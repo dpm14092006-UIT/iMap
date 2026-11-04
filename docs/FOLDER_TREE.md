@@ -13,7 +13,6 @@ RouteTwin_OOP_Starter/
 │   │       │   ├── multi-stop/          [N1] TSP route planner
 │   │       │   ├── my-routes/           [N1] Saved routes
 │   │       │   ├── traffic/             [N2] Quick reports / clearance / hook
-│   │       │   ├── ai-vision/           [N2] Upload / AI results
 │   │       │   └── auth/                [N2] Supabase Auth UI
 │   │       └── shared/                  API client, UI utilities, icons
 │   └── api/                            Express + TypeScript
@@ -33,7 +32,6 @@ RouteTwin_OOP_Starter/
 │               │   ├── application/    Use Cases + Ports
 │               │   ├── infrastructure/ DB/realtime adapters
 │               │   └── presentation/   Controllers + Express routes
-│               ├── ai-vision/          [N2] Gemini traffic/sign adapters
 │               └── auth/               [N2] JWT, current user, permissions
 ├── packages/shared/                  [BOTH] Types, Zod DTO contracts
 ├── supabase/migrations/               [N2] PostGIS, schema, RLS
@@ -46,6 +44,6 @@ RouteTwin_OOP_Starter/
 
 ## Chuẩn cho mỗi module backend mới
 
-`domain` → không import framework, SDK; `application` → case nghiệp vụ, ports; `infrastructure` → Vietmap/Gemini/Supabase adapters; `presentation` → controller HTTP, schema validation.
+`domain` → không import framework, SDK; `application` → case nghiệp vụ, ports; `infrastructure` → Vietmap/Supabase adapters; `presentation` → controller HTTP, schema validation.
 
 Module nhỏ có thể khởi tạo các folder khi bắt đầu triển khai, không cần tạo hàng chục class rỗng. Ưu tiên class có trách nhiệm và test rõ ràng hơn là dùng kế thừa phức tạp.

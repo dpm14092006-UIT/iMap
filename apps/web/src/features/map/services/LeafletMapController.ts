@@ -63,14 +63,20 @@ export class LeafletMapController {
   }
 
   setLayer(layer: MapLayer) {
-    if (this.activeLayer === layer && (layer === 'street' ? this.map.hasLayer(this.streets) : this.map.hasLayer(this.imagery))) return;
+    const expectedLayerIsVisible = layer === 'satellite' ? this.map.hasLayer(this.imagery) : this.map.hasLayer(this.streets);
+    if (this.activeLayer === layer && expectedLayerIsVisible) {
+      this.map.getContainer().classList.toggle('map-theme-dark', layer === 'dark');
+      return;
+    }
     this.activeLayer = layer;
     if (layer === 'satellite') {
+      this.map.getContainer().classList.remove('map-theme-dark');
       this.map.removeLayer(this.streets);
       this.imagery.addTo(this.map);
     } else {
       this.map.removeLayer(this.imagery);
       this.streets.addTo(this.map);
+      this.map.getContainer().classList.toggle('map-theme-dark', layer === 'dark');
     }
   }
 

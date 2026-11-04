@@ -6,7 +6,6 @@ const items: { key: Exclude<FeatureKey, 'place'>; label: string; icon: IconName 
   { key: 'multi', label: 'Nhiều điểm', icon: 'multi-stop' },
   { key: 'traffic', label: 'Giao thông', icon: 'traffic' },
   { key: 'saved', label: 'Đã lưu', icon: 'bookmark' },
-  { key: 'ai', label: 'AI ảnh', icon: 'sparkles' },
 ];
 
 type FeatureNavProps = { active: FeatureKey | null; incidentCount: number; onSelect: (key: FeatureKey) => void };

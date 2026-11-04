@@ -1,4 +1,4 @@
-import { InMemoryTrafficReportRepository } from './modules/traffic/infrastructure/repositories/InMemoryTrafficReportRepository.js';
+import { SupabaseTrafficReportRepository } from './modules/traffic/infrastructure/repositories/SupabaseTrafficReportRepository.js';
 import { CreateTrafficReportUseCase } from './modules/traffic/application/use-cases/CreateTrafficReportUseCase.js';
 import { ListTrafficReportsUseCase } from './modules/traffic/application/use-cases/ListTrafficReportsUseCase.js';
 import { UpdateRoadClearanceUseCase } from './modules/traffic/application/use-cases/UpdateRoadClearanceUseCase.js';
@@ -12,7 +12,7 @@ import { RouteController } from './modules/navigation/presentation/RouteControll
 import { env } from './config/env.js';
 /** Composition root – chỉ nơi này biết class implementation cụ thể. */
 export function createContainer() {
-  const trafficRepository = new InMemoryTrafficReportRepository();
+  const trafficRepository = new SupabaseTrafficReportRepository();
   const trafficController = new TrafficController(
     new CreateTrafficReportUseCase(trafficRepository),
     new ListTrafficReportsUseCase(trafficRepository),

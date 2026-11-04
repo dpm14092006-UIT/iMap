@@ -10,7 +10,7 @@
 | Traffic UI, warning forms, clearance | N2 | N1 |
 | Traffic Report use cases, repository | N2 | N1 |
 | Realtime Broadcast, road clearance, expiry | N2 | N1 |
-| AI Traffic + AI Sign image inference | N2 | N1 |
+| Traffic report photo capture/storage | N2 | N1 |
 | Supabase DB/PostGIS/Auth/RLS/Storage/migrations | N2 | N1 |
 | Express bootstrapping, security middleware, deployment | N2 | N1 |
 | Shared DTO, event contracts, DI composition root | BOTH | BOTH |
@@ -18,7 +18,7 @@
 
 ## Quy trình
 
-- Branch N1: `feat/nav-...`; branch N2: `feat/traffic-...`, `feat/ai-...`.
+- Branch N1: `feat/nav-...`; branch N2: `feat/traffic-...`.
 - Một PR = một nhiệm vụ độc lập; không push thẳng `main`.
 - Sửa contract, migration, composition root phải có review của người còn lại.
 - Kết thúc ngày: merge/đẩy bản tích hợp chạy được lên staging; không dồn vào ngày 10.

@@ -27,15 +27,28 @@ Các đầu việc dưới đây chưa được triển khai. Chúng được gi
 - Giữ điểm cuối cố định hoặc quay về điểm đầu khi tùy chọn tương ứng được bật.
 - Dựng hình học từng chặng bằng Route API, không nối thẳng các điểm.
 
-## N2 — Traffic, AI & data
+## N2 — Traffic reports & data
 
-### TrafficMapLayer
+### Đã triển khai trong source
+
+- Auth UI/context và API JWT verification; writes dùng access token người dùng, không dùng `service_role`.
+- Traffic repository dùng RPC PostGIS có bounding box, giới hạn 200 kết quả, RLS, chống spam, versioning, xác minh và hết hạn.
+- GeoJSON `FeatureCollection`, Broadcast từ trigger Postgres và snapshot khi kết nối/reconnect.
+- Traffic panel gửi/đồng bộ/xác minh; chụp hoặc chọn ảnh minh chứng tuỳ chọn, preview trước khi gửi, lưu ảnh private theo user và gắn với báo cáo.
+
+### Còn cần cấu hình/nghiệm thu trên Supabase
+
+- Điền URL/keys, áp dụng migration và bật job expiry. Chưa chạy được do project credentials chưa có trong workspace.
+- Kiểm tra RLS, Auth confirmation email, Realtime và Storage trên project thật.
+- Xác nhận trải nghiệm chụp ảnh trên iOS/Android và xem ảnh qua signed URL bằng tài khoản khác.
+
+### TrafficMapLayer (đã có API/Realtime; adapter trực tiếp vào Leaflet còn thuộc N1)
 
 - N2 cung cấp GeoJSON `FeatureCollection` từ `traffic_reports`, có marker theo loại và mức độ.
 - N1 hiển thị layer qua abstraction của `MapView`, không để module traffic phụ thuộc nội bộ Map SDK.
 - Bổ sung Realtime Broadcast và lấy snapshot khi kết nối lại.
 
-### Supabase traffic repository
+### Supabase traffic repository (đã triển khai)
 
 - Viết `SupabaseTrafficReportRepository implements TrafficReportRepository`.
 - Lưu `geom geography(Point,4326)` trong PostGIS; thứ tự GeoJSON là `[lng,lat]`.
@@ -43,10 +56,8 @@ Các đầu việc dưới đây chưa được triển khai. Chúng được gi
 - Phát Realtime Broadcast sau khi tạo hoặc xác nhận đã thông thoáng; xử lý snapshot khi reconnect.
 - Giới hạn số cảnh báo, tự hết hạn, chống spam và kiểm tra quyền sở hữu.
 
-### Gemini Vision adapter
+### Traffic report photos
 
-- Dùng một service cho hai tác vụ độc lập với hai Zod output schemas.
-- Kiểm tra MIME/kích thước file; gọi Gemini phía backend; parse JSON và trả `unknown` khi ảnh không rõ.
-- Cho phép tạo báo cáo giao thông trước khi AI trả kết quả; ảnh tĩnh không đủ để khẳng định có kẹt xe.
-- Nhận diện biển báo chỉ là dữ liệu tham khảo, không tự thêm quy tắc cấm đường.
-- Đánh giá bằng ảnh Việt Nam có bộ đối chiếu; đo precision, recall và F1.
+- Ảnh là bằng chứng tuỳ chọn, không được dùng để tự suy ra loại hoặc mức độ sự cố.
+- Chỉ nhận JPG, PNG, WebP tối đa 5 MB; Storage private, gắn vào report bằng đường dẫn UUID đã kiểm tra ở RPC.
+- Ảnh báo cáo chỉ chia sẻ cho người dùng đã đăng nhập trong thời gian report còn hiệu lực; chủ ảnh vẫn xem được ảnh của mình.
