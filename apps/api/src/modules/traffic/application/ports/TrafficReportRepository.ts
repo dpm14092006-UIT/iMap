@@ -1,6 +1,6 @@
-import type { TrafficReportBounds, TrafficReportDto, TrafficReportInput } from '@routetwin/shared';
+import type { TrafficReport } from '../../domain/entities/TrafficReport.js';
 export interface TrafficReportRepository {
-  list(bounds: TrafficReportBounds, accessToken?: string): Promise<TrafficReportDto[]>;
-  create(input: TrafficReportInput, accessToken: string): Promise<TrafficReportDto>;
-  updateClearance(id: string, state: 'clear' | 'still_active', accessToken: string): Promise<TrafficReportDto>;
+  save(report: TrafficReport): Promise<void>;
+  findAll(): Promise<TrafficReport[]>;
+  findById(id: string): Promise<TrafficReport | null>;
 }
