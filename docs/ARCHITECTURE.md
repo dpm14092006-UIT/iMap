@@ -23,7 +23,7 @@ flowchart TB
 
 ## Patterns có chủ đích
 
-- **Repository**: `TrafficReportRepository` → `SupabaseTrafficReportRepository` trong composition production; `InMemoryTrafficReportRepository` chỉ là local/test adapter.
+- **Repository**: `TrafficReportRepository` → `InMemoryTrafficReportRepository` (demo), sau đó `SupabaseTrafficReportRepository`.
 - **Adapter**: `PlaceSearchProvider` → `VietmapPlaceSearchProvider`; `AiVisionProvider` → `GeminiVisionProvider`.
 - **Strategy**: `OptimizationStrategy` để thay `NearestNeighbor`/`TwoOpt`.
 - **Dependency Injection bằng constructor**: `new CreateTrafficReportUseCase(repo)`; wiring tại `composition-root.ts`.
