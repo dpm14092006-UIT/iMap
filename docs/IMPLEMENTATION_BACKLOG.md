@@ -1,6 +1,6 @@
 # Implementation backlog
 
-Các đầu việc dưới đây chưa được triển khai. Chúng được giữ tập trung ở tài liệu này để thư mục source chỉ chứa mã đang dùng.
+Tài liệu này theo dõi phần đã triển khai và các việc còn lại, để trạng thái N1/N2 luôn rõ ràng.
 
 ## N1 — Navigation & optimization
 

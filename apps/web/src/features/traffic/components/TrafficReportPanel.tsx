@@ -69,9 +69,13 @@ export function TrafficReportPanel({ incidents, selectedPoint, isAuthenticated, 
     void Promise.all(recentPhotos.map(async (incident) => [
       incident.id,
       await trafficApi.signedPhotoUrl(incident.imagePath!),
-    ] as const)).then((entries) => {
-      if (current) setPhotoUrls(Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => Boolean(entry[1]))));
-    });
+    ] as const))
+      .then((entries) => {
+        if (current) setPhotoUrls(Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => Boolean(entry[1]))));
+      })
+      .catch(() => {
+        if (current) setPhotoUrls({});
+      });
     return () => { current = false; };
   }, [incidents]);
 

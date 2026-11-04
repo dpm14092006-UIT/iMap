@@ -1,7 +1,7 @@
 import { z } from 'zod';
 export const incidentTypes = ['traffic_jam','accident','construction','flood','road_closure','obstacle'] as const;
 const trafficPhotoPathSchema = z.string().regex(
-  /^[0-9a-f-]{36}\/traffic-reports\/[0-9a-f-]{36}\.(jpg|png|webp)$/i,
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/traffic-reports\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp)$/i,
   'Đường dẫn ảnh báo cáo không hợp lệ',
 );
 export const trafficReportInputSchema = z.object({
