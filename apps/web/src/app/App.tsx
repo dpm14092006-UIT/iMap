@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { AiVisionPanel } from '../features/ai-vision/components/AiVisionPanel';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { MultiStopPanel } from '../features/multi-stop/components/MultiStopPanel';
 import { SavedRoutesPanel } from '../features/my-routes/components/SavedRoutesPanel';
 import type { SavedRoute } from '../features/my-routes/types';
@@ -13,13 +12,17 @@ import { PlaceSearchBar } from '../features/places/components/PlaceSearchBar';
 import { RoutePanel } from '../features/navigation/components/RoutePanel';
 import { RouteApiClient } from '../features/navigation/services/RouteApiClient';
 import { TrafficReportPanel, type DemoIncident, type IncidentKind, type IncidentSeverity } from '../features/traffic/components/TrafficReportPanel';
+import { useTrafficReports } from '../features/traffic/hooks/useTrafficReports';
+import { useAuth } from '../features/auth/context/AuthProvider';
 import { FeatureNav } from './components/FeatureNav';
 import { Icon } from '../shared/components/Icon';
 
+const AuthPanel = lazy(() => import('../features/auth/components/AuthPanel').then((module) => ({ default: module.AuthPanel })));
+
 const defaultOrigin = demoPlaces.find((place) => place.id === 'ben-thanh') ?? demoPlaces[0]!;
 const defaultDestination = demoPlaces.find((place) => place.id === 'landmark') ?? demoPlaces[1]!;
-const incidentStorageKey = 'routetwin-traffic-reports-v1';
 const routeStorageKey = 'routetwin-saved-routes-v1';
+const incidentLabels: Record<IncidentKind, string> = { traffic_jam: 'Kẹt xe', accident: 'Tai nạn', construction: 'Thi công', flood: 'Ngập đường', road_closure: 'Đường đóng', obstacle: 'Vật cản' };
 
 function readStored<T>(key: string, fallback: T): T {
   try {
@@ -34,12 +37,6 @@ function writeStored<T>(key: string, value: T) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* Storage can be disabled by the browser. */ }
 }
 
-function readIncidents(): DemoIncident[] {
-  const now = Date.now();
-  const reports = readStored<(DemoIncident & { expiresAt?: number })[]>(incidentStorageKey, []);
-  return reports.filter((report) => Number.isFinite(report.lat) && Number.isFinite(report.lng) && (!report.expiresAt || report.expiresAt > now));
-}
-
 function readSavedRoutes(): SavedRoute[] {
   return readStored<SavedRoute[]>(routeStorageKey, []).filter((route) => Boolean(route?.origin && route?.origin.name && route?.kind));
 }
@@ -49,6 +46,8 @@ function formatDuration(minutes: number) {
 }
 
 export function App() {
+  const { user, accessToken } = useAuth();
+  const { reports, error: trafficError, loading: trafficLoading, create: createTrafficReport, clearance: updateClearance } = useTrafficReports(accessToken, user?.id ?? null);
   const routeApi = useMemo(() => new RouteApiClient(), []);
   const mapController = useRef<LeafletMapController | null>(null);
   const [activePanel, setActivePanel] = useState<FeatureKey | null>('directions');
@@ -57,16 +56,27 @@ export function App() {
   const [initialDestination, setInitialDestination] = useState<DemoPlace | null>(defaultDestination);
   const [activeRoute, setActiveRoute] = useState<RoutePlan | null>(null);
   const [layer, setLayer] = useState<MapLayer>('street');
-  const [incidents, setIncidents] = useState<DemoIncident[]>(readIncidents);
   const [selectedMapPoint, setSelectedMapPoint] = useState<{ lat: number; lng: number } | null>(null);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>(readSavedRoutes);
+  const [authOpen, setAuthOpen] = useState(false);
   const [toast, setToast] = useState('');
   const toastTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => () => window.clearTimeout(toastTimer.current), []);
-  useEffect(() => { writeStored(incidentStorageKey, incidents); }, [incidents]);
   useEffect(() => { writeStored(routeStorageKey, savedRoutes); }, [savedRoutes]);
+
+  const incidents = useMemo<DemoIncident[]>(() => reports.map((report) => ({
+    id: report.id,
+    type: report.incidentType,
+    severity: report.severity,
+    description: report.note || incidentLabels[report.incidentType],
+    time: new Date(report.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+    lat: report.lat,
+    lng: report.lng,
+    imagePath: report.imagePath,
+    status: report.status,
+  })), [reports]);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -153,13 +163,23 @@ export function App() {
     showToast('Đã tính lại hành trình đã lưu bằng VietMap');
   };
 
-  const reportIncident = (type: IncidentKind, severity: IncidentSeverity, point: { lat: number; lng: number }) => {
-    const labels: Record<IncidentKind, string> = { traffic_jam: 'Kẹt xe', accident: 'Tai nạn', construction: 'Thi công', flood: 'Ngập đường', road_closure: 'Đường đóng', obstacle: 'Vật cản' };
-    const report: DemoIncident = { id: `report-${Date.now()}`, type, severity, description: labels[type], time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }), lat: point.lat, lng: point.lng };
-    setIncidents((current) => [report, ...current]);
+  const reportIncident = async (type: IncidentKind, severity: IncidentSeverity, point: { lat: number; lng: number }, note: string, photo: File | null) => {
+    if (!accessToken) {
+      setAuthOpen(true);
+      throw new Error('Đăng nhập để gửi báo cáo.');
+    }
+    await createTrafficReport({ incidentType: type, severity, lat: point.lat, lng: point.lng, ...(note ? { note } : {}) }, photo ?? undefined);
     setSelectedMapPoint(null);
     mapController.current?.flyTo(point, 15);
-    showToast('Đã lưu báo cáo giao thông trên thiết bị này');
+    showToast('Đã đồng bộ báo cáo giao thông');
+  };
+
+  const verifyIncident = async (id: string, state: 'clear' | 'still_active') => {
+    if (!accessToken) {
+      setAuthOpen(true);
+      throw new Error('Đăng nhập để xác minh báo cáo.');
+    }
+    await updateClearance(id, state);
   };
 
   const openDirections = (place: DemoPlace) => {
@@ -229,7 +249,7 @@ export function App() {
             <span className="hidden items-center gap-1.5 rounded-full bg-slate-100 px-3 py-2 text-[10px] font-semibold text-slate-600 lg:inline-flex"><Icon name="pin" size={13} className="text-brand-600" />TP. Hồ Chí Minh</span>
             <span className="hidden items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-2 text-[10px] font-semibold text-emerald-800 sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />OpenStreetMap</span>
             <button type="button" onClick={() => showToast('Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.')} aria-label="Thông tin bản đồ" className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-brand-200 hover:text-brand-700"><Icon name="more" size={19} /></button>
-            <button type="button" onClick={() => showToast('Đăng nhập sẽ đồng bộ tuyến giữa các thiết bị khi bật dịch vụ tài khoản.')} aria-label="Tài khoản" className="grid h-9 w-9 place-items-center rounded-full bg-[#e8e1d7] text-xs font-bold text-[#685849] ring-2 ring-white sm:h-10 sm:w-10">DT</button>
+            <button type="button" onClick={() => setAuthOpen(true)} aria-label={user ? `Tài khoản ${user.email ?? ''}` : 'Đăng nhập tài khoản'} className={`grid h-9 w-9 place-items-center rounded-full text-xs font-bold ring-2 ring-white transition sm:h-10 sm:w-10 ${user ? 'bg-brand-100 text-brand-700' : 'bg-[#e8e1d7] text-[#685849]'}`}>{user?.email?.slice(0, 2).toUpperCase() ?? 'ĐN'}</button>
           </div>
         </div>
         <div className="px-3 pb-2 md:hidden"><PlaceSearchBar onSelect={openPlace} /></div>
@@ -254,9 +274,9 @@ export function App() {
         showToast('Đã tính tuyến qua các điểm bằng VietMap');
         return result;
       }} onSave={savePlan} />}
-      {activePanel === 'traffic' && <TrafficReportPanel incidents={incidents} selectedPoint={selectedMapPoint} onClose={() => setActivePanel(null)} onReport={reportIncident} />}
+      {activePanel === 'traffic' && <TrafficReportPanel incidents={incidents} selectedPoint={selectedMapPoint} isAuthenticated={Boolean(accessToken)} loading={trafficLoading} error={trafficError} onClose={() => setActivePanel(null)} onSignIn={() => setAuthOpen(true)} onReport={reportIncident} onClearance={verifyIncident} />}
       {activePanel === 'saved' && <SavedRoutesPanel routes={savedRoutes} onClose={() => setActivePanel(null)} onDelete={(id) => { setSavedRoutes((current) => current.filter((route) => route.id !== id)); showToast('Đã xóa hành trình đã lưu'); }} onOpen={openSavedRoute} />}
-      {activePanel === 'ai' && <AiVisionPanel onClose={() => setActivePanel(null)} />}
+      {authOpen && <Suspense fallback={<div className="absolute left-5 top-[143px] z-40 rounded-xl bg-white px-4 py-3 text-xs font-medium text-slate-600 shadow-float max-md:bottom-4 max-md:left-3 max-md:top-auto" role="status">Đang mở tài khoản…</div>}><AuthPanel onClose={() => setAuthOpen(false)} /></Suspense>}
       {activePanel === 'place' && selectedPlace && <PlacePanel place={selectedPlace} onClose={() => setActivePanel(null)} onDirections={openDirections} />}
 
       <MapToolbar
