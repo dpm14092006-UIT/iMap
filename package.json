@@ -1,0 +1,19 @@
+{
+  "name": "routetwin-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "npm run build -w @routetwin/shared && concurrently -k -n API,WEB -c cyan,magenta \"npm run dev -w @routetwin/api\" \"npm run dev -w @routetwin/web\"",
+    "build": "npm run build -w @routetwin/shared && npm run build -w @routetwin/api && npm run build -w @routetwin/web",
+    "test": "npm run build -w @routetwin/shared && npm run test -w @routetwin/api",
+    "typecheck": "npm run build -w @routetwin/shared && npm run typecheck -w @routetwin/api && npm run typecheck -w @routetwin/web"
+  },
+  "engines": { "node": ">=20.19" },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.3",
+    "@types/node": "^22.15.0"
+  }
+}
