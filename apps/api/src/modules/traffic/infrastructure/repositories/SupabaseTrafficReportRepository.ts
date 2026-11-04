@@ -12,6 +12,7 @@ type DbTrafficReport = {
   note: string | null;
   gps_accuracy_m: number | null;
   heading_deg: number | null;
+  image_path: string | null;
   status: TrafficReportDto['status'];
   created_at: string;
   expires_at: string;
@@ -41,6 +42,7 @@ export class SupabaseTrafficReportRepository implements TrafficReportRepository 
       p_note: input.note ?? null,
       p_gps_accuracy_m: input.gpsAccuracyM ?? null,
       p_heading_deg: input.headingDeg ?? null,
+      p_image_path: input.imagePath ?? null,
     }).single();
     if (error) throw this.toAppError(error);
     return this.toDto(data as DbTrafficReport);
@@ -65,6 +67,7 @@ export class SupabaseTrafficReportRepository implements TrafficReportRepository 
       ...(row.note ? { note: row.note } : {}),
       ...(row.gps_accuracy_m !== null ? { gpsAccuracyM: Number(row.gps_accuracy_m) } : {}),
       ...(row.heading_deg !== null ? { headingDeg: Number(row.heading_deg) } : {}),
+      ...(row.image_path ? { imagePath: row.image_path } : {}),
       status: row.status,
       createdAt: row.created_at,
       expiresAt: row.expires_at,

@@ -14,12 +14,4 @@ export class SupabaseClientFactory {
     });
   }
 
-  createAdmin(): SupabaseClient {
-    if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-      throw new AppError(503, 'SUPABASE_ADMIN_NOT_CONFIGURED', 'Dịch vụ lưu kết quả chưa được cấu hình');
-    }
-    return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
-    });
-  }
 }

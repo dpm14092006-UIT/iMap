@@ -17,7 +17,6 @@ import { useAuth } from '../features/auth/context/AuthProvider';
 import { FeatureNav } from './components/FeatureNav';
 import { Icon } from '../shared/components/Icon';
 
-const AiVisionPanel = lazy(() => import('../features/ai-vision/components/AiVisionPanel').then((module) => ({ default: module.AiVisionPanel })));
 const AuthPanel = lazy(() => import('../features/auth/components/AuthPanel').then((module) => ({ default: module.AuthPanel })));
 
 const defaultOrigin = demoPlaces.find((place) => place.id === 'ben-thanh') ?? demoPlaces[0]!;
@@ -48,7 +47,7 @@ function formatDuration(minutes: number) {
 
 export function App() {
   const { user, accessToken } = useAuth();
-  const { reports, error: trafficError, loading: trafficLoading, create: createTrafficReport, clearance: updateClearance } = useTrafficReports(accessToken);
+  const { reports, error: trafficError, loading: trafficLoading, create: createTrafficReport, clearance: updateClearance } = useTrafficReports(accessToken, user?.id ?? null);
   const routeApi = useMemo(() => new RouteApiClient(), []);
   const mapController = useRef<LeafletMapController | null>(null);
   const [activePanel, setActivePanel] = useState<FeatureKey | null>('directions');
@@ -75,6 +74,7 @@ export function App() {
     time: new Date(report.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
     lat: report.lat,
     lng: report.lng,
+    imagePath: report.imagePath,
     status: report.status,
   })), [reports]);
 
@@ -163,12 +163,12 @@ export function App() {
     showToast('Đã tính lại hành trình đã lưu bằng VietMap');
   };
 
-  const reportIncident = async (type: IncidentKind, severity: IncidentSeverity, point: { lat: number; lng: number }, note: string) => {
+  const reportIncident = async (type: IncidentKind, severity: IncidentSeverity, point: { lat: number; lng: number }, note: string, photo: File | null) => {
     if (!accessToken) {
       setAuthOpen(true);
       throw new Error('Đăng nhập để gửi báo cáo.');
     }
-    await createTrafficReport({ incidentType: type, severity, lat: point.lat, lng: point.lng, ...(note ? { note } : {}) });
+    await createTrafficReport({ incidentType: type, severity, lat: point.lat, lng: point.lng, ...(note ? { note } : {}) }, photo ?? undefined);
     setSelectedMapPoint(null);
     mapController.current?.flyTo(point, 15);
     showToast('Đã đồng bộ báo cáo giao thông');
@@ -276,7 +276,6 @@ export function App() {
       }} onSave={savePlan} />}
       {activePanel === 'traffic' && <TrafficReportPanel incidents={incidents} selectedPoint={selectedMapPoint} isAuthenticated={Boolean(accessToken)} loading={trafficLoading} error={trafficError} onClose={() => setActivePanel(null)} onSignIn={() => setAuthOpen(true)} onReport={reportIncident} onClearance={verifyIncident} />}
       {activePanel === 'saved' && <SavedRoutesPanel routes={savedRoutes} onClose={() => setActivePanel(null)} onDelete={(id) => { setSavedRoutes((current) => current.filter((route) => route.id !== id)); showToast('Đã xóa hành trình đã lưu'); }} onOpen={openSavedRoute} />}
-      {activePanel === 'ai' && <Suspense fallback={<div className="absolute left-5 top-[143px] z-30 rounded-xl bg-white px-4 py-3 text-xs font-medium text-slate-600 shadow-float max-md:bottom-4 max-md:left-3 max-md:top-auto" role="status">Đang mở phân tích ảnh…</div>}><AiVisionPanel onClose={() => setActivePanel(null)} onRequireAuth={() => setAuthOpen(true)} /></Suspense>}
       {authOpen && <Suspense fallback={<div className="absolute left-5 top-[143px] z-40 rounded-xl bg-white px-4 py-3 text-xs font-medium text-slate-600 shadow-float max-md:bottom-4 max-md:left-3 max-md:top-auto" role="status">Đang mở tài khoản…</div>}><AuthPanel onClose={() => setAuthOpen(false)} /></Suspense>}
       {activePanel === 'place' && selectedPlace && <PlacePanel place={selectedPlace} onClose={() => setActivePanel(null)} onDirections={openDirections} />}
 

@@ -7,15 +7,12 @@ const envSchema = z.object({
   API_PORT: z.coerce.number().int().positive().default(4000),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   VIETMAP_API_KEY: optionalValue,
-  GEMINI_API_KEY: optionalValue,
-  GEMINI_MODEL: optionalValue,
   SUPABASE_URL: z.preprocess(
     (value) => typeof value === 'string' && value.trim() === '' ? undefined : value,
     z.string().url().optional(),
   ),
   SUPABASE_PUBLISHABLE_KEY: optionalValue,
   SUPABASE_ANON_KEY: optionalValue,
-  SUPABASE_SERVICE_ROLE_KEY: optionalValue,
 });
 export const env = envSchema.parse(process.env);
 export const supabaseKey = env.SUPABASE_PUBLISHABLE_KEY ?? env.SUPABASE_ANON_KEY;
