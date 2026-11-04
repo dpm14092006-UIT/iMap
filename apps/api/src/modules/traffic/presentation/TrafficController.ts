@@ -31,6 +31,7 @@ export class TrafficController {
           severity: report.severity,
           status: report.status,
           ...(report.note ? { note: report.note } : {}),
+          hasPhoto: Boolean(report.imagePath),
           createdAt: report.createdAt,
           expiresAt: report.expiresAt,
           version: report.version,

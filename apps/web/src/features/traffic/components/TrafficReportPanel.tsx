@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FloatingPanel } from '../../../app/components/FloatingPanel';
 import { Icon } from '../../../shared/components/Icon';
+import { trafficApi } from '../api/trafficApi';
 
 export type IncidentKind = 'traffic_jam' | 'accident' | 'construction' | 'flood' | 'road_closure' | 'obstacle';
 export type IncidentSeverity = 'low' | 'medium' | 'high';
 export type DemoIncident = {
   id: string; type: IncidentKind; severity: IncidentSeverity; description: string; time: string;
-  lat: number; lng: number; status?: 'active' | 'cleared' | 'expired';
+  lat: number; lng: number; imagePath?: string; status?: 'active' | 'cleared' | 'expired';
 };
 
 const incidentOptions: { id: IncidentKind; label: string; icon: 'traffic' | 'car' | 'road' | 'globe' | 'close-circle' | 'layers' }[] = [
@@ -32,7 +33,7 @@ type TrafficReportPanelProps = {
   error: string;
   onClose: () => void;
   onSignIn: () => void;
-  onReport: (type: IncidentKind, severity: IncidentSeverity, point: { lat: number; lng: number }, note: string) => Promise<void>;
+  onReport: (type: IncidentKind, severity: IncidentSeverity, point: { lat: number; lng: number }, note: string, photo: File | null) => Promise<void>;
   onClearance: (id: string, state: 'clear' | 'still_active') => Promise<void>;
 };
 
@@ -40,10 +41,54 @@ export function TrafficReportPanel({ incidents, selectedPoint, isAuthenticated, 
   const [type, setType] = useState<IncidentKind>('traffic_jam');
   const [severity, setSeverity] = useState<IncidentSeverity>('medium');
   const [note, setNote] = useState('');
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState('');
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [busyReportId, setBusyReportId] = useState('');
   const [actionMessage, setActionMessage] = useState('');
   const [actionError, setActionError] = useState('');
+
+  useEffect(() => {
+    if (!photo) {
+      setPhotoPreview('');
+      return;
+    }
+    const url = URL.createObjectURL(photo);
+    setPhotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photo]);
+
+  useEffect(() => {
+    let current = true;
+    const recentPhotos = incidents.slice(0, 8).filter((incident) => incident.imagePath);
+    if (!recentPhotos.length) {
+      setPhotoUrls({});
+      return () => { current = false; };
+    }
+    void Promise.all(recentPhotos.map(async (incident) => [
+      incident.id,
+      await trafficApi.signedPhotoUrl(incident.imagePath!),
+    ] as const)).then((entries) => {
+      if (current) setPhotoUrls(Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => Boolean(entry[1]))));
+    });
+    return () => { current = false; };
+  }, [incidents]);
+
+  const selectPhoto = (file: File | undefined) => {
+    if (!file) return;
+    setActionMessage('');
+    setActionError('');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setActionError('Ảnh phải có định dạng JPG, PNG hoặc WebP.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setActionError('Ảnh tối đa 5 MB.');
+      return;
+    }
+    setPhoto(file);
+  };
 
   const submit = async () => {
     if (!selectedPoint || !isAuthenticated) return;
@@ -51,8 +96,9 @@ export function TrafficReportPanel({ incidents, selectedPoint, isAuthenticated, 
     setActionError('');
     setActionMessage('');
     try {
-      await onReport(type, severity, selectedPoint, note.trim());
+      await onReport(type, severity, selectedPoint, note.trim(), photo);
       setNote('');
+      setPhoto(null);
       setActionMessage('Đã gửi báo cáo. Cảm ơn bạn đã cập nhật tình hình.');
     } catch (cause) {
       setActionError(cause instanceof Error ? cause.message : 'Không gửi được báo cáo.');
@@ -92,6 +138,28 @@ export function TrafficReportPanel({ incidents, selectedPoint, isAuthenticated, 
       <label className="mb-3 block text-[10px] font-semibold text-slate-600">Ghi chú ngắn <span className="font-normal text-slate-400">(không bắt buộc)</span>
         <textarea maxLength={300} value={note} onChange={(event) => setNote(event.target.value)} rows={2} placeholder="Ví dụ: ngập sâu gần giao lộ…" className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2 text-[11px] font-normal text-ink outline-none placeholder:text-slate-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-50" />
       </label>
+      <div className="mb-3 rounded-xl border border-slate-200 bg-white p-3">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="text-[10px] font-semibold text-slate-700">Ảnh hiện trường <span className="font-normal text-slate-400">(không bắt buộc)</span></span>
+          <span className="text-[9px] text-slate-400">Tối đa 5 MB</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <label className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-brand-50 px-3 text-[10px] font-semibold text-brand-700 transition hover:bg-brand-100 focus-within:ring-4 focus-within:ring-brand-100">
+            <Icon name="camera" size={15} />Chụp ảnh
+            <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" className="sr-only" onChange={(event) => { selectPhoto(event.target.files?.[0]); event.currentTarget.value = ''; }} />
+          </label>
+          <label className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-slate-100 px-3 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-200 focus-within:ring-4 focus-within:ring-slate-200">
+            <Icon name="upload" size={14} />Chọn ảnh
+            <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => { selectPhoto(event.target.files?.[0]); event.currentTarget.value = ''; }} />
+          </label>
+        </div>
+        <p className="mt-2 text-[9px] leading-4 text-slate-400">Trên điện thoại, nút Chụp ảnh sẽ mở camera. Ảnh chỉ được tải lên khi bạn gửi báo cáo.</p>
+        {photo && photoPreview && <div className="mt-3 flex items-center gap-3 rounded-lg bg-slate-50 p-2">
+          <img src={photoPreview} alt="Xem trước ảnh hiện trường" className="h-16 w-20 rounded-md object-cover" />
+          <span className="min-w-0 flex-1 truncate text-[10px] text-slate-600">{photo.name}</span>
+          <button type="button" aria-label="Xóa ảnh đã chọn" disabled={busy} onClick={() => setPhoto(null)} className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-white hover:text-red-600 disabled:opacity-50"><Icon name="trash" size={15} /></button>
+        </div>}
+      </div>
       {isAuthenticated ? <button type="button" disabled={!selectedPoint || busy} onClick={() => void submit()} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 text-xs font-bold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300"><Icon name="send" size={16} />{busy ? 'Đang gửi…' : 'Gửi báo cáo'}</button> : <button type="button" onClick={onSignIn} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 text-xs font-bold text-white transition hover:bg-brand-700"><Icon name="pin" size={16} />Đăng nhập để gửi báo cáo</button>}
       {!selectedPoint && <p className="mt-2 text-center text-[10px] text-slate-500">Chọn đúng vị trí trên bản đồ trước khi gửi.</p>}
       {actionMessage && <p className="mt-2 text-[10px] font-medium text-emerald-700" role="status">{actionMessage}</p>}
@@ -101,11 +169,13 @@ export function TrafficReportPanel({ incidents, selectedPoint, isAuthenticated, 
         <div className="mb-3 flex items-center justify-between"><h3 className="text-[12px] font-bold text-ink">Báo cáo gần đây</h3><span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">{incidents.length}</span></div>
         {loading && <p className="mb-2 text-[10px] text-slate-500" role="status">Đang đồng bộ báo cáo…</p>}
         {incidents.length ? <ul className="space-y-2">
-          {incidents.map((incident) => {
+          {incidents.slice(0, 8).map((incident) => {
             const selectedType = incidentOptions.find((option) => option.id === incident.type);
             const selectedSeverity = severityOptions.find((option) => option.id === incident.severity);
             return <li key={incident.id} className="rounded-xl bg-slate-50 px-3 py-2.5">
               <div className="flex items-center gap-2.5"><span className={`h-2 w-2 shrink-0 rounded-full ${selectedSeverity?.color ?? 'bg-slate-400'}`} /><span className="min-w-0 flex-1"><span className="block truncate text-[11px] font-semibold text-ink">{selectedType?.label ?? 'Sự cố'} · {incident.description}</span><span className="mt-0.5 block text-[10px] text-slate-500">{incident.time} · {incident.lat.toFixed(4)}, {incident.lng.toFixed(4)}</span></span></div>
+              {incident.imagePath && photoUrls[incident.id] && <a href={photoUrls[incident.id]} target="_blank" rel="noreferrer" aria-label="Mở ảnh minh chứng" className="mt-2 block overflow-hidden rounded-lg"><img src={photoUrls[incident.id]} alt={`Ảnh minh chứng: ${selectedType?.label ?? 'sự cố giao thông'}`} loading="lazy" className="max-h-36 w-full rounded-lg object-cover" /></a>}
+              {incident.imagePath && !photoUrls[incident.id] && <p className="mt-1.5 pl-4 text-[9px] text-slate-500">Có ảnh minh chứng</p>}
               {isAuthenticated && <div className="mt-2 flex gap-2 pl-4"><button type="button" disabled={busyReportId === incident.id} onClick={() => void verify(incident.id, 'clear')} className="rounded-full bg-white px-2.5 py-1 text-[9px] font-semibold text-emerald-700 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50">Đã thông</button><button type="button" disabled={busyReportId === incident.id} onClick={() => void verify(incident.id, 'still_active')} className="rounded-full bg-white px-2.5 py-1 text-[9px] font-semibold text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100 disabled:opacity-50">Vẫn còn</button></div>}
             </li>;
           })}

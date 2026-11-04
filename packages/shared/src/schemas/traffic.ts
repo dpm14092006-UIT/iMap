@@ -1,5 +1,9 @@
 import { z } from 'zod';
 export const incidentTypes = ['traffic_jam','accident','construction','flood','road_closure','obstacle'] as const;
+const trafficPhotoPathSchema = z.string().regex(
+  /^[0-9a-f-]{36}\/traffic-reports\/[0-9a-f-]{36}\.(jpg|png|webp)$/i,
+  'Đường dẫn ảnh báo cáo không hợp lệ',
+);
 export const trafficReportInputSchema = z.object({
   incidentType: z.enum(incidentTypes),
   severity: z.enum(['low','medium','high']),
@@ -8,6 +12,7 @@ export const trafficReportInputSchema = z.object({
   note: z.string().max(300).optional(),
   gpsAccuracyM: z.number().min(0).max(100_000).optional(),
   headingDeg: z.number().min(0).lt(360).optional(),
+  imagePath: trafficPhotoPathSchema.optional(),
 });
 export const clearanceSchema = z.object({ state: z.enum(['clear','still_active']) });
 export const trafficReportIdSchema = z.string().uuid();
@@ -28,6 +33,7 @@ export const trafficReportDtoSchema = z.object({
   note: z.string().max(300).optional(),
   gpsAccuracyM: z.number().nonnegative().optional(),
   headingDeg: z.number().min(0).lt(360).optional(),
+  imagePath: trafficPhotoPathSchema.optional(),
   status: z.enum(['active','cleared','expired']),
   createdAt: z.string().datetime(),
   expiresAt: z.string().datetime().optional(),

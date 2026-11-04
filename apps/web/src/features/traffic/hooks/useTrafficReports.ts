@@ -3,7 +3,7 @@ import type { TrafficReportDto, TrafficReportInput } from '@routetwin/shared';
 import { trafficApi } from '../api/trafficApi';
 import { supabaseClient } from '../../auth/services/supabaseClient';
 
-export function useTrafficReports(accessToken: string | null) {
+export function useTrafficReports(accessToken: string | null, userId: string | null) {
   const [reports, setReports] = useState<TrafficReportDto[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -38,12 +38,23 @@ export function useTrafficReports(accessToken: string | null) {
     return () => { void client.removeChannel(channel); };
   }, [refresh]);
 
-  const create = useCallback(async (input: TrafficReportInput) => {
+  const create = useCallback(async (input: TrafficReportInput, photo?: File) => {
     if (!accessToken) throw new Error('Đăng nhập để gửi báo cáo giao thông.');
-    const report = await trafficApi.create(input, accessToken);
+    let imagePath: string | undefined;
+    if (photo) {
+      if (!userId) throw new Error('Không xác định được tài khoản để lưu ảnh.');
+      imagePath = await trafficApi.uploadPhoto(photo, userId);
+    }
+    let report: TrafficReportDto;
+    try {
+      report = await trafficApi.create({ ...input, ...(imagePath ? { imagePath } : {}) }, accessToken);
+    } catch (error) {
+      if (imagePath) await trafficApi.removePhoto(imagePath).catch(() => undefined);
+      throw error;
+    }
     await refresh();
     return report;
-  }, [accessToken, refresh]);
+  }, [accessToken, userId, refresh]);
 
   const clearance = useCallback(async (id: string, state: 'clear' | 'still_active') => {
     if (!accessToken) throw new Error('Đăng nhập để xác minh báo cáo giao thông.');
