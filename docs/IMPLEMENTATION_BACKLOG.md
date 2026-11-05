@@ -1,63 +1,35 @@
-# Implementation backlog
+# Trạng thái triển khai
 
-Tài liệu này theo dõi phần đã triển khai và các việc còn lại, để trạng thái N1/N2 luôn rõ ràng.
+Tài liệu này phản ánh source hiện tại; hạng mục chưa có mã được ghi là còn lại, không mô tả như tính năng đã chạy.
 
 ## N1 — Navigation & optimization
 
-### Places API adapter
+### Đã có
 
-- Viết `VietmapPlacesProvider implements PlaceSearchProvider`.
-- Hỗ trợ gợi ý có debounce, hủy request cũ và giới hạn 5–8 kết quả.
-- Lấy Place Details sau khi người dùng chọn địa điểm; không suy tọa độ bằng geocoding tên tùy tiện.
-- Tuân thủ điều khoản cache và bảo vệ khóa API phía máy chủ.
+- Tìm địa điểm qua Photon/OpenStreetMap.
+- Tính tuyến ô tô/xe máy qua VietMap Route API v4; hình học và hướng dẫn rẽ lấy từ API.
+- Dijkstra trên graph và strategy Nearest Neighbor/2-opt có mã/kiểm thử riêng; chưa được nối thành endpoint tối ưu.
+- Giao diện nhiều điểm gọi VietMap theo thứ tự người dùng sắp xếp, chưa tự tối ưu thứ tự.
 
-### A* solver
+### Còn lại
 
-- Viết `AStarSolver implements ShortestPathStrategy`; chỉ tạo interface chiến lược nếu có thêm thuật toán cần dùng chung.
-- Heuristic khoảng cách đường chim bay không được vượt chi phí đường thực tế. Nếu tối ưu thời gian, dùng giới hạn tốc độ cao nhất hợp lệ.
-- Dùng min-heap, `gScore`, `fScore`, parent, visited và khôi phục đường đi.
-- So sánh chi phí với Dijkstra trên cùng đồ thị và phương tiện. Chỉ dùng số node đã duyệt trong benchmark/test.
+- Nhập graph đường OSM đủ tin cậy, bổ sung A* và so sánh kết quả với Dijkstra.
+- Tích hợp VietMap Matrix/TSP và nối strategy vào endpoint tối ưu thứ tự nhiều điểm.
+- API lưu và tải hành trình; hiện giao diện chỉ lưu trên localStorage.
 
-### Vietmap Matrix/TSP và 2-opt
+## N2 — Traffic & data
 
-- Viết `VietmapMatrixProvider implements MatrixProvider` để lấy ma trận theo phương tiện và loại chi phí.
-- Kiểm tra input, quota, retry có giới hạn và cache theo điều khoản.
-- Dùng VietMap TSP v4 để đối chiếu; không giả định Route v4 tự đổi thứ tự điểm dừng.
-- Với ma trận có hướng, tính lại toàn bộ chi phí ứng viên 2-opt hoặc dùng delta formula hợp lệ cho ATSP.
-- Giữ điểm cuối cố định hoặc quay về điểm đầu khi tùy chọn tương ứng được bật.
-- Dựng hình học từng chặng bằng Route API, không nối thẳng các điểm.
+### Đã có trong source
 
-## N2 — Traffic reports & data
+- Supabase Auth UI, kiểm tra access token ở API; các thao tác ghi dùng token người dùng.
+- Báo cáo PostGIS theo bounding box, GeoJSON, giới hạn truy vấn, rate limit, xác nhận tình trạng và hết hạn.
+- Realtime Broadcast cùng snapshot khi kết nối lại; ảnh báo cáo lưu trong bucket riêng tư.
+- Gợi ý loại/mức độ/ghi chú sự cố từ ảnh và đọc biển báo ngay trong form báo cáo. Gemini mặc định tắt; người dùng xem lại và tự gửi.
+- Tổng hợp báo cáo cùng loại trong bán kính 75 m và 30 phút; hiển thị số báo cáo, số người gửi riêng biệt và lần cập nhật. Không xóa/gộp báo cáo gốc. Đây chưa phải map-matching cùng một đoạn đường.
 
-### Đã triển khai trong source
+### Cần nghiệm thu trên Supabase
 
-- Auth UI/context và API JWT verification; writes dùng access token người dùng, không dùng `service_role`.
-- Traffic repository dùng RPC PostGIS có bounding box, giới hạn 200 kết quả, RLS, chống spam, versioning, xác minh và hết hạn.
-- GeoJSON `FeatureCollection`, Broadcast từ trigger Postgres và snapshot khi kết nối/reconnect.
-- Traffic panel gửi/đồng bộ/xác minh; chụp hoặc chọn ảnh minh chứng tuỳ chọn, preview trước khi gửi, lưu ảnh private theo user và gắn với báo cáo.
-
-### Còn cần cấu hình/nghiệm thu trên Supabase
-
-- Điền URL/keys, áp dụng migration và bật job expiry. Chưa chạy được do project credentials chưa có trong workspace.
-- Kiểm tra RLS, Auth confirmation email, Realtime và Storage trên project thật.
-- Xác nhận trải nghiệm chụp ảnh trên iOS/Android và xem ảnh qua signed URL bằng tài khoản khác.
-
-### TrafficMapLayer (đã có API/Realtime; adapter trực tiếp vào Leaflet còn thuộc N1)
-
-- N2 cung cấp GeoJSON `FeatureCollection` từ `traffic_reports`, có marker theo loại và mức độ.
-- N1 hiển thị layer qua abstraction của `MapView`, không để module traffic phụ thuộc nội bộ Map SDK.
-- Bổ sung Realtime Broadcast và lấy snapshot khi kết nối lại.
-
-### Supabase traffic repository (đã triển khai)
-
-- Viết `SupabaseTrafficReportRepository implements TrafficReportRepository`.
-- Lưu `geom geography(Point,4326)` trong PostGIS; thứ tự GeoJSON là `[lng,lat]`.
-- Truy vấn theo bounding box/geo-cell, dùng RLS/JWT và không tải toàn bộ bản ghi.
-- Phát Realtime Broadcast sau khi tạo hoặc xác nhận đã thông thoáng; xử lý snapshot khi reconnect.
-- Giới hạn số cảnh báo, tự hết hạn, chống spam và kiểm tra quyền sở hữu.
-
-### Traffic report photos
-
-- Ảnh là bằng chứng tuỳ chọn, không được dùng để tự suy ra loại hoặc mức độ sự cố.
-- Chỉ nhận JPG, PNG, WebP tối đa 5 MB; Storage private, gắn vào report bằng đường dẫn UUID đã kiểm tra ở RPC.
-- Ảnh báo cáo chỉ chia sẻ cho người dùng đã đăng nhập trong thời gian report còn hiệu lực; chủ ảnh vẫn xem được ảnh của mình.
+- Áp dụng đủ migration `0001`–`0004`, xác minh Auth/RLS, Realtime và Storage trên project thật.
+- Bật `pg_cron` và áp dụng `supabase/ops/traffic-expiry-cron.sql`.
+- Kiểm tra luồng upload/đọc ảnh trên thiết bị di động và quyền truy cập bằng nhiều tài khoản.
+- Chỉ bật Gemini sau khi cấu hình key và rà soát điều khoản/phạm vi người dùng; xem `docs/AI_APPLICATIONS.md`.

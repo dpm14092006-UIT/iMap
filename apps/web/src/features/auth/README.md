@@ -1,3 +1,3 @@
 # N2 – Auth UI
 
-`LoginDialog`, `AuthProvider`, protected user routes. Supabase Auth + server verify JWT, không chỉ ẩn UI.
+Đăng nhập và phiên người dùng nằm trong `AuthPanel`, `AuthProvider` và `supabaseClient`. API xác minh access token cho các thao tác được bảo vệ; ứng dụng hiện chưa có hệ thống trang riêng tư cần route guard.

@@ -16,4 +16,4 @@
 
 ## Ví dụ luồng dependency
 
-`POST /api/traffic-reports` → `TrafficController.create` → `CreateTrafficReportUseCase.execute` → `TrafficReportRepository.save` → `InMemoryTrafficReportRepository` (sau đó Supabase adapter).
+`POST /api/traffic-reports` → `TrafficController.create` → `CreateTrafficReportUseCase.execute` → `TrafficReportRepository.save` → `SupabaseTrafficReportRepository`. `InMemoryTrafficReportRepository` là adapter dành cho local/test.
