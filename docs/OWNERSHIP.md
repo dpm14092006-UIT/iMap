@@ -3,7 +3,7 @@
 | Phạm vi | Owner | Reviewer |
 |---|---|---|
 | Web shell, MapView, SearchBar, VehicleSwitcher, Street/Satellite | N1 | N2 |
-| Vietmap Search/Places/Route provider | N1 | N2 |
+| Photon/OpenStreetMap Places, VietMap Route provider | N1 | N2 |
 | OSM graph, GeoPoint, Dijkstra/A* | N1 | N2 |
 | Multi-stop Matrix + Nearest Neighbor + 2-opt | N1 | N2 |
 | Dynamic Reroute, My Routes | N1 | N2 |
