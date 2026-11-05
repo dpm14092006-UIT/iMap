@@ -127,12 +127,17 @@ export class LeafletMapController {
   private drawIncidents(incidents: MapIncident[]) {
     this.incidentsLayer.clearLayers();
     incidents.forEach((incident) => {
-      const marker = L.marker([incident.lat, incident.lng], { icon: this.incidentMarker(incident.severity), keyboard: false }).addTo(this.incidentsLayer);
+      const marker = L.marker([incident.lat, incident.lng], { icon: this.incidentMarker(incident.severity, incident.communityReporterCount ?? 0), keyboard: false }).addTo(this.incidentsLayer);
       const content = document.createElement('div');
       const heading = document.createElement('strong');
       heading.textContent = incident.description;
       const detail = document.createElement('p');
-      detail.textContent = 'Cảnh báo cộng đồng · chưa xác minh';
+      const reportCount = incident.communityReportCount ?? 1;
+      const reporterCount = incident.communityReporterCount ?? 0;
+      const updatedAt = incident.communityUpdatedAt
+        ? new Date(incident.communityUpdatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+        : incident.time;
+      detail.textContent = `${reportCount} báo cáo / 75 m trong 30 phút từ ${reporterCount} người${incident.communityUpdatedAt ? ` · cập nhật ${updatedAt}` : ' · chưa có xác nhận mới'}`;
       detail.className = 'mb-0 mt-1 text-xs text-slate-500';
       content.append(heading, detail);
       marker.bindPopup(content);
@@ -159,8 +164,9 @@ export class LeafletMapController {
     });
   }
 
-  private incidentMarker(severity: MapIncident['severity']) {
+  private incidentMarker(severity: MapIncident['severity'], communityReporterCount: number) {
     const tone = severity === 'high' ? 'high' : severity === 'low' ? 'low' : 'medium';
-    return L.divIcon({ className: `routetwin-incident-marker ${tone}`, html: '<span>!</span>', iconSize: [28, 28], iconAnchor: [14, 14] });
+    const label = communityReporterCount > 1 ? String(communityReporterCount) : '!';
+    return L.divIcon({ className: `routetwin-incident-marker ${tone}`, html: `<span>${label}</span>`, iconSize: [28, 28], iconAnchor: [14, 14] });
   }
 }
