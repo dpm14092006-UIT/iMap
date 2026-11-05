@@ -32,7 +32,7 @@ export function createApp() {
     next();
   });
   app.use(express.json({limit:'32kb'}));
-  app.get('/api/health', (_req,res) => res.json({data:{status:'ok', service:'routetwin-api', configured:{supabasePublic:supabaseConfigured, routing:env.VIETMAP_API_KEY ? 'vietmap' : 'needs_vietmap_api_key'}}}));
+  app.get('/api/health', (_req,res) => res.json({data:{status:'ok', service:'routetwin-api', configured:{supabasePublic:supabaseConfigured, routing:env.VIETMAP_API_KEY ? 'vietmap' : 'needs_vietmap_api_key', trafficImageAi:env.GEMINI_TRAFFIC_AI_ENABLED && Boolean(env.GEMINI_API_KEY)}}}));
   app.use('/api/traffic-reports', createTrafficRouter(container.trafficController));
   app.use('/api/places', createPlacesRouter(container.placeSearchController));
   app.use('/api/routes', createRoutesRouter(container.routeController));

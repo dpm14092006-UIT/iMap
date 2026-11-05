@@ -74,6 +74,9 @@ export function App() {
     time: new Date(report.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
     lat: report.lat,
     lng: report.lng,
+    communityReportCount: report.communityReportCount ?? 1,
+    communityReporterCount: report.communityReporterCount ?? 0,
+    communityUpdatedAt: report.communityUpdatedAt ?? undefined,
     imagePath: report.imagePath,
     status: report.status,
   })), [reports]);
@@ -274,7 +277,7 @@ export function App() {
         showToast('Đã tính tuyến qua các điểm bằng VietMap');
         return result;
       }} onSave={savePlan} />}
-      {activePanel === 'traffic' && <TrafficReportPanel incidents={incidents} selectedPoint={selectedMapPoint} isAuthenticated={Boolean(accessToken)} loading={trafficLoading} error={trafficError} onClose={() => setActivePanel(null)} onSignIn={() => setAuthOpen(true)} onReport={reportIncident} onClearance={verifyIncident} />}
+      {activePanel === 'traffic' && <TrafficReportPanel incidents={incidents} selectedPoint={selectedMapPoint} isAuthenticated={Boolean(accessToken)} accessToken={accessToken} loading={trafficLoading} error={trafficError} onClose={() => setActivePanel(null)} onSignIn={() => setAuthOpen(true)} onReport={reportIncident} onClearance={verifyIncident} />}
       {activePanel === 'saved' && <SavedRoutesPanel routes={savedRoutes} onClose={() => setActivePanel(null)} onDelete={(id) => { setSavedRoutes((current) => current.filter((route) => route.id !== id)); showToast('Đã xóa hành trình đã lưu'); }} onOpen={openSavedRoute} />}
       {authOpen && <Suspense fallback={<div className="absolute left-5 top-[143px] z-40 rounded-xl bg-white px-4 py-3 text-xs font-medium text-slate-600 shadow-float max-md:bottom-4 max-md:left-3 max-md:top-auto" role="status">Đang mở tài khoản…</div>}><AuthPanel onClose={() => setAuthOpen(false)} /></Suspense>}
       {activePanel === 'place' && selectedPlace && <PlacePanel place={selectedPlace} onClose={() => setActivePanel(null)} onDirections={openDirections} />}
