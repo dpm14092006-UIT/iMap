@@ -31,6 +31,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .routetwin-incident-marker { display: grid; place-items: center; border: 3px solid white; border-radius: 50%; background: #f59e0b; box-shadow: 0 2px 8px rgba(15,23,42,.24); color: white; font: 800 14px Inter, system-ui, sans-serif; }
 .routetwin-incident-marker.high { background: #e34f42; }
 .routetwin-incident-marker.low { background: #22a575; }
+/* Chế độ chọn điểm trên bản đồ: con trỏ dấu "+" thay cho bàn tay kéo. */
+.routetwin-leaflet.is-picking, .routetwin-leaflet.is-picking .leaflet-interactive { cursor: crosshair; }
 .route-connector { position: absolute; z-index: 0; left: 4px; top: 12px; bottom: 12px; border-left: 1.5px dashed #c3d1dc; }
 .panel-scroll { overscroll-behavior: contain; scrollbar-color: #d7dee7 transparent; scrollbar-width: thin; }
 .panel-scroll::-webkit-scrollbar { width: 5px; }

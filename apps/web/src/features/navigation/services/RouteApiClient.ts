@@ -1,11 +1,12 @@
 import type { RouteResult } from '@routetwin/shared';
-import type { DemoPlace, RouteObjective, RoutePlan, TransportMode } from '../../map/types';
+import type { RouteObjective, RoutePlan, TransportMode } from '../../map/types';
+import type { Place } from '../../places/types';
 
 type RouteApiError = { error?: { message?: string } };
 
 /** Client boundary for the API's VietMap-backed route calculation. */
 export class RouteApiClient {
-  async createPlan(stops: DemoPlace[], vehicle: TransportMode, objective: RouteObjective = 'time'): Promise<RoutePlan | { error: string }> {
+  async createPlan(stops: Place[], vehicle: TransportMode, objective: RouteObjective = 'time'): Promise<RoutePlan | { error: string }> {
     if (stops.length < 2) return { error: 'Chọn ít nhất điểm đi và điểm đến.' };
     if (vehicle !== 'car' && vehicle !== 'motorcycle') {
       return { error: 'Dịch vụ định tuyến hiện hỗ trợ ô tô và xe máy.' };

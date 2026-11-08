@@ -1,12 +1,13 @@
-import type { DemoPlace, RoutePlan, TransportMode } from '../map/types';
+import type { RoutePlan, TransportMode } from '../map/types';
+import type { Place } from '../places/types';
 
 export type SavedRoute = {
   id: string;
   kind: 'route' | 'multi';
   title: string;
-  origin: DemoPlace;
-  destination?: DemoPlace;
-  stops?: DemoPlace[];
+  origin: Place;
+  destination?: Place;
+  stops?: Place[];
   vehicle: TransportMode;
   plan?: RoutePlan;
   originId: string;

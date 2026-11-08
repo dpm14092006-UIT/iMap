@@ -9,7 +9,11 @@ const vietmapResponseSchema = z.object({
   paths: z.array(z.object({
     distance: z.number().finite().nonnegative(),
     time: z.number().finite().nonnegative(),
-    points: z.array(z.tuple([z.number().finite(), z.number().finite()])),
+    // Với points_encoded=false, VietMap Route v4 trả GeoJSON LineString: coordinates là [lng, lat].
+    points: z.object({
+      type: z.literal('LineString'),
+      coordinates: z.array(z.tuple([z.number().finite(), z.number().finite()])),
+    }),
     instructions: z.array(z.object({
       distance: z.number().finite().nonnegative().default(0),
       time: z.number().finite().nonnegative().default(0),
@@ -83,7 +87,7 @@ export class VietmapRouteProvider implements RouteProvider {
     }
 
     const path = [...parsed.data.paths].sort((a, b) => input.objective === 'distance' ? a.distance - b.distance : a.time - b.time)[0]!;
-    if (path.points.length < 2) {
+    if (path.points.coordinates.length < 2) {
       throw new AppError(502, 'ROUTE_PROVIDER_INVALID_RESPONSE', 'VietMap trả về tuyến thiếu tọa độ đường đi.');
     }
 
@@ -91,8 +95,8 @@ export class VietmapRouteProvider implements RouteProvider {
       source: 'vietmap',
       distanceMeters: path.distance,
       durationSeconds: Math.round(path.time / 1000),
-      // Route v4 returns [latitude, longitude] when points_encoded=false.
-      coordinates: path.points.map(([lat, lng]) => [lng, lat]),
+      // Đã đúng thứ tự GeoJSON [lng, lat] của dự án nên giữ nguyên.
+      coordinates: path.points.coordinates,
       instructions: path.instructions
         .filter((instruction) => instruction.text.trim() || instruction.street_name.trim())
         .map((instruction) => ({
