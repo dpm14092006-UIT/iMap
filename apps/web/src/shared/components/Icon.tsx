@@ -1,7 +1,7 @@
 import type { ReactNode, SVGProps } from 'react';
 
 export type IconName =
-  | 'arrow-up-right' | 'bookmark' | 'car' | 'check' | 'chevron-down' | 'close'
+  | 'sparkles' | 'arrow-up-right' | 'bookmark' | 'car' | 'check' | 'chevron-down' | 'close'
   | 'compass' | 'current-location' | 'directions' | 'globe' | 'layers' | 'menu'
   | 'motorcycle' | 'multi-stop' | 'plus' | 'minus' | 'moon' | 'search'
   | 'traffic' | 'upload' | 'swap' | 'clock' | 'road' | 'pin' | 'bike'
@@ -19,6 +19,7 @@ const common = {
 };
 
 const shapes: Record<IconName, ReactNode> = {
+    sparkles: <><path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3Z"/><path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></>,
     'arrow-up-right': <><path d="M7 17 17 7"/><path d="M8 7h9v9"/></>,
     bookmark: <path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.6L6 21V4.75Z"/>,
     car: <><path d="m5 10 1.6-4.1A2 2 0 0 1 8.5 4.6h7a2 2 0 0 1 1.9 1.3L19 10"/><path d="M3.8 10.4A2 2 0 0 1 5.6 9h12.8a2 2 0 0 1 1.8 1.4l1 4.1a1.7 1.7 0 0 1-1.7 2.1H4.5a1.7 1.7 0 0 1-1.7-2.1l1-4.1Z"/><path d="M6 17.5v2M18 17.5v2M6 13h.01M18 13h.01"/></>,

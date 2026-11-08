@@ -11,8 +11,10 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.114",
     "@routetwin/shared": "*",
     "@supabase/supabase-js": "^2.118.0",
+    "ai": "^7.0.165",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",

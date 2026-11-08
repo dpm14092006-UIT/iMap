@@ -1,3 +1,7 @@
+import { ExplorePlacesUseCase } from './modules/route-stops/application/use-cases/ExplorePlacesUseCase.js';
+import { FindRouteStopsUseCase } from './modules/route-stops/application/use-cases/FindRouteStopsUseCase.js';
+import { OverpassStopPlaceProvider } from './modules/route-stops/infrastructure/providers/OverpassStopPlaceProvider.js';
+import { AiStopIntentParser } from './modules/route-stops/infrastructure/providers/AiStopIntentParser.js';
 import { SupabaseTrafficReportRepository } from './modules/traffic/infrastructure/repositories/SupabaseTrafficReportRepository.js';
 import { CreateTrafficReportUseCase } from './modules/traffic/application/use-cases/CreateTrafficReportUseCase.js';
 import { ListTrafficReportsUseCase } from './modules/traffic/application/use-cases/ListTrafficReportsUseCase.js';
@@ -19,6 +23,11 @@ export function createContainer() {
     new UpdateRoadClearanceUseCase(trafficRepository),
   );
   const placeSearchController = new PlaceSearchController(new SearchPlacesUseCase(new PhotonPlaceSearchProvider()));
-  const routeController = new RouteController(new CalculateRouteUseCase(new VietmapRouteProvider(env.VIETMAP_API_KEY)));
-  return { trafficController, placeSearchController, routeController };
+  const routeProvider = new VietmapRouteProvider(env.VIETMAP_API_KEY);
+  const routeController = new RouteController(new CalculateRouteUseCase(routeProvider));
+  const stopPlaces = new OverpassStopPlaceProvider(env.OVERPASS_API_URL);
+  const stopParser = new AiStopIntentParser({ provider: env.STOP_AI_PROVIDER, model: env.STOP_AI_MODEL, apiKey: env.GEMINI_API_KEY, ollamaUrl: env.OLLAMA_BASE_URL });
+  const findRouteStops = new FindRouteStopsUseCase(routeProvider, stopPlaces, stopParser);
+  const explorePlaces = new ExplorePlacesUseCase(stopParser, stopPlaces, findRouteStops);
+  return { trafficController, placeSearchController, routeController, findRouteStops, explorePlaces };
 }

@@ -1,4 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import type { RouteStopCandidate, StopPlace } from '@routetwin/shared';
+import { routePlanFromResult } from '../features/navigation/services/RouteApiClient';
 import { MultiStopPanel } from '../features/multi-stop/components/MultiStopPanel';
 import { SavedRoutesPanel } from '../features/my-routes/components/SavedRoutesPanel';
 import type { SavedRoute } from '../features/my-routes/types';
@@ -16,6 +18,8 @@ import { useTrafficReports } from '../features/traffic/hooks/useTrafficReports';
 import { useAuth } from '../features/auth/context/AuthProvider';
 import { FeatureNav } from './components/FeatureNav';
 import { Icon } from '../shared/components/Icon';
+
+const PlaceAssistantPanel = lazy(() => import('../features/place-assistant/components/PlaceAssistantPanel').then((module) => ({ default: module.PlaceAssistantPanel })));
 
 const AuthPanel = lazy(() => import('../features/auth/components/AuthPanel').then((module) => ({ default: module.AuthPanel })));
 
@@ -197,7 +201,7 @@ export function App() {
   };
 
   const handleMapClick = (point: { lat: number; lng: number }) => {
-    if (activePanel === 'traffic') {
+    if (activePanel === 'traffic' || activePanel === 'assistant') {
       setSelectedMapPoint(point);
       return;
     }
@@ -213,6 +217,26 @@ export function App() {
       }
       if (Math.abs(nearest.lat - point.lat) < 0.002 && Math.abs(nearest.lng - point.lng) < 0.002) openPlace(nearest);
     }
+  };
+
+  const assistantPlace = (place: StopPlace): DemoPlace => ({
+    id: place.id, name: place.name, district: place.address, category: place.category,
+    lat: place.lat, lng: place.lng, source: 'Photon / OpenStreetMap',
+  });
+  const addAssistantStop = (candidate: RouteStopCandidate, expectedRouteId: string) => {
+    if (!activeRoute || activeRoute.id !== expectedRouteId || activeRoute.stops.length !== 2) {
+      showToast('Tuyến đã thay đổi. Hãy tìm lại điểm dừng.'); return;
+    }
+    const point = assistantPlace(candidate.place);
+    setActiveRoute(routePlanFromResult(candidate.route, [activeRoute.stops[0]!, point, activeRoute.stops[1]!], activeRoute.vehicle));
+    showToast(`Đã thêm điểm ghé: ${point.name}`);
+  };
+  const removeAssistantStop = async () => {
+    if (!activeRoute || activeRoute.stops.length < 3) return;
+    const originalId = activeRoute.id;
+    const result = await routeApi.createPlan([activeRoute.stops[0]!, activeRoute.stops[activeRoute.stops.length - 1]!], activeRoute.vehicle);
+    if ('error' in result) { showToast(result.error); return; }
+    setActiveRoute((current) => current?.id === originalId ? result : current);
   };
 
   const locate = () => {
@@ -263,6 +287,13 @@ export function App() {
 
       {activeRoute && <div className="route-mobile-status absolute bottom-[calc(56dvh+10px)] left-3 z-10 flex items-center gap-2 rounded-full border border-white/80 bg-white/95 px-3 py-2 text-[10px] font-bold text-ink shadow-lg shadow-slate-900/10 backdrop-blur-md md:hidden"><Icon name="route" size={14} className="text-brand-600" />{routeDistance} · {routeDuration}<span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800">Ước tính</span></div>}
 
+      {activePanel === 'assistant' && <Suspense fallback={<div className="absolute left-5 top-[143px] z-40 rounded-xl bg-white p-4 text-xs shadow-float">Đang mở trợ lý…</div>}><PlaceAssistantPanel
+        route={activeRoute} selectedPoint={selectedMapPoint}
+        getMapCenter={() => mapController.current?.getCenter() ?? { lat: 10.783, lng: 106.704 }}
+        onClose={() => setActivePanel(null)} onFocus={(place) => mapController.current?.flyTo(place)}
+        onDirections={(place) => openDirections(assistantPlace(place))}
+        onAddStop={addAssistantStop} onRemoveStop={() => { void removeAssistantStop(); }}
+      /></Suspense>}
       {activePanel === 'directions' && <RoutePanel initialDestination={initialDestination} initialOrigin={initialOrigin} onClose={() => setActivePanel(null)} onOriginChange={(place) => { if (place) setInitialOrigin(place); setActiveRoute(null); }} onDestinationChange={(place) => { setInitialDestination(place); setActiveRoute(null); }} onClearRoute={() => setActiveRoute(null)} onPreview={findRoute} onSave={(origin, destination) => { void saveRoute(origin, destination); }} route={activeRoute} />}
       {activePanel === 'multi' && <MultiStopPanel onClose={() => setActivePanel(null)} onPlanRoute={async (start, stops, mode, objective, returnToStart) => {
         const routeStops = [start, ...stops, ...(returnToStart ? [start] : [])];

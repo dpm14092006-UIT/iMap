@@ -4,7 +4,7 @@ import { AppError } from '../errors/AppError.js';
 export const errorHandler: ErrorRequestHandler = (error: unknown, req, res, _next) => {
   const requestId = req.header('x-request-id') ?? 'unavailable';
   if (typeof error === 'object' && error !== null && 'type' in error && error.type === 'entity.too.large') {
-    res.status(413).json({ error: { code: 'PAYLOAD_TOO_LARGE', message: 'Tệp tải lên tối đa 5 MB', requestId } });
+    res.status(413).json({ error: { code: 'PAYLOAD_TOO_LARGE', message: 'Dữ liệu vượt kích thước endpoint cho phép', requestId } });
     return;
   }
   if (typeof error === 'object' && error !== null && 'type' in error && error.type === 'entity.parse.failed') {
