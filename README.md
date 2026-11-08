@@ -65,6 +65,7 @@ Frontend chia theo feature (`map`, `places`, `navigation`, `multi-stop`, `my-rou
 | `POST /api/traffic-reports` | N2 | RAM demo, chưa auth/realtime |
 | `POST /api/traffic-reports/:id/clearance` | N2 | RAM demo |
 | `GET /api/places/suggest` | N1 | Photon / OpenStreetMap |
+| `GET /api/places/reverse` | N1 | Photon reverse geocoding (tọa độ → địa chỉ) |
 | `POST /api/routes/calculate` | N1 | VietMap Route v4; cần `VIETMAP_API_KEY` |
 | `POST /api/routes/algorithm` | N1 | 501, chưa OSM import |
 | `POST /api/routes/optimize` | N1 | 501, chưa Matrix/TSP |

@@ -1,18 +1,19 @@
 import { useState } from 'react';
 import { FloatingPanel } from '../../../app/components/FloatingPanel';
 import { Icon } from '../../../shared/components/Icon';
-import { demoPlaces, routePlaces } from '../../map/data/demoPlaces';
-import type { DemoPlace, RouteObjective, RoutePlan, TransportMode } from '../../map/types';
+import { findPopularPlace, popularPlaces } from '../../places/data/popularPlaces';
+import type { RouteObjective, RoutePlan, TransportMode } from '../../map/types';
+import type { Place } from '../../places/types';
 import { PlaceCombobox } from '../../places/components/PlaceCombobox';
 
-type MultiStopPanelProps = { onClose: () => void; onPlanRoute: (start: DemoPlace, stops: DemoPlace[], mode: TransportMode, objective: RouteObjective, returnToStart: boolean) => Promise<RoutePlan | { error: string }>; onSave?: (plan: RoutePlan) => void };
+type MultiStopPanelProps = { onClose: () => void; onPlanRoute: (start: Place, stops: Place[], mode: TransportMode, objective: RouteObjective, returnToStart: boolean) => Promise<RoutePlan | { error: string }>; onSave?: (plan: RoutePlan) => void };
 
-const defaultStops = ['ben-thanh', 'independence', 'zoo'].map((id) => demoPlaces.find((place) => place.id === id)).filter((place): place is DemoPlace => Boolean(place));
+const defaultStops = ['ben-thanh', 'independence', 'zoo'].map((id) => findPopularPlace(id)).filter((place): place is Place => Boolean(place));
 
 export function MultiStopPanel({ onClose, onPlanRoute, onSave }: MultiStopPanelProps) {
-  const [stops, setStops] = useState<DemoPlace[]>(defaultStops);
-  const [start, setStart] = useState<DemoPlace>(demoPlaces[0]!);
-  const [startText, setStartText] = useState(demoPlaces[0]!.name);
+  const [stops, setStops] = useState<Place[]>(defaultStops);
+  const [start, setStart] = useState<Place>(popularPlaces[0]!);
+  const [startText, setStartText] = useState(popularPlaces[0]!.name);
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<TransportMode>('motorcycle');
   const [returnToStart, setReturnToStart] = useState(false);
@@ -22,7 +23,7 @@ export function MultiStopPanel({ onClose, onPlanRoute, onSave }: MultiStopPanelP
   const [objective, setObjective] = useState<RouteObjective>('time');
   const summaries = stops.slice(0, 2).map((stop) => stop.name).join(' · ');
 
-  const addStop = (place: DemoPlace) => {
+  const addStop = (place: Place) => {
     setStops((current) => current.some((item) => item.id === place.id) ? current : [...current, place].slice(0, 8));
     setQuery('');
     setPlan(null);
@@ -34,7 +35,7 @@ export function MultiStopPanel({ onClose, onPlanRoute, onSave }: MultiStopPanelP
       <p className="mb-4 text-[12px] leading-5 text-slate-500">Thêm điểm dừng theo thứ tự muốn đi. VietMap sẽ tính tuyến đường thật qua các điểm đó.</p>
       <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
         <p className="mb-2 text-[10px] font-bold uppercase tracking-[.09em] text-slate-500">Điểm xuất phát</p>
-        <PlaceCombobox ariaLabel="Điểm xuất phát hành trình nhiều điểm" className="w-full" icon="current-location" inputClassName="h-10 bg-white" onChange={setStartText} onSelect={(place) => { setStart(place); setStartText(place.name); setPlan(null); }} places={routePlaces} placeholder="Chọn điểm xuất phát" value={startText} />
+        <PlaceCombobox ariaLabel="Điểm xuất phát hành trình nhiều điểm" className="w-full" icon="current-location" inputClassName="h-10 bg-white" onChange={setStartText} onSelect={(place) => { setStart(place); setStartText(place.name); setPlan(null); }} places={popularPlaces} placeholder="Chọn điểm xuất phát" value={startText} />
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-3">
@@ -47,11 +48,11 @@ export function MultiStopPanel({ onClose, onPlanRoute, onSave }: MultiStopPanelP
       <ol className="mb-3 space-y-1.5" aria-label="Danh sách điểm dừng">
         {stops.map((place, index) => <li key={place.id} className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-3 py-2.5">
           <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-bold ${index === 0 ? 'bg-brand-50 text-brand-700' : 'bg-slate-100 text-slate-600'}`}>{String(index + 1).padStart(2, '0')}</span>
-          <span className="min-w-0 flex-1"><span className="block truncate text-[12px] font-semibold text-ink">{place.name}</span><span className="mt-0.5 block text-[10px] text-slate-500">{place.district}</span></span>
+          <span className="min-w-0 flex-1"><span className="block truncate text-[12px] font-semibold text-ink">{place.name}</span><span className="mt-0.5 block text-[10px] text-slate-500">{place.address}</span></span>
           <button type="button" onClick={() => { setStops((current) => current.filter((stop) => stop.id !== place.id)); setPlan(null); }} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600" aria-label={`Xóa ${place.name}`}><Icon name="close" size={16} /></button>
         </li>)}
       </ol>
-      <div className="mb-4"><PlaceCombobox ariaLabel="Tìm điểm dừng để thêm" className="w-full" icon="plus" inputClassName="h-[44px] bg-white" onChange={setQuery} onSelect={addStop} places={demoPlaces.filter((place) => !stops.some((stop) => stop.id === place.id))} placeholder="Thêm điểm dừng" value={query} /></div>
+      <div className="mb-4"><PlaceCombobox ariaLabel="Tìm điểm dừng để thêm" className="w-full" icon="plus" inputClassName="h-[44px] bg-white" onChange={setQuery} onSelect={addStop} places={popularPlaces.filter((place) => !stops.some((stop) => stop.id === place.id))} placeholder="Thêm điểm dừng" value={query} /></div>
       <div className="sticky bottom-0 z-20 -mx-5 bg-gradient-to-t from-white via-white/95 to-transparent px-5 pb-1 pt-3">
         <button type="button" onClick={() => { void (async () => { setIsLoading(true); setError(''); try { const result = await onPlanRoute(start, stops, mode, objective, returnToStart); if ('error' in result) { setError(result.error); setPlan(null); } else { setPlan(result); } } finally { setIsLoading(false); } })(); }} disabled={isLoading || stops.length < 2} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 text-xs font-bold text-white shadow-md shadow-brand-600/20 transition hover:bg-brand-700 disabled:bg-slate-300 disabled:shadow-none">{isLoading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" /> : <Icon name="route" size={17} />}{isLoading ? 'Đang tính tuyến…' : 'Tính tuyến qua các điểm'}</button>
       </div>
