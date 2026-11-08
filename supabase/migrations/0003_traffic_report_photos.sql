@@ -1,3 +1,6 @@
+-- Run the complete file. On failure this transaction rolls back all changes.
+begin;
+
 -- Replace the standalone AI Vision feature with optional photo evidence on traffic reports.
 -- Existing files in Storage are preserved; this migration only removes AI metadata/quota tables.
 
@@ -48,7 +51,7 @@ create policy traffic_images_read_own on storage.objects
     )
   );
 
-drop function public.get_traffic_reports_bbox(double precision,double precision,double precision,double precision);
+drop function if exists public.get_traffic_reports_bbox(double precision,double precision,double precision,double precision);
 create function public.get_traffic_reports_bbox(
   p_min_lat double precision,
   p_min_lng double precision,
@@ -94,7 +97,9 @@ $function$;
 revoke all on function public.get_traffic_reports_bbox(double precision,double precision,double precision,double precision) from public;
 grant execute on function public.get_traffic_reports_bbox(double precision,double precision,double precision,double precision) to anon, authenticated;
 
-drop function public.create_traffic_report(text,text,double precision,double precision,text,double precision,double precision);
+-- Recreate both historical signatures, including when this migration is retried.
+drop function if exists public.create_traffic_report(text,text,double precision,double precision,text,double precision,double precision);
+drop function if exists public.create_traffic_report(text,text,double precision,double precision,text,double precision,double precision,text);
 create function public.create_traffic_report(
   p_incident_type text,
   p_severity text,
@@ -165,7 +170,7 @@ $function$;
 revoke all on function public.create_traffic_report(text,text,double precision,double precision,text,double precision,double precision,text) from public;
 grant execute on function public.create_traffic_report(text,text,double precision,double precision,text,double precision,double precision,text) to authenticated;
 
-drop function public.update_traffic_report_clearance(uuid,text);
+drop function if exists public.update_traffic_report_clearance(uuid,text);
 create function public.update_traffic_report_clearance(p_report_id uuid, p_state text)
 returns table (
   id uuid, incident_type text, severity text, lat double precision, lng double precision,
@@ -242,3 +247,7 @@ begin
   return new;
 end;
 $function$;
+
+-- Refresh the RPC signatures cached by the Supabase REST API after commit.
+notify pgrst, 'reload schema';
+commit;
