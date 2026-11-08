@@ -1,3 +1,7 @@
+-- FIXED-0002-RPC-RETURN-TYPE-v2
+-- Run this ENTIRE file after 0001, then run 0003 and 0004 in order.
+begin;
+
 -- N2: Auth/RLS, bounded PostGIS traffic queries, community updates, AI audit and private image storage.
 
 alter table public.traffic_reports
@@ -124,7 +128,8 @@ grant select, update on public.profiles to authenticated;
 grant select, insert, update, delete on public.saved_routes to authenticated;
 grant select on public.ai_analyses to authenticated;
 
-create or replace function public.get_traffic_reports_bbox(
+drop function if exists public.get_traffic_reports_bbox(double precision,double precision,double precision,double precision);
+create function public.get_traffic_reports_bbox(
   p_min_lat double precision,
   p_min_lng double precision,
   p_max_lat double precision,
@@ -167,7 +172,9 @@ begin
 end;
 $function$;
 
-create or replace function public.create_traffic_report(
+drop function if exists public.create_traffic_report(text,text,double precision,double precision,text,double precision,double precision);
+drop function if exists public.create_traffic_report(text,text,double precision,double precision,text,double precision,double precision,text);
+create function public.create_traffic_report(
   p_incident_type text,
   p_severity text,
   p_lat double precision,
@@ -229,7 +236,8 @@ begin
 end;
 $function$;
 
-create or replace function public.update_traffic_report_clearance(p_report_id uuid, p_state text)
+drop function if exists public.update_traffic_report_clearance(uuid,text);
+create function public.update_traffic_report_clearance(p_report_id uuid, p_state text)
 returns table (
   id uuid, incident_type text, severity text, lat double precision, lng double precision,
   note text, gps_accuracy_m double precision, heading_deg double precision,
@@ -381,3 +389,6 @@ create policy traffic_images_delete_own on storage.objects
   for delete to authenticated using (
     bucket_id = 'traffic-images' and (storage.foldername(name))[1] = (select auth.uid())::text
   );
+
+notify pgrst, 'reload schema';
+commit;
