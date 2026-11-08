@@ -252,7 +252,7 @@ export function App() {
             <span className="hidden items-center gap-1.5 rounded-full bg-slate-100 px-3 py-2 text-[10px] font-semibold text-slate-600 lg:inline-flex"><Icon name="pin" size={13} className="text-brand-600" />TP. Hồ Chí Minh</span>
             <span className="hidden items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-2 text-[10px] font-semibold text-emerald-800 sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />OpenStreetMap</span>
             <button type="button" onClick={() => showToast('Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.')} aria-label="Thông tin bản đồ" className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-brand-200 hover:text-brand-700"><Icon name="more" size={19} /></button>
-            <button type="button" onClick={() => setAuthOpen(true)} aria-label={user ? `Tài khoản ${user.email ?? ''}` : 'Đăng nhập tài khoản'} className={`grid h-9 w-9 place-items-center rounded-full text-xs font-bold ring-2 ring-white transition sm:h-10 sm:w-10 ${user ? 'bg-brand-100 text-brand-700' : 'bg-[#e8e1d7] text-[#685849]'}`}>{user?.email?.slice(0, 2).toUpperCase() ?? 'ĐN'}</button>
+            <a href="/login" aria-label={user ? `Tài khoản ${user.email ?? ''}` : 'Đăng nhập tài khoản'} className={`grid h-9 w-9 place-items-center rounded-full text-xs font-bold ring-2 ring-white transition sm:h-10 sm:w-10 ${user ? 'bg-brand-100 text-brand-700' : 'bg-[#e8e1d7] text-[#685849]'}`}>{user?.email?.slice(0, 2).toUpperCase() ?? 'ĐN'}</a>
           </div>
         </div>
         <div className="px-3 pb-2 md:hidden"><PlaceSearchBar onSelect={openPlace} /></div>
