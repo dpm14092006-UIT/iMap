@@ -22,14 +22,13 @@ export class LeafletMapController {
   readonly map: L.Map;
   private readonly streets: L.TileLayer;
   private readonly imagery: L.TileLayer;
-  private readonly placesLayer = L.layerGroup();
   private readonly routeLayer = L.layerGroup();
   private readonly incidentsLayer = L.layerGroup();
   private readonly locationLayer = L.layerGroup();
   private lastRouteId: string | null = null;
   private activeLayer: MapLayer = 'street';
 
-  constructor(container: HTMLElement, private readonly handlers: MapControllerHandlers) {
+  constructor(container: HTMLElement, handlers: MapControllerHandlers) {
     this.map = L.map(container, { zoomControl: false, preferCanvas: true, attributionControl: true }).setView(center, 13);
     this.map.attributionControl.setPosition('bottomleft');
     this.streets = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
@@ -41,7 +40,6 @@ export class LeafletMapController {
       attribution: 'Imagery © Esri, Vantor, Earthstar Geographics, and the GIS User Community',
     });
     this.streets.addTo(this.map);
-    this.placesLayer.addTo(this.map);
     this.routeLayer.addTo(this.map);
     this.incidentsLayer.addTo(this.map);
     this.locationLayer.addTo(this.map);
@@ -50,8 +48,6 @@ export class LeafletMapController {
 
   update(data: MapControllerData) {
     this.setLayer(data.layer);
-    this.placesLayer.clearLayers();
-    for (const place of data.places) this.drawPlace(place, place.id === data.selectedPlaceId);
     this.drawRoute(data.route);
     this.drawIncidents(data.incidents);
     this.drawCurrentLocation(data.currentLocation);
@@ -88,21 +84,6 @@ export class LeafletMapController {
 
   destroy() {
     this.map.remove();
-  }
-
-  private drawPlace(place: DemoPlace, selected: boolean) {
-    const marker = L.circleMarker([place.lat, place.lng], {
-      radius: selected ? 8 : 5,
-      color: '#ffffff',
-      weight: selected ? 3 : 2,
-      fillColor: selected ? '#2476ea' : '#547f68',
-      fillOpacity: 1,
-      bubblingMouseEvents: false,
-    }).addTo(this.placesLayer);
-    const tooltip = document.createElement('span');
-    tooltip.textContent = place.name;
-    marker.bindTooltip(tooltip, { direction: 'top', offset: [0, -5], className: 'routetwin-tooltip' });
-    marker.on('click', () => this.handlers.onSelectPlace(place));
   }
 
   private drawRoute(route: RoutePlan | null) {
