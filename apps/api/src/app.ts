@@ -1,3 +1,5 @@
+import { createVoiceRouter } from './modules/voice/voice.routes.js';
+import { createRouteStopsRouter } from './modules/route-stops/presentation/route-stops.routes.js';
 import express from 'express';
 import cors from 'cors';
 import { randomUUID } from 'node:crypto';
@@ -8,9 +10,8 @@ import { createRoutesRouter } from './modules/navigation/presentation/routes.rou
 import { errorHandler } from './shared/http/error-handler.js';
 import { notImplemented } from './shared/http/not-implemented.js';
 import { env, supabaseConfigured } from './config/env.js';
-export function createApp() {
+export function createApp(container = createContainer()) {
   const app = express();
-  const container = createContainer();
   app.use(cors({
     origin: env.CORS_ORIGIN.split(',').map((origin) => origin.trim()),
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -35,6 +36,8 @@ export function createApp() {
   app.get('/api/health', (_req,res) => res.json({data:{status:'ok', service:'routetwin-api', configured:{supabasePublic:supabaseConfigured, routing:env.VIETMAP_API_KEY ? 'vietmap' : 'needs_vietmap_api_key'}}}));
   app.use('/api/traffic-reports', createTrafficRouter(container.trafficController));
   app.use('/api/places', createPlacesRouter(container.placeSearchController));
+  app.use('/api/route-stops', createRouteStopsRouter(container.findRouteStops, container.explorePlaces));
+  app.use('/api/voice', createVoiceRouter());
   app.use('/api/routes', createRoutesRouter(container.routeController));
   app.post('/api/routes/algorithm', notImplemented('OSM Dijkstra/A* endpoint'));
   app.post('/api/routes/optimize', notImplemented('Vietmap Matrix + TSP / 2-opt'));
@@ -43,3 +46,6 @@ export function createApp() {
   app.use(errorHandler);
   return app;
 }
+
+// Vercel Express entry point; local main.ts owns listen().
+export default createApp();

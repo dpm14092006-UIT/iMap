@@ -10,7 +10,7 @@ export type DemoPlace = {
   source?: 'demo' | 'Photon / OpenStreetMap';
 };
 
-export type FeatureKey = 'directions' | 'multi' | 'traffic' | 'saved' | 'place';
+export type FeatureKey = 'directions' | 'multi' | 'traffic' | 'saved' | 'place' | 'assistant';
 export type MapLayer = 'street' | 'satellite' | 'dark';
 export type TransportMode = 'car' | 'motorcycle';
 export type RouteObjective = 'time' | 'distance';

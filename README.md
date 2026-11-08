@@ -81,3 +81,12 @@ Frontend chia theo feature (`map`, `places`, `navigation`, `multi-stop`, `my-rou
 6. **P1 không có trong scope code hiện tại:** nhận diện biển báo liên tục bằng camera; tile server/bản đồ nền toàn quốc.
 
 Xem `docs/ARCHITECTURE.md`, `docs/OWNERSHIP.md`, `docs/ROADMAP_2_WEEKS.md`.
+
+## Trợ lý địa điểm và voice (nhánh dpm)
+
+Tìm nhu cầu chung quanh vị trí hoặc dọc tuyến, hỏi lại khi mơ hồ, thêm/bỏ điểm ghé theo chi phí đường đi thật. Voice trình duyệt và Whisper API là cách điền bản nháp để người dùng kiểm tra trước khi tìm.
+
+- [Thiết kế/API và phạm vi](docs/PLACE_ASSISTANT_TECHNICAL.md)
+- [Thuật toán tìm điểm ghé](docs/ROUTE_STOPS_TECHNICAL.md)
+- [Benchmark Whisper trên 48 audio](docs/VOICE_BENCHMARK.md)
+- [Deploy web + API Vercel, cấu hình voice free quota](docs/DEPLOY_API.md)

@@ -6,6 +6,14 @@ const optionalValue = z.preprocess(
 const envSchema = z.object({
   API_PORT: z.coerce.number().int().positive().default(4000),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  OVERPASS_API_URL: z.string().url().default('https://overpass-api.de/api/interpreter'),
+  STOP_AI_PROVIDER: z.enum(['off', 'gemini', 'ollama']).default('off'),
+  STOP_AI_MODEL: optionalValue,
+  GEMINI_API_KEY: optionalValue,
+  OLLAMA_BASE_URL: z.string().url().default('http://localhost:11434'),
+  VOICE_STT_PROVIDER: z.enum(['off', 'cloudflare']).default('off'),
+  CLOUDFLARE_ACCOUNT_ID: optionalValue,
+  CLOUDFLARE_AI_TOKEN: optionalValue,
   VIETMAP_API_KEY: optionalValue,
   SUPABASE_URL: z.preprocess(
     (value) => typeof value === 'string' && value.trim() === '' ? undefined : value,
@@ -14,6 +22,6 @@ const envSchema = z.object({
   SUPABASE_PUBLISHABLE_KEY: optionalValue,
   SUPABASE_ANON_KEY: optionalValue,
 });
-export const env = envSchema.parse(process.env);
+export const env = envSchema.parse({ ...process.env, API_PORT: process.env.API_PORT ?? process.env.PORT });
 export const supabaseKey = env.SUPABASE_PUBLISHABLE_KEY ?? env.SUPABASE_ANON_KEY;
 export const supabaseConfigured = Boolean(env.SUPABASE_URL && supabaseKey);

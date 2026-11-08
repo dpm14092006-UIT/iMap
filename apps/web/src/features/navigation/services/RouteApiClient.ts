@@ -13,7 +13,7 @@ export class RouteApiClient {
 
     let response: Response;
     try {
-      response = await fetch('/api/routes/calculate', {
+      response = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? '/api'}/routes/calculate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -32,20 +32,26 @@ export class RouteApiClient {
       return { error: 'Dịch vụ chỉ đường trả về tuyến không hợp lệ.' };
     }
 
+    return routePlanFromResult(payload.data, stops, vehicle, objective);
+  }
+}
+
+
+export function routePlanFromResult(result: RouteResult, stops: DemoPlace[], vehicle: TransportMode, objective: RouteObjective = 'time'): RoutePlan {
     const first = stops[0]!;
     const last = stops[stops.length - 1]!;
     const leg = {
       nodes: stops.map((place) => place.id),
       // API data is GeoJSON [longitude, latitude]; Leaflet consumes [latitude, longitude].
-      points: payload.data.coordinates.map(([lng, lat]) => [lat, lng] as [number, number]),
-      distanceKm: payload.data.distanceMeters / 1000,
-      durationMin: payload.data.durationSeconds / 60,
+      points: result.coordinates.map(([lng, lat]) => [lat, lng] as [number, number]),
+      distanceKm: result.distanceMeters / 1000,
+      durationMin: result.durationSeconds / 60,
       from: first,
       to: last,
-      instructions: payload.data.instructions,
+      instructions: result.instructions,
     };
     return {
-      id: `vietmap-${Date.now()}`,
+      id: `vietmap-${crypto.randomUUID()}`,
       kind: stops.length > 2 ? 'multi' : 'route',
       stops,
       legs: [leg],
@@ -54,5 +60,4 @@ export class RouteApiClient {
       vehicle,
       objective,
     };
-  }
 }

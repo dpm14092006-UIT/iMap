@@ -2,6 +2,7 @@ import { Icon, type IconName } from '../../shared/components/Icon';
 import type { FeatureKey } from '../../features/map/types';
 
 const items: { key: Exclude<FeatureKey, 'place'>; label: string; icon: IconName }[] = [
+  { key: 'assistant', label: 'Trợ lý địa điểm', icon: 'sparkles' },
   { key: 'directions', label: 'Chỉ đường', icon: 'directions' },
   { key: 'multi', label: 'Nhiều điểm', icon: 'multi-stop' },
   { key: 'traffic', label: 'Giao thông', icon: 'traffic' },
