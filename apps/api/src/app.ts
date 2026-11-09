@@ -15,8 +15,7 @@ export function createApp() {
   app.get('/api/health', (_req,res) => res.json({data:{status:'ok', service:'routetwin-api', routing:env.VIETMAP_API_KEY ? 'vietmap' : 'needs_vietmap_api_key'}}));
   app.use('/api/traffic-reports', createTrafficRouter(container.trafficController));
   app.use('/api/places', createPlacesRouter(container.placeSearchController));
-  app.use('/api/routes', createRoutesRouter(container.routeController));
-  app.post('/api/routes/algorithm', notImplemented('OSM Dijkstra/A* endpoint'));
+  app.use('/api/routes', createRoutesRouter(container.routeController, container.pathfindingController));
   app.post('/api/routes/optimize', notImplemented('Vietmap Matrix + TSP / 2-opt'));
   app.get('/api/my-routes', notImplemented('Supabase saved routes'));
   app.post('/api/ai/analyze-traffic', notImplemented('Gemini Traffic Image Analysis'));

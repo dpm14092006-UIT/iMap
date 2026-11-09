@@ -2,7 +2,9 @@ import { FloatingPanel } from '../../../app/components/FloatingPanel';
 import { Icon } from '../../../shared/components/Icon';
 import type { TransportMode } from '../../map/types';
 import { PlaceField } from '../../places/components/PlaceField';
+import type { AlgorithmComparisonController } from '../hooks/useAlgorithmComparison';
 import type { DirectionsController } from '../hooks/useDirections';
+import { AlgorithmComparison } from './AlgorithmComparison';
 import { RouteResultCard } from './RouteResultCard';
 
 /** Ô nào đang chờ người dùng chọn điểm trên bản đồ. */
@@ -10,6 +12,8 @@ export type PickTarget = 'origin' | 'destination';
 
 type RoutePanelProps = {
   directions: DirectionsController;
+  /** So sánh Dijkstra / A* trên cùng điểm đi/đến (không cần key VietMap). */
+  comparison: AlgorithmComparisonController;
   pickTarget: PickTarget | null;
   isLocating: boolean;
   onPickOnMap: (target: PickTarget) => void;
@@ -24,7 +28,7 @@ const vehicles: { id: TransportMode; label: string; icon: 'car' | 'motorcycle' }
 ];
 
 /** Panel chỉ đường A → B. Mọi trạng thái nằm trong hook useDirections, panel chỉ hiển thị. */
-export function RoutePanel({ directions, pickTarget, isLocating, onPickOnMap, onUseMyLocation, onSave, onClose }: RoutePanelProps) {
+export function RoutePanel({ directions, comparison, pickTarget, isLocating, onPickOnMap, onUseMyLocation, onSave, onClose }: RoutePanelProps) {
   const { origin, destination, vehicle, route, isLoading, error } = directions;
   const canCalculate = Boolean(origin && destination) && origin?.id !== destination?.id && !isLoading;
 
@@ -73,6 +77,7 @@ export function RoutePanel({ directions, pickTarget, isLocating, onPickOnMap, on
 
       {route && <RouteResultCard route={route} onSave={onSave} />}
 
+      <AlgorithmComparison comparison={comparison} canRun={Boolean(origin && destination) && origin?.id !== destination?.id} />
 
       <div className="route-note mt-4 flex items-start gap-2 border-t border-slate-100 pt-3 text-[10px] leading-[1.6] text-slate-500">
         <Icon name="compass" size={14} className="mt-0.5 shrink-0 text-slate-400" />

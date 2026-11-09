@@ -1,11 +1,11 @@
 import * as L from 'leaflet';
 import type { LatLng, Place } from '../../places/types';
 import type { TrafficFeature, TrafficMapLayer, TrafficSeverity } from '../layers/trafficMapLayer';
-import type { DraftStops, MapLayer, RoutePlan } from '../types';
+import type { AlgorithmOverlay, Bounds, DraftStops, MapLayer, RoutePlan } from '../types';
 
 /** Tâm mặc định: trung tâm TP.HCM. */
 const HCMC_CENTER: L.LatLngExpression = [10.783, 106.704];
-const COLORS = { start: '#20a26b', end: '#2476ea', route: '#2476ea', multiRoute: '#167dcb' };
+const COLORS = { start: '#20a26b', end: '#2476ea', route: '#2476ea', multiRoute: '#167dcb', dijkstra: '#8b5cf6', astar: '#f97316', coverage: '#64748b' };
 
 export type MapControllerHandlers = {
   onSelectPlace: (place: Place) => void;
@@ -22,6 +22,8 @@ export type MapControllerData = {
   trafficLayer: TrafficMapLayer;
   currentLocation: LatLng | null;
   isPicking: boolean;
+  /** Tuyến Dijkstra/A* và khung vùng dữ liệu (null nếu chưa chạy thuật toán). */
+  algorithmOverlay: AlgorithmOverlay | null;
 };
 
 /**
@@ -34,10 +36,12 @@ export class LeafletMapController {
   private readonly imagery: L.TileLayer;
   // Mỗi loại dữ liệu một layer group riêng để xóa/vẽ lại độc lập.
   private readonly placesLayer = L.layerGroup();
+  private readonly algorithmLayer = L.layerGroup();
   private readonly routeLayer = L.layerGroup();
   private readonly trafficLayer = L.layerGroup();
   private readonly locationLayer = L.layerGroup();
   private lastRouteId: string | null = null;
+  private lastOverlayKey: string | null = null;
   private activeLayer: MapLayer = 'street';
 
   constructor(container: HTMLElement, private readonly handlers: MapControllerHandlers) {
@@ -53,6 +57,7 @@ export class LeafletMapController {
     });
     this.streets.addTo(this.map);
     this.placesLayer.addTo(this.map);
+    this.algorithmLayer.addTo(this.map); // nằm dưới tuyến VietMap và marker
     this.routeLayer.addTo(this.map);
     this.trafficLayer.addTo(this.map);
     this.locationLayer.addTo(this.map);
@@ -71,6 +76,7 @@ export class LeafletMapController {
     if (data.route) this.drawRoute(data.route);
     else this.drawDraftStops(data.draftStops);
 
+    this.drawAlgorithmOverlay(data.algorithmOverlay);
     this.drawTraffic(data.trafficLayer);
     this.drawCurrentLocation(data.currentLocation);
 
@@ -80,6 +86,13 @@ export class LeafletMapController {
       if (coordinates.length) this.fit(coordinates);
     }
     this.lastRouteId = data.route?.id ?? null;
+
+    const overlay = data.algorithmOverlay;
+    if (overlay && overlay.key !== this.lastOverlayKey) {
+      const coordinates = overlay.paths.flatMap((path) => path.points);
+      if (coordinates.length) this.fit(coordinates);
+    }
+    this.lastOverlayKey = overlay?.key ?? null;
   }
 
   setLayer(layer: MapLayer) {
@@ -150,6 +163,30 @@ export class LeafletMapController {
     });
     const marker = L.marker([place.lat, place.lng], { icon, keyboard: false }).addTo(this.routeLayer);
     marker.bindTooltip(this.textElement('span', place.name), { direction: 'top', className: 'routetwin-tooltip' });
+  }
+
+  /**
+   * Vẽ kết quả thuật toán: Dijkstra nét liền tím (dày, bên dưới), A* nét đứt cam (bên trên).
+   * Hai tuyến thường trùng nhau vì cùng chi phí tối ưu, nên vẫn thấy được cả hai màu.
+   */
+  private drawAlgorithmOverlay(overlay: AlgorithmOverlay | null) {
+    this.algorithmLayer.clearLayers();
+    if (!overlay) return;
+    if (overlay.coverage) this.drawCoverage(overlay.coverage);
+    for (const path of overlay.paths) {
+      if (path.points.length < 2) continue;
+      const style: L.PolylineOptions = path.algorithm === 'dijkstra'
+        ? { color: COLORS.dijkstra, weight: 8, opacity: 0.55 }
+        : { color: COLORS.astar, weight: 4, opacity: 0.95, dashArray: '8 7' };
+      L.polyline(path.points, { ...style, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(this.algorithmLayer);
+    }
+  }
+
+  /** Khung nét đứt cho biết vùng có dữ liệu đồ thị OSM. */
+  private drawCoverage({ south, west, north, east }: Bounds) {
+    L.rectangle([[south, west], [north, east]], {
+      color: COLORS.coverage, weight: 1.5, dashArray: '6 6', fill: false, interactive: false,
+    }).addTo(this.algorithmLayer);
   }
 
   /** Vẽ sự cố giao thông theo hợp đồng TrafficMapLayer (bỏ qua sự cố đã thông thoáng). */
