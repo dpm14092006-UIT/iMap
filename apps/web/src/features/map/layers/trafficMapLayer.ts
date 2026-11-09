@@ -21,12 +21,18 @@ export type TrafficFeatureProperties = {
   severity: TrafficSeverity;
   /** Tiêu đề ngắn hiển thị trong popup, ví dụ "Kẹt xe". */
   title: string;
-  /** Sự cố đã được báo là thông thoáng thì N1 không vẽ nữa. */
-  status: 'active' | 'cleared';
+  /** Chỉ sự cố 'active' được vẽ; đã thông thoáng hoặc hết hạn thì bỏ qua. */
+  status: 'active' | 'cleared' | 'expired';
   /** true nếu đã được xác minh (nhiều người xác nhận/AI), false nếu chỉ là 1 báo cáo. */
   verified: boolean;
   /** Thời điểm báo cáo (ISO 8601), không bắt buộc. */
   reportedAt?: string;
+  /** Số báo cáo cùng loại gần nhau (75 m / 30 phút) được gộp vào sự cố này. */
+  communityReportCount?: number;
+  /** Số người khác nhau đã báo/xác nhận; > 1 thì marker hiện con số thay cho "!". */
+  communityReporterCount?: number;
+  /** Lần xác nhận gần nhất (ISO 8601). */
+  communityUpdatedAt?: string;
 };
 
 export type TrafficFeature = Feature<Point, TrafficFeatureProperties>;

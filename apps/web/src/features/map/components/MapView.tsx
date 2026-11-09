@@ -1,13 +1,11 @@
 import { useEffect, useRef, type MutableRefObject } from 'react';
-import type { LatLng, Place } from '../../places/types';
+import type { LatLng } from '../../places/types';
 import type { TrafficMapLayer } from '../layers/trafficMapLayer';
 import { LeafletMapController } from '../services/LeafletMapController';
 import type { AlgorithmOverlay, DraftStops, MapLayer, RoutePlan } from '../types';
 
 type MapViewProps = {
   layer: MapLayer;
-  places: Place[];
-  selectedPlaceId: string | null;
   route: RoutePlan | null;
   /** Điểm đi/đến đã chọn nhưng chưa có tuyến. */
   draftStops: DraftStops;
@@ -19,22 +17,20 @@ type MapViewProps = {
   /** Tuyến Dijkstra/A* để so sánh (null nếu chưa chạy). */
   algorithmOverlay: AlgorithmOverlay | null;
   controllerRef: MutableRefObject<LeafletMapController | null>;
-  onSelectPlace: (place: Place) => void;
   onMapClick: (point: LatLng) => void;
 };
 
 /** Component React bọc LeafletMapController: tạo bản đồ 1 lần, sau đó chỉ truyền dữ liệu mới. */
-export function MapView({ layer, places, selectedPlaceId, route, draftStops, trafficLayer, currentLocation, isPicking, algorithmOverlay, controllerRef, onSelectPlace, onMapClick }: MapViewProps) {
+export function MapView({ layer, route, draftStops, trafficLayer, currentLocation, isPicking, algorithmOverlay, controllerRef, onMapClick }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   // Giữ handler mới nhất trong ref để không phải tạo lại bản đồ khi callback đổi.
-  const handlersRef = useRef({ onSelectPlace, onMapClick });
-  handlersRef.current = { onSelectPlace, onMapClick };
+  const handlersRef = useRef({ onMapClick });
+  handlersRef.current = { onMapClick };
 
   // Tạo bản đồ khi mount, hủy khi unmount.
   useEffect(() => {
     if (!containerRef.current) return;
     const controller = new LeafletMapController(containerRef.current, {
-      onSelectPlace: (place) => handlersRef.current.onSelectPlace(place),
       onMapClick: (point) => handlersRef.current.onMapClick(point),
     });
     controllerRef.current = controller;
@@ -49,8 +45,8 @@ export function MapView({ layer, places, selectedPlaceId, route, draftStops, tra
 
   // Vẽ lại khi dữ liệu thay đổi.
   useEffect(() => {
-    controllerRef.current?.update({ layer, places, selectedPlaceId, route, draftStops, trafficLayer, currentLocation, isPicking, algorithmOverlay });
-  }, [controllerRef, layer, places, selectedPlaceId, route, draftStops, trafficLayer, currentLocation, isPicking, algorithmOverlay]);
+    controllerRef.current?.update({ layer, route, draftStops, trafficLayer, currentLocation, isPicking, algorithmOverlay });
+  }, [controllerRef, layer, route, draftStops, trafficLayer, currentLocation, isPicking, algorithmOverlay]);
 
   return <div ref={containerRef} className="routetwin-leaflet absolute inset-0 z-0" role="region" aria-label="Bản đồ tương tác TP. Hồ Chí Minh" />;
 }

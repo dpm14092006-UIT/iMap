@@ -8,7 +8,7 @@
 
 `composition-root -> mọi implementation`
 
-Không import ngược chiều. `Controller` không viết SQL và không gọi trực tiếp Gemini/Vietmap. `UseCase` chỉ gọi interface. `Entity` giữ dữ liệu hợp lệ và phương thức nghiệp vụ.
+Không import ngược chiều. `Controller` không viết SQL và không gọi trực tiếp Vietmap. `UseCase` chỉ gọi interface. `Entity` giữ dữ liệu hợp lệ và phương thức nghiệp vụ.
 
 ```mermaid
 flowchart TB
@@ -17,14 +17,13 @@ flowchart TB
   UseCase --> Port[Ports / Interfaces]
   Port -.implemented by.-> Vietmap[Vietmap Adapter]
   Port -.implemented by.-> DB[Supabase Adapter]
-  Port -.implemented by.-> AI[Gemini Adapter]
   UseCase --> Domain[Domain Entities / Value Objects]
 ```
 
 ## Patterns có chủ đích
 
-- **Repository**: `TrafficReportRepository` → `InMemoryTrafficReportRepository` (demo), sau đó `SupabaseTrafficReportRepository`.
-- **Adapter**: `PlaceSearchProvider` → `VietmapPlaceSearchProvider`; `AiVisionProvider` → `GeminiVisionProvider`.
+- **Repository**: `TrafficReportRepository` → `SupabaseTrafficReportRepository` trong composition production; `InMemoryTrafficReportRepository` chỉ là local/test adapter.
+- **Adapter**: `PlaceSearchProvider` → `PhotonPlaceSearchProvider`; `RouteProvider` → `VietmapRouteProvider`; `TrafficReportRepository` → `SupabaseTrafficReportRepository`; `TrafficImageAnalyzer` → `GeminiTrafficImageAnalyzer`.
 - **Strategy**: `OptimizationStrategy` để thay `NearestNeighbor`/`TwoOpt`.
 - **Dependency Injection bằng constructor**: `new CreateTrafficReportUseCase(repo)`; wiring tại `composition-root.ts`.
 - **DTO + Zod**: đầu vào HTTP không phải domain entity.
@@ -36,6 +35,6 @@ N1 không truy cập DB traffic trực tiếp; N2 không sửa `MapView.tsx` tr�
 ## Ghi chú GPS và routing
 
 - Dijkstra/A* là **thuật toán đồ thị riêng** trên OSM một khu vực giới hạn, khác kết quả route từ Vietmap.
-- Vietmap Route/Matrix/TSP adapter ban đầu là `NotImplemented` cho tới khi tích hợp thật.
+- VietMap Route v4 đã dùng để tính đường theo hình học và hướng dẫn rẽ trả về. Matrix/TSP và OSM A* vẫn là phần cần triển khai.
 - Tối ưu ghé nhiều điểm với thời gian đi đường là bài toán TSP path/cycle tùy điểm đầu/cuối; ma trận có thể bất đối xứng.
-- Không để kết quả từ một ảnh AI hoặc một report đơn lẻ mặc nhiên thành lệnh sửa mạng đường.
+- Gemini có thể gợi ý loại/mức độ sự cố hoặc nội dung biển báo từ ảnh ngay trong form báo cáo. Tính năng mặc định tắt; người dùng phải xem lại và tự gửi, không tự xác nhận sự cố hay sửa tuyến.

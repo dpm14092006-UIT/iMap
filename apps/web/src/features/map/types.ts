@@ -2,8 +2,9 @@ import type { RouteInstruction } from '@routetwin/shared';
 import type { Place } from '../places/types';
 
 /** Các panel chức năng mở được từ thanh FeatureNav (và panel chi tiết địa điểm). */
-export type FeatureKey = 'directions' | 'multi' | 'traffic' | 'saved' | 'ai' | 'place';
-export type MapLayer = 'street' | 'satellite';
+export type FeatureKey = 'directions' | 'multi' | 'traffic' | 'saved' | 'place' | 'assistant';
+/** 'dark' là nền bản đồ tối (tự bật theo giờ trên mobile, xem useTimeBasedMapLayer). */
+export type MapLayer = 'street' | 'satellite' | 'dark';
 export type TransportMode = 'car' | 'motorcycle';
 export type RouteObjective = 'time' | 'distance';
 /** Tọa độ theo thứ tự Leaflet: [lat, lng]. */
