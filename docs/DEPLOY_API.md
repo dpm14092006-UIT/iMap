@@ -49,7 +49,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=...
 
 `VITE_API_BASE_URL` phải có `/api`, không slash cuối. Frontend Vite đóng gói biến lúc build, đổi env cần redeploy. Local vẫn `/api`, Vite proxy đến4000. RouteApiClient đã dùng env này, không còn buộc `/api` cùng origin. Supabase public key là key public; tuyệt đối không dùng service_role key. Cập nhật API CORS_ORIGIN bằng origin web sau khi có domain. Preview domain phải được allowlist rõ ràng nếu cần thử.
 
-Đăng nhập được push riêng lên `main` theo yêu cầu. Bản `dpm` chưa chứa trang `/login` mới của main; muốn deploy kết hợp cần tích hợp hai nhánh riêng trong lần phát hành sau.
+Nhánh `dpm` đã merge toàn bộ `main`, gồm trang `/login`, traffic AI và xác nhận cộng đồng; giữ trợ lý địa điểm, voice, cấu hình Vercel và sửa migration của dpm. Có thể chọn `dpm` để deploy bản tích hợp. Cấu hình key của từng dịch vụ vẫn cần thiết.
 
 ## 4. Kiểm tra sau deploy
 

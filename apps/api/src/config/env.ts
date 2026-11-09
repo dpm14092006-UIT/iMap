@@ -15,6 +15,11 @@ const envSchema = z.object({
   CLOUDFLARE_ACCOUNT_ID: optionalValue,
   CLOUDFLARE_AI_TOKEN: optionalValue,
   VIETMAP_API_KEY: optionalValue,
+  GEMINI_TRAFFIC_AI_ENABLED: z.string().trim().toLowerCase().default('false').transform((value) => value === 'true'),
+  GEMINI_MODEL: z.preprocess(
+    (value) => typeof value === 'string' && value.trim() === '' ? undefined : value,
+    z.string().trim().default('gemini-3.8-flash'),
+  ),
   SUPABASE_URL: z.preprocess(
     (value) => typeof value === 'string' && value.trim() === '' ? undefined : value,
     z.string().url().optional(),

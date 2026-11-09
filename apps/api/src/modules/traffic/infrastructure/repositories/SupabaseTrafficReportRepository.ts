@@ -17,6 +17,10 @@ type DbTrafficReport = {
   created_at: string;
   expires_at: string;
   version: number;
+  user_id?: string | null;
+  community_report_count?: number;
+  community_reporter_count?: number;
+  community_updated_at?: string | null;
 };
 
 export class SupabaseTrafficReportRepository implements TrafficReportRepository {
@@ -72,6 +76,9 @@ export class SupabaseTrafficReportRepository implements TrafficReportRepository 
       createdAt: row.created_at,
       expiresAt: row.expires_at,
       version: Number(row.version),
+      communityReportCount: Number(row.community_report_count ?? 1),
+      communityReporterCount: Number(row.community_reporter_count ?? (row.user_id ? 1 : 0)),
+      communityUpdatedAt: row.community_updated_at === undefined ? row.created_at : row.community_updated_at,
     };
   }
 

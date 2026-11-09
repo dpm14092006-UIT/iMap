@@ -1,3 +1,3 @@
 # N1 – My Routes
 
-Saved Routes List, Favorite Route Card, hook `useSavedRoutes`, Supabase auth owner. Không lưu raw GPS tracking log theo mặc định.
+Hiện danh sách hành trình được lưu ở localStorage trên trình duyệt. API và đồng bộ theo tài khoản Supabase chưa triển khai; không lưu lịch sử GPS thô.

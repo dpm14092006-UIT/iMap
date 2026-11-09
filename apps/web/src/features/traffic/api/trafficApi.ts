@@ -1,10 +1,10 @@
-import type { TrafficReportDto, TrafficReportInput } from '@routetwin/shared';
+import type { TrafficImageAnalysisDto, TrafficImageAnalysisTask, TrafficReportDto, TrafficReportInput } from '@routetwin/shared';
 import { apiRequest } from '../../../shared/api/httpClient';
 import type { FeatureCollection, Point } from 'geojson';
 import { supabaseClient } from '../../auth/services/supabaseClient';
 
 export const hcmBounds = { minLat: 10.0, minLng: 106.0, maxLat: 11.25, maxLng: 107.25 };
-export type TrafficFeature = { incidentType: string; severity: string; status: string; createdAt: string; expiresAt: string; version: number; hasPhoto: boolean; note?: string };
+export type TrafficFeature = { incidentType: string; severity: string; status: string; createdAt: string; expiresAt: string; version: number; hasPhoto: boolean; communityReportCount: number; communityReporterCount: number; communityUpdatedAt: string | null; note?: string };
 const photoExtensions: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 const maxPhotoBytes = 5 * 1024 * 1024;
 
@@ -14,9 +14,11 @@ function boundsQuery() {
 }
 
 export const trafficApi = {
+  imageAnalysisReady:() => apiRequest<{ configured?: { trafficImageAi?: boolean } }>('/health'),
   list:(accessToken?:string) => apiRequest<TrafficReportDto[]>(`/traffic-reports?${boundsQuery()}`, undefined, accessToken),
   geojson:(accessToken?:string) => apiRequest<FeatureCollection<Point, TrafficFeature>>(`/traffic-reports/geojson?${boundsQuery()}`, undefined, accessToken),
   create:(input:TrafficReportInput, accessToken:string) => apiRequest<TrafficReportDto>('/traffic-reports',{method:'POST',body:JSON.stringify(input)},accessToken),
+  analyzeImage:(file:File,task:TrafficImageAnalysisTask,accessToken:string) => apiRequest<TrafficImageAnalysisDto>(`/traffic-reports/analyze-image?task=${task}`,{method:'POST',headers:{'Content-Type':file.type},body:file},accessToken),
   clearance:(id:string,state:'clear'|'still_active',accessToken:string)=>apiRequest<TrafficReportDto>(`/traffic-reports/${id}/clearance`,{method:'POST',body:JSON.stringify({state})},accessToken),
   uploadPhoto: async (file: File, userId: string): Promise<string> => {
     if (!supabaseClient) throw new Error('Cần cấu hình Supabase để đính kèm ảnh.');

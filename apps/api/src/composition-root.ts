@@ -7,6 +7,8 @@ import { CreateTrafficReportUseCase } from './modules/traffic/application/use-ca
 import { ListTrafficReportsUseCase } from './modules/traffic/application/use-cases/ListTrafficReportsUseCase.js';
 import { UpdateRoadClearanceUseCase } from './modules/traffic/application/use-cases/UpdateRoadClearanceUseCase.js';
 import { TrafficController } from './modules/traffic/presentation/TrafficController.js';
+import { AnalyzeTrafficImageUseCase } from './modules/traffic/application/use-cases/AnalyzeTrafficImageUseCase.js';
+import { GeminiTrafficImageAnalyzer } from './modules/traffic/infrastructure/providers/GeminiTrafficImageAnalyzer.js';
 import { PhotonPlaceSearchProvider } from './modules/places/infrastructure/providers/PhotonPlaceSearchProvider.js';
 import { SearchPlacesUseCase } from './modules/places/application/use-cases/SearchPlacesUseCase.js';
 import { PlaceSearchController } from './modules/places/presentation/PlaceSearchController.js';
@@ -21,6 +23,7 @@ export function createContainer() {
     new CreateTrafficReportUseCase(trafficRepository),
     new ListTrafficReportsUseCase(trafficRepository),
     new UpdateRoadClearanceUseCase(trafficRepository),
+    new AnalyzeTrafficImageUseCase(new GeminiTrafficImageAnalyzer(env.GEMINI_API_KEY, env.GEMINI_MODEL, env.GEMINI_TRAFFIC_AI_ENABLED)),
   );
   const placeSearchController = new PlaceSearchController(new SearchPlacesUseCase(new PhotonPlaceSearchProvider()));
   const routeProvider = new VietmapRouteProvider(env.VIETMAP_API_KEY);
