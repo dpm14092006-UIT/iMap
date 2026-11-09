@@ -2,6 +2,8 @@
 
 Ngày 09/11/2026. Dùng tab **Trợ lý địa điểm**. Gõ hoặc nói nhu cầu tiếng Anh/Việt; không cần biết tên POI. Đây là tìm loại địa điểm trong dữ liệu OSM, chưa phải tìm mọi thực thể bằng ngôn ngữ tự nhiên.
 
+Toàn bộ trợ lý và voice yêu cầu tài khoản đã đăng nhập. API xác minh Bearer token với Supabase; khách vẫn dùng tìm địa chỉ và chỉ đường. Xem [phân quyền](FEATURE_ACCESS.md).
+
 ## Luồng và trách nhiệm
 
 ```text
@@ -32,7 +34,7 @@ Dọc tuyến: chỉ nhận tuyến hai đầu mút, xe máy/ô tô. Giới hạ
 
 Response envelope `{ "data": ... }`, discriminated union theo `status`: `clarify`, `needs_location`, `needs_route`, `results`. `results` phân tiếp `mode=nearby|route`. Có `source=ai|rules`, cảnh báo và thời điểm khảo sát. Bộ lọc loại/bán kính/km/phút chọn tay ưu tiên câu chữ. Validation lỗi 400; provider lỗi 502; giới hạn tải 429, không giả kết quả rỗng khi upstream hỏng.
 
-`POST /api/route-stops/search` giữ endpoint chuyên tìm điểm ghé. Cùng giới hạn 5 lần/phút/IP và tối đa 2 request xử lý mỗi process. Cache Overpass 2 phút/30 mục, dedupe request trùng. Đây là guard demo trong RAM, không phải giới hạn toàn cục trên nhiều Vercel instance; cần limiter chung nếu mở công khai với tải lớn.
+`POST /api/route-stops/search` giữ endpoint chuyên tìm điểm ghé. Cùng giới hạn 5 lần/phút/tài khoản và tối đa 2 request xử lý mỗi process. Cache Overpass 2 phút/30 mục, dedupe request trùng. Đây là guard demo trong RAM, không phải giới hạn toàn cục trên nhiều Vercel instance; cần limiter chung nếu mở công khai với tải lớn.
 
 ## Voice
 

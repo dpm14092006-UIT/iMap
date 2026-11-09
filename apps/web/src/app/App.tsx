@@ -1,3 +1,4 @@
+import { AssistantAccessPanel } from '../features/auth/components/AssistantAccessPanel';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import type { RouteStopCandidate, StopPlace } from '@routetwin/shared';
 import { routePlanFromResult } from '../features/navigation/services/RouteApiClient';
@@ -51,7 +52,7 @@ function formatDuration(minutes: number) {
 }
 
 export function App() {
-  const { user, accessToken } = useAuth();
+  const { user, accessToken, loading: authLoading } = useAuth();
   const { reports, error: trafficError, loading: trafficLoading, create: createTrafficReport, clearance: updateClearance } = useTrafficReports(accessToken, user?.id ?? null);
   const routeApi = useMemo(() => new RouteApiClient(), []);
   const mapController = useRef<LeafletMapController | null>(null);
@@ -283,7 +284,7 @@ export function App() {
         <div className="px-3 pb-2 md:hidden"><PlaceSearchBar onSelect={openPlace} /></div>
       </header>
 
-      <FeatureNav active={activePanel} incidentCount={incidents.length} onSelect={selectFeature} />
+      <FeatureNav isAuthenticated={Boolean(user && !user.is_anonymous && accessToken)} active={activePanel} incidentCount={incidents.length} onSelect={selectFeature} />
 
       <div className="map-live-status absolute right-5 top-[140px] z-10 hidden items-center gap-2 rounded-full border border-white/80 bg-white/90 px-3 py-2 text-[10px] font-semibold text-slate-600 shadow-sm backdrop-blur lg:flex">
         {activeRoute ? <><Icon name="route" size={14} className="text-brand-600" />{routeDistance} · {routeDuration}<span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] text-amber-800">Ước tính</span></> : <><span className="h-2 w-2 rounded-full bg-emerald-500" />Bản đồ TP. Hồ Chí Minh</>}
@@ -291,13 +292,13 @@ export function App() {
 
       {activeRoute && <div className="route-mobile-status absolute bottom-[calc(56dvh+10px)] left-3 z-10 flex items-center gap-2 rounded-full border border-white/80 bg-white/95 px-3 py-2 text-[10px] font-bold text-ink shadow-lg shadow-slate-900/10 backdrop-blur-md md:hidden"><Icon name="route" size={14} className="text-brand-600" />{routeDistance} · {routeDuration}<span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800">Ước tính</span></div>}
 
-      {activePanel === 'assistant' && <Suspense fallback={<div className="absolute left-5 top-[143px] z-40 rounded-xl bg-white p-4 text-xs shadow-float">Đang mở trợ lý…</div>}><PlaceAssistantPanel
-        route={activeRoute} selectedPoint={selectedMapPoint}
+      {activePanel === 'assistant' && (!authLoading && user && !user.is_anonymous && accessToken ? <Suspense fallback={<div className="absolute left-5 top-[143px] z-40 rounded-xl bg-white p-4 text-xs shadow-float">Đang mở trợ lý…</div>}><PlaceAssistantPanel
+        key={user.id} accessToken={accessToken} route={activeRoute} selectedPoint={selectedMapPoint}
         getMapCenter={() => mapController.current?.getCenter() ?? { lat: 10.783, lng: 106.704 }}
         onClose={() => setActivePanel(null)} onFocus={(place) => mapController.current?.flyTo(place)}
         onDirections={(place) => openDirections(assistantPlace(place))}
         onAddStop={addAssistantStop} onRemoveStop={() => { void removeAssistantStop(); }}
-      /></Suspense>}
+      /></Suspense> : <AssistantAccessPanel loading={authLoading} onClose={() => setActivePanel(null)} />)}
       {activePanel === 'directions' && <RoutePanel initialDestination={initialDestination} initialOrigin={initialOrigin} onClose={() => setActivePanel(null)} onOriginChange={(place) => { if (place) setInitialOrigin(place); setActiveRoute(null); }} onDestinationChange={(place) => { setInitialDestination(place); setActiveRoute(null); }} onClearRoute={() => setActiveRoute(null)} onPreview={findRoute} onSave={(origin, destination) => { void saveRoute(origin, destination); }} route={activeRoute} />}
       {activePanel === 'multi' && <MultiStopPanel onClose={() => setActivePanel(null)} onPlanRoute={async (start, stops, mode, objective, returnToStart) => {
         const routeStops = [start, ...stops, ...(returnToStart ? [start] : [])];
@@ -309,7 +310,7 @@ export function App() {
         showToast('Đã tính tuyến qua các điểm bằng VietMap');
         return result;
       }} onSave={savePlan} />}
-      {activePanel === 'traffic' && <TrafficReportPanel incidents={incidents} selectedPoint={selectedMapPoint} isAuthenticated={Boolean(accessToken)} accessToken={accessToken} loading={trafficLoading} error={trafficError} onClose={() => setActivePanel(null)} onSignIn={() => setAuthOpen(true)} onReport={reportIncident} onClearance={verifyIncident} />}
+      {activePanel === 'traffic' && <TrafficReportPanel incidents={incidents} selectedPoint={selectedMapPoint} isAuthenticated={Boolean(user && !user.is_anonymous && accessToken)} accessToken={accessToken} loading={trafficLoading} error={trafficError} onClose={() => setActivePanel(null)} onSignIn={() => setAuthOpen(true)} onReport={reportIncident} onClearance={verifyIncident} />}
       {activePanel === 'saved' && <SavedRoutesPanel routes={savedRoutes} onClose={() => setActivePanel(null)} onDelete={(id) => { setSavedRoutes((current) => current.filter((route) => route.id !== id)); showToast('Đã xóa hành trình đã lưu'); }} onOpen={openSavedRoute} />}
       {authOpen && <Suspense fallback={<div className="absolute left-5 top-[143px] z-40 rounded-xl bg-white px-4 py-3 text-xs font-medium text-slate-600 shadow-float max-md:bottom-4 max-md:left-3 max-md:top-auto" role="status">Đang mở tài khoản…</div>}><AuthPanel onClose={() => setAuthOpen(false)} /></Suspense>}
       {activePanel === 'place' && selectedPlace && <PlacePanel place={selectedPlace} onClose={() => setActivePanel(null)} onDirections={openDirections} />}

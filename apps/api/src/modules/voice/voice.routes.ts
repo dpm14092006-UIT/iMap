@@ -1,3 +1,5 @@
+import { requireAuth } from '../../shared/http/require-auth.js';
+import type { AuthenticatedRequest } from '../../shared/http/authenticated-request.js';
 import { Router, raw } from 'express';
 import { z } from 'zod';
 import { env } from '../../config/env.js';
@@ -26,6 +28,7 @@ const outputSchema = z.object({ success: z.literal(true), result: z.object({ tex
 export type VoiceConfig = { enabled: boolean; accountId?: string; token?: string };
 export function createVoiceRouter(config: VoiceConfig = { enabled: env.VOICE_STT_PROVIDER === 'cloudflare', accountId: env.CLOUDFLARE_ACCOUNT_ID, token: env.CLOUDFLARE_AI_TOKEN }, fetcher: typeof fetch = fetch) {
   const router = Router();
+  router.use(requireAuth());
   const available = Boolean(config.enabled && config.accountId && config.token);
   router.get('/config', (_req, res) => res.json({ data: { available, provider: available ? 'cloudflare-whisper' : 'off', maxSeconds: 15, language: 'en' } }));
   const windows = new Map<string, { count: number; until: number }>(); let active = 0;
@@ -33,7 +36,7 @@ export function createVoiceRouter(config: VoiceConfig = { enabled: env.VOICE_STT
     if (!available) { next(new AppError(503, 'VOICE_NOT_CONFIGURED', 'API voice chưa được cấu hình. Có thể dùng nhập chữ hoặc voice trình duyệt.')); return; }
     const now = Date.now();
     for (const [key, value] of windows) if (value.until <= now) windows.delete(key);
-    const key = req.ip ?? 'unknown', window = windows.get(key) ?? { count: 0, until: now + 60000 };
+    const key = (req as AuthenticatedRequest).auth!.userId, window = windows.get(key) ?? { count: 0, until: now + 60000 };
     if (active >= 2 || window.count >= 5 || (windows.size >= 1000 && !windows.has(key))) { res.setHeader('Retry-After', '60'); next(new AppError(429, 'VOICE_BUSY', 'Voice đang bận. Thử lại sau một phút.')); return; }
     window.count++; windows.set(key, window); next();
   }, raw({ type: 'audio/wav', limit: MAX_BYTES }), async (req, res, next) => {

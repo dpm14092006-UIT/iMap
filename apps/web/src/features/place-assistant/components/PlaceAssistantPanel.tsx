@@ -7,12 +7,13 @@ import { useApiSpeechDraft } from '../hooks/useApiSpeechDraft';
 import { useSpeechDraft } from '../hooks/useSpeechDraft';
 type Point = { lat: number; lng: number };
 type Props = {
+  accessToken: string;
   route: RoutePlan | null; selectedPoint: Point | null; getMapCenter: () => Point;
   onClose: () => void; onFocus: (place: StopPlace) => void; onDirections: (place: StopPlace) => void;
   onAddStop: (candidate: RouteStopCandidate, routeId: string) => void; onRemoveStop: () => void;
 };
 const examples = ["I'm running low on fuel", 'Find a school nearby', 'Find the station', 'Tôi cần nghỉ một chút'];
-export function PlaceAssistantPanel({ route, selectedPoint, getMapCenter, onClose, onFocus, onDirections, onAddStop, onRemoveStop }: Props) {
+export function PlaceAssistantPanel({ accessToken, route, selectedPoint, getMapCenter, onClose, onFocus, onDirections, onAddStop, onRemoveStop }: Props) {
   const [query, setQuery] = useState('');
   const [context, setContext] = useState<string[]>([]);
   const [mode, setMode] = useState<'nearby' | 'route'>(route?.stops.length === 2 ? 'route' : 'nearby');
@@ -27,7 +28,7 @@ export function PlaceAssistantPanel({ route, selectedPoint, getMapCenter, onClos
   const [language, setLanguage] = useState('en-US');
   const requestRef = useRef<AbortController | null>(null);
   const speech = useSpeechDraft(setQuery);
-  const apiSpeech = useApiSpeechDraft(setQuery);
+  const apiSpeech = useApiSpeechDraft(setQuery, accessToken);
   const [voiceEngine, setVoiceEngine] = useState<'browser' | 'api'>('browser');
   const voiceBusy = speech.listening || apiSpeech.listening || apiSpeech.processing;
   const routeId = route?.id;
@@ -53,7 +54,7 @@ export function PlaceAssistantPanel({ route, selectedPoint, getMapCenter, onClos
           ...(distance !== '' ? { maxExtraDistanceMeters: Math.round(Number(distance) * 1000) } : {}),
           ...(minutes !== '' ? { maxExtraDurationSeconds: Math.round(Number(minutes) * 60) } : {}),
         }),
-      }, controller.signal);
+      }, controller.signal, accessToken);
       if (controller.signal.aborted) return;
       setResult(data); setContext((previous) => [...previous, text, ...(chosenCategory ? [stopCategoryLabels[chosenCategory]] : [])].slice(-4));
     } catch (cause) {

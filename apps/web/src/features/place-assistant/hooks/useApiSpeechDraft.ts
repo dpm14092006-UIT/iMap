@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { apiRequest } from '../../../shared/api/httpClient';
 import { recordingToWav } from '../services/voiceAudio';
-export function useApiSpeechDraft(onDraft: (text: string) => void) {
+export function useApiSpeechDraft(onDraft: (text: string) => void, accessToken: string) {
   const [available, setAvailable] = useState(false), [listening, setListening] = useState(false), [processing, setProcessing] = useState(false), [error, setError] = useState('');
   const currentDraft = useRef(onDraft); currentDraft.current = onDraft;
   const recorder = useRef<MediaRecorder | null>(null), stream = useRef<MediaStream | null>(null), timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -14,12 +14,13 @@ export function useApiSpeechDraft(onDraft: (text: string) => void) {
     release(); busy.current = false; setListening(false); setProcessing(false);
   };
   useEffect(() => {
+    setAvailable(false);
     const controller = new AbortController();
     if (typeof MediaRecorder !== 'undefined' && typeof navigator.mediaDevices?.getUserMedia === 'function') {
-      void apiRequest<{ available: boolean }>('/voice/config', { signal: controller.signal }).then((config) => { if (!controller.signal.aborted) setAvailable(config.available); }).catch(() => {});
+      void apiRequest<{ available: boolean }>('/voice/config', { signal: controller.signal }, accessToken).then((config) => { if (!controller.signal.aborted) setAvailable(config.available); }).catch(() => {});
     }
     return () => { controller.abort(); cancel(); };
-  }, []);
+  }, [accessToken]);
   const start = async () => {
     if (!available || busy.current) return;
     busy.current = true; const version = ++generation.current; setError('');
@@ -39,7 +40,7 @@ export function useApiSpeechDraft(onDraft: (text: string) => void) {
             const audio = await recordingToWav(new Blob(chunks, { type: active.mimeType }));
             if (version !== generation.current) return;
             const controller = new AbortController(); request.current = controller;
-            const result = await apiRequest<{ text: string }>('/voice/transcribe', { method: 'POST', body: audio, headers: { 'Content-Type': 'audio/wav' }, signal: controller.signal });
+            const result = await apiRequest<{ text: string }>('/voice/transcribe', { method: 'POST', body: audio, headers: { 'Content-Type': 'audio/wav' }, signal: controller.signal }, accessToken);
             if (version === generation.current) currentDraft.current(result.text);
           } catch (cause) { if (version === generation.current) setError(cause instanceof Error ? cause.message : 'Voice chưa sẵn sàng.'); }
           finally { if (version === generation.current) { busy.current = false; setProcessing(false); } }

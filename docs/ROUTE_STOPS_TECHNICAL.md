@@ -2,6 +2,8 @@
 
 Ngày triển khai: 09/11/2026. Nhánh tích hợp: `dpm`. Giao diện cuối nằm trong **Trợ lý địa điểm**, chế độ **Dọc tuyến đang đi**. Xem thêm `PLACE_ASSISTANT_TECHNICAL.md` cho chế độ quanh vị trí và voice.
 
+Từ bản phân quyền thành viên, cả `/search` và `/explore` yêu cầu Authorization Bearer token hợp lệ. Xem FEATURE_ACCESS.md.
+
 ## Phạm vi sản phẩm
 
 Người dùng tính tuyến A → B, nhập yêu cầu bằng chữ tiếng Việt hoặc tiếng Anh, xem các điểm ghé đủ điều kiện rồi chọn “Ghé điểm này”. Voice điền bản nháp qua nhận dạng trình duyệt hoặc Whisper API; người dùng kiểm tra rồi chủ động bấm Tìm. Xem PLACE_ASSISTANT_TECHNICAL.md và DEPLOY_API.md cho endpoint audio.
@@ -84,7 +86,7 @@ Mã lỗi đáng chú ý:
 | 503 | VIETMAP_NOT_CONFIGURED | Thiếu key VietMap |
 | 502 | STOP_PLACES_UNAVAILABLE | Overpass lỗi, timeout hoặc dữ liệu không đầy đủ |
 | 502 | STOP_ROUTES_UNAVAILABLE | Không tính được route qua bất kỳ ứng viên nào |
-| 429 | STOP_SEARCH_BUSY | Giới hạn request demo: 5 lần/phút/IP hoặc 2 tìm kiếm đồng thời |
+| 429 | STOP_SEARCH_BUSY | Giới hạn request demo: 5 lần/phút/tài khoản hoặc 2 tìm kiếm đồng thời |
 
 Lỗi key, quota và rate limit VietMap được giữ nguyên thay vì trả kết quả rỗng. Nếu chỉ một vài điểm tính route lỗi thì vẫn trả kết quả thành công còn lại cùng cảnh báo.
 
