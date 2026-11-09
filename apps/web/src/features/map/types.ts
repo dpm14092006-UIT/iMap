@@ -45,4 +45,7 @@ export type MapIncident = {
   time: string;
   lat: number;
   lng: number;
+  communityReportCount?: number;
+  communityReporterCount?: number;
+  communityUpdatedAt?: string;
 };

@@ -79,6 +79,9 @@ export function App() {
     time: new Date(report.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
     lat: report.lat,
     lng: report.lng,
+    communityReportCount: report.communityReportCount ?? 1,
+    communityReporterCount: report.communityReporterCount ?? 0,
+    communityUpdatedAt: report.communityUpdatedAt ?? undefined,
     imagePath: report.imagePath,
     status: report.status,
   })), [reports]);
@@ -274,7 +277,7 @@ export function App() {
             <span className="hidden items-center gap-1.5 rounded-full bg-slate-100 px-3 py-2 text-[10px] font-semibold text-slate-600 lg:inline-flex"><Icon name="pin" size={13} className="text-brand-600" />TP. Hồ Chí Minh</span>
             <span className="hidden items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-2 text-[10px] font-semibold text-emerald-800 sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />OpenStreetMap</span>
             <button type="button" onClick={() => showToast('Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.')} aria-label="Thông tin bản đồ" className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-brand-200 hover:text-brand-700"><Icon name="more" size={19} /></button>
-            <button type="button" onClick={() => setAuthOpen(true)} aria-label={user ? `Tài khoản ${user.email ?? ''}` : 'Đăng nhập tài khoản'} className={`grid h-9 w-9 place-items-center rounded-full text-xs font-bold ring-2 ring-white transition sm:h-10 sm:w-10 ${user ? 'bg-brand-100 text-brand-700' : 'bg-[#e8e1d7] text-[#685849]'}`}>{user?.email?.slice(0, 2).toUpperCase() ?? 'ĐN'}</button>
+            <a href="/login" aria-label={user ? `Tài khoản ${user.email ?? ''}` : 'Đăng nhập tài khoản'} className={`grid h-9 w-9 place-items-center rounded-full text-xs font-bold ring-2 ring-white transition sm:h-10 sm:w-10 ${user ? 'bg-brand-100 text-brand-700' : 'bg-[#e8e1d7] text-[#685849]'}`}>{user?.email?.slice(0, 2).toUpperCase() ?? 'ĐN'}</a>
           </div>
         </div>
         <div className="px-3 pb-2 md:hidden"><PlaceSearchBar onSelect={openPlace} /></div>
@@ -306,7 +309,7 @@ export function App() {
         showToast('Đã tính tuyến qua các điểm bằng VietMap');
         return result;
       }} onSave={savePlan} />}
-      {activePanel === 'traffic' && <TrafficReportPanel incidents={incidents} selectedPoint={selectedMapPoint} isAuthenticated={Boolean(accessToken)} loading={trafficLoading} error={trafficError} onClose={() => setActivePanel(null)} onSignIn={() => setAuthOpen(true)} onReport={reportIncident} onClearance={verifyIncident} />}
+      {activePanel === 'traffic' && <TrafficReportPanel incidents={incidents} selectedPoint={selectedMapPoint} isAuthenticated={Boolean(accessToken)} accessToken={accessToken} loading={trafficLoading} error={trafficError} onClose={() => setActivePanel(null)} onSignIn={() => setAuthOpen(true)} onReport={reportIncident} onClearance={verifyIncident} />}
       {activePanel === 'saved' && <SavedRoutesPanel routes={savedRoutes} onClose={() => setActivePanel(null)} onDelete={(id) => { setSavedRoutes((current) => current.filter((route) => route.id !== id)); showToast('Đã xóa hành trình đã lưu'); }} onOpen={openSavedRoute} />}
       {authOpen && <Suspense fallback={<div className="absolute left-5 top-[143px] z-40 rounded-xl bg-white px-4 py-3 text-xs font-medium text-slate-600 shadow-float max-md:bottom-4 max-md:left-3 max-md:top-auto" role="status">Đang mở tài khoản…</div>}><AuthPanel onClose={() => setAuthOpen(false)} /></Suspense>}
       {activePanel === 'place' && selectedPlace && <PlacePanel place={selectedPlace} onClose={() => setActivePanel(null)} onDirections={openDirections} />}
