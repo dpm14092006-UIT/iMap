@@ -60,7 +60,7 @@ export function App() {
   const [initialOrigin, setInitialOrigin] = useState<DemoPlace>(defaultOrigin);
   const [initialDestination, setInitialDestination] = useState<DemoPlace | null>(defaultDestination);
   const [activeRoute, setActiveRoute] = useState<RoutePlan | null>(null);
-  const { layer, setLayer, automatic } = useTimeBasedMapLayer();
+  const { layer, setLayer } = useTimeBasedMapLayer();
   const [selectedMapPoint, setSelectedMapPoint] = useState<{ lat: number; lng: number } | null>(null);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>(readSavedRoutes);
@@ -312,7 +312,6 @@ export function App() {
       {activePanel === 'place' && selectedPlace && <PlacePanel place={selectedPlace} onClose={() => setActivePanel(null)} onDirections={openDirections} />}
 
       <MapToolbar
-        automatic={automatic}
         layer={layer}
         onLayerChange={setLayer}
         onLocate={locate}
