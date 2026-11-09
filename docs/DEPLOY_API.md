@@ -33,7 +33,7 @@ Giữ tài khoản ở **Workers Free**: Workers AI có 10.000 neurons/ngày; v�
 
 Dashboard Workers AI → Use REST API → Create Workers AI API Token, lấy Account ID/token và thêm vào env API Vercel. Model cố định `@cf/openai/whisper`, REST binary. Không cần deploy thêm Worker hay Docker model. Không đưa token vào biến `VITE_*` hoặc GitHub. Sau khi đặt env phải redeploy API.
 
-Ứng dụng không lưu audio; xử lý trong RAM và chuyển provider khi người dùng bấm nhận dạng. Audio ≤15s, WAV≤500kB, timeout25s. Có limiter demo5/phút/IP +2 active mỗi instance, **không phải giới hạn toàn cục/quota billing** trên serverless. Nếu public rộng, cần rate limit chung/auth và theo dõi quota dashboard. Không có chuyển nhà cung cấp trả phí khi Cloudflare lỗi.
+Ứng dụng không lưu audio; xử lý trong RAM và chuyển provider khi người dùng bấm nhận dạng. Audio ≤15s, WAV≤500kB, timeout25s. Có limiter demo5/phút/tài khoản +2 active mỗi instance, **không phải giới hạn toàn cục/quota billing** trên serverless. Nếu public rộng, cần rate limit chung/auth và theo dõi quota dashboard. Không có chuyển nhà cung cấp trả phí khi Cloudflare lỗi.
 
 Hugging Face Docker Spaces không được coi là lựa chọn deploy miễn phí mới: tài liệu hiện yêu cầu paid PRO/Team để tạo Docker/Gradio Space; static space miễn phí không chạy Python API.
 
@@ -53,11 +53,11 @@ Nhánh `dpm` đã merge toàn bộ `main`, gồm trang `/login`, traffic AI và 
 
 ## 4. Kiểm tra sau deploy
 
-1. `GET https://API/api/health` →200; `GET /api/voice/config` →`available:true` nếu đã cấu hình. `true` chỉ chứng minh biến tồn tại, không chứng minh key còn quota/hợp lệ.
-2. Gửi câu “Find the station” đến `/api/route-stops/explore` →clarify không cần key VietMap.
+1. `GET https://API/api/health` →200; `GET /api/voice/config` sau khi đăng nhập, có Bearer access token →`available:true` nếu đã cấu hình; khách nhận401. `true` chỉ chứng minh biến tồn tại, không chứng minh key còn quota/hợp lệ.
+2. Đăng nhập bằng tài khoản test; gửi Bearer access token cùng câu “Find the station” đến `/api/route-stops/explore` →clarify không cần key VietMap.
 3. Mở web HTTPS →Trợ lý địa điểm →Whisper API →cấp quyền micro →nói tiếng Anh ngắn →Xong →kiểm tra ô chữ. Chưa bấm Tìm thì chưa chạy POI query.
 4. Bấm Tìm với vị trí bản đồ →POI/link OSM; cấu hình VietMap và thử tuyến A-B →ghé/bỏ điểm, tổng tuyến cập nhật.
-5. Với audio WAV hợp lệ có thể kiểm tra bằng `curl --data-binary @sample.wav -H 'Content-Type: audio/wav' https://API/api/voice/transcribe`. Không gửi token Cloudflare từ client. Key sai/quota thiếu phải trả lỗi, không tạo transcript/POI giả.
+5. Audio WAV gửi đến `/api/voice/transcribe` phải có `Authorization: Bearer <Supabase access token>` của thành viên. Thiếu token bị401; không gửi token Cloudflare từ client. Key sai/quota thiếu phải trả lỗi, không tạo transcript/POI giả.
 
 Hiện đã kiểm tra build/typecheck, HTTP contract với fixture, UI fixture, local real-ASR benchmark. Chưa có token Cloudflare/key VietMap/Gemini và URL deployment nên **chưa xác minh production end-to-end**. Public Overpass từng406/timeout trong môi trường này; cần kiểm tra nguồn POI khi deploy.
 
@@ -69,7 +69,7 @@ Sau khi tạo audio benchmark (script ở VOICE_BENCHMARK.md), chạy:
 node scripts/voice/check-deployment.mjs https://TEN-PROJECT-API.vercel.app/api https://TEN-PROJECT-WEB.vercel.app ~/.cache/imap-voice/audio /tmp/imap-cloud-voice-check.json
 ```
 
-Bài này bắt buộc HTTPS, kiểm tra health/config, CORS web origin rồi gửi 3 WAV tổng hợp đến provider thật. Thiếu config, quota, lỗi phiên âm hoặc response giả dạng sai provider đều exit1; không dùng model local thay thế. Chưa chạy vì chưa có deployment/token. Đây vẫn chưa kiểm tra phần ghi âm micro trên thiết bị. Nghiệm thu thêm Chrome desktop và Safari/Chrome điện thoại: cấp/từ chối quyền, nói/Xong/Hủy, câu mơ hồ, mạng lỗi, kết quả bản nháp, bấm Tìm và POI. Ghi thiết bị/browser/câu nói/độ trễ; không gắn nhãn production đạt chỉ bằng unit test.
+Bài này yêu cầu biến môi trường `IMAP_TEST_ACCESS_TOKEN` chứa phiên đăng nhập của tài khoản test (không dùng token Cloudflare và không đưa token vào lệnh CLI/log/Git). Thiếu phiên sẽ dừng; API trả401 cho khách. Bài này bắt buộc HTTPS, kiểm tra health/config, CORS web origin rồi gửi 3 WAV tổng hợp đến provider thật. Thiếu config, quota, lỗi phiên âm hoặc response giả dạng sai provider đều exit1; không dùng model local thay thế. Chưa chạy vì chưa có deployment/token. Đây vẫn chưa kiểm tra phần ghi âm micro trên thiết bị. Nghiệm thu thêm Chrome desktop và Safari/Chrome điện thoại: cấp/từ chối quyền, nói/Xong/Hủy, câu mơ hồ, mạng lỗi, kết quả bản nháp, bấm Tìm và POI. Ghi thiết bị/browser/câu nói/độ trễ; không gắn nhãn production đạt chỉ bằng unit test.
 
 ## Docker thay thế (API Node)
 

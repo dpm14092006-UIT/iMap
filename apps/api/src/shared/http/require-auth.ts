@@ -23,6 +23,10 @@ export function requireAuth(clientFactory = new SupabaseClientFactory()): Reques
         next(new AppError(401, 'INVALID_SESSION', 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn'));
         return;
       }
+      if (data.user.is_anonymous) {
+        next(new AppError(403, 'ACCOUNT_REQUIRED', 'Vui lòng đăng ký tài khoản và đăng nhập để sử dụng tính năng này'));
+        return;
+      }
       (request as AuthenticatedRequest).auth = { userId: data.user.id, accessToken: token };
       next();
     } catch {

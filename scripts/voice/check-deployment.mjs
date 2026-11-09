@@ -6,11 +6,14 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 const [baseArgument, webOrigin, audioDirectory, output] = process.argv.slice(2);
 if (!baseArgument || !webOrigin || !audioDirectory) throw Error('Pass API URL including /api, web origin and benchmark audio directory.');
+const sessionToken = process.env.IMAP_TEST_ACCESS_TOKEN;
+if (!sessionToken) throw Error('Set IMAP_TEST_ACCESS_TOKEN with a test member session. Never pass tokens as command arguments.');
 const base = baseArgument.replace(/\/$/, '');
 for (const value of [base, webOrigin]) if (new URL(value).protocol !== 'https:') throw Error('This acceptance check requires deployed HTTPS endpoints.');
 const report = { checkedAt: new Date().toISOString(), api: base, webOrigin, checks: [], samples: [], browserMicrophone: 'not tested by this script' };
 async function data(endpoint, init) {
-  const response = await fetch(base + endpoint, { ...init, signal: AbortSignal.timeout(35000) });
+  const headers = new Headers(init?.headers); headers.set('Authorization', `Bearer ${sessionToken}`);
+  const response = await fetch(base + endpoint, { ...init, headers, signal: AbortSignal.timeout(35000) });
   const json = await response.json().catch(() => null);
   if (!response.ok) throw Error(`${endpoint}: HTTP ${response.status} ${json?.error?.code ?? ''}`);
   if (!json?.data) throw Error(`${endpoint}: missing API envelope`);
@@ -21,7 +24,7 @@ try {
   const config = await data('/voice/config');
   if (!config.available || config.provider !== 'cloudflare-whisper') throw Error('Cloud voice not configured; local/browser ASR does not satisfy this check.');
   report.checks.push('cloud provider configured');
-  const preflight = await fetch(base + '/voice/transcribe', { method: 'OPTIONS', headers: { Origin: webOrigin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'content-type' }, signal: AbortSignal.timeout(15000) });
+  const preflight = await fetch(base + '/voice/transcribe', { method: 'OPTIONS', headers: { Origin: webOrigin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'content-type,authorization' }, signal: AbortSignal.timeout(15000) });
   if (!preflight.ok || preflight.headers.get('access-control-allow-origin') !== webOrigin || !preflight.headers.get('access-control-allow-methods')?.includes('POST')) throw Error('CORS preflight does not allow deployed web origin.');
   report.checks.push('CORS preflight OK');
   // Three real upstream calls stay within per-process five/minute guard.
