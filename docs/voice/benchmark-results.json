@@ -1,0 +1,1335 @@
+{
+  "model": "Systran/faster-whisper-base.en",
+  "engine": "faster-whisper 1.2.1 / CPU int8",
+  "seed": 42,
+  "generatedAudio": true,
+  "limitations": "Synthetic macOS TTS, additive white noise. Not human speech, real road noise, browser ASR or Cloudflare model accuracy.",
+  "rows": [
+    {
+      "condition": "clean_us",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "I'm running low on fuel. Find a gas station nearby.",
+      "expectedCategory": "fuel",
+      "transcript": "I'm running low on fuel, find a gas station nearby.",
+      "wordErrors": 0,
+      "referenceWords": 10,
+      "audioSeconds": 3.375,
+      "seconds": 1.033,
+      "expectedSlots": {
+        "category": "fuel",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "fuel",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_us",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find a school within two kilometers.",
+      "expectedCategory": "school",
+      "transcript": "Find a school within 2 km.",
+      "wordErrors": 2,
+      "referenceWords": 6,
+      "audioSeconds": 2.022,
+      "seconds": 0.533,
+      "expectedSlots": {
+        "category": "school",
+        "nearbyRadiusMeters": 2000,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "school",
+        "nearbyRadiusMeters": 2000,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_us",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find a hospital near me.",
+      "expectedCategory": "hospital",
+      "transcript": "Find a hospital near me.",
+      "wordErrors": 0,
+      "referenceWords": 5,
+      "audioSeconds": 1.534,
+      "seconds": 0.591,
+      "expectedSlots": {
+        "category": "hospital",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "hospital",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_us",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "I need a public toilet.",
+      "expectedCategory": "toilets",
+      "transcript": "I need a public toilet.",
+      "wordErrors": 0,
+      "referenceWords": 5,
+      "audioSeconds": 1.366,
+      "seconds": 0.475,
+      "expectedSlots": {
+        "category": "toilets",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "toilets",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_us",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find a coffee shop with at most five minutes extra.",
+      "expectedCategory": "cafe",
+      "transcript": "Find a coffee shop with at most 5 minutes extra.",
+      "wordErrors": 1,
+      "referenceWords": 10,
+      "audioSeconds": 2.881,
+      "seconds": 1.188,
+      "expectedSlots": {
+        "category": "cafe",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": 300
+      },
+      "recognizedSlots": {
+        "category": "cafe",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": 300
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_us",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Where can I park my car?",
+      "expectedCategory": "parking",
+      "transcript": "Where can I park my car?",
+      "wordErrors": 0,
+      "referenceWords": 6,
+      "audioSeconds": 1.488,
+      "seconds": 1.65,
+      "expectedSlots": {
+        "category": "parking",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "parking",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_us",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find the station.",
+      "expectedCategory": "unknown",
+      "transcript": "Find the station.",
+      "wordErrors": 0,
+      "referenceWords": 3,
+      "audioSeconds": 1.093,
+      "seconds": 0.961,
+      "expectedSlots": {
+        "category": "unknown",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "unknown",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_us",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find a pharmacy with at most one kilometer extra.",
+      "expectedCategory": "pharmacy",
+      "transcript": "Find a pharmacy with at most 1 km extra.",
+      "wordErrors": 2,
+      "referenceWords": 9,
+      "audioSeconds": 2.904,
+      "seconds": 1,
+      "expectedSlots": {
+        "category": "pharmacy",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": 1000,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "pharmacy",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": 1000,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_us",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find an ATM nearby.",
+      "expectedCategory": "atm",
+      "transcript": "Find an ATM nearby.",
+      "wordErrors": 0,
+      "referenceWords": 4,
+      "audioSeconds": 1.673,
+      "seconds": 1.23,
+      "expectedSlots": {
+        "category": "atm",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "atm",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_us",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find a bus stop near me.",
+      "expectedCategory": "bus_stop",
+      "transcript": "Find a bus stop near me.",
+      "wordErrors": 0,
+      "referenceWords": 6,
+      "audioSeconds": 1.569,
+      "seconds": 1.172,
+      "expectedSlots": {
+        "category": "bus_stop",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "bus_stop",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_us",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find a train station nearby.",
+      "expectedCategory": "train_station",
+      "transcript": "Find a train station nearby.",
+      "wordErrors": 0,
+      "referenceWords": 5,
+      "audioSeconds": 1.917,
+      "seconds": 1.006,
+      "expectedSlots": {
+        "category": "train_station",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "train_station",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_us",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find a public library.",
+      "expectedCategory": "library",
+      "transcript": "Find a public library.",
+      "wordErrors": 0,
+      "referenceWords": 4,
+      "audioSeconds": 1.499,
+      "seconds": 0.86,
+      "expectedSlots": {
+        "category": "library",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "library",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_uk",
+      "voice": "Daniel",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "I'm running low on fuel. Find a gas station nearby.",
+      "expectedCategory": "fuel",
+      "transcript": "I'm running low on fuel, find a gas station nearby.",
+      "wordErrors": 0,
+      "referenceWords": 10,
+      "audioSeconds": 3.556,
+      "seconds": 1.829,
+      "expectedSlots": {
+        "category": "fuel",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "fuel",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_uk",
+      "voice": "Daniel",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find a school within two kilometers.",
+      "expectedCategory": "school",
+      "transcript": "Find a school within 2 km.",
+      "wordErrors": 2,
+      "referenceWords": 6,
+      "audioSeconds": 2.18,
+      "seconds": 1.188,
+      "expectedSlots": {
+        "category": "school",
+        "nearbyRadiusMeters": 2000,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "school",
+        "nearbyRadiusMeters": 2000,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_uk",
+      "voice": "Daniel",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find a hospital near me.",
+      "expectedCategory": "hospital",
+      "transcript": "Find a hospital near me.",
+      "wordErrors": 0,
+      "referenceWords": 5,
+      "audioSeconds": 1.577,
+      "seconds": 1.584,
+      "expectedSlots": {
+        "category": "hospital",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "hospital",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_uk",
+      "voice": "Daniel",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "I need a public toilet.",
+      "expectedCategory": "toilets",
+      "transcript": "I need a public toilet.",
+      "wordErrors": 0,
+      "referenceWords": 5,
+      "audioSeconds": 1.421,
+      "seconds": 0.85,
+      "expectedSlots": {
+        "category": "toilets",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "toilets",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_uk",
+      "voice": "Daniel",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find a coffee shop with at most five minutes extra.",
+      "expectedCategory": "cafe",
+      "transcript": "Find a coffee shop with at most 5 minutes extra.",
+      "wordErrors": 1,
+      "referenceWords": 10,
+      "audioSeconds": 3.109,
+      "seconds": 1.425,
+      "expectedSlots": {
+        "category": "cafe",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": 300
+      },
+      "recognizedSlots": {
+        "category": "cafe",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": 300
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_uk",
+      "voice": "Daniel",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Where can I park my car?",
+      "expectedCategory": "parking",
+      "transcript": "Where can I park my car?",
+      "wordErrors": 0,
+      "referenceWords": 6,
+      "audioSeconds": 1.616,
+      "seconds": 0.93,
+      "expectedSlots": {
+        "category": "parking",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "parking",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_uk",
+      "voice": "Daniel",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find the station.",
+      "expectedCategory": "unknown",
+      "transcript": "Find the station.",
+      "wordErrors": 0,
+      "referenceWords": 3,
+      "audioSeconds": 1.089,
+      "seconds": 0.72,
+      "expectedSlots": {
+        "category": "unknown",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "unknown",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_uk",
+      "voice": "Daniel",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find a pharmacy with at most one kilometer extra.",
+      "expectedCategory": "pharmacy",
+      "transcript": "Find a pharmacy with at most 1 kilometer extra.",
+      "wordErrors": 1,
+      "referenceWords": 9,
+      "audioSeconds": 3.202,
+      "seconds": 1.071,
+      "expectedSlots": {
+        "category": "pharmacy",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": 1000,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "pharmacy",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": 1000,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_uk",
+      "voice": "Daniel",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find an ATM nearby.",
+      "expectedCategory": "atm",
+      "transcript": "Find an ATM nearby.",
+      "wordErrors": 0,
+      "referenceWords": 4,
+      "audioSeconds": 1.646,
+      "seconds": 0.934,
+      "expectedSlots": {
+        "category": "atm",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "atm",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_uk",
+      "voice": "Daniel",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find a bus stop near me.",
+      "expectedCategory": "bus_stop",
+      "transcript": "Find a bus stop near me.",
+      "wordErrors": 0,
+      "referenceWords": 6,
+      "audioSeconds": 1.658,
+      "seconds": 0.571,
+      "expectedSlots": {
+        "category": "bus_stop",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "bus_stop",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_uk",
+      "voice": "Daniel",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find a train station nearby.",
+      "expectedCategory": "train_station",
+      "transcript": "Find a train station nearby.",
+      "wordErrors": 0,
+      "referenceWords": 5,
+      "audioSeconds": 1.832,
+      "seconds": 1.012,
+      "expectedSlots": {
+        "category": "train_station",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "train_station",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "clean_uk",
+      "voice": "Daniel",
+      "rate": 175,
+      "snrDb": null,
+      "reference": "Find a public library.",
+      "expectedCategory": "library",
+      "transcript": "Find a public library.",
+      "wordErrors": 0,
+      "referenceWords": 4,
+      "audioSeconds": 1.542,
+      "seconds": 1.122,
+      "expectedSlots": {
+        "category": "library",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "library",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "fast_us",
+      "voice": "Samantha",
+      "rate": 240,
+      "snrDb": null,
+      "reference": "I'm running low on fuel. Find a gas station nearby.",
+      "expectedCategory": "fuel",
+      "transcript": "I'm running low on fuel, find a gas station nearby.",
+      "wordErrors": 0,
+      "referenceWords": 10,
+      "audioSeconds": 2.612,
+      "seconds": 1.147,
+      "expectedSlots": {
+        "category": "fuel",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "fuel",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "fast_us",
+      "voice": "Samantha",
+      "rate": 240,
+      "snrDb": null,
+      "reference": "Find a school within two kilometers.",
+      "expectedCategory": "school",
+      "transcript": "Find a school within 2 km.",
+      "wordErrors": 2,
+      "referenceWords": 6,
+      "audioSeconds": 1.562,
+      "seconds": 0.857,
+      "expectedSlots": {
+        "category": "school",
+        "nearbyRadiusMeters": 2000,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "school",
+        "nearbyRadiusMeters": 2000,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "fast_us",
+      "voice": "Samantha",
+      "rate": 240,
+      "snrDb": null,
+      "reference": "Find a hospital near me.",
+      "expectedCategory": "hospital",
+      "transcript": "Find a hospital near me.",
+      "wordErrors": 0,
+      "referenceWords": 5,
+      "audioSeconds": 1.191,
+      "seconds": 0.852,
+      "expectedSlots": {
+        "category": "hospital",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "hospital",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "fast_us",
+      "voice": "Samantha",
+      "rate": 240,
+      "snrDb": null,
+      "reference": "I need a public toilet.",
+      "expectedCategory": "toilets",
+      "transcript": "I need a public toilet.",
+      "wordErrors": 0,
+      "referenceWords": 5,
+      "audioSeconds": 1.056,
+      "seconds": 1.01,
+      "expectedSlots": {
+        "category": "toilets",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "toilets",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "fast_us",
+      "voice": "Samantha",
+      "rate": 240,
+      "snrDb": null,
+      "reference": "Find a coffee shop with at most five minutes extra.",
+      "expectedCategory": "cafe",
+      "transcript": "Find a coffee shop with at most 5 minutes extra.",
+      "wordErrors": 1,
+      "referenceWords": 10,
+      "audioSeconds": 2.224,
+      "seconds": 0.651,
+      "expectedSlots": {
+        "category": "cafe",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": 300
+      },
+      "recognizedSlots": {
+        "category": "cafe",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": 300
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "fast_us",
+      "voice": "Samantha",
+      "rate": 240,
+      "snrDb": null,
+      "reference": "Where can I park my car?",
+      "expectedCategory": "parking",
+      "transcript": "Where can I park my car?",
+      "wordErrors": 0,
+      "referenceWords": 6,
+      "audioSeconds": 1.145,
+      "seconds": 0.523,
+      "expectedSlots": {
+        "category": "parking",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "parking",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "fast_us",
+      "voice": "Samantha",
+      "rate": 240,
+      "snrDb": null,
+      "reference": "Find the station.",
+      "expectedCategory": "unknown",
+      "transcript": "Find the station.",
+      "wordErrors": 0,
+      "referenceWords": 3,
+      "audioSeconds": 0.843,
+      "seconds": 0.48,
+      "expectedSlots": {
+        "category": "unknown",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "unknown",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "fast_us",
+      "voice": "Samantha",
+      "rate": 240,
+      "snrDb": null,
+      "reference": "Find a pharmacy with at most one kilometer extra.",
+      "expectedCategory": "pharmacy",
+      "transcript": "Find a pharmacy with utmost 1 km extra.",
+      "wordErrors": 4,
+      "referenceWords": 9,
+      "audioSeconds": 2.247,
+      "seconds": 0.964,
+      "expectedSlots": {
+        "category": "pharmacy",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": 1000,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "pharmacy",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": 1000,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "fast_us",
+      "voice": "Samantha",
+      "rate": 240,
+      "snrDb": null,
+      "reference": "Find an ATM nearby.",
+      "expectedCategory": "atm",
+      "transcript": "Find an ATM nearby.",
+      "wordErrors": 0,
+      "referenceWords": 4,
+      "audioSeconds": 1.295,
+      "seconds": 0.447,
+      "expectedSlots": {
+        "category": "atm",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "atm",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "fast_us",
+      "voice": "Samantha",
+      "rate": 240,
+      "snrDb": null,
+      "reference": "Find a bus stop near me.",
+      "expectedCategory": "bus_stop",
+      "transcript": "Find a bus stop near me.",
+      "wordErrors": 0,
+      "referenceWords": 6,
+      "audioSeconds": 1.214,
+      "seconds": 0.379,
+      "expectedSlots": {
+        "category": "bus_stop",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "bus_stop",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "fast_us",
+      "voice": "Samantha",
+      "rate": 240,
+      "snrDb": null,
+      "reference": "Find a train station nearby.",
+      "expectedCategory": "train_station",
+      "transcript": "Find a train station nearby.",
+      "wordErrors": 0,
+      "referenceWords": 5,
+      "audioSeconds": 1.481,
+      "seconds": 0.609,
+      "expectedSlots": {
+        "category": "train_station",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "train_station",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "fast_us",
+      "voice": "Samantha",
+      "rate": 240,
+      "snrDb": null,
+      "reference": "Find a public library.",
+      "expectedCategory": "library",
+      "transcript": "Find a public library.",
+      "wordErrors": 0,
+      "referenceWords": 4,
+      "audioSeconds": 1.168,
+      "seconds": 0.632,
+      "expectedSlots": {
+        "category": "library",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "library",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "noise_10db",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": 10,
+      "reference": "I'm running low on fuel. Find a gas station nearby.",
+      "expectedCategory": "fuel",
+      "transcript": "I'm running low on fuel, find a gas station nearby.",
+      "wordErrors": 0,
+      "referenceWords": 10,
+      "audioSeconds": 3.375,
+      "seconds": 0.669,
+      "expectedSlots": {
+        "category": "fuel",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "fuel",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "noise_10db",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": 10,
+      "reference": "Find a school within two kilometers.",
+      "expectedCategory": "school",
+      "transcript": "find a school within 2 km.",
+      "wordErrors": 2,
+      "referenceWords": 6,
+      "audioSeconds": 2.022,
+      "seconds": 0.654,
+      "expectedSlots": {
+        "category": "school",
+        "nearbyRadiusMeters": 2000,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "school",
+        "nearbyRadiusMeters": 2000,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "noise_10db",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": 10,
+      "reference": "Find a hospital near me.",
+      "expectedCategory": "hospital",
+      "transcript": "Find a hospital near me.",
+      "wordErrors": 0,
+      "referenceWords": 5,
+      "audioSeconds": 1.534,
+      "seconds": 0.49,
+      "expectedSlots": {
+        "category": "hospital",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "hospital",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "noise_10db",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": 10,
+      "reference": "I need a public toilet.",
+      "expectedCategory": "toilets",
+      "transcript": "I need a public toilet.",
+      "wordErrors": 0,
+      "referenceWords": 5,
+      "audioSeconds": 1.366,
+      "seconds": 0.619,
+      "expectedSlots": {
+        "category": "toilets",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "toilets",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "noise_10db",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": 10,
+      "reference": "Find a coffee shop with at most five minutes extra.",
+      "expectedCategory": "cafe",
+      "transcript": "Find a coffee shop with at most 5 minutes extra.",
+      "wordErrors": 1,
+      "referenceWords": 10,
+      "audioSeconds": 2.881,
+      "seconds": 0.598,
+      "expectedSlots": {
+        "category": "cafe",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": 300
+      },
+      "recognizedSlots": {
+        "category": "cafe",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": 300
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "noise_10db",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": 10,
+      "reference": "Where can I park my car?",
+      "expectedCategory": "parking",
+      "transcript": "Where can I park my car?",
+      "wordErrors": 0,
+      "referenceWords": 6,
+      "audioSeconds": 1.488,
+      "seconds": 0.728,
+      "expectedSlots": {
+        "category": "parking",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "parking",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "noise_10db",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": 10,
+      "reference": "Find the station.",
+      "expectedCategory": "unknown",
+      "transcript": "Find the station.",
+      "wordErrors": 0,
+      "referenceWords": 3,
+      "audioSeconds": 1.093,
+      "seconds": 0.767,
+      "expectedSlots": {
+        "category": "unknown",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "unknown",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "noise_10db",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": 10,
+      "reference": "Find a pharmacy with at most one kilometer extra.",
+      "expectedCategory": "pharmacy",
+      "transcript": "Find a pharmacy with its most 1-kilometer extra.",
+      "wordErrors": 2,
+      "referenceWords": 9,
+      "audioSeconds": 2.904,
+      "seconds": 1.14,
+      "expectedSlots": {
+        "category": "pharmacy",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": 1000,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "pharmacy",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": 1000,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "noise_10db",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": 10,
+      "reference": "Find an ATM nearby.",
+      "expectedCategory": "atm",
+      "transcript": "Find an ATM nearby.",
+      "wordErrors": 0,
+      "referenceWords": 4,
+      "audioSeconds": 1.673,
+      "seconds": 0.876,
+      "expectedSlots": {
+        "category": "atm",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "atm",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "noise_10db",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": 10,
+      "reference": "Find a bus stop near me.",
+      "expectedCategory": "bus_stop",
+      "transcript": "time to bus stop near me.",
+      "wordErrors": 2,
+      "referenceWords": 6,
+      "audioSeconds": 1.569,
+      "seconds": 0.764,
+      "expectedSlots": {
+        "category": "bus_stop",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "bus_stop",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "noise_10db",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": 10,
+      "reference": "Find a train station nearby.",
+      "expectedCategory": "train_station",
+      "transcript": "Find a train station nearby.",
+      "wordErrors": 0,
+      "referenceWords": 5,
+      "audioSeconds": 1.917,
+      "seconds": 0.607,
+      "expectedSlots": {
+        "category": "train_station",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "train_station",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    },
+    {
+      "condition": "noise_10db",
+      "voice": "Samantha",
+      "rate": 175,
+      "snrDb": 10,
+      "reference": "Find a public library.",
+      "expectedCategory": "library",
+      "transcript": "Find a public library.",
+      "wordErrors": 0,
+      "referenceWords": 4,
+      "audioSeconds": 1.499,
+      "seconds": 0.938,
+      "expectedSlots": {
+        "category": "library",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "recognizedSlots": {
+        "category": "library",
+        "nearbyRadiusMeters": null,
+        "maxExtraDistanceMeters": null,
+        "maxExtraDurationSeconds": null
+      },
+      "categoryCorrect": true,
+      "slotsCorrect": true
+    }
+  ],
+  "summary": {
+    "clean_us": {
+      "samples": 12,
+      "rawWordErrorRate": 0.0685,
+      "categoryAccuracy": 1,
+      "allSlotsAccuracy": 1,
+      "meanInferenceSeconds": 0.975
+    },
+    "clean_uk": {
+      "samples": 12,
+      "rawWordErrorRate": 0.0548,
+      "categoryAccuracy": 1,
+      "allSlotsAccuracy": 1,
+      "meanInferenceSeconds": 1.103
+    },
+    "fast_us": {
+      "samples": 12,
+      "rawWordErrorRate": 0.0959,
+      "categoryAccuracy": 1,
+      "allSlotsAccuracy": 1,
+      "meanInferenceSeconds": 0.713
+    },
+    "noise_10db": {
+      "samples": 12,
+      "rawWordErrorRate": 0.0959,
+      "categoryAccuracy": 1,
+      "allSlotsAccuracy": 1,
+      "meanInferenceSeconds": 0.738
+    }
+  }
+}

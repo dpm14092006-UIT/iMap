@@ -3,7 +3,7 @@
 1. **SRP:** mỗi class một lý do thay đổi (`CreateTrafficReportUseCase` tạo report; `TrafficController` chỉ nhận/trả HTTP).
 2. **OCP / DIP:** use case phụ thuộc interface `TrafficReportRepository` chứ không phụ thuộc Supabase class.
 3. **LSP:** adapter mới triển khai đúng contract, có test với cả `InMemory` và `Supabase`.
-4. **ISP:** `RouteProvider`, `MatrixProvider`, `AiVisionProvider` không ghép một interface khổng lồ.
+4. **ISP:** `RouteProvider`, `MatrixProvider`, `TrafficReportRepository` giữ hợp đồng nhỏ theo trách nhiệm.
 5. **Dependency direction:** domain không import Express, React, DB, SDK hay config.
 6. **Constructor injection:** container tạo repo/provider rồi truyền vào use case. Không dùng singleton global giấu dependencies.
 7. **Data validation:** Zod ở HTTP edge; domain entity vẫn tự bảo vệ invariants.
@@ -16,4 +16,4 @@
 
 ## Ví dụ luồng dependency
 
-`POST /api/traffic-reports` → `TrafficController.create` → `CreateTrafficReportUseCase.execute` → `TrafficReportRepository.save` → `InMemoryTrafficReportRepository` (sau đó Supabase adapter).
+`POST /api/traffic-reports` → `TrafficController.create` → `CreateTrafficReportUseCase.execute` → `TrafficReportRepository.save` → `SupabaseTrafficReportRepository`. `InMemoryTrafficReportRepository` là adapter dành cho local/test.

@@ -1,51 +1,46 @@
-# Folder tree và ownership
+# Cấu trúc thư mục hiện tại
 
 ```text
 RouteTwin_OOP_Starter/
 ├── apps/
-│   ├── web/                            React + Vite + TypeScript + Tailwind CSS
-│   │   └── src/
-│   │       ├── app/                     App shell, feature composition, panel layout
-│   │       ├── features/
-│   │       │   ├── map/                 [N1] MapView, layer controls, map data/types
-│   │       │   ├── places/              [N1] Search, autocomplete
-│   │       │   ├── navigation/          [N1] GPS / vehicle / route results
-│   │       │   ├── multi-stop/          [N1] TSP route planner
-│   │       │   ├── my-routes/           [N1] Saved routes
-│   │       │   ├── traffic/             [N2] Quick reports / clearance / hook
-│   │       │   ├── ai-vision/           [N2] Upload / AI results
-│   │       │   └── auth/                [N2] Supabase Auth UI
-│   │       └── shared/                  API client, UI utilities, icons
-│   └── api/                            Express + TypeScript
-│       └── src/
-│           ├── main.ts                 App entry point
-│           ├── app.ts                  HTTP routes + middleware
-│           ├── composition-root.ts     Dependency Injection / wiring
-│           ├── config/                 Validated environment variables
-│           ├── shared/                 Errors, middleware, HTTP conventions
-│           └── modules/
-│               ├── places/             [N1] Vietmap Places/Autocomplete
-│               ├── navigation/         [N1] Routing, OSM, Dijkstra/A*
-│               ├── optimization/       [N1] Matrix, TSP, NN, 2-opt
-│               ├── my-routes/          [N1] Saved Routes API
-│               ├── traffic/            [N2] Entity, Use Cases, Repo, HTTP
-│               │   ├── domain/         Entities + rules
-│               │   ├── application/    Use Cases + Ports
-│               │   ├── infrastructure/ DB/realtime adapters
-│               │   └── presentation/   Controllers + Express routes
-│               ├── ai-vision/          [N2] Gemini traffic/sign adapters
-│               └── auth/               [N2] JWT, current user, permissions
-├── packages/shared/                  [BOTH] Types, Zod DTO contracts
-├── supabase/migrations/               [N2] PostGIS, schema, RLS
-├── docs/                              [BOTH] Architecture / ownership
-├── .github/workflows/                [BOTH] CI checks
-├── scripts/                           Import/test helper scripts
-├── run.sh                             Launcher Mac one command
-└── package.json                       npm workspaces
+│   ├── web/src/
+│   │   ├── app/                         Shell và ghép các tính năng
+│   │   ├── features/
+│   │   │   ├── auth/                    Supabase Auth UI/context
+│   │   │   ├── map/                     Leaflet, lớp traffic, dữ liệu mẫu
+│   │   │   ├── places/                  Tìm kiếm Photon/OSM
+│   │   │   ├── navigation/              Gọi VietMap Route API
+│   │   │   ├── multi-stop/              Lập kế hoạch nhiều điểm
+│   │   │   ├── my-routes/               UI lưu localStorage; chưa có API
+│   │   │   └── traffic/                 Báo cáo, ảnh, gợi ý Gemini, xác nhận
+│   │   └── shared/                      API client và UI dùng chung
+│   └── api/src/
+│       ├── config/                      Đọc và kiểm tra biến môi trường
+│       ├── shared/                      HTTP, lỗi và Supabase client
+│       ├── modules/
+│       │   ├── places/                  Photon provider và tìm kiếm
+│       │   ├── navigation/              VietMap route, graph, Dijkstra
+│       │   ├── optimization/            Strategy tối ưu và matrix port
+│       │   ├── my-routes/               Tài liệu; API chưa triển khai
+│       │   └── traffic/                 Domain, use cases, adapters, HTTP
+│       ├── composition-root.ts           Dependency injection
+│       ├── app.ts                        Express middleware/routes
+│       └── main.ts                       Entry point
+├── packages/shared/src/                  DTO, Zod schemas, types
+├── supabase/
+│   ├── migrations/                       PostGIS, Auth/RLS, ảnh, xác nhận
+│   └── ops/                              SQL vận hành hạn báo cáo
+├── docs/                                 Kiến trúc, API, kế hoạch, ownership
+├── tests/e2e/                            Chỗ đặt kiểm thử E2E
+├── scripts/                              Chỗ đặt script tiện ích
+├── assets/                               Tài liệu về tài sản có quyền sử dụng
+├── .github/workflows/                    CI
+├── run.sh                                Chạy web và API trên Mac
+└── package.json                          npm workspaces
 ```
 
-## Chuẩn cho mỗi module backend mới
+AI không có feature riêng: phân tích ảnh sự cố và biển báo nằm trong form Báo cáo giao thông. Backend xác thực token Supabase trong `shared/http`; chưa có module `auth` riêng. Các thư mục chỉ có README ghi rõ phạm vi là khung cho phần chưa triển khai, không phải mã chạy.
 
-`domain` → không import framework, SDK; `application` → case nghiệp vụ, ports; `infrastructure` → Vietmap/Gemini/Supabase adapters; `presentation` → controller HTTP, schema validation.
+## Quy tắc module backend
 
-Module nhỏ có thể khởi tạo các folder khi bắt đầu triển khai, không cần tạo hàng chục class rỗng. Ưu tiên class có trách nhiệm và test rõ ràng hơn là dùng kế thừa phức tạp.
+`domain` không phụ thuộc framework/SDK; `application` chứa use case và ports; `infrastructure` triển khai provider/repository; `presentation` xử lý HTTP và schema validation. Chỉ khởi tạo folder khi có mã thực tế cần đặt vào đó.

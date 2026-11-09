@@ -8,15 +8,12 @@ const HCMC_CENTER: L.LatLngExpression = [10.783, 106.704];
 const COLORS = { start: '#20a26b', end: '#2476ea', route: '#2476ea', multiRoute: '#167dcb', dijkstra: '#8b5cf6', astar: '#f97316', coverage: '#64748b' };
 
 export type MapControllerHandlers = {
-  onSelectPlace: (place: Place) => void;
   onMapClick: (point: LatLng) => void;
 };
 
 /** Toàn bộ dữ liệu cần vẽ trên bản đồ, được MapView truyền vào mỗi khi thay đổi. */
 export type MapControllerData = {
   layer: MapLayer;
-  places: Place[];
-  selectedPlaceId: string | null;
   route: RoutePlan | null;
   draftStops: DraftStops;
   trafficLayer: TrafficMapLayer;
@@ -35,7 +32,6 @@ export class LeafletMapController {
   private readonly streets: L.TileLayer;
   private readonly imagery: L.TileLayer;
   // Mỗi loại dữ liệu một layer group riêng để xóa/vẽ lại độc lập.
-  private readonly placesLayer = L.layerGroup();
   private readonly algorithmLayer = L.layerGroup();
   private readonly routeLayer = L.layerGroup();
   private readonly trafficLayer = L.layerGroup();
@@ -44,7 +40,7 @@ export class LeafletMapController {
   private lastOverlayKey: string | null = null;
   private activeLayer: MapLayer = 'street';
 
-  constructor(container: HTMLElement, private readonly handlers: MapControllerHandlers) {
+  constructor(container: HTMLElement, handlers: MapControllerHandlers) {
     this.map = L.map(container, { zoomControl: false, preferCanvas: true, attributionControl: true }).setView(HCMC_CENTER, 13);
     this.map.attributionControl.setPosition('bottomleft');
     this.streets = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
@@ -56,7 +52,6 @@ export class LeafletMapController {
       attribution: 'Imagery © Esri, Vantor, Earthstar Geographics, and the GIS User Community',
     });
     this.streets.addTo(this.map);
-    this.placesLayer.addTo(this.map);
     this.algorithmLayer.addTo(this.map); // nằm dưới tuyến VietMap và marker
     this.routeLayer.addTo(this.map);
     this.trafficLayer.addTo(this.map);
@@ -68,9 +63,6 @@ export class LeafletMapController {
   update(data: MapControllerData) {
     this.setLayer(data.layer);
     this.setPicking(data.isPicking);
-
-    this.placesLayer.clearLayers();
-    for (const place of data.places) this.drawPlace(place, place.id === data.selectedPlaceId);
 
     this.routeLayer.clearLayers();
     if (data.route) this.drawRoute(data.route);
@@ -95,15 +87,22 @@ export class LeafletMapController {
     this.lastOverlayKey = overlay?.key ?? null;
   }
 
+  /** 'dark' dùng chung tile OSM với 'street' nhưng thêm class CSS để đảo màu (xem styles.css). */
   setLayer(layer: MapLayer) {
-    if (this.activeLayer === layer && (layer === 'street' ? this.map.hasLayer(this.streets) : this.map.hasLayer(this.imagery))) return;
+    const expectedLayerIsVisible = layer === 'satellite' ? this.map.hasLayer(this.imagery) : this.map.hasLayer(this.streets);
+    if (this.activeLayer === layer && expectedLayerIsVisible) {
+      this.map.getContainer().classList.toggle('map-theme-dark', layer === 'dark');
+      return;
+    }
     this.activeLayer = layer;
     if (layer === 'satellite') {
+      this.map.getContainer().classList.remove('map-theme-dark');
       this.map.removeLayer(this.streets);
       this.imagery.addTo(this.map);
     } else {
       this.map.removeLayer(this.imagery);
       this.streets.addTo(this.map);
+      this.map.getContainer().classList.toggle('map-theme-dark', layer === 'dark');
     }
   }
 
@@ -117,19 +116,6 @@ export class LeafletMapController {
   /** Đổi con trỏ thành dấu "+" khi người dùng đang chọn điểm trên bản đồ. */
   private setPicking(isPicking: boolean) {
     this.map.getContainer().classList.toggle('is-picking', isPicking);
-  }
-
-  private drawPlace(place: Place, selected: boolean) {
-    const marker = L.circleMarker([place.lat, place.lng], {
-      radius: selected ? 8 : 5,
-      color: '#ffffff',
-      weight: selected ? 3 : 2,
-      fillColor: selected ? '#2476ea' : '#547f68',
-      fillOpacity: 1,
-      bubblingMouseEvents: false,
-    }).addTo(this.placesLayer);
-    marker.bindTooltip(this.textElement('span', place.name), { direction: 'top', offset: [0, -5], className: 'routetwin-tooltip' });
-    marker.on('click', () => this.handlers.onSelectPlace(place));
   }
 
   private drawRoute(route: RoutePlan) {
@@ -196,16 +182,20 @@ export class LeafletMapController {
       if (feature.properties.status !== 'active') continue;
       const [lng, lat] = feature.geometry.coordinates; // GeoJSON: [lng, lat]
       if (typeof lat !== 'number' || typeof lng !== 'number') continue;
-      const marker = L.marker([lat, lng], { icon: this.trafficIcon(feature.properties.severity), keyboard: false }).addTo(this.trafficLayer);
+      const { severity, communityReporterCount = 0 } = feature.properties;
+      const marker = L.marker([lat, lng], { icon: this.trafficIcon(severity, communityReporterCount), keyboard: false }).addTo(this.trafficLayer);
       marker.bindPopup(this.trafficPopup(feature));
     }
   }
 
+  /** Popup sự cố: tiêu đề + số báo cáo được gộp và số người xác nhận (dữ liệu cộng đồng từ N2). */
   private trafficPopup({ properties }: TrafficFeature): HTMLElement {
     const content = document.createElement('div');
-    const status = properties.verified ? 'Đã xác minh' : 'Cảnh báo cộng đồng · chưa xác minh';
-    const time = properties.reportedAt ? ` · ${new Date(properties.reportedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : '';
-    const detail = this.textElement('p', `${status}${time}`);
+    const formatTime = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const reportCount = properties.communityReportCount ?? 1;
+    const reporterCount = properties.communityReporterCount ?? 0;
+    const freshness = properties.communityUpdatedAt ? ` · cập nhật ${formatTime(properties.communityUpdatedAt)}` : ' · chưa có xác nhận mới';
+    const detail = this.textElement('p', `${reportCount} báo cáo / 75 m trong 30 phút từ ${reporterCount} người${freshness}`);
     detail.className = 'mb-0 mt-1 text-xs text-slate-500';
     content.append(this.textElement('strong', properties.title), detail);
     return content;
@@ -221,8 +211,10 @@ export class LeafletMapController {
     this.map.fitBounds(L.latLngBounds(points).pad(0.18), { padding: [70, 70], maxZoom: 15 });
   }
 
-  private trafficIcon(severity: TrafficSeverity) {
-    return L.divIcon({ className: `routetwin-incident-marker ${severity}`, html: '<span>!</span>', iconSize: [28, 28], iconAnchor: [14, 14] });
+  /** Marker sự cố: màu theo mức độ; hiện số người xác nhận khi có từ 2 người trở lên, nếu không thì "!". */
+  private trafficIcon(severity: TrafficSeverity, communityReporterCount: number) {
+    const label = communityReporterCount > 1 ? String(communityReporterCount) : '!';
+    return L.divIcon({ className: `routetwin-incident-marker ${severity}`, html: `<span>${label}</span>`, iconSize: [28, 28], iconAnchor: [14, 14] });
   }
 
   /** Tạo element bằng textContent (không dùng innerHTML) để tránh chèn HTML từ dữ liệu người dùng. */

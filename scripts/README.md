@@ -1,6 +1,6 @@
 # Scripts
 
-N1: importer OSM TP.HCM và thuật toán benchmark CLI; N2: seed dữ liệu phát triển và script check migrations/permissions. Không đưa API key trong script.
+Thư mục dành cho tiện ích dùng thực tế như importer, seed hoặc kiểm tra migration. Không ghi API key hoặc dữ liệu người dùng vào script.
 
 ## N1 – OSM & benchmark
 

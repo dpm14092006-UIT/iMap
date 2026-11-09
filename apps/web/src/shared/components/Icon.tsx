@@ -1,9 +1,9 @@
 import type { ReactNode, SVGProps } from 'react';
 
 export type IconName =
-  | 'arrow-up-right' | 'bookmark' | 'car' | 'check' | 'chevron-down' | 'close'
+  | 'sparkles' | 'arrow-up-right' | 'bookmark' | 'car' | 'check' | 'chevron-down' | 'close'
   | 'compass' | 'current-location' | 'directions' | 'globe' | 'layers' | 'menu'
-  | 'motorcycle' | 'multi-stop' | 'plus' | 'minus' | 'search' | 'sparkles'
+  | 'motorcycle' | 'multi-stop' | 'plus' | 'minus' | 'moon' | 'search'
   | 'traffic' | 'upload' | 'swap' | 'clock' | 'road' | 'pin' | 'bike'
   | 'walk' | 'camera' | 'trash' | 'heart' | 'more' | 'send' | 'route'
   | 'parking' | 'cafe' | 'shop' | 'hospital' | 'close-circle';
@@ -19,6 +19,7 @@ const common = {
 };
 
 const shapes: Record<IconName, ReactNode> = {
+    sparkles: <><path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3Z"/><path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></>,
     'arrow-up-right': <><path d="M7 17 17 7"/><path d="M8 7h9v9"/></>,
     bookmark: <path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.6L6 21V4.75Z"/>,
     car: <><path d="m5 10 1.6-4.1A2 2 0 0 1 8.5 4.6h7a2 2 0 0 1 1.9 1.3L19 10"/><path d="M3.8 10.4A2 2 0 0 1 5.6 9h12.8a2 2 0 0 1 1.8 1.4l1 4.1a1.7 1.7 0 0 1-1.7 2.1H4.5a1.7 1.7 0 0 1-1.7-2.1l1-4.1Z"/><path d="M6 17.5v2M18 17.5v2M6 13h.01M18 13h.01"/></>,
@@ -35,8 +36,8 @@ const shapes: Record<IconName, ReactNode> = {
     'multi-stop': <><circle cx="5" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 6h7a3 3 0 0 1 3 3v3a3 3 0 0 1-3 3H8"/><path d="m11 12-3 3 3 3"/></>,
     plus: <><path d="M12 5v14M5 12h14"/></>,
     minus: <path d="M5 12h14"/>,
+    moon: <path d="M20.6 15.1A8.7 8.7 0 0 1 8.9 3.4 8.8 8.8 0 1 0 20.6 15.1Z"/>,
     search: <><circle cx="10.8" cy="10.8" r="6.6"/><path d="m16 16 5 5"/></>,
-    sparkles: <><path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3Z"/><path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></>,
     traffic: <><path d="m12 3 9 16H3l9-16Z"/><path d="M12 9v4M12 16.5h.01"/></>,
     upload: <><path d="M12 16V4M7 9l5-5 5 5"/><path d="M5 14v4.25A1.75 1.75 0 0 0 6.75 20h10.5A1.75 1.75 0 0 0 19 18.25V14"/></>,
     swap: <><path d="m7 7 3-3 3 3M10 4v15M17 17l-3 3-3-3M14 20V5"/></>,

@@ -24,6 +24,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .routetwin-leaflet .leaflet-control-attribution { margin: 0 0 3px 3px; border-radius: 5px; background: rgba(255,255,255,.84); color: #475569; font-size: 9px; }
 .routetwin-leaflet .leaflet-control-attribution a { color: #315d8a; }
 .routetwin-leaflet .leaflet-tile { filter: saturate(.92); }
+.routetwin-leaflet.map-theme-dark { background: #05070b; }
+.routetwin-leaflet.map-theme-dark .leaflet-tile-pane .leaflet-tile { filter: invert(1) hue-rotate(180deg) brightness(.72) contrast(1.12) saturate(.58); }
+.routetwin-leaflet.map-theme-dark .leaflet-control-attribution { color: #cbd5e1; background: rgb(15 23 42 / 82%); }
+.routetwin-leaflet.map-theme-dark .leaflet-control-attribution a { color: #93c5fd; }
 .routetwin-tooltip { border: 0; border-radius: 7px; padding: 4px 7px; background: rgba(255,255,255,.96); box-shadow: 0 2px 10px rgba(20,37,58,.16); color: #172b43; font: 600 11px Inter, system-ui, sans-serif; }
 .routetwin-tooltip::before { display: none; }
 .routetwin-route-marker { border: 0; background: transparent; }

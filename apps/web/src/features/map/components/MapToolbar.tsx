@@ -13,7 +13,7 @@ export function MapToolbar({ layer, onLayerChange, onZoomIn, onZoomOut, onLocate
   return (
     <div className="map-controls absolute bottom-6 right-5 z-20 flex flex-col items-end gap-2 max-md:bottom-[calc(56dvh+10px)] max-md:right-3">
       <div className="flex items-center rounded-full border border-white bg-white/95 p-1 shadow-lg shadow-slate-900/10 backdrop-blur-md max-md:p-0.5" role="group" aria-label="Kiểu bản đồ">
-        <button type="button" aria-pressed={layer === 'street'} onClick={() => onLayerChange('street')} className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-semibold transition max-md:gap-1 max-md:px-2.5 max-md:py-1.5 max-md:text-[10px] ${layer === 'street' ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:text-ink'}`}><Icon name="layers" size={15} /> Bản đồ</button>
+        <button type="button" aria-pressed={layer !== 'satellite'} onClick={() => onLayerChange('street')} className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-semibold transition max-md:gap-1 max-md:px-2.5 max-md:py-1.5 max-md:text-[10px] ${layer !== 'satellite' ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:text-ink'}`}><Icon name="layers" size={15} /> Bản đồ</button>
         <button type="button" aria-pressed={layer === 'satellite'} onClick={() => onLayerChange('satellite')} className={`rounded-full px-3 py-2 text-[11px] font-semibold transition max-md:px-2.5 max-md:py-1.5 max-md:text-[10px] ${layer === 'satellite' ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:text-ink'}`}>Vệ tinh</button>
       </div>
       <div className="overflow-hidden rounded-2xl border border-white bg-white/95 shadow-lg shadow-slate-900/10 backdrop-blur-md" role="group" aria-label="Điều khiển bản đồ">
