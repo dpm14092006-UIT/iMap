@@ -4,7 +4,7 @@
 
 - Nhấn biểu tượng tài khoản ở góc bản đồ để mở `/login`.
 - Trang riêng hỗ trợ đăng nhập email/mật khẩu, đăng ký, hiện/ẩn mật khẩu, đăng xuất và quay lại bản đồ.
-- Trên điện thoại, form nằm trước phần giới thiệu để không phải cuộn mới thấy form.
+- Desktop dùng form cạnh minh họa tuyến đường SVG; điện thoại ẩn minh họa và ưu tiên form. Bỏ khối quảng bá/thẻ tính năng lớn. Ô nhập trên mobile dùng chữ 16px để tránh tự zoom khi focus.
 - Các hành động gửi/xác nhận báo cáo vẫn có thể mở AuthPanel ngay trong bản đồ; cả hai dùng chung `AccountForm` và `AuthProvider`.
 - Thành công hiển thị trạng thái tài khoản và nút tiếp tục với bản đồ. Khi Supabase yêu cầu xác nhận email, đăng ký hiển thị hướng dẫn kiểm tra email và không giả định đã có phiên.
 
