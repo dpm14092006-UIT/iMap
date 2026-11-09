@@ -8,11 +8,14 @@
     "dev": "npm run build -w @routetwin/shared && concurrently -k -n API,WEB -c cyan,magenta \"npm run dev -w @routetwin/api\" \"npm run dev -w @routetwin/web\"",
     "build": "npm run build -w @routetwin/shared && npm run build -w @routetwin/api && npm run build -w @routetwin/web",
     "test": "npm run build -w @routetwin/shared && npm run test -w @routetwin/api",
-    "typecheck": "npm run build -w @routetwin/shared && npm run typecheck -w @routetwin/api && npm run typecheck -w @routetwin/web"
+    "typecheck": "npm run build -w @routetwin/shared && npm run typecheck -w @routetwin/api && npm run typecheck -w @routetwin/web",
+    "osm:import": "tsx scripts/osm/import-osm.ts",
+    "benchmark:pathfinding": "tsx scripts/benchmark/benchmark-pathfinding.ts"
   },
   "engines": { "node": ">=20.19" },
   "devDependencies": {
     "concurrently": "^9.1.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.8.3",
     "@types/node": "^22.15.0"
   }

@@ -67,7 +67,8 @@ Frontend chia theo feature (`map`, `places`, `navigation`, `multi-stop`, `my-rou
 | `GET /api/places/suggest` | N1 | Photon / OpenStreetMap |
 | `GET /api/places/reverse` | N1 | Photon reverse geocoding (tọa độ → địa chỉ) |
 | `POST /api/routes/calculate` | N1 | VietMap Route v4; cần `VIETMAP_API_KEY` |
-| `POST /api/routes/algorithm` | N1 | 501, chưa OSM import |
+| `POST /api/routes/algorithm` | N1 | Dijkstra / A* trên đồ thị OSM trung tâm TP.HCM |
+| `GET /api/routes/algorithm/graph` | N1 | Vùng phủ + kích thước đồ thị OSM |
 | `POST /api/routes/optimize` | N1 | 501, chưa Matrix/TSP |
 | `GET /api/my-routes` | N1 | 501, chưa Supabase |
 | `POST /api/ai/analyze-traffic` | N2 | 501, chưa Gemini |

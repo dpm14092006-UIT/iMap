@@ -10,6 +10,7 @@ import { MultiStopPanel } from '../features/multi-stop/components/MultiStopPanel
 import { SavedRoutesPanel } from '../features/my-routes/components/SavedRoutesPanel';
 import type { SavedRoute } from '../features/my-routes/types';
 import { RoutePanel, type PickTarget } from '../features/navigation/components/RoutePanel';
+import { useAlgorithmComparison } from '../features/navigation/hooks/useAlgorithmComparison';
 import { useDirections } from '../features/navigation/hooks/useDirections';
 import { RouteApiClient } from '../features/navigation/services/RouteApiClient';
 import { formatDistanceKm, formatDurationMinutes } from '../features/navigation/utils/format';
@@ -100,6 +101,9 @@ export function App() {
     initialOrigin: defaultOrigin,
     initialDestination: defaultDestination,
   });
+
+  // So sánh Dijkstra / A* cho cùng điểm đi, điểm đến và loại xe của panel chỉ đường.
+  const comparison = useAlgorithmComparison({ origin: directions.origin, destination: directions.destination, vehicle: directions.vehicle });
 
   // Marker A/B cho điểm đã chọn nhưng chưa tính tuyến (chỉ khi panel chỉ đường đang mở).
   const draftStops = useMemo<DraftStops>(
@@ -256,6 +260,7 @@ export function App() {
       <MapView
         controllerRef={mapController}
         currentLocation={currentLocation}
+        algorithmOverlay={activePanel === 'directions' ? comparison.overlay : null}
         draftStops={draftStops}
         isPicking={pickTarget !== null}
         layer={layer}
@@ -299,6 +304,7 @@ export function App() {
 
       {activePanel === 'directions' && (
         <RoutePanel
+          comparison={comparison}
           directions={directions}
           isLocating={isLocating}
           pickTarget={pickTarget}
