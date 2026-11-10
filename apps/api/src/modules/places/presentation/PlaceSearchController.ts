@@ -8,6 +8,7 @@ import type { SearchPlacesUseCase } from '../application/use-cases/SearchPlacesU
 /** GET /api/places/suggest?q=...&lat=...&lng=... */
 const searchQuerySchema = z.object({
   q: z.string().trim().min(2).max(120),
+  kind: z.enum(['all', 'street']).default('all'),
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
 });
@@ -30,7 +31,7 @@ export class PlaceSearchController {
     try {
       const input = searchQuerySchema.parse(req.query);
       const focus = input.lat !== undefined && input.lng !== undefined ? { lat: input.lat, lng: input.lng } : undefined;
-      res.json({ data: await this.searchPlaces.execute(input.q, focus) });
+      res.json({ data: await this.searchPlaces.execute(input.q, focus, input.kind) });
     } catch (error) {
       next(error);
     }

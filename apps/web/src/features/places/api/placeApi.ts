@@ -18,8 +18,8 @@ function toSuggestion(suggestion: PlaceSuggestion): PlaceSearchSuggestion {
 /** Client gọi module `places` của backend (VietMap). */
 export const placeApi = {
   /** Gợi ý địa điểm theo từ khóa, ưu tiên khu vực quanh `focus`. */
-  async suggest(query: string, focus: LatLng, signal?: AbortSignal): Promise<PlaceSearchSuggestion[]> {
-    const params = new URLSearchParams({ q: query, lat: String(focus.lat), lng: String(focus.lng) });
+  async suggest(query: string, focus: LatLng, signal?: AbortSignal, kind: 'all' | 'street' = 'all'): Promise<PlaceSearchSuggestion[]> {
+    const params = new URLSearchParams({ q: query, lat: String(focus.lat), lng: String(focus.lng), kind });
     const data = await apiRequest<PlaceSuggestion[]>(`/places/suggest?${params}`, { signal });
     return data.map(toSuggestion);
   },

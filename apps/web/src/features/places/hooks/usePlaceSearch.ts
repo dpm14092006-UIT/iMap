@@ -17,11 +17,11 @@ const HCMC_CENTER: LatLng = { lat: 10.779, lng: 106.701 };
  * - Gõ liên tục: chỉ gọi API sau khi dừng gõ DEBOUNCE_MS.
  * - Gõ tiếp khi request cũ chưa xong: request cũ bị abort, không ghi đè kết quả mới.
  */
-export function usePlaceSearch(query: string, focus: LatLng = HCMC_CENTER, enabled = true) {
+export function usePlaceSearch(query: string, focus: LatLng = HCMC_CENTER, enabled = true, kind: 'all' | 'street' = 'all') {
   const [results, setResults] = useState<PlaceSearchSuggestion[]>([]);
   const [status, setStatus] = useState<PlaceSearchStatus>('idle');
   const trimmed = query.trim();
-  const requestKey = `${trimmed}|${focus.lat}|${focus.lng}`;
+  const requestKey = `${trimmed}|${focus.lat}|${focus.lng}|${kind}`;
   const [completedQuery, setCompletedQuery] = useState('');
   const [error, setError] = useState('');
 
@@ -36,7 +36,7 @@ export function usePlaceSearch(query: string, focus: LatLng = HCMC_CENTER, enabl
     const timer = window.setTimeout(async () => {
       setResults([]); setError(''); setStatus('loading');
       try {
-        const found = await placeApi.suggest(trimmed, focus, controller.signal);
+        const found = await placeApi.suggest(trimmed, focus, controller.signal, kind);
         if (controller.signal.aborted) return;
         setResults(found);
         setCompletedQuery(requestKey); setStatus('ready');
@@ -53,7 +53,7 @@ export function usePlaceSearch(query: string, focus: LatLng = HCMC_CENTER, enabl
       controller.abort();
     };
     // Phụ thuộc vào lat/lng thay vì object focus để không gọi lại khi object được tạo mới.
-  }, [trimmed, focus.lat, focus.lng, enabled, requestKey]);
+  }, [trimmed, focus.lat, focus.lng, enabled, requestKey, kind]);
 
   return { results: completedQuery === requestKey ? results : [], status: trimmed.length < MIN_QUERY_LENGTH ? 'idle' as const : completedQuery !== requestKey ? 'loading' as const : status, error: completedQuery === requestKey ? error : '' };
 }
