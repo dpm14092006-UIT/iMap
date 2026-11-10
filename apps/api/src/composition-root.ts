@@ -1,3 +1,5 @@
+import { OptimizeRouteUseCase } from './modules/optimization/application/OptimizeRouteUseCase.js';
+import { VietmapMatrixProvider } from './modules/optimization/infrastructure/VietmapMatrixProvider.js';
 import { ExplorePlacesUseCase } from './modules/route-stops/application/use-cases/ExplorePlacesUseCase.js';
 import { FindRouteStopsUseCase } from './modules/route-stops/application/use-cases/FindRouteStopsUseCase.js';
 import { OverpassStopPlaceProvider } from './modules/route-stops/infrastructure/providers/OverpassStopPlaceProvider.js';
@@ -44,6 +46,7 @@ export function createContainer() {
     placeProvider,
   );
   const routeProvider = new VietmapRouteProvider(env.VIETMAP_API_KEY);
+  const optimizeRoute = new OptimizeRouteUseCase(new VietmapMatrixProvider(env.VIETMAP_API_KEY), routeProvider);
   const routeController = new RouteController(new CalculateRouteUseCase(routeProvider));
   const stopPlaces = new OverpassStopPlaceProvider(env.OVERPASS_API_URL);
   const stopParser = new AiStopIntentParser({ provider: env.STOP_AI_PROVIDER, model: env.STOP_AI_MODEL, apiKey: env.GEMINI_API_KEY, ollamaUrl: env.OLLAMA_BASE_URL });
@@ -56,5 +59,5 @@ export function createContainer() {
     new FindPathUseCase(roadGraphSource, { dijkstra: new DijkstraSolver(), astar: new AStarSolver() }),
     new GetRoadGraphInfoUseCase(roadGraphSource),
   );
-  return { trafficController, placeSearchController, routeController, findRouteStops, explorePlaces, pathfindingController };
+  return { optimizeRoute, trafficController, placeSearchController, routeController, findRouteStops, explorePlaces, pathfindingController };
 }

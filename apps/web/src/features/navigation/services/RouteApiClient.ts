@@ -1,4 +1,4 @@
-import type { RouteResult } from '@routetwin/shared';
+import type { OptimizeRouteResult, RouteResult } from '@routetwin/shared';
 import type { RouteObjective, RoutePlan, TransportMode } from '../../map/types';
 import type { Place } from '../../places/types';
 
@@ -6,6 +6,20 @@ type RouteApiError = { error?: { message?: string } };
 
 /** Client boundary for the API's VietMap-backed route calculation. */
 export class RouteApiClient {
+  async createOptimizedPlan(stops: Place[], vehicle: TransportMode, objective: RouteObjective, returnToStart: boolean): Promise<RoutePlan | { error: string }> {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? '/api'}/routes/optimize`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ points: stops.map(({ lat, lng }) => ({ lat, lng })), vehicle, objective: objective === 'distance' ? 'distance' : 'duration', returnToStart }),
+      });
+      const payload = await response.json() as { data?: OptimizeRouteResult } & RouteApiError;
+      if (!response.ok) return { error: payload.error?.message ?? 'Không tối ưu được hành trình.' };
+      const data = payload.data;
+      if (!data || data.order.some((index) => !Number.isInteger(index) || !stops[index]) || data.order.length !== stops.length + (returnToStart ? 1 : 0) || new Set(data.order).size !== stops.length || data.order[0] !== 0 || (returnToStart && data.order.at(-1) !== 0)) return { error: 'Thứ tự tối ưu trả về không hợp lệ.' };
+      return routePlanFromResult(data.route, data.order.map((index) => stops[index]!), vehicle, objective);
+    } catch { return { error: 'Không kết nối được dịch vụ tối ưu hành trình. Hãy thử lại.' }; }
+  }
+
   async createPlan(stops: Place[], vehicle: TransportMode, objective: RouteObjective = 'time'): Promise<RoutePlan | { error: string }> {
     if (stops.length < 2) return { error: 'Chọn ít nhất điểm đi và điểm đến.' };
     if (vehicle !== 'car' && vehicle !== 'motorcycle') {

@@ -32,7 +32,7 @@ const vehicles: { id: TransportMode; label: string; icon: 'car' | 'motorcycle' }
 /** Panel chỉ đường A → B. Mọi trạng thái nằm trong hook useDirections, panel chỉ hiển thị. */
 export function RoutePanel({ getSearchFocus, directions, comparison, pickTarget, isLocating, onPickOnMap, onUseMyLocation, onSave, onClose }: RoutePanelProps) {
   const { origin, destination, vehicle, route, isLoading, error } = directions;
-  const canCalculate = Boolean(origin && destination) && origin?.id !== destination?.id && !isLoading;
+  const canCalculate = Boolean(origin && destination) && directions.waypoints.every((item) => item.place) && (origin?.id !== destination?.id || directions.waypoints.length > 0) && !isLoading;
 
   return (
     <FloatingPanel eyebrow="LỘ TRÌNH" title="Chỉ đường" icon="directions" onClose={onClose}>
@@ -52,6 +52,15 @@ export function RoutePanel({ getSearchFocus, directions, comparison, pickTarget,
           <span className="absolute -left-[20px] top-[17px] z-10 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 shadow-sm" />
           <PlaceField getFocus={getSearchFocus} ariaLabel="Điểm xuất phát" placeholder="Điểm xuất phát" place={origin} onChange={directions.setOrigin} />
         </div>
+        {directions.waypoints.map((item, index) => <div key={item.key} className="relative">
+          <span className="absolute -left-5 top-4 text-[10px] font-bold text-brand-600">{index + 1}</span>
+          <PlaceField getFocus={getSearchFocus} ariaLabel={`Điểm dừng ${index + 1}`} placeholder={`Điểm dừng ${index + 1}`} place={item.place} onChange={(place) => directions.setWaypoint(item.key, place)} />
+          <div className="mt-1 flex justify-end gap-1">
+            <button type="button" disabled={index === 0} onClick={() => directions.moveWaypoint(index, -1)} aria-label={`Đưa điểm dừng ${index + 1} lên trước`} className="px-2 text-xs text-slate-500 disabled:opacity-30">↑</button>
+            <button type="button" disabled={index === directions.waypoints.length - 1} onClick={() => directions.moveWaypoint(index, 1)} aria-label={`Đưa điểm dừng ${index + 1} xuống sau`} className="px-2 text-xs text-slate-500 disabled:opacity-30">↓</button>
+            <button type="button" onClick={() => directions.removeWaypoint(item.key)} aria-label={`Xóa điểm dừng ${index + 1}`} className="px-2 text-[10px] text-slate-500">Xóa</button>
+          </div>
+        </div>)}
         <div className="relative">
           <span className="absolute -left-[20px] top-[17px] z-10 h-2.5 w-2.5 rounded-[3px] border-2 border-white bg-brand-500 shadow-sm" />
           <PlaceField getFocus={getSearchFocus} ariaLabel="Điểm đến" placeholder="Bạn muốn đi đâu?" place={destination} onChange={directions.setDestination} />
@@ -61,6 +70,8 @@ export function RoutePanel({ getSearchFocus, directions, comparison, pickTarget,
         </button>
       </div>
 
+      <button type="button" disabled={directions.waypoints.length >= 8} onClick={directions.addWaypoint} className="mt-2 ml-5 inline-flex items-center gap-1 text-[11px] font-semibold text-brand-700 disabled:opacity-40"><Icon name="plus" size={14} />Thêm điểm dừng</button>
+      {directions.waypoints.length > 0 && <p className="mt-1 pl-5 text-[10px] text-slate-500">Đi theo thứ tự trên. Muốn tự sắp xếp tốt nhất, dùng Nhiều điểm.</p>}
       {/* Cách chọn điểm khác: GPS hoặc click trên bản đồ. */}
       <div className="mt-3 flex flex-wrap gap-1.5 pl-5">
         <QuickAction icon="current-location" label={isLocating ? 'Đang định vị…' : 'Vị trí của tôi'} disabled={isLocating} onClick={onUseMyLocation} />
@@ -79,10 +90,10 @@ export function RoutePanel({ getSearchFocus, directions, comparison, pickTarget,
 
       {route && <RouteResultCard route={route} onSave={onSave} />}
 
-      <details className="mt-3 border-t border-slate-100 pt-3">
+      {directions.waypoints.length === 0 && <details className="mt-3 border-t border-slate-100 pt-3">
         <summary className="cursor-pointer text-[11px] font-semibold text-slate-500">So sánh Dijkstra / A*</summary>
         <AlgorithmComparison comparison={comparison} canRun={Boolean(origin && destination) && origin?.id !== destination?.id} />
-      </details>
+      </details>}
 
       {!route && <div className="route-note mt-4 flex items-start gap-2 border-t border-slate-100 pt-3 text-[10px] leading-[1.6] text-slate-500">
         <Icon name="compass" size={14} className="mt-0.5 shrink-0 text-slate-400" />

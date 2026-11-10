@@ -39,7 +39,9 @@ export function createApp(container = createContainer()) {
   app.use('/api/route-stops', createRouteStopsRouter(container.findRouteStops, container.explorePlaces));
   app.use('/api/voice', createVoiceRouter());
   app.use('/api/routes', createRoutesRouter(container.routeController, container.pathfindingController));
-  app.post('/api/routes/optimize', notImplemented('Vietmap Matrix + TSP / 2-opt'));
+  app.post('/api/routes/optimize', async (req, res, next) => {
+    try { res.json({ data: await container.optimizeRoute.execute(req.body) }); } catch (error) { next(error); }
+  });
   app.get('/api/my-routes', notImplemented('Supabase saved routes'));
   app.use((_req,res) => res.status(404).json({error:{code:'NOT_FOUND',message:'Không tìm thấy endpoint'}}));
   app.use(errorHandler);
