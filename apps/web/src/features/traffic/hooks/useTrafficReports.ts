@@ -1,19 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { TrafficReportDto, TrafficReportInput } from '@routetwin/shared';
-import { trafficApi } from '../api/trafficApi';
+import type { TrafficReportBounds, TrafficReportDto, TrafficReportInput } from '@routetwin/shared';
+import { trafficApi, vietnamBounds } from '../api/trafficApi';
 import { supabaseClient } from '../../auth/services/supabaseClient';
 
-export function useTrafficReports(accessToken: string | null, userId: string | null) {
+export function useTrafficReports(accessToken: string | null, userId: string | null, bounds: TrafficReportBounds = vietnamBounds) {
   const [reports, setReports] = useState<TrafficReportDto[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [searchBounds, setSearchBounds] = useState(bounds);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearchBounds(bounds), 350);
+    return () => window.clearTimeout(timer);
+  }, [bounds.minLat, bounds.minLng, bounds.maxLat, bounds.maxLng]);
   const latestRequest = useRef(0);
 
   const refresh = useCallback(async () => {
     const requestId = ++latestRequest.current;
     setLoading(true);
     try {
-      const nextReports = await trafficApi.list(accessToken ?? undefined);
+      const nextReports = await trafficApi.list(accessToken ?? undefined, searchBounds);
       if (requestId !== latestRequest.current) return;
       setReports(nextReports);
       setError('');
@@ -23,7 +28,7 @@ export function useTrafficReports(accessToken: string | null, userId: string | n
     } finally {
       if (requestId === latestRequest.current) setLoading(false);
     }
-  }, [accessToken]);
+  }, [accessToken, searchBounds]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 

@@ -17,7 +17,7 @@ export function RouteResultCard({ route, onSave }: RouteResultCardProps) {
         <div className="flex items-center gap-2">
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-white text-brand-600 shadow-sm"><Icon name="route" size={17} /></span>
           <div>
-            <p className="text-[12px] font-bold text-ink">Tuyến theo đường thật</p>
+            <p className="text-[12px] font-bold text-ink">Lộ trình đề xuất</p>
             <p className="mt-0.5 text-[10px] text-slate-500">VietMap · {vehicleLabels[route.vehicle]}</p>
           </div>
         </div>
@@ -29,7 +29,10 @@ export function RouteResultCard({ route, onSave }: RouteResultCardProps) {
         <div><p className="text-[19px] font-bold tracking-tight text-ink">{formatDurationMinutes(route.durationMin)}</p><p className="mt-0.5 text-[10px] text-slate-500">Thời gian ước tính</p></div>
       </div>
 
-      <InstructionList instructions={instructions} />
+      {instructions.length > 0 && <details className="mb-3 border-t border-brand-100 pt-2">
+        <summary className="cursor-pointer py-1 text-[11px] font-semibold text-brand-700">Chỉ dẫn từng bước ({instructions.length})</summary>
+        <InstructionList instructions={instructions} />
+      </details>}
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-[10px] leading-4 text-slate-500">Thời gian có thể đổi theo giao thông.</p>

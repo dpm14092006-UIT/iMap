@@ -5,7 +5,7 @@
  * - map:     điểm người dùng chọn trực tiếp trên bản đồ
  * - gps:     vị trí hiện tại lấy từ GPS của thiết bị
  */
-export type PlaceSource = 'popular' | 'osm' | 'map' | 'gps';
+export type PlaceSource = 'popular' | 'osm' | 'vietmap' | 'map' | 'gps';
 
 /** Một địa điểm dùng chung cho tìm kiếm, chỉ đường, nhiều điểm và tuyến đã lưu. */
 export type Place = {
@@ -22,3 +22,6 @@ export type Place = {
 
 /** Tọa độ đơn giản theo định dạng JSON của dự án: {lat, lng}. */
 export type LatLng = { lat: number; lng: number };
+
+/** A suggestion may need one details request before it can be used as a route point. */
+export type PlaceSearchSuggestion = Omit<Place, 'lat' | 'lng'> & { lat?: number; lng?: number };

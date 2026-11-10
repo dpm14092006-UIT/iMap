@@ -1,3 +1,5 @@
+import type { PlaceSearchProvider } from '../application/ports/PlaceSearchProvider.js';
+import { AppError } from '../../../shared/errors/AppError.js';
 import type { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
 import type { ReverseGeocodeUseCase } from '../application/use-cases/ReverseGeocodeUseCase.js';
@@ -21,6 +23,7 @@ export class PlaceSearchController {
   constructor(
     private readonly searchPlaces: SearchPlacesUseCase,
     private readonly reverseGeocode: ReverseGeocodeUseCase,
+    private readonly provider?: PlaceSearchProvider,
   ) {}
 
   suggest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -31,6 +34,14 @@ export class PlaceSearchController {
     } catch (error) {
       next(error);
     }
+  };
+
+  resolve = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { id } = z.object({ id: z.string().trim().min(1).max(4096) }).parse(req.query);
+      if (!this.provider?.resolve) throw new AppError(503, 'PLACE_RESOLVE_UNAVAILABLE', 'Dịch vụ lấy tọa độ chưa sẵn sàng.');
+      res.json({ data: await this.provider.resolve(id) });
+    } catch (error) { next(error); }
   };
 
   reverse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

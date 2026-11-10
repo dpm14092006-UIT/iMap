@@ -1,22 +1,22 @@
-import type { TrafficImageAnalysisDto, TrafficImageAnalysisTask, TrafficReportDto, TrafficReportInput } from '@routetwin/shared';
+import type { TrafficReportBounds, TrafficImageAnalysisDto, TrafficImageAnalysisTask, TrafficReportDto, TrafficReportInput } from '@routetwin/shared';
 import { apiRequest } from '../../../shared/api/httpClient';
 import type { FeatureCollection, Point } from 'geojson';
 import { supabaseClient } from '../../auth/services/supabaseClient';
 
-export const hcmBounds = { minLat: 10.0, minLng: 106.0, maxLat: 11.25, maxLng: 107.25 };
+export const vietnamBounds: TrafficReportBounds = { minLat: 7, minLng: 102, maxLat: 24, maxLng: 117 };
 export type TrafficFeature = { incidentType: string; severity: string; status: string; createdAt: string; expiresAt: string; version: number; hasPhoto: boolean; communityReportCount: number; communityReporterCount: number; communityUpdatedAt: string | null; note?: string };
 const photoExtensions: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 const maxPhotoBytes = 5 * 1024 * 1024;
 
-function boundsQuery() {
-  const query = new URLSearchParams(Object.entries(hcmBounds).map(([key, value]) => [key, String(value)]));
+function boundsQuery(bounds: TrafficReportBounds) {
+  const query = new URLSearchParams(Object.entries(bounds).map(([key, value]) => [key, String(value)]));
   return query.toString();
 }
 
 export const trafficApi = {
   imageAnalysisReady:() => apiRequest<{ configured?: { trafficImageAi?: boolean } }>('/health'),
-  list:(accessToken?:string) => apiRequest<TrafficReportDto[]>(`/traffic-reports?${boundsQuery()}`, undefined, accessToken),
-  geojson:(accessToken?:string) => apiRequest<FeatureCollection<Point, TrafficFeature>>(`/traffic-reports/geojson?${boundsQuery()}`, undefined, accessToken),
+  list:(accessToken?:string, bounds: TrafficReportBounds = vietnamBounds) => apiRequest<TrafficReportDto[]>(`/traffic-reports?${boundsQuery(bounds)}`, undefined, accessToken),
+  geojson:(accessToken?:string, bounds: TrafficReportBounds = vietnamBounds) => apiRequest<FeatureCollection<Point, TrafficFeature>>(`/traffic-reports/geojson?${boundsQuery(bounds)}`, undefined, accessToken),
   create:(input:TrafficReportInput, accessToken:string) => apiRequest<TrafficReportDto>('/traffic-reports',{method:'POST',body:JSON.stringify(input)},accessToken),
   analyzeImage:(file:File,task:TrafficImageAnalysisTask,accessToken:string) => apiRequest<TrafficImageAnalysisDto>(`/traffic-reports/analyze-image?task=${task}`,{method:'POST',headers:{'Content-Type':file.type},body:file},accessToken),
   clearance:(id:string,state:'clear'|'still_active',accessToken:string)=>apiRequest<TrafficReportDto>(`/traffic-reports/${id}/clearance`,{method:'POST',body:JSON.stringify({state})},accessToken),

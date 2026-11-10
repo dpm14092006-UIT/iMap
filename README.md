@@ -2,7 +2,7 @@
 
 > Project vision: A Web-Based Navigation and Route Optimization System with Real-Time Community Traffic Updates.
 
-Bộ ứng dụng React/TypeScript + Tailwind CSS + Express/TypeScript theo hướng feature-first và Clean Architecture. Web dùng nền bản đồ OpenStreetMap, tìm địa điểm qua Photon và tính tuyến ô tô/xe máy qua VietMap Route API v4. N2 có Auth, báo cáo giao thông PostGIS, GeoJSON/Realtime, xác minh cộng đồng và ảnh hiện trường lưu riêng tư. Các báo cáo cùng loại trong bán kính 75 m và 30 phút được tổng hợp để hiện số báo cáo, người gửi riêng biệt và lần cập nhật gần nhất; đây là ước lượng lân cận, chưa map-match vào cùng đoạn đường.
+Bộ ứng dụng React/TypeScript + Tailwind CSS + Express/TypeScript theo hướng feature-first và Clean Architecture. Web dùng nền bản đồ OpenStreetMap, tìm địa điểm qua VietMap Autocomplete/Place v4 và tính tuyến ô tô/xe máy qua VietMap Route API v4. N2 có Auth, báo cáo giao thông PostGIS, GeoJSON/Realtime, xác minh cộng đồng và ảnh hiện trường lưu riêng tư. Các báo cáo cùng loại trong bán kính 75 m và 30 phút được tổng hợp để hiện số báo cáo, người gửi riêng biệt và lần cập nhật gần nhất; đây là ước lượng lân cận, chưa map-match vào cùng đoạn đường.
 
 Tuyến được dựng từ hình học đường và hướng dẫn rẽ trả về từ VietMap, không còn nối thẳng các điểm mẫu. Cần có `VIETMAP_API_KEY` để tính tuyến; khi thiếu key, API trả lỗi cấu hình thay vì vẽ tuyến giả.
 
@@ -66,8 +66,9 @@ Frontend chia theo feature (`map`, `places`, `navigation`, `multi-stop`, `my-rou
 | `POST /api/traffic-reports` | N2 | JWT + PostGIS, rate limit |
 | `POST /api/traffic-reports/:id/clearance` | N2 | Xác minh cộng đồng + cooldown |
 | `POST /api/traffic-reports/analyze-image?task=incident\|traffic_sign` | N2 | Gợi ý Gemini trong biểu mẫu báo cáo; cần đăng nhập và bật cấu hình |
-| `GET /api/places/suggest` | N1 | Photon / OpenStreetMap |
-| `GET /api/places/reverse` | N1 | Photon reverse geocoding (tọa độ → địa chỉ) |
+| `GET /api/places/suggest` | N1 | VietMap Autocomplete v4; gợi ý chưa có tọa độ |
+| `GET /api/places/details?id=...` | N1 | VietMap Place v4; chỉ gọi khi chọn một gợi ý |
+| `GET /api/places/reverse` | N1 | VietMap reverse geocoding (tọa độ → địa chỉ) |
 | `POST /api/routes/calculate` | N1 | VietMap Route v4; cần `VIETMAP_API_KEY` |
 | `POST /api/routes/algorithm` | N1 | Dijkstra / A* trên đồ thị OSM trung tâm TP.HCM |
 | `GET /api/routes/algorithm/graph` | N1 | Vùng phủ + kích thước đồ thị OSM |
@@ -93,3 +94,11 @@ Tìm nhu cầu chung quanh vị trí hoặc dọc tuyến, hỏi lại khi mơ h
 - [Thuật toán tìm điểm ghé](docs/ROUTE_STOPS_TECHNICAL.md)
 - [Benchmark Whisper trên 48 audio](docs/VOICE_BENCHMARK.md)
 - [Deploy web + API Vercel, cấu hình voice free quota](docs/DEPLOY_API.md)
+
+## Tìm kiếm toàn Việt Nam
+
+VietMap Search dùng `VIETMAP_API_KEY` ở backend, cùng biến cấu hình với định tuyến; key cần quyền/quota Autocomplete, Place và Reverse. Frontend luôn gọi `VITE_API_BASE_URL`. Khi gõ ít nhất 2 ký tự, app chờ 300 ms, hủy request cũ và ưu tiên theo tâm bản đồ. Chọn một gợi ý mới gọi Place v4 lấy tọa độ, không gọi Place cho toàn bộ danh sách. Kết quả thật được xếp trước gợi ý lưu sẵn. Tên khớp trực tiếp được ưu tiên hơn doanh nghiệp chỉ chứa tên địa danh. Lỗi quyền/quota/mạng được hiển thị; không chuyển dịch vụ âm thầm.
+
+Bản đồ khởi đầu ở khung nhìn Việt Nam, có nút quay về toàn quốc. Báo cáo giao thông được truy vấn theo vùng đang xem, giới hạn số lượng theo API; phóng to để xem chi tiết. Đồ thị Dijkstra/A* cài đặt riêng vẫn chỉ phủ trung tâm TP.HCM; tuyến VietMap không dùng đồ thị này.
+
+Xem [kết quả kiểm tra tìm kiếm](docs/SEARCH_VERIFICATION.md).

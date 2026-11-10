@@ -1,3 +1,4 @@
+import type { TrafficReportBounds } from '@routetwin/shared';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import type { RouteStopCandidate, StopPlace } from '@routetwin/shared';
 import { AssistantAccessPanel } from '../features/auth/components/AssistantAccessPanel';
@@ -19,7 +20,7 @@ import { RouteApiClient, routePlanFromResult } from '../features/navigation/serv
 import { formatDistanceKm, formatDurationMinutes } from '../features/navigation/utils/format';
 import { PlacePanel } from '../features/places/components/PlacePanel';
 import { PlaceSearchBar } from '../features/places/components/PlaceSearchBar';
-import { findPopularPlace, popularPlaces } from '../features/places/data/popularPlaces';
+import { popularPlaces } from '../features/places/data/popularPlaces';
 import { basicPlaceFromPoint, placeFromPoint } from '../features/places/services/placeFromPoint';
 import type { LatLng, Place } from '../features/places/types';
 import { TrafficReportPanel, type DemoIncident, type IncidentKind, type IncidentSeverity } from '../features/traffic/components/TrafficReportPanel';
@@ -33,8 +34,8 @@ const PlaceAssistantPanel = lazy(() => import('../features/place-assistant/compo
 const AuthPanel = lazy(() => import('../features/auth/components/AuthPanel').then((module) => ({ default: module.AuthPanel })));
 
 // Điểm đi/đến mặc định khi mở app lần đầu.
-const defaultOrigin = findPopularPlace('ben-thanh') ?? null;
-const defaultDestination = findPopularPlace('landmark') ?? null;
+const defaultOrigin = null;
+const defaultDestination = null;
 
 // Khóa localStorage. Tăng "v2" vì kiểu Place đã đổi (district -> address).
 const routeStorageKey = 'routetwin-saved-routes-v2';
@@ -92,8 +93,10 @@ export function App() {
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>(readSavedRoutes);
   const [authOpen, setAuthOpen] = useState(false);
 
+  const [trafficBounds, setTrafficBounds] = useState<TrafficReportBounds>({ minLat: 7, minLng: 102, maxLat: 24, maxLng: 117 });
+
   // --- Phần traffic (N2): báo cáo lấy từ API; bản đồ nhận qua hợp đồng TrafficMapLayer. ---
-  const { reports, error: trafficError, loading: trafficLoading, create: createTrafficReport, clearance: updateClearance } = useTrafficReports(accessToken, user?.id ?? null);
+  const { reports, error: trafficError, loading: trafficLoading, create: createTrafficReport, clearance: updateClearance } = useTrafficReports(accessToken, user?.id ?? null, trafficBounds);
   const [selectedMapPoint, setSelectedMapPoint] = useState<LatLng | null>(null);
   const incidents = useMemo<DemoIncident[]>(() => reports.map((report) => ({
     id: report.id,
@@ -320,6 +323,7 @@ export function App() {
     <main id="map" className="relative h-[100dvh] min-h-[560px] overflow-hidden bg-[#e8ece7] text-ink">
       <MapView
         controllerRef={mapController}
+        onBoundsChange={setTrafficBounds}
         currentLocation={currentLocation}
         algorithmOverlay={activePanel === 'directions' ? comparison.overlay : null}
         draftStops={draftStops}
@@ -332,23 +336,22 @@ export function App() {
 
       <header className="app-header absolute inset-x-0 top-0 z-40 border-b border-white/80 bg-white/90 shadow-[0_2px_12px_rgba(20,37,58,.04)] backdrop-blur-xl">
         <div className="mx-auto flex h-[58px] max-w-[1920px] items-center gap-3 px-3 sm:h-[68px] sm:px-5">
-          <div className="hidden min-w-0 max-w-[720px] flex-1 md:block"><PlaceSearchBar onSelect={openPlace} /></div>
+          <div className="flex shrink-0 items-center gap-2" aria-label="iMap"><img src="/favicon.svg" alt="" width="32" height="32" /><span className="text-lg font-bold tracking-tight text-brand-700">iMap</span></div>
+          <div className="hidden min-w-0 max-w-[720px] flex-1 md:block"><PlaceSearchBar getFocus={() => mapController.current?.getCenter() ?? { lat: 16, lng: 108 }} onSelect={openPlace} /></div>
           <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
-            <span className="hidden items-center gap-1.5 rounded-full bg-slate-100 px-3 py-2 text-[10px] font-semibold text-slate-600 lg:inline-flex"><Icon name="pin" size={13} className="text-brand-600" />TP. Hồ Chí Minh</span>
-            <span className="hidden items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-2 text-[10px] font-semibold text-emerald-800 sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />OpenStreetMap</span>
             <button type="button" onClick={() => showToast('Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.')} aria-label="Thông tin bản đồ" className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-brand-200 hover:text-brand-700"><Icon name="more" size={19} /></button>
             <a href="/login" aria-label={user ? `Tài khoản ${user.email ?? ''}` : 'Đăng nhập tài khoản'} className={`grid h-9 w-9 place-items-center rounded-full text-xs font-bold ring-2 ring-white transition sm:h-10 sm:w-10 ${user ? 'bg-brand-100 text-brand-700' : 'bg-[#e8e1d7] text-[#685849]'}`}>{user?.email?.slice(0, 2).toUpperCase() ?? 'ĐN'}</a>
           </div>
         </div>
-        <div className="px-3 pb-2 md:hidden"><PlaceSearchBar onSelect={openPlace} /></div>
+        <div className="px-3 pb-2 md:hidden"><PlaceSearchBar getFocus={() => mapController.current?.getCenter() ?? { lat: 16, lng: 108 }} onSelect={openPlace} /></div>
       </header>
 
       <FeatureNav isAuthenticated={isAuthenticated} active={activePanel} incidentCount={incidents.length} onSelect={selectFeature} />
 
       {/* Tóm tắt tuyến đang hiển thị (desktop: góc phải; mobile: trên bottom sheet). */}
-      <div className="map-live-status absolute right-5 top-[140px] z-10 hidden items-center gap-2 rounded-full border border-white/80 bg-white/90 px-3 py-2 text-[10px] font-semibold text-slate-600 shadow-sm backdrop-blur lg:flex">
-        {activeRoute ? <><Icon name="route" size={14} className="text-brand-600" />{routeSummary}<span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] text-amber-800">Ước tính</span></> : <><span className="h-2 w-2 rounded-full bg-emerald-500" />Bản đồ TP. Hồ Chí Minh</>}
-      </div>
+      {activeRoute && <div className="map-live-status absolute right-5 top-[140px] z-10 hidden items-center gap-2 rounded-full border border-white/80 bg-white/90 px-3 py-2 text-[10px] font-semibold text-slate-600 shadow-sm backdrop-blur lg:flex">
+        {activeRoute ? <><Icon name="route" size={14} className="text-brand-600" />{routeSummary}<span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] text-amber-800">Ước tính</span></> : <><span className="h-2 w-2 rounded-full bg-emerald-500" />Bản đồ Việt Nam</>}
+      </div>}
       {activeRoute && <div className="route-mobile-status absolute bottom-[calc(56dvh+10px)] left-3 z-10 flex items-center gap-2 rounded-full border border-white/80 bg-white/95 px-3 py-2 text-[10px] font-bold text-ink shadow-lg shadow-slate-900/10 backdrop-blur-md md:hidden"><Icon name="route" size={14} className="text-brand-600" />{routeSummary}<span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800">Ước tính</span></div>}
 
       {/* Hướng dẫn khi đang chọn điểm trên bản đồ. */}
@@ -368,7 +371,7 @@ export function App() {
               accessToken={accessToken}
               route={activeRoute}
               selectedPoint={selectedMapPoint}
-              getMapCenter={() => mapController.current?.getCenter() ?? { lat: 10.783, lng: 106.704 }}
+              getMapCenter={() => mapController.current?.getCenter() ?? { lat: 16, lng: 108 }}
               onClose={() => openPanel(null)}
               onFocus={(place) => mapController.current?.flyTo(place)}
               onDirections={(place) => openDirections(placeFromStop(place))}
@@ -380,6 +383,7 @@ export function App() {
         : <AssistantAccessPanel loading={authLoading} onClose={() => openPanel(null)} />)}
       {activePanel === 'directions' && (
         <RoutePanel
+          getSearchFocus={() => mapController.current?.getCenter() ?? { lat: 16, lng: 108 }}
           comparison={comparison}
           directions={directions}
           isLocating={isLocating}
@@ -408,13 +412,14 @@ export function App() {
       <MapToolbar
         layer={layer}
         onLayerChange={setLayer}
+        onShowVietnam={() => mapController.current?.showVietnam()}
         onLocate={() => { void locateOnMap(); }}
         onZoomIn={() => mapController.current?.zoomIn()}
         onZoomOut={() => mapController.current?.zoomOut()}
       />
 
       <div className="map-city-label absolute bottom-6 left-5 z-10 max-w-[280px] rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-sm backdrop-blur-md max-md:hidden">
-        <p className="text-[12px] font-bold text-ink">Thành phố Hồ Chí Minh</p>
+        <p className="text-[12px] font-bold text-ink">Việt Nam</p>
         <p className="mt-1 text-[10px] leading-4 text-slate-500">Chọn điểm trên bản đồ hoặc tìm địa chỉ ở thanh tìm kiếm</p>
       </div>
 
