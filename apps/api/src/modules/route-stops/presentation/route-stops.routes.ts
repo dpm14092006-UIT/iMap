@@ -1,3 +1,4 @@
+import { env } from '../../../config/env.js';
 import { requireAuth } from '../../../shared/http/require-auth.js';
 import type { AuthenticatedRequest } from '../../../shared/http/authenticated-request.js';
 import type { ExplorePlacesUseCase } from '../application/use-cases/ExplorePlacesUseCase.js';
@@ -8,6 +9,10 @@ import type { FindRouteStopsUseCase } from '../application/use-cases/FindRouteSt
 export function createRouteStopsRouter(findStops: FindRouteStopsUseCase, explore?: ExplorePlacesUseCase) {
   const router = Router();
   router.use(requireAuth());
+  router.get('/config', (_req, res) => {
+    const aiConfigured = Boolean(env.STOP_AI_MODEL && (env.STOP_AI_PROVIDER === 'ollama' || (env.STOP_AI_PROVIDER === 'gemini' && env.GEMINI_API_KEY)));
+    res.json({ data: { aiConfigured } });
+  });
   const windows = new Map<string, { count: number; until: number }>();
   let active = 0;
   router.post(['/search', '/explore'], async (req, res, next) => {
