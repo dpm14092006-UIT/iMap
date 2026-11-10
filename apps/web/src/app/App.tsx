@@ -422,11 +422,6 @@ export function App() {
         onZoomOut={() => mapController.current?.zoomOut()}
       />
 
-      <div className="map-city-label absolute bottom-6 left-5 z-10 max-w-[280px] rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-sm backdrop-blur-md max-md:hidden">
-        <p className="text-[12px] font-bold text-ink">Việt Nam</p>
-        <p className="mt-1 text-[10px] leading-4 text-slate-500">Chọn điểm trên bản đồ hoặc tìm địa chỉ ở thanh tìm kiếm</p>
-      </div>
-
       {toast && <div className="toast-message absolute left-1/2 top-[145px] z-[90] flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/70 bg-slate-900/90 px-4 py-2.5 text-center text-[11px] font-semibold text-white shadow-xl backdrop-blur max-md:top-[174px]" role="status" aria-live="polite"><Icon name="check" size={15} className="shrink-0 text-emerald-300" />{toast}</div>}
     </main>
   );
