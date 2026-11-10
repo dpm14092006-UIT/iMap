@@ -17,6 +17,9 @@ export function useTrafficReports(accessToken: string | null, userId: string | n
   const refresh = useCallback(async () => {
     const requestId = ++latestRequest.current;
     setLoading(true);
+    if (searchBounds.maxLat - searchBounds.minLat > 2 || searchBounds.maxLng - searchBounds.minLng > 2) {
+      setReports([]); setError('Phóng to khu vực cần xem để tải báo cáo giao thông.'); setLoading(false); return;
+    }
     try {
       const nextReports = await trafficApi.list(accessToken ?? undefined, searchBounds);
       if (requestId !== latestRequest.current) return;
