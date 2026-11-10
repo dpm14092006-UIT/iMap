@@ -86,6 +86,8 @@ export function App() {
   const { layer, setLayer } = useTimeBasedMapLayer(); // nền tối tự bật theo giờ trên mobile
 
   const [activePanel, setActivePanel] = useState<FeatureKey | null>('directions');
+  const multiPlanGeneration = useRef(0);
+  useEffect(() => { if (activePanel && activePanel !== 'multi') multiPlanGeneration.current++; }, [activePanel]);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [activeRoute, setActiveRoute] = useState<RoutePlan | null>(null);
   const [pickTarget, setPickTarget] = useState<PickTarget | null>(null);
@@ -325,7 +327,7 @@ export function App() {
         controllerRef={mapController}
         onBoundsChange={setTrafficBounds}
         currentLocation={currentLocation}
-        algorithmOverlay={activePanel === 'directions' ? comparison.overlay : null}
+        algorithmOverlay={activePanel === 'directions' && directions.waypoints.length === 0 ? comparison.overlay : null}
         draftStops={draftStops}
         isPicking={pickTarget !== null}
         layer={layer}
@@ -394,16 +396,18 @@ export function App() {
           onUseMyLocation={() => { void setOriginFromGps(); }}
         />
       )}
-      {activePanel === 'multi' && <MultiStopPanel onClose={() => openPanel(null)} onPlanRoute={async (start, stops, mode, objective, returnToStart) => {
-        const routeStops = [start, ...stops, ...(returnToStart ? [start] : [])];
+      <div hidden={activePanel !== 'multi'}><MultiStopPanel isActive={activePanel === 'multi'} onShowPlan={setActiveRoute} getFocus={() => mapController.current?.getCenter() ?? { lat: 16, lng: 108 }} onClose={() => openPanel(null)} onPlanRoute={async (start, stops, mode, objective, returnToStart) => {
+        const requestId = ++multiPlanGeneration.current;
+        const routeStops = [start, ...stops];
         setActiveRoute(null);
-        const result = await routeApi.createPlan(routeStops, mode, objective);
+        const result = await routeApi.createOptimizedPlan(routeStops, mode, objective, returnToStart);
+        if (requestId !== multiPlanGeneration.current) return { error: 'Đã hủy hành trình cũ.' };
         if ('error' in result) return result;
         setActiveRoute(result);
         setSelectedPlace(null);
-        showToast('Đã tính tuyến qua các điểm bằng VietMap');
+        showToast('Đã tối ưu thứ tự ghé theo đường đi VietMap');
         return result;
-      }} onSave={savePlan} />}
+      }} onReset={(planId) => { multiPlanGeneration.current++; if (activeRoute?.id === planId) setActiveRoute(null); }} onSave={savePlan} /></div>
       {activePanel === 'traffic' && <TrafficReportPanel incidents={incidents} selectedPoint={selectedMapPoint} isAuthenticated={isAuthenticated} accessToken={accessToken} loading={trafficLoading} error={trafficError} onClose={() => openPanel(null)} onSignIn={() => setAuthOpen(true)} onReport={reportIncident} onClearance={verifyIncident} />}
       {activePanel === 'saved' && <SavedRoutesPanel routes={savedRoutes} onClose={() => openPanel(null)} onDelete={(id) => { setSavedRoutes((current) => current.filter((route) => route.id !== id)); showToast('Đã xóa hành trình đã lưu'); }} onOpen={(route) => { void openSavedRoute(route); }} />}
       {authOpen && <Suspense fallback={<div className="absolute left-5 top-[143px] z-40 rounded-xl bg-white px-4 py-3 text-xs font-medium text-slate-600 shadow-float max-md:bottom-4 max-md:left-3 max-md:top-auto" role="status">Đang mở tài khoản…</div>}><AuthPanel onClose={() => setAuthOpen(false)} /></Suspense>}
