@@ -7,7 +7,8 @@ type PlacePanelProps = { place: Place; onClose: () => void; onDirections: (place
 
 /** Mô tả nguồn dữ liệu của địa điểm cho người dùng. */
 const sourceLabels: Record<PlaceSource, string> = {
-  popular: 'Địa điểm gợi ý · TP. Hồ Chí Minh',
+  popular: 'Địa điểm gợi ý có sẵn',
+  vietmap: 'Tìm thấy qua VietMap',
   osm: 'Tìm thấy qua Photon / OpenStreetMap',
   map: 'Điểm chọn trên bản đồ',
   gps: 'Vị trí GPS của thiết bị',

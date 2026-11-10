@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { placeApi } from '../api/placeApi';
-import type { LatLng, Place } from '../types';
+import type { LatLng, PlaceSearchSuggestion } from '../types';
 
 /** Trạng thái tìm kiếm để UI hiển thị đúng thông báo (đang tìm / không có / lỗi). */
 export type PlaceSearchStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 /** Chờ người dùng ngừng gõ bao lâu (ms) thì mới gọi API. */
-const DEBOUNCE_MS = 350;
+const DEBOUNCE_MS = 300;
 /** Tối thiểu số ký tự trước khi tìm kiếm. */
 export const MIN_QUERY_LENGTH = 2;
 /** Mặc định ưu tiên kết quả quanh trung tâm TP.HCM. */
@@ -17,13 +17,16 @@ const HCMC_CENTER: LatLng = { lat: 10.779, lng: 106.701 };
  * - Gõ liên tục: chỉ gọi API sau khi dừng gõ DEBOUNCE_MS.
  * - Gõ tiếp khi request cũ chưa xong: request cũ bị abort, không ghi đè kết quả mới.
  */
-export function usePlaceSearch(query: string, focus: LatLng = HCMC_CENTER) {
-  const [results, setResults] = useState<Place[]>([]);
+export function usePlaceSearch(query: string, focus: LatLng = HCMC_CENTER, enabled = true) {
+  const [results, setResults] = useState<PlaceSearchSuggestion[]>([]);
   const [status, setStatus] = useState<PlaceSearchStatus>('idle');
   const trimmed = query.trim();
+  const requestKey = `${trimmed}|${focus.lat}|${focus.lng}`;
+  const [completedQuery, setCompletedQuery] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (trimmed.length < MIN_QUERY_LENGTH) {
+    if (!enabled || trimmed.length < MIN_QUERY_LENGTH) {
       setResults([]);
       setStatus('idle');
       return;
@@ -31,14 +34,16 @@ export function usePlaceSearch(query: string, focus: LatLng = HCMC_CENTER) {
 
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
-      setStatus('loading');
+      setResults([]); setError(''); setStatus('loading');
       try {
-        setResults(await placeApi.suggest(trimmed, focus, controller.signal));
-        setStatus('ready');
-      } catch {
+        const found = await placeApi.suggest(trimmed, focus, controller.signal);
+        if (controller.signal.aborted) return;
+        setResults(found);
+        setCompletedQuery(requestKey); setStatus('ready');
+      } catch (cause) {
         if (controller.signal.aborted) return; // request bị hủy do người dùng gõ tiếp
         setResults([]);
-        setStatus('error');
+        setCompletedQuery(requestKey); setError(cause instanceof Error ? cause.message : 'Không kết nối được dịch vụ tìm kiếm.'); setStatus('error');
       }
     }, DEBOUNCE_MS);
 
@@ -48,7 +53,7 @@ export function usePlaceSearch(query: string, focus: LatLng = HCMC_CENTER) {
       controller.abort();
     };
     // Phụ thuộc vào lat/lng thay vì object focus để không gọi lại khi object được tạo mới.
-  }, [trimmed, focus.lat, focus.lng]);
+  }, [trimmed, focus.lat, focus.lng, enabled, requestKey]);
 
-  return { results, status };
+  return { results: completedQuery === requestKey ? results : [], status: trimmed.length < MIN_QUERY_LENGTH ? 'idle' as const : completedQuery !== requestKey ? 'loading' as const : status, error: completedQuery === requestKey ? error : '' };
 }

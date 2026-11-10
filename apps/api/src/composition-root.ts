@@ -9,7 +9,7 @@ import { UpdateRoadClearanceUseCase } from './modules/traffic/application/use-ca
 import { TrafficController } from './modules/traffic/presentation/TrafficController.js';
 import { AnalyzeTrafficImageUseCase } from './modules/traffic/application/use-cases/AnalyzeTrafficImageUseCase.js';
 import { GeminiTrafficImageAnalyzer } from './modules/traffic/infrastructure/providers/GeminiTrafficImageAnalyzer.js';
-import { PhotonPlaceSearchProvider } from './modules/places/infrastructure/providers/PhotonPlaceSearchProvider.js';
+import { VietmapPlaceSearchProvider } from './modules/places/infrastructure/providers/VietmapPlaceSearchProvider.js';
 import { SearchPlacesUseCase } from './modules/places/application/use-cases/SearchPlacesUseCase.js';
 import { ReverseGeocodeUseCase } from './modules/places/application/use-cases/ReverseGeocodeUseCase.js';
 import { PlaceSearchController } from './modules/places/presentation/PlaceSearchController.js';
@@ -37,10 +37,11 @@ export function createContainer() {
     new UpdateRoadClearanceUseCase(trafficRepository),
     new AnalyzeTrafficImageUseCase(new GeminiTrafficImageAnalyzer(env.GEMINI_API_KEY, env.GEMINI_MODEL, env.GEMINI_TRAFFIC_AI_ENABLED)),
   );
-  const placeProvider = new PhotonPlaceSearchProvider();
+  const placeProvider = new VietmapPlaceSearchProvider(env.VIETMAP_API_KEY);
   const placeSearchController = new PlaceSearchController(
     new SearchPlacesUseCase(placeProvider),
     new ReverseGeocodeUseCase(placeProvider),
+    placeProvider,
   );
   const routeProvider = new VietmapRouteProvider(env.VIETMAP_API_KEY);
   const routeController = new RouteController(new CalculateRouteUseCase(routeProvider));

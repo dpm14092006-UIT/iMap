@@ -3,12 +3,13 @@ import type { LatLng, Place } from '../../places/types';
 import type { TrafficFeature, TrafficMapLayer, TrafficSeverity } from '../layers/trafficMapLayer';
 import type { AlgorithmOverlay, Bounds, DraftStops, MapLayer, RoutePlan } from '../types';
 
-/** Tâm mặc định: trung tâm TP.HCM. */
-const HCMC_CENTER: L.LatLngExpression = [10.783, 106.704];
+/** Khung nhìn khởi đầu toàn Việt Nam, không giới hạn pan/zoom vào một thành phố. */
+const VIETNAM_CENTER: L.LatLngExpression = [16, 108];
 const COLORS = { start: '#20a26b', end: '#2476ea', route: '#2476ea', multiRoute: '#167dcb', dijkstra: '#8b5cf6', astar: '#f97316', coverage: '#64748b' };
 
 export type MapControllerHandlers = {
   onMapClick: (point: LatLng) => void;
+  onBoundsChange?: (bounds: { minLat: number; minLng: number; maxLat: number; maxLng: number }) => void;
 };
 
 /** Toàn bộ dữ liệu cần vẽ trên bản đồ, được MapView truyền vào mỗi khi thay đổi. */
@@ -41,7 +42,7 @@ export class LeafletMapController {
   private activeLayer: MapLayer = 'street';
 
   constructor(container: HTMLElement, handlers: MapControllerHandlers) {
-    this.map = L.map(container, { zoomControl: false, preferCanvas: true, attributionControl: true }).setView(HCMC_CENTER, 13);
+    this.map = L.map(container, { zoomControl: false, preferCanvas: true, attributionControl: true }).setView(VIETNAM_CENTER, 5);
     this.map.attributionControl.setPosition('bottomleft');
     this.streets = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -56,6 +57,8 @@ export class LeafletMapController {
     this.routeLayer.addTo(this.map);
     this.trafficLayer.addTo(this.map);
     this.locationLayer.addTo(this.map);
+    this.map.on('moveend', () => handlers.onBoundsChange?.(this.getBounds()));
+    handlers.onBoundsChange?.(this.getBounds());
     this.map.on('click', (event: L.LeafletMouseEvent) => handlers.onMapClick({ lat: event.latlng.lat, lng: event.latlng.lng }));
   }
 
@@ -106,6 +109,11 @@ export class LeafletMapController {
     }
   }
 
+  private getBounds() {
+    const bounds = this.map.getBounds();
+    return { minLat: Math.max(-90, bounds.getSouth()), maxLat: Math.min(90, bounds.getNorth()), minLng: Math.max(-180, bounds.getWest()), maxLng: Math.min(180, bounds.getEast()) };
+  }
+  showVietnam() { this.map.setView(VIETNAM_CENTER, 5); }
   zoomIn() { this.map.zoomIn(); }
   zoomOut() { this.map.zoomOut(); }
   flyTo(point: LatLng, zoom = 15) { this.map.flyTo([point.lat, point.lng], zoom, { duration: 0.55 }); }

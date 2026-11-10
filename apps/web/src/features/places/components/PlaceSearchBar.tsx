@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { popularPlaces } from '../data/popularPlaces';
-import type { Place } from '../types';
+import type { LatLng, Place } from '../types';
 import { PlaceCombobox } from './PlaceCombobox';
 
-type PlaceSearchBarProps = { onSelect: (place: Place) => void };
+type PlaceSearchBarProps = { getFocus?: () => LatLng; onSelect: (place: Place) => void };
 
 /** Thanh tìm kiếm trên header: chọn địa điểm để xem chi tiết trên bản đồ. */
-export function PlaceSearchBar({ onSelect }: PlaceSearchBarProps) {
+export function PlaceSearchBar({ onSelect, getFocus }: PlaceSearchBarProps) {
   const [query, setQuery] = useState('');
 
   return (
     <PlaceCombobox
+      getFocus={getFocus}
       ariaLabel="Tìm địa điểm trên bản đồ"
       className="w-full"
       icon="search"
@@ -22,7 +23,7 @@ export function PlaceSearchBar({ onSelect }: PlaceSearchBarProps) {
         onSelect(place);
       }}
       places={popularPlaces}
-      placeholder="Tìm địa điểm ở TP. Hồ Chí Minh"
+      placeholder="Tìm địa điểm, đường hoặc địa chỉ"
       value={query}
     />
   );

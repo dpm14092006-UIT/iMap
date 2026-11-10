@@ -1,3 +1,4 @@
+import type { LatLng } from '../../places/types';
 import { FloatingPanel } from '../../../app/components/FloatingPanel';
 import { Icon } from '../../../shared/components/Icon';
 import type { TransportMode } from '../../map/types';
@@ -11,6 +12,7 @@ import { RouteResultCard } from './RouteResultCard';
 export type PickTarget = 'origin' | 'destination';
 
 type RoutePanelProps = {
+  getSearchFocus?: () => LatLng;
   directions: DirectionsController;
   /** So sánh Dijkstra / A* trên cùng điểm đi/đến (không cần key VietMap). */
   comparison: AlgorithmComparisonController;
@@ -28,7 +30,7 @@ const vehicles: { id: TransportMode; label: string; icon: 'car' | 'motorcycle' }
 ];
 
 /** Panel chỉ đường A → B. Mọi trạng thái nằm trong hook useDirections, panel chỉ hiển thị. */
-export function RoutePanel({ directions, comparison, pickTarget, isLocating, onPickOnMap, onUseMyLocation, onSave, onClose }: RoutePanelProps) {
+export function RoutePanel({ getSearchFocus, directions, comparison, pickTarget, isLocating, onPickOnMap, onUseMyLocation, onSave, onClose }: RoutePanelProps) {
   const { origin, destination, vehicle, route, isLoading, error } = directions;
   const canCalculate = Boolean(origin && destination) && origin?.id !== destination?.id && !isLoading;
 
@@ -48,11 +50,11 @@ export function RoutePanel({ directions, comparison, pickTarget, isLocating, onP
         <span className="route-connector" aria-hidden="true" />
         <div className="relative">
           <span className="absolute -left-[20px] top-[17px] z-10 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 shadow-sm" />
-          <PlaceField ariaLabel="Điểm xuất phát" placeholder="Điểm xuất phát" place={origin} onChange={directions.setOrigin} />
+          <PlaceField getFocus={getSearchFocus} ariaLabel="Điểm xuất phát" placeholder="Điểm xuất phát" place={origin} onChange={directions.setOrigin} />
         </div>
         <div className="relative">
           <span className="absolute -left-[20px] top-[17px] z-10 h-2.5 w-2.5 rounded-[3px] border-2 border-white bg-brand-500 shadow-sm" />
-          <PlaceField ariaLabel="Điểm đến" placeholder="Bạn muốn đi đâu?" place={destination} onChange={directions.setDestination} />
+          <PlaceField getFocus={getSearchFocus} ariaLabel="Điểm đến" placeholder="Bạn muốn đi đâu?" place={destination} onChange={directions.setDestination} />
         </div>
         <button type="button" disabled={!origin || !destination} onClick={directions.swap} className="absolute right-0 top-1/2 z-10 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-brand-200 hover:text-brand-600 disabled:opacity-40" aria-label="Đảo chiều điểm đi và điểm đến" title="Đảo chiều">
           <Icon name="swap" size={17} />
@@ -62,8 +64,8 @@ export function RoutePanel({ directions, comparison, pickTarget, isLocating, onP
       {/* Cách chọn điểm khác: GPS hoặc click trên bản đồ. */}
       <div className="mt-3 flex flex-wrap gap-1.5 pl-5">
         <QuickAction icon="current-location" label={isLocating ? 'Đang định vị…' : 'Vị trí của tôi'} disabled={isLocating} onClick={onUseMyLocation} />
-        <QuickAction icon="pin" label="Chọn điểm đi trên bản đồ" active={pickTarget === 'origin'} onClick={() => onPickOnMap('origin')} />
-        <QuickAction icon="pin" label="Chọn điểm đến trên bản đồ" active={pickTarget === 'destination'} onClick={() => onPickOnMap('destination')} />
+        <QuickAction icon="pin" label="Chọn điểm đi" active={pickTarget === 'origin'} onClick={() => onPickOnMap('origin')} />
+        <QuickAction icon="pin" label="Chọn điểm đến" active={pickTarget === 'destination'} onClick={() => onPickOnMap('destination')} />
       </div>
 
       <div className="sticky bottom-0 z-20 -mx-5 mt-3 bg-gradient-to-t from-white via-white/95 to-transparent px-5 pb-1 pt-3">
@@ -77,12 +79,15 @@ export function RoutePanel({ directions, comparison, pickTarget, isLocating, onP
 
       {route && <RouteResultCard route={route} onSave={onSave} />}
 
-      <AlgorithmComparison comparison={comparison} canRun={Boolean(origin && destination) && origin?.id !== destination?.id} />
+      <details className="mt-3 border-t border-slate-100 pt-3">
+        <summary className="cursor-pointer text-[11px] font-semibold text-slate-500">So sánh Dijkstra / A*</summary>
+        <AlgorithmComparison comparison={comparison} canRun={Boolean(origin && destination) && origin?.id !== destination?.id} />
+      </details>
 
-      <div className="route-note mt-4 flex items-start gap-2 border-t border-slate-100 pt-3 text-[10px] leading-[1.6] text-slate-500">
+      {!route && <div className="route-note mt-4 flex items-start gap-2 border-t border-slate-100 pt-3 text-[10px] leading-[1.6] text-slate-500">
         <Icon name="compass" size={14} className="mt-0.5 shrink-0 text-slate-400" />
-        <p>VietMap tính tuyến theo loại xe và trả chỉ dẫn từng bước. Thời gian có thể đổi theo giao thông thực tế.</p>
-      </div>
+        <p>Tuyến VietMap theo phương tiện đã chọn. Thời gian là ước tính.</p>
+      </div>}
     </FloatingPanel>
   );
 }
