@@ -5,6 +5,7 @@ import type { ExplorePlacesUseCase } from '../application/use-cases/ExplorePlace
 import { Router } from 'express';
 import { routeStopRequestSchema, explorePlacesRequestSchema } from '@routetwin/shared';
 import type { FindRouteStopsUseCase } from '../application/use-cases/FindRouteStopsUseCase.js';
+import { ConcurrencyLimiter } from '../../../shared/http/ConcurrencyLimiter.js';
 import { getRequestId } from '../../../shared/http/request-context.js';
 /** Shared quota limits provider cost across instances; the local counter bounds concurrency per process. */
 export function createRouteStopsRouter(findStops: FindRouteStopsUseCase, explore?: ExplorePlacesUseCase) {
@@ -17,30 +18,28 @@ export function createRouteStopsRouter(findStops: FindRouteStopsUseCase, explore
     );
     res.json({ data: { aiConfigured } });
   });
-  let active = 0;
+  const limiter = new ConcurrencyLimiter(2);
   router.post(['/search', '/explore'], requireFeatureQuota('route_stops'), async (req, res, next) => {
-    if (active >= 2) {
-      res.setHeader('Retry-After', '60');
-      res.status(429).json({
-        error: {
-          code: 'STOP_SEARCH_BUSY',
-          message: 'Đã có nhiều yêu cầu tìm điểm dừng. Vui lòng thử lại sau một phút.',
-          requestId: getRequestId(req),
-        },
-      });
-      return;
-    }
-    active++;
     try {
-      if (req.path === '/explore' && explore) {
-        res.json({ data: await explore.execute(explorePlacesRequestSchema.parse(req.body)) });
-      } else {
-        res.json({ data: await findStops.execute(routeStopRequestSchema.parse(req.body)) });
+      const result = await limiter.run(async () =>
+        req.path === '/explore' && explore
+          ? explore.execute(explorePlacesRequestSchema.parse(req.body))
+          : findStops.execute(routeStopRequestSchema.parse(req.body)),
+      );
+      if (!result) {
+        res.setHeader('Retry-After', '60');
+        res.status(429).json({
+          error: {
+            code: 'STOP_SEARCH_BUSY',
+            message: 'Đã có nhiều yêu cầu tìm điểm dừng. Vui lòng thử lại sau một phút.',
+            requestId: getRequestId(req),
+          },
+        });
+        return;
       }
+      res.json({ data: result.value });
     } catch (error) {
       next(error);
-    } finally {
-      active--;
     }
   });
   return router;

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { TrafficImageAnalysisDto, TrafficImageAnalysisTask } from '@routetwin/shared';
 import { FloatingPanel } from '../../../app/components/FloatingPanel';
 import { Icon } from '../../../shared/components/Icon';
-import { trafficApi } from '../api/trafficApi';
+import { trafficApi, trafficPhotos } from '../api/trafficApi';
 import { incidentLabels } from '../services/trafficPresentation';
 
 export type IncidentKind =
@@ -108,7 +108,7 @@ export function TrafficReportPanel({
     }
     void Promise.all(
       recentPhotos.map(
-        async (incident) => [incident.id, await trafficApi.signedPhotoUrl(incident.imagePath!)] as const,
+        async (incident) => [incident.id, await trafficPhotos.signedUrl(incident.imagePath!)] as const,
       ),
     )
       .then((entries) => {

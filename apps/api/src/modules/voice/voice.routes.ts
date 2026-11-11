@@ -4,6 +4,7 @@ import { Router, raw } from 'express';
 import { z } from 'zod';
 import { env } from '../../config/env.js';
 import { AppError } from '../../shared/errors/AppError.js';
+import { ConcurrencyLimiter } from '../../shared/http/ConcurrencyLimiter.js';
 
 const MAX_BYTES = 500000; // 15 seconds of mono PCM16 / 16kHz is 480044 bytes.
 /** Accept our bounded PCM WAV format only; reject compressed audio and dishonest durations. */
@@ -54,6 +55,69 @@ const outputSchema = z.object({
   result: z.object({ text: z.string().trim().min(1).max(300) }),
 });
 export type VoiceConfig = { enabled: boolean; accountId?: string; token?: string };
+
+/** Nhận dạng giọng nói bằng Cloudflare Workers AI (Whisper). Nhà cung cấp và model cố định, không có fallback trả phí. */
+export class CloudflareWhisperTranscriber {
+  constructor(
+    private readonly config: VoiceConfig,
+    private readonly fetcher: typeof fetch = fetch,
+  ) {}
+
+  get available(): boolean {
+    return Boolean(this.config.enabled && this.config.accountId && this.config.token);
+  }
+
+  /** Gửi WAV đã kiểm tra hợp lệ và trả văn bản; mọi lỗi nhà cung cấp được đổi thành AppError tiếng Việt. */
+  async transcribe(audio: Buffer): Promise<string> {
+    validateVoiceWav(audio);
+    try {
+      const upstream = await this.fetcher(
+        `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(this.config.accountId!)}/ai/run/@cf/openai/whisper`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.config.token}`,
+            'Content-Type': 'application/octet-stream',
+          },
+          body: new Uint8Array(audio),
+          signal: AbortSignal.timeout(25000),
+        },
+      );
+      if (upstream.status === 429) {
+        throw new AppError(
+          429,
+          'VOICE_QUOTA',
+          'Đã hết quota hoặc bị giới hạn voice. Không tự chuyển sang dịch vụ trả phí.',
+        );
+      }
+      if (!upstream.ok) {
+        throw new AppError(
+          502,
+          'VOICE_PROVIDER_ERROR',
+          'Dịch vụ nhận giọng nói chưa sẵn sàng. Hãy thử lại hoặc nhập chữ.',
+        );
+      }
+      const payload = outputSchema.safeParse(await upstream.json());
+      if (!payload.success) {
+        throw new AppError(
+          502,
+          'VOICE_NO_TEXT',
+          'Không nhận được câu nói rõ ràng dưới 300 ký tự. Hãy nói ngắn hơn hoặc nhập chữ.',
+        );
+      }
+      return payload.data.result.text;
+    } catch (cause) {
+      throw cause instanceof AppError
+        ? cause
+        : new AppError(
+            502,
+            'VOICE_UNAVAILABLE',
+            'Không nhận dạng được âm thanh lúc này. Hãy thử lại hoặc nhập chữ.',
+          );
+    }
+  }
+}
+
 export function createVoiceRouter(
   config: VoiceConfig = {
     enabled: env.VOICE_STT_PROVIDER === 'cloudflare',
@@ -63,28 +127,30 @@ export function createVoiceRouter(
   fetcher: typeof fetch = fetch,
 ) {
   const router = Router();
+  const transcriber = new CloudflareWhisperTranscriber(config, fetcher);
+  const limiter = new ConcurrencyLimiter(2);
   router.use(requireAuth());
-  const available = Boolean(config.enabled && config.accountId && config.token);
   router.get('/config', (_req, res) =>
     res.json({
-      data: { available, provider: available ? 'cloudflare-whisper' : 'off', maxSeconds: 15, language: 'en' },
+      data: {
+        available: transcriber.available,
+        provider: transcriber.available ? 'cloudflare-whisper' : 'off',
+        maxSeconds: 15,
+        language: 'en',
+      },
     }),
   );
-  let active = 0;
   router.post(
     '/transcribe',
-    (req, _res, next) => {
-      if (!available) {
-        next(
-          new AppError(
-            503,
-            'VOICE_NOT_CONFIGURED',
-            'API voice chưa được cấu hình. Có thể dùng nhập chữ hoặc voice trình duyệt.',
-          ),
-        );
-        return;
-      }
-      next();
+    (_req, _res, next) => {
+      if (transcriber.available) return next();
+      next(
+        new AppError(
+          503,
+          'VOICE_NOT_CONFIGURED',
+          'API voice chưa được cấu hình. Có thể dùng nhập chữ hoặc voice trình duyệt.',
+        ),
+      );
     },
     requireFeatureQuota('voice'),
     raw({ type: 'audio/wav', limit: MAX_BYTES }),
@@ -93,57 +159,18 @@ export function createVoiceRouter(
         next(new AppError(415, 'AUDIO_TYPE', 'Chỉ nhận audio/wav.'));
         return;
       }
-      if (active >= 2) {
-        res.setHeader('Retry-After', '60');
-        next(new AppError(429, 'VOICE_BUSY', 'Voice đang bận. Thử lại sau một phút.'));
-        return;
-      }
-      active++;
       try {
-        if (!Buffer.isBuffer(req.body)) throw new AppError(400, 'EMPTY_AUDIO', 'Chưa có âm thanh.');
-        validateVoiceWav(req.body);
-        // Fixed provider/model; no paid-provider fallback, no client-controlled upstream URL.
-        const upstream = await fetcher(
-          `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(config.accountId!)}/ai/run/@cf/openai/whisper`,
-          {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${config.token}`, 'Content-Type': 'application/octet-stream' },
-            body: new Uint8Array(req.body),
-            signal: AbortSignal.timeout(25000),
-          },
-        );
-        if (upstream.status === 429)
-          throw new AppError(
-            429,
-            'VOICE_QUOTA',
-            'Đã hết quota hoặc bị giới hạn voice. Không tự chuyển sang dịch vụ trả phí.',
-          );
-        if (!upstream.ok)
-          throw new AppError(
-            502,
-            'VOICE_PROVIDER_ERROR',
-            'Dịch vụ nhận giọng nói chưa sẵn sàng. Hãy thử lại hoặc nhập chữ.',
-          );
-        const payload = outputSchema.safeParse(await upstream.json());
-        if (!payload.success)
-          throw new AppError(
-            502,
-            'VOICE_NO_TEXT',
-            'Không nhận được câu nói rõ ràng dưới 300 ký tự. Hãy nói ngắn hơn hoặc nhập chữ.',
-          );
-        res.json({ data: { text: payload.data.result.text, provider: 'cloudflare-whisper' } });
-      } catch (cause) {
-        next(
-          cause instanceof AppError
-            ? cause
-            : new AppError(
-                502,
-                'VOICE_UNAVAILABLE',
-                'Không nhận dạng được âm thanh lúc này. Hãy thử lại hoặc nhập chữ.',
-              ),
-        );
-      } finally {
-        active--;
+        const result = await limiter.run(() => {
+          if (!Buffer.isBuffer(req.body)) throw new AppError(400, 'EMPTY_AUDIO', 'Chưa có âm thanh.');
+          return transcriber.transcribe(req.body);
+        });
+        if (!result) {
+          res.setHeader('Retry-After', '60');
+          throw new AppError(429, 'VOICE_BUSY', 'Voice đang bận. Thử lại sau một phút.');
+        }
+        res.json({ data: { text: result.value, provider: 'cloudflare-whisper' } });
+      } catch (error) {
+        next(error);
       }
     },
   );

@@ -1,60 +1,105 @@
-const BASE = import.meta.env.VITE_API_BASE_URL ?? '/api';
-/** Quá thời gian này mà API chưa trả lời thì báo lỗi thay vì để giao diện chờ mãi. */
-const REQUEST_TIMEOUT_MS = 45_000;
+import { ApiError } from './ApiError';
 
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    /** Mã HTTP; 0 nếu yêu cầu chưa tới được máy chủ (mất mạng, quá thời gian chờ). */
-    public readonly status: number,
-    public readonly code?: string,
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
+export type HttpClientOptions = {
+  /** Tiền tố của mọi endpoint, ví dụ "/api". */
+  baseUrl: string;
+  /** Quá thời gian này mà API chưa trả lời thì báo lỗi thay vì để giao diện chờ mãi. */
+  timeoutMs: number;
+};
 
-function withTimeout(signal?: AbortSignal | null): AbortSignal | undefined {
-  if (typeof AbortSignal.timeout !== 'function') return signal ?? undefined;
-  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
-  return signal && typeof AbortSignal.any === 'function'
-    ? AbortSignal.any([signal, timeout])
-    : (signal ?? timeout);
-}
+/** Thông tin bổ sung cho một yêu cầu. */
+export type RequestOptions = Omit<RequestInit, 'body' | 'method'> & {
+  /** Access token của Supabase, gửi qua header Authorization. */
+  accessToken?: string;
+};
 
 /**
- * Gọi API của backend và trả về phần `data` trong phong bì `{ data }`.
- * Mọi lỗi (HTTP, mất mạng, quá thời gian) đều ném `ApiError` với thông báo tiếng Việt;
- * riêng yêu cầu bị nơi gọi chủ động hủy thì giữ nguyên `AbortError`.
+ * Lớp duy nhất của web nói chuyện HTTP với backend.
+ * Mọi API client (places, traffic, routes…) nhận một HttpClient qua constructor,
+ * nên có thể thay bằng bản giả khi kiểm thử và chỉ cần sửa một chỗ khi đổi cách gọi API.
+ *
+ * Backend luôn trả phong bì `{ data }` hoặc `{ error: { code, message } }`; lớp này bóc phong bì
+ * và đổi mọi lỗi (HTTP, mất mạng, quá thời gian) thành `ApiError`. Yêu cầu bị chính nơi gọi hủy
+ * (AbortController) thì giữ nguyên `AbortError`.
  */
-export async function apiRequest<T>(endpoint: string, init?: RequestInit, accessToken?: string): Promise<T> {
-  const headers = new Headers(init?.headers);
-  const hasJsonBody = init?.body && !(init.body instanceof Blob) && !(init.body instanceof ArrayBuffer);
-  if (hasJsonBody && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-  if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
-  headers.set('Accept', 'application/json');
+export class HttpClient {
+  constructor(private readonly options: HttpClientOptions) {}
 
-  let response: Response;
-  try {
-    response = await fetch(`${BASE}${endpoint}`, { ...init, headers, signal: withTimeout(init?.signal) });
-  } catch (cause) {
-    if (init?.signal?.aborted) throw cause;
-    if (cause instanceof DOMException && cause.name === 'TimeoutError') {
-      throw new ApiError('Máy chủ phản hồi quá lâu. Hãy thử lại.', 0, 'TIMEOUT');
+  get<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+    return this.send<T>(endpoint, 'GET', undefined, options);
+  }
+
+  /** Gửi JSON, hoặc gửi nguyên Blob/ArrayBuffer (ví dụ ảnh, âm thanh) nếu `body` là dữ liệu nhị phân. */
+  post<T>(endpoint: string, body?: unknown, options: RequestOptions = {}): Promise<T> {
+    return this.send<T>(endpoint, 'POST', body, options);
+  }
+
+  private async send<T>(
+    endpoint: string,
+    method: 'GET' | 'POST',
+    body: unknown,
+    { accessToken, ...init }: RequestOptions,
+  ): Promise<T> {
+    const headers = new Headers(init.headers);
+    headers.set('Accept', 'application/json');
+    if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
+    const payload = this.encodeBody(body, headers);
+
+    let response: Response;
+    try {
+      response = await fetch(`${this.options.baseUrl}${endpoint}`, {
+        ...init,
+        method,
+        headers,
+        body: payload,
+        signal: this.withTimeout(init.signal),
+      });
+    } catch (cause) {
+      throw this.toTransportError(cause, init.signal);
     }
-    throw new ApiError('Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.', 0, 'NETWORK');
+    return this.unwrap<T>(response);
   }
 
-  const json: unknown = await response.json().catch(() => null);
-  if (!response.ok) {
-    const apiError =
-      typeof json === 'object' && json !== null && 'error' in json
-        ? (json as { error: { message?: string; code?: string } }).error
-        : {};
-    throw new ApiError(apiError.message ?? `Lỗi API (${response.status})`, response.status, apiError.code);
+  private encodeBody(body: unknown, headers: Headers): BodyInit | undefined {
+    if (body === undefined) return undefined;
+    if (body instanceof Blob || body instanceof ArrayBuffer) return body;
+    if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+    return JSON.stringify(body);
   }
-  if (typeof json !== 'object' || json === null || !('data' in json)) {
-    throw new ApiError('Phản hồi API không hợp lệ', response.status);
+
+  private withTimeout(signal?: AbortSignal | null): AbortSignal | undefined {
+    if (typeof AbortSignal.timeout !== 'function') return signal ?? undefined;
+    const timeout = AbortSignal.timeout(this.options.timeoutMs);
+    if (!signal) return timeout;
+    return typeof AbortSignal.any === 'function' ? AbortSignal.any([signal, timeout]) : signal;
   }
-  return (json as { data: T }).data;
+
+  private toTransportError(cause: unknown, signal?: AbortSignal | null): unknown {
+    if (signal?.aborted) return cause;
+    if (cause instanceof DOMException && cause.name === 'TimeoutError') {
+      return new ApiError('Máy chủ phản hồi quá lâu. Hãy thử lại.', 0, 'TIMEOUT');
+    }
+    return new ApiError('Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.', 0, 'NETWORK');
+  }
+
+  private async unwrap<T>(response: Response): Promise<T> {
+    const json: unknown = await response.json().catch(() => null);
+    if (!response.ok) {
+      const apiError =
+        typeof json === 'object' && json !== null && 'error' in json
+          ? (json as { error: { message?: string; code?: string } }).error
+          : {};
+      throw new ApiError(apiError.message ?? `Lỗi API (${response.status})`, response.status, apiError.code);
+    }
+    if (typeof json !== 'object' || json === null || !('data' in json)) {
+      throw new ApiError('Phản hồi API không hợp lệ', response.status);
+    }
+    return (json as { data: T }).data;
+  }
 }
+
+/** HttpClient dùng chung của ứng dụng, trỏ tới API cấu hình bằng VITE_API_BASE_URL. */
+export const httpClient = new HttpClient({
+  baseUrl: import.meta.env.VITE_API_BASE_URL ?? '/api',
+  timeoutMs: 45_000,
+});
