@@ -57,11 +57,11 @@
 
 | ID | Công việc | Giờ | DoD | ✔ |
 |---|---|---|---|---|
-| 3.1 | `VietmapMatrixProvider implements MatrixProvider`: ma trận thời gian/khoảng cách theo xe; validate input, timeout, retry có giới hạn, lỗi quota rõ ràng | 2 | Mock test + gọi thật được với 3–8 điểm | [ ] |
-| 3.2 | `TwoOptStrategy` cho ma trận **bất đối xứng** (tính lại toàn bộ chi phí ứng viên); hỗ trợ giữ điểm cuối cố định / quay về điểm đầu | 2 | Test: không tệ hơn NN, giữ điểm đầu/cuối đúng | [ ] |
-| 3.3 | `OptimizeTripUseCase`: Matrix → NN → 2-opt → dựng hình học từng chặng bằng Route API (không nối thẳng) | 1.5 | Trả `order`, `legs[]` (geometry, distance, duration), tổng | [ ] |
-| 3.4 | Endpoint `POST /api/routes/optimize` + Zod schema (3–8 điểm, objective, returnToStart) | 0.5 | Thay 501; lỗi validation 400 đúng định dạng | [ ] |
-| 3.5 | `MultiStopPanel` + hook `useOptimizedTrip`: hiển thị thứ tự tối ưu, từng chặng, tổng; so sánh “trước/sau tối ưu” | 2 | Nhập 3–8 điểm → thấy thứ tự và tiết kiệm bao nhiêu | [ ] |
+| 3.1 | `VietmapMatrixProvider implements MatrixProvider` | 2 | Gọi thật được với nhiều điểm | [x] N2 làm; N1 gắn vào port `MatrixProvider` (đã thử thật tới 20 điểm) |
+| 3.2 | `TwoOptStrategy` (NN + 2-opt best-improvement) cho ma trận **bất đối xứng**, interface `OptimizationStrategy` chung với Held–Karp | 2 | Test: không tệ hơn NN, giữ điểm đầu/cuối | [x] |
+| 3.3 | `OptimizeRouteUseCase`: Matrix → Held–Karp (mặc định) hoặc NN + 2-opt → tuyến thật; báo đích danh điểm không có đường | 1.5 | Trả `order`, chi phí trước/sau, thuật toán đã dùng | [x] N2 làm phần lõi, N1 thêm chọn thuật toán |
+| 3.4 | `POST /api/routes/optimize` qua `OptimizationController`, Zod schema (tối đa 15 điểm ghé, `algorithm`) | 0.5 | Validate trước khi gọi Matrix | [x] |
+| 3.5 | `MultiStopPanel`: chọn thuật toán, hiển thị “tiết kiệm X% so với thứ tự nhập” | 2 | Thấy thứ tự tối ưu và mức tiết kiệm | [x] N2 làm panel, N1 thêm phần thuật toán |
 
 **Deliverable D3:** Multi-stop tối ưu thật thay cho nối điểm theo thứ tự nhập.
 
@@ -114,6 +114,6 @@
 |---|---|---|---|
 | 1 | 7 | 6 | 1.7 dời sang D3–D4 |
 | 2 | 6 | 6 | Thêm UI so sánh thuật toán (không cần key VietMap) |
-| 3 | 5 | 0 | |
+| 3 | 5 | 5 | N2 làm lõi Held–Karp; N1 thêm 2-opt, Strategy, benchmark (`docs/BENCHMARK_TSP.md`) |
 | 4 | 6 | 0 | |
 | 5 | 7 | 0 | |

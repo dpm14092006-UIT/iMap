@@ -72,7 +72,7 @@ Frontend chia theo feature (`map`, `places`, `navigation`, `multi-stop`, `my-rou
 | `POST /api/routes/calculate` | N1 | VietMap Route v4; cần `VIETMAP_API_KEY` |
 | `POST /api/routes/algorithm` | N1 | Dijkstra / A* trên đồ thị OSM trung tâm TP.HCM |
 | `GET /api/routes/algorithm/graph` | N1 | Vùng phủ + kích thước đồ thị OSM |
-| `POST /api/routes/optimize` | N1 | Matrix VietMap + Held–Karp, tối đa 8 điểm ghé |
+| `POST /api/routes/optimize` | N1 | Matrix VietMap + Held–Karp (chính xác) hoặc NN + 2-opt (gần đúng), tối đa 15 điểm ghé |
 | `GET /api/my-routes` | N1 | 501, chưa Supabase |
 
 ## Những lưu ý bắt buộc
@@ -106,6 +106,6 @@ Xem [kết quả kiểm tra tìm kiếm](docs/SEARCH_VERIFICATION.md).
 ## Thứ tự điểm dừng
 
 - **Chỉ đường:** thêm tối đa 8 điểm dừng giữa điểm xuất phát và điểm đến, đổi thứ tự bằng nút lên/xuống. Route API giữ nguyên thứ tự người dùng chọn.
-- **Nhiều điểm:** điểm xuất phát cố định; tự chọn thứ tự ghé tốt nhất theo ma trận chi phí đường bộ có hướng. Held–Karp tìm tối ưu chính xác trên ma trận cho tối đa 8 điểm ghé; hỗ trợ đường đi mở hoặc quay về điểm xuất phát. Matrix tính theo loại xe và tiêu chí thời gian/quãng đường. Tuyến cuối lấy hình học đường thật từ Route API, không nối các điểm bằng đường thẳng.
+- **Nhiều điểm:** điểm xuất phát cố định; tự chọn thứ tự ghé tốt nhất theo ma trận chi phí đường bộ có hướng. Chế độ "Tự động"/"Chính xác" dùng Held–Karp tìm tối ưu chính xác cho tối đa 15 điểm ghé (≈ 20–30 ms); "Nhanh" dùng Nearest Neighbor + 2-opt (gần đúng, trung bình dài hơn tối ưu 1–3,5%, xem `docs/BENCHMARK_TSP.md`). Hỗ trợ đường đi mở hoặc quay về điểm xuất phát; điểm không có đường xe (khu đi bộ, công viên) được báo đích danh. Matrix tính theo loại xe và tiêu chí thời gian/quãng đường. Tuyến cuối lấy hình học đường thật từ Route API, không nối các điểm bằng đường thẳng.
 - Matrix dùng `VIETMAP_API_KEY`; key cần quyền Matrix. Không chuyển sang khoảng cách đường thẳng khi dịch vụ lỗi. Ma trận không có đường (null hoặc -1) được coi là không thể đi, không phải chi phí 0. Chi phí Matrix/Route có thể khác do làm tròn hoặc lựa chọn tuyến của provider; không cam kết giao thông tức thời.
 - Đóng bảng nhiều điểm chỉ ẩn bảng; điểm, bộ lọc và kết quả được giữ trong phiên ứng dụng. Mở lại phục hồi tuyến trên bản đồ. Chỉ nút **Xóa hành trình** xóa bản nháp; **Lưu** lưu tuyến vào danh sách đã lưu. Tải lại trang cần mở tuyến đã lưu, không có tự lưu vị trí nhạy cảm vào storage.
