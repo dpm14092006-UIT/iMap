@@ -16,42 +16,92 @@ const system = [
 /** Only the typed request is sent to the model, not the trip geometry or the user's GPS. */
 export class AiStopIntentParser implements StopIntentParser {
   private readonly fallback = new KeywordStopIntentParser();
-  constructor(private readonly options: { provider: 'off' | 'gemini' | 'ollama'; model?: string; apiKey?: string; ollamaUrl: string }) {}
+  constructor(
+    private readonly options: {
+      provider: 'off' | 'gemini' | 'ollama';
+      model?: string;
+      apiKey?: string;
+      ollamaUrl: string;
+    },
+  ) {}
   async parse(query: string, context: string[] = []) {
-    if (this.options.provider === 'off' || !this.options.model || (this.options.provider === 'gemini' && !this.options.apiKey)) {
-      return { ...await this.fallback.parse(query, context), warning: 'Đang dùng bộ lọc từ khóa; AI chưa được bật.' };
+    if (
+      this.options.provider === 'off' ||
+      !this.options.model ||
+      (this.options.provider === 'gemini' && !this.options.apiKey)
+    ) {
+      return {
+        ...(await this.fallback.parse(query, context)),
+        warning: 'Đang dùng bộ lọc từ khóa; AI chưa được bật.',
+      };
     }
     const prompt = JSON.stringify({ previousRequests: context.slice(-4), request: query });
     try {
       if (this.options.provider === 'ollama') {
         const response = await fetch(new URL('/api/chat', this.options.ollamaUrl), {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(15000),
-          body: JSON.stringify({ model: this.options.model, stream: false, format: {
-            type: 'object', properties: {
-              category: { type: 'string', enum: [...stopCategories, 'unknown'] },
-              maxExtraDistanceMeters: { type: ['integer', 'null'], minimum: 0, maximum: 10000 },
-              maxExtraDurationSeconds: { type: ['integer', 'null'], minimum: 0, maximum: 3600 },
-              nearbyRadiusMeters: { type: ['integer', 'null'], minimum: 100, maximum: 5000 },
-              clarificationQuestion: { type: ['string', 'null'] },
-              suggestedCategories: { type: 'array', items: { type: 'string', enum: [...stopCategories] }, maxItems: 4 },
-              unsupportedRequirements: { type: 'array', items: { type: 'string' }, maxItems: 5 },
-            }, required: ['category', 'maxExtraDistanceMeters', 'maxExtraDurationSeconds', 'nearbyRadiusMeters', 'clarificationQuestion', 'suggestedCategories', 'unsupportedRequirements'], additionalProperties: false,
-          }, messages: [{ role: 'system', content: system }, { role: 'user', content: prompt }], options: { temperature: 0, num_predict: 300 } }),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(15000),
+          body: JSON.stringify({
+            model: this.options.model,
+            stream: false,
+            format: {
+              type: 'object',
+              properties: {
+                category: { type: 'string', enum: [...stopCategories, 'unknown'] },
+                maxExtraDistanceMeters: { type: ['integer', 'null'], minimum: 0, maximum: 10000 },
+                maxExtraDurationSeconds: { type: ['integer', 'null'], minimum: 0, maximum: 3600 },
+                nearbyRadiusMeters: { type: ['integer', 'null'], minimum: 100, maximum: 5000 },
+                clarificationQuestion: { type: ['string', 'null'] },
+                suggestedCategories: {
+                  type: 'array',
+                  items: { type: 'string', enum: [...stopCategories] },
+                  maxItems: 4,
+                },
+                unsupportedRequirements: { type: 'array', items: { type: 'string' }, maxItems: 5 },
+              },
+              required: [
+                'category',
+                'maxExtraDistanceMeters',
+                'maxExtraDurationSeconds',
+                'nearbyRadiusMeters',
+                'clarificationQuestion',
+                'suggestedCategories',
+                'unsupportedRequirements',
+              ],
+              additionalProperties: false,
+            },
+            messages: [
+              { role: 'system', content: system },
+              { role: 'user', content: prompt },
+            ],
+            options: { temperature: 0, num_predict: 300 },
+          }),
         });
         if (!response.ok) throw new Error('Ollama unavailable');
-        const result = await response.json() as { message?: { content?: string } };
-        return { intent: stopIntentSchema.parse(JSON.parse(result.message?.content ?? '')), source: 'ai' as const };
+        const result = (await response.json()) as { message?: { content?: string } };
+        return {
+          intent: stopIntentSchema.parse(JSON.parse(result.message?.content ?? '')),
+          source: 'ai' as const,
+        };
       }
       const google = createGoogle({ apiKey: this.options.apiKey });
       const { output } = await generateText({
-        model: google(this.options.model), system, prompt,
+        model: google(this.options.model),
+        system,
+        prompt,
         output: Output.object({ schema: stopIntentSchema }),
-        maxOutputTokens: 400, maxRetries: 0, abortSignal: AbortSignal.timeout(10000),
+        maxOutputTokens: 400,
+        maxRetries: 0,
+        abortSignal: AbortSignal.timeout(10000),
       });
       return { intent: stopIntentSchema.parse(output), source: 'ai' as const };
     } catch {
       // No paid-provider fallback and no logging request content or secrets.
-      return { ...await this.fallback.parse(query, context), warning: 'AI đang bận hoặc hết lượt; kết quả dùng bộ lọc từ khóa.' };
+      return {
+        ...(await this.fallback.parse(query, context)),
+        warning: 'AI đang bận hoặc hết lượt; kết quả dùng bộ lọc từ khóa.',
+      };
     }
   }
 }

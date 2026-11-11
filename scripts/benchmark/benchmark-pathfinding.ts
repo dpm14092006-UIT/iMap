@@ -12,7 +12,11 @@ import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { AStarSolver } from '../../apps/api/src/modules/navigation/domain/algorithms/AStarSolver.js';
 import { DijkstraSolver } from '../../apps/api/src/modules/navigation/domain/algorithms/DijkstraSolver.js';
-import type { CostMetric, RoadGraph, Vehicle } from '../../apps/api/src/modules/navigation/domain/algorithms/RoadGraph.js';
+import type {
+  CostMetric,
+  RoadGraph,
+  Vehicle,
+} from '../../apps/api/src/modules/navigation/domain/algorithms/RoadGraph.js';
 import type { ShortestPathSolver } from '../../apps/api/src/modules/navigation/domain/algorithms/ShortestPathSolver.js';
 import { OsmFileGraphSource } from '../../apps/api/src/modules/navigation/infrastructure/osm/OsmFileGraphSource.js';
 
@@ -33,14 +37,23 @@ function seededRandom(seed: number) {
 function randomPairs(graph: RoadGraph, vehicle: Vehicle, count: number): [string, string][] {
   const random = seededRandom(42);
   const bbox = { south: 10.765, west: 106.685, north: 10.8, east: 106.725 };
-  const randomPoint = () => ({ lat: bbox.south + random() * (bbox.north - bbox.south), lng: bbox.west + random() * (bbox.east - bbox.west) });
+  const randomPoint = () => ({
+    lat: bbox.south + random() * (bbox.north - bbox.south),
+    lng: bbox.west + random() * (bbox.east - bbox.west),
+  });
   return Array.from({ length: count }, () => [
     graph.nearestNode(randomPoint(), vehicle)!.node.id,
     graph.nearestNode(randomPoint(), vehicle)!.node.id,
   ]);
 }
 
-function run(solver: ShortestPathSolver, graph: RoadGraph, pair: [string, string], vehicle: Vehicle, metric: CostMetric) {
+function run(
+  solver: ShortestPathSolver,
+  graph: RoadGraph,
+  pair: [string, string],
+  vehicle: Vehicle,
+  metric: CostMetric,
+) {
   const started = performance.now();
   const result = solver.solve(graph, pair[0], pair[1], { vehicle, metric });
   return { result, ms: performance.now() - started };
@@ -62,7 +75,10 @@ async function main() {
   for (const vehicle of ['motorcycle', 'car'] as const) {
     const pairs = randomPairs(graph, vehicle, pairCount);
     for (const metric of ['distance', 'duration'] as const) {
-      const totals: Record<string, Stats> = { dijkstra: { runs: 0, visited: 0, ms: 0 }, astar: { runs: 0, visited: 0, ms: 0 } };
+      const totals: Record<string, Stats> = {
+        dijkstra: { runs: 0, visited: 0, ms: 0 },
+        astar: { runs: 0, visited: 0, ms: 0 },
+      };
       let unreachable = 0;
       for (const pair of pairs) {
         const d = run(dijkstra, graph, pair, vehicle, metric);
@@ -72,15 +88,21 @@ async function main() {
           continue;
         }
         if (Math.abs(d.result.cost - a.result.cost) > 1e-6 * Math.max(1, d.result.cost)) mismatches += 1;
-        for (const [name, entry] of [['dijkstra', d], ['astar', a]] as const) {
+        for (const [name, entry] of [
+          ['dijkstra', d],
+          ['astar', a],
+        ] as const) {
           totals[name]!.runs += 1;
           totals[name]!.visited += entry.result!.visitedNodes;
           totals[name]!.ms += entry.ms;
         }
       }
-      const avg = (name: string, key: 'visited' | 'ms') => totals[name]![key] / Math.max(1, totals[name]!.runs);
+      const avg = (name: string, key: 'visited' | 'ms') =>
+        totals[name]![key] / Math.max(1, totals[name]!.runs);
       const visitedSaving = 100 * (1 - avg('astar', 'visited') / avg('dijkstra', 'visited'));
-      rows.push(`| ${vehicle} | ${metric} | ${totals.dijkstra!.runs} | ${avg('dijkstra', 'visited').toFixed(0)} | ${avg('astar', 'visited').toFixed(0)} | ${visitedSaving.toFixed(0)}% | ${avg('dijkstra', 'ms').toFixed(2)} | ${avg('astar', 'ms').toFixed(2)} | ${unreachable} |`);
+      rows.push(
+        `| ${vehicle} | ${metric} | ${totals.dijkstra!.runs} | ${avg('dijkstra', 'visited').toFixed(0)} | ${avg('astar', 'visited').toFixed(0)} | ${visitedSaving.toFixed(0)}% | ${avg('dijkstra', 'ms').toFixed(2)} | ${avg('astar', 'ms').toFixed(2)} | ${unreachable} |`,
+      );
     }
   }
 

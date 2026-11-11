@@ -15,7 +15,8 @@ function gridGraph(size: number): RoadGraph {
   const graph = new RoadGraph();
   const id = (row: number, col: number) => `${row}-${col}`;
   for (let row = 0; row < size; row++) {
-    for (let col = 0; col < size; col++) graph.addNode({ id: id(row, col), lat: 10.77 + row * 0.001, lng: 106.69 + col * 0.001 });
+    for (let col = 0; col < size; col++)
+      graph.addNode({ id: id(row, col), lat: 10.77 + row * 0.001, lng: 106.69 + col * 0.001 });
   }
   const connect = (a: string, b: string) => {
     // Độ dài cạnh = khoảng cách thật giữa 2 node, giống cách dựng đồ thị từ OSM.
@@ -40,7 +41,7 @@ function gridGraph(size: number): RoadGraph {
  */
 function sampleGraph(): RoadGraph {
   const graph = new RoadGraph();
-  graph.addNode({ id: 'A', lat: 10.770, lng: 106.690 });
+  graph.addNode({ id: 'A', lat: 10.77, lng: 106.69 });
   graph.addNode({ id: 'B', lat: 10.771, lng: 106.691 });
   graph.addNode({ id: 'C', lat: 10.772, lng: 106.692 });
   graph.addNode({ id: 'D', lat: 10.773, lng: 106.692 });
@@ -54,8 +55,15 @@ function sampleGraph(): RoadGraph {
 describe.each(solvers)('$name', (solver) => {
   it('tìm đường ngắn hơn và tôn trọng loại phương tiện', () => {
     const graph = sampleGraph();
-    expect(solver.solve(graph, 'A', 'C', { vehicle: 'car', metric: 'distance' })?.nodeIds).toEqual(['A', 'B', 'C']);
-    expect(solver.solve(graph, 'A', 'C', { vehicle: 'motorcycle', metric: 'distance' })?.nodeIds).toEqual(['A', 'C']);
+    expect(solver.solve(graph, 'A', 'C', { vehicle: 'car', metric: 'distance' })?.nodeIds).toEqual([
+      'A',
+      'B',
+      'C',
+    ]);
+    expect(solver.solve(graph, 'A', 'C', { vehicle: 'motorcycle', metric: 'distance' })?.nodeIds).toEqual([
+      'A',
+      'C',
+    ]);
   });
 
   it('tính đúng quãng đường và thời gian (giây)', () => {
@@ -74,7 +82,10 @@ describe.each(solvers)('$name', (solver) => {
   });
 
   it('điểm đầu trùng điểm cuối thì chi phí bằng 0', () => {
-    expect(solver.solve(sampleGraph(), 'A', 'A', { vehicle: 'car', metric: 'distance' })).toMatchObject({ nodeIds: ['A'], cost: 0 });
+    expect(solver.solve(sampleGraph(), 'A', 'A', { vehicle: 'car', metric: 'distance' })).toMatchObject({
+      nodeIds: ['A'],
+      cost: 0,
+    });
   });
 });
 

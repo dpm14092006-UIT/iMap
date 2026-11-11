@@ -9,7 +9,10 @@ export function nextMapThemeChange(now: Date): Date {
   const next = new Date(now);
   if (now.getHours() < 6) next.setHours(6, 0, 0, 0);
   else if (now.getHours() < 18) next.setHours(18, 0, 0, 0);
-  else { next.setDate(next.getDate() + 1); next.setHours(6, 0, 0, 0); }
+  else {
+    next.setDate(next.getDate() + 1);
+    next.setHours(6, 0, 0, 0);
+  }
   return next;
 }
 
@@ -42,5 +45,9 @@ export function useTimeBasedMapLayer() {
       document.removeEventListener('visibilitychange', sync);
     };
   }, []);
-  return { automatic: mobile, layer: satellite ? 'satellite' as const : mobile ? theme : 'street' as const, setLayer: (layer: MapLayer) => setSatellite(layer === 'satellite') };
+  return {
+    automatic: mobile,
+    layer: satellite ? ('satellite' as const) : mobile ? theme : ('street' as const),
+    setLayer: (layer: MapLayer) => setSatellite(layer === 'satellite'),
+  };
 }

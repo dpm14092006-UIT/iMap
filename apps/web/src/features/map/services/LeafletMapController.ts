@@ -5,7 +5,15 @@ import type { AlgorithmOverlay, Bounds, DraftStops, MapLayer, RoutePlan } from '
 
 /** Khung nhìn khởi đầu toàn Việt Nam, không giới hạn pan/zoom vào một thành phố. */
 const VIETNAM_CENTER: L.LatLngExpression = [16, 108];
-const COLORS = { start: '#20a26b', end: '#2476ea', route: '#2476ea', multiRoute: '#167dcb', dijkstra: '#8b5cf6', astar: '#f97316', coverage: '#64748b' };
+const COLORS = {
+  start: '#20a26b',
+  end: '#2476ea',
+  route: '#2476ea',
+  multiRoute: '#167dcb',
+  dijkstra: '#8b5cf6',
+  astar: '#f97316',
+  coverage: '#64748b',
+};
 
 export type MapControllerHandlers = {
   onMapClick: (point: LatLng) => void;
@@ -38,20 +46,29 @@ export class LeafletMapController {
   private readonly trafficLayer = L.layerGroup();
   private readonly locationLayer = L.layerGroup();
   private lastRouteId: string | null = null;
+  private lastDraftStopsKey = '';
   private lastOverlayKey: string | null = null;
+  private lastTrafficMapLayer: TrafficMapLayer | null = null;
   private activeLayer: MapLayer = 'street';
 
   constructor(container: HTMLElement, handlers: MapControllerHandlers) {
-    this.map = L.map(container, { zoomControl: false, preferCanvas: true, attributionControl: true }).setView(VIETNAM_CENTER, 5);
+    this.map = L.map(container, { zoomControl: false, preferCanvas: true, attributionControl: true }).setView(
+      VIETNAM_CENTER,
+      5,
+    );
     this.map.attributionControl.setPosition('bottomleft');
     this.streets = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a>',
+      attribution:
+        '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a>',
     });
-    this.imagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19,
-      attribution: 'Imagery © Esri, Vantor, Earthstar Geographics, and the GIS User Community',
-    });
+    this.imagery = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      {
+        maxZoom: 19,
+        attribution: 'Imagery © Esri, Vantor, Earthstar Geographics, and the GIS User Community',
+      },
+    );
     this.streets.addTo(this.map);
     this.algorithmLayer.addTo(this.map); // nằm dưới tuyến VietMap và marker
     this.routeLayer.addTo(this.map);
@@ -59,7 +76,9 @@ export class LeafletMapController {
     this.locationLayer.addTo(this.map);
     this.map.on('moveend', () => handlers.onBoundsChange?.(this.getBounds()));
     handlers.onBoundsChange?.(this.getBounds());
-    this.map.on('click', (event: L.LeafletMouseEvent) => handlers.onMapClick({ lat: event.latlng.lat, lng: event.latlng.lng }));
+    this.map.on('click', (event: L.LeafletMouseEvent) =>
+      handlers.onMapClick({ lat: event.latlng.lat, lng: event.latlng.lng }),
+    );
   }
 
   /** Vẽ lại bản đồ theo dữ liệu mới nhất. */
@@ -67,12 +86,20 @@ export class LeafletMapController {
     this.setLayer(data.layer);
     this.setPicking(data.isPicking);
 
-    this.routeLayer.clearLayers();
-    if (data.route) this.drawRoute(data.route);
-    else this.drawDraftStops(data.draftStops);
+    const routeId = data.route?.id ?? null;
+    const draftStopsKey = [data.draftStops.origin, data.draftStops.destination]
+      .map((place) => (place ? `${place.id}:${place.lat},${place.lng}:${place.name}` : ''))
+      .join('|');
+    if (routeId !== this.lastRouteId || (!routeId && draftStopsKey !== this.lastDraftStopsKey)) {
+      this.routeLayer.clearLayers();
+      if (data.route) this.drawRoute(data.route);
+      else this.drawDraftStops(data.draftStops);
+    }
+    this.lastDraftStopsKey = draftStopsKey;
 
-    this.drawAlgorithmOverlay(data.algorithmOverlay);
-    this.drawTraffic(data.trafficLayer);
+    if (data.algorithmOverlay?.key !== this.lastOverlayKey) this.drawAlgorithmOverlay(data.algorithmOverlay);
+    if (data.trafficLayer !== this.lastTrafficMapLayer) this.drawTraffic(data.trafficLayer);
+    this.lastTrafficMapLayer = data.trafficLayer;
     this.drawCurrentLocation(data.currentLocation);
 
     // Chỉ tự zoom vừa tuyến khi có tuyến MỚI, tránh giật bản đồ mỗi lần render.
@@ -80,7 +107,7 @@ export class LeafletMapController {
       const coordinates = data.route.legs.flatMap((leg) => leg.points);
       if (coordinates.length) this.fit(coordinates);
     }
-    this.lastRouteId = data.route?.id ?? null;
+    this.lastRouteId = routeId;
 
     const overlay = data.algorithmOverlay;
     if (overlay && overlay.key !== this.lastOverlayKey) {
@@ -92,7 +119,8 @@ export class LeafletMapController {
 
   /** 'dark' dùng chung tile OSM với 'street' nhưng thêm class CSS để đảo màu (xem styles.css). */
   setLayer(layer: MapLayer) {
-    const expectedLayerIsVisible = layer === 'satellite' ? this.map.hasLayer(this.imagery) : this.map.hasLayer(this.streets);
+    const expectedLayerIsVisible =
+      layer === 'satellite' ? this.map.hasLayer(this.imagery) : this.map.hasLayer(this.streets);
     if (this.activeLayer === layer && expectedLayerIsVisible) {
       this.map.getContainer().classList.toggle('map-theme-dark', layer === 'dark');
       return;
@@ -111,15 +139,41 @@ export class LeafletMapController {
 
   private getBounds() {
     const bounds = this.map.getBounds();
-    return { minLat: Math.max(-90, bounds.getSouth()), maxLat: Math.min(90, bounds.getNorth()), minLng: Math.max(-180, bounds.getWest()), maxLng: Math.min(180, bounds.getEast()) };
+    return {
+      minLat: Math.max(-90, bounds.getSouth()),
+      maxLat: Math.min(90, bounds.getNorth()),
+      minLng: Math.max(-180, bounds.getWest()),
+      maxLng: Math.min(180, bounds.getEast()),
+    };
   }
-  showVietnam() { this.map.setView(VIETNAM_CENTER, 5); }
-  zoomIn() { this.map.zoomIn(); }
-  zoomOut() { this.map.zoomOut(); }
-  flyTo(point: LatLng, zoom = 15) { this.map.flyTo([point.lat, point.lng], zoom, { duration: 0.55 }); }
-  getCenter(): LatLng { const point = this.map.getCenter(); return { lat: point.lat, lng: point.lng }; }
-  invalidateSize() { this.map.invalidateSize({ pan: false }); }
-  destroy() { this.map.remove(); }
+  showVietnam() {
+    this.map.setView(VIETNAM_CENTER, 5);
+  }
+  zoomIn() {
+    this.map.zoomIn();
+  }
+  zoomOut() {
+    this.map.zoomOut();
+  }
+  flyTo(point: LatLng, zoom = 15) {
+    this.map.flyTo([point.lat, point.lng], zoom, { duration: 0.55 });
+  }
+  followLocation(point: LatLng, zoom = 16) {
+    const target = L.latLng(point.lat, point.lng);
+    if (this.map.getZoom() < zoom) this.map.setView(target, zoom, { animate: true, duration: 0.35 });
+    else if (this.map.getCenter().distanceTo(target) > 25)
+      this.map.panTo(target, { animate: true, duration: 0.35 });
+  }
+  getCenter(): LatLng {
+    const point = this.map.getCenter();
+    return { lat: point.lat, lng: point.lng };
+  }
+  invalidateSize() {
+    this.map.invalidateSize({ pan: false });
+  }
+  destroy() {
+    this.map.remove();
+  }
 
   /** Đổi con trỏ thành dấu "+" khi người dùng đang chọn điểm trên bản đồ. */
   private setPicking(isPicking: boolean) {
@@ -131,8 +185,20 @@ export class LeafletMapController {
       const points = leg.points.map(([lat, lng]) => L.latLng(lat, lng));
       if (points.length < 2) continue;
       // Vẽ 2 lớp: viền trắng dày bên dưới + màu tuyến bên trên để nổi trên nền bản đồ.
-      L.polyline(points, { color: '#fff', weight: 10, opacity: 0.94, lineCap: 'round', lineJoin: 'round' }).addTo(this.routeLayer);
-      L.polyline(points, { color: route.kind === 'multi' ? COLORS.multiRoute : COLORS.route, weight: 5.5, opacity: 0.98, lineCap: 'round', lineJoin: 'round' }).addTo(this.routeLayer);
+      L.polyline(points, {
+        color: '#fff',
+        weight: 10,
+        opacity: 0.94,
+        lineCap: 'round',
+        lineJoin: 'round',
+      }).addTo(this.routeLayer);
+      L.polyline(points, {
+        color: route.kind === 'multi' ? COLORS.multiRoute : COLORS.route,
+        weight: 5.5,
+        opacity: 0.98,
+        lineCap: 'round',
+        lineJoin: 'round',
+      }).addTo(this.routeLayer);
     }
     route.stops.forEach((place, index) => {
       const isLast = index === route.stops.length - 1;
@@ -156,7 +222,10 @@ export class LeafletMapController {
       iconAnchor: [16, 16],
     });
     const marker = L.marker([place.lat, place.lng], { icon, keyboard: false }).addTo(this.routeLayer);
-    marker.bindTooltip(this.textElement('span', place.name), { direction: 'top', className: 'routetwin-tooltip' });
+    marker.bindTooltip(this.textElement('span', place.name), {
+      direction: 'top',
+      className: 'routetwin-tooltip',
+    });
   }
 
   /**
@@ -169,18 +238,31 @@ export class LeafletMapController {
     if (overlay.coverage) this.drawCoverage(overlay.coverage);
     for (const path of overlay.paths) {
       if (path.points.length < 2) continue;
-      const style: L.PolylineOptions = path.algorithm === 'dijkstra'
-        ? { color: COLORS.dijkstra, weight: 8, opacity: 0.55 }
-        : { color: COLORS.astar, weight: 4, opacity: 0.95, dashArray: '8 7' };
-      L.polyline(path.points, { ...style, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(this.algorithmLayer);
+      const style: L.PolylineOptions =
+        path.algorithm === 'dijkstra'
+          ? { color: COLORS.dijkstra, weight: 8, opacity: 0.55 }
+          : { color: COLORS.astar, weight: 4, opacity: 0.95, dashArray: '8 7' };
+      L.polyline(path.points, { ...style, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(
+        this.algorithmLayer,
+      );
     }
   }
 
   /** Khung nét đứt cho biết vùng có dữ liệu đồ thị OSM. */
   private drawCoverage({ south, west, north, east }: Bounds) {
-    L.rectangle([[south, west], [north, east]], {
-      color: COLORS.coverage, weight: 1.5, dashArray: '6 6', fill: false, interactive: false,
-    }).addTo(this.algorithmLayer);
+    L.rectangle(
+      [
+        [south, west],
+        [north, east],
+      ],
+      {
+        color: COLORS.coverage,
+        weight: 1.5,
+        dashArray: '6 6',
+        fill: false,
+        interactive: false,
+      },
+    ).addTo(this.algorithmLayer);
   }
 
   /** Vẽ sự cố giao thông theo hợp đồng TrafficMapLayer (bỏ qua sự cố đã thông thoáng). */
@@ -191,7 +273,10 @@ export class LeafletMapController {
       const [lng, lat] = feature.geometry.coordinates; // GeoJSON: [lng, lat]
       if (typeof lat !== 'number' || typeof lng !== 'number') continue;
       const { severity, communityReporterCount = 0 } = feature.properties;
-      const marker = L.marker([lat, lng], { icon: this.trafficIcon(severity, communityReporterCount), keyboard: false }).addTo(this.trafficLayer);
+      const marker = L.marker([lat, lng], {
+        icon: this.trafficIcon(severity, communityReporterCount),
+        keyboard: false,
+      }).addTo(this.trafficLayer);
       marker.bindPopup(this.trafficPopup(feature));
     }
   }
@@ -199,11 +284,17 @@ export class LeafletMapController {
   /** Popup sự cố: tiêu đề + số báo cáo được gộp và số người xác nhận (dữ liệu cộng đồng từ N2). */
   private trafficPopup({ properties }: TrafficFeature): HTMLElement {
     const content = document.createElement('div');
-    const formatTime = (iso: string) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const formatTime = (iso: string) =>
+      new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     const reportCount = properties.communityReportCount ?? 1;
     const reporterCount = properties.communityReporterCount ?? 0;
-    const freshness = properties.communityUpdatedAt ? ` · cập nhật ${formatTime(properties.communityUpdatedAt)}` : ' · chưa có xác nhận mới';
-    const detail = this.textElement('p', `${reportCount} báo cáo / 75 m trong 30 phút từ ${reporterCount} người${freshness}`);
+    const freshness = properties.communityUpdatedAt
+      ? ` · cập nhật ${formatTime(properties.communityUpdatedAt)}`
+      : ' · chưa có xác nhận mới';
+    const detail = this.textElement(
+      'p',
+      `${reportCount} báo cáo / 75 m trong 30 phút từ ${reporterCount} người${freshness}`,
+    );
     detail.className = 'mb-0 mt-1 text-xs text-slate-500';
     content.append(this.textElement('strong', properties.title), detail);
     return content;
@@ -212,7 +303,13 @@ export class LeafletMapController {
   private drawCurrentLocation(point: LatLng | null) {
     this.locationLayer.clearLayers();
     if (!point) return;
-    L.circleMarker([point.lat, point.lng], { radius: 8, fillColor: '#2476ea', fillOpacity: 1, color: '#fff', weight: 3 }).addTo(this.locationLayer);
+    L.circleMarker([point.lat, point.lng], {
+      radius: 8,
+      fillColor: '#2476ea',
+      fillOpacity: 1,
+      color: '#fff',
+      weight: 3,
+    }).addTo(this.locationLayer);
   }
 
   private fit(points: L.LatLngExpression[]) {
@@ -222,7 +319,12 @@ export class LeafletMapController {
   /** Marker sự cố: màu theo mức độ; hiện số người xác nhận khi có từ 2 người trở lên, nếu không thì "!". */
   private trafficIcon(severity: TrafficSeverity, communityReporterCount: number) {
     const label = communityReporterCount > 1 ? String(communityReporterCount) : '!';
-    return L.divIcon({ className: `routetwin-incident-marker ${severity}`, html: `<span>${label}</span>`, iconSize: [28, 28], iconAnchor: [14, 14] });
+    return L.divIcon({
+      className: `routetwin-incident-marker ${severity}`,
+      html: `<span>${label}</span>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+    });
   }
 
   /** Tạo element bằng textContent (không dùng innerHTML) để tránh chèn HTML từ dữ liệu người dùng. */

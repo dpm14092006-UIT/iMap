@@ -16,7 +16,9 @@ describe('osmRoadRules', () => {
   });
 
   it('tag cụ thể ưu tiên hơn tag chung', () => {
-    expect(allowedVehicles({ highway: 'residential', access: 'no', motorcycle: 'yes' })).toEqual(['motorcycle']);
+    expect(allowedVehicles({ highway: 'residential', access: 'no', motorcycle: 'yes' })).toEqual([
+      'motorcycle',
+    ]);
     expect(allowedVehicles({ highway: 'residential', motorcar: 'no' })).toEqual(['motorcycle']);
   });
 
@@ -38,7 +40,12 @@ describe('osmRoadRules', () => {
 describe('OsmGraphBuilder', () => {
   /** 3 node thẳng hàng: 1 — 2 — 3. Way 10 hai chiều (1→2), way 11 một chiều (2→3). */
   const extract: OsmExtract = {
-    meta: { source: 'test', license: 'ODbL', bbox: { south: 10, west: 106, north: 11, east: 107 }, fetchedAt: '' },
+    meta: {
+      source: 'test',
+      license: 'ODbL',
+      bbox: { south: 10, west: 106, north: 11, east: 107 },
+      fetchedAt: '',
+    },
     nodes: { 1: [10.77, 106.69], 2: [10.771, 106.69], 3: [10.772, 106.69] },
     ways: [
       { id: 10, nodes: [1, 2], tags: { highway: 'residential', name: 'Hẻm A' } },
@@ -50,7 +57,12 @@ describe('OsmGraphBuilder', () => {
     const graph = new OsmGraphBuilder().build(extract);
     expect(graph.nodeCount).toBe(3);
     expect(graph.edgeCount).toBe(3);
-    expect(graph.neighbors('2', 'car').map((edge) => edge.to).sort()).toEqual(['1', '3']);
+    expect(
+      graph
+        .neighbors('2', 'car')
+        .map((edge) => edge.to)
+        .sort(),
+    ).toEqual(['1', '3']);
     expect(graph.neighbors('3', 'car')).toEqual([]);
   });
 

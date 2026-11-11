@@ -37,7 +37,13 @@ export function useAlgorithmComparison({ origin, destination, vehicle }: Compari
     const requestId = ++latestRequest.current;
     setIsLoading(true);
     setError('');
-    if (!coverage) pathfindingApi.graphInfo().then((info) => setCoverage(info.coverage)).catch(() => { /* không bắt buộc */ });
+    if (!coverage)
+      pathfindingApi
+        .graphInfo()
+        .then((info) => setCoverage(info.coverage))
+        .catch(() => {
+          /* không bắt buộc */
+        });
     try {
       const data = await pathfindingApi.solve({
         from: { lat: origin.lat, lng: origin.lng },
@@ -48,7 +54,8 @@ export function useAlgorithmComparison({ origin, destination, vehicle }: Compari
       });
       if (requestId === latestRequest.current) setResult(data);
     } catch (caught) {
-      if (requestId === latestRequest.current) setError(caught instanceof Error ? caught.message : 'Không chạy được thuật toán.');
+      if (requestId === latestRequest.current)
+        setError(caught instanceof Error ? caught.message : 'Không chạy được thuật toán.');
     } finally {
       if (requestId === latestRequest.current) setIsLoading(false);
     }
@@ -61,8 +68,13 @@ export function useAlgorithmComparison({ origin, destination, vehicle }: Compari
   const overlay = useMemo<AlgorithmOverlay | null>(() => {
     if (!result && !(error && coverage)) return null;
     return {
-      key: result ? `${result.snappedFrom.lat},${result.snappedFrom.lng}-${result.snappedTo.lat},${result.snappedTo.lng}-${result.vehicle}-${result.objective}` : 'coverage-only',
-      paths: (result?.runs ?? []).map((run) => ({ algorithm: run.algorithm, points: run.coordinates.map(([lng, lat]) => [lat, lng] as [number, number]) })),
+      key: result
+        ? `${result.snappedFrom.lat},${result.snappedFrom.lng}-${result.snappedTo.lat},${result.snappedTo.lng}-${result.vehicle}-${result.objective}`
+        : 'coverage-only',
+      paths: (result?.runs ?? []).map((run) => ({
+        algorithm: run.algorithm,
+        points: run.coordinates.map(([lng, lat]) => [lat, lng] as [number, number]),
+      })),
       coverage,
     };
   }, [result, error, coverage]);

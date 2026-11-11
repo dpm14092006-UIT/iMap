@@ -8,24 +8,31 @@ import {
 } from '@routetwin/shared';
 import { z } from 'zod';
 import { AppError } from '../../../../shared/errors/AppError.js';
-import type { TrafficImageAnalyzer, TrafficImageMimeType } from '../../application/ports/TrafficImageAnalyzer.js';
+import type {
+  TrafficImageAnalyzer,
+  TrafficImageMimeType,
+} from '../../application/ports/TrafficImageAnalyzer.js';
 
-const apiIncidentResponseSchema = z.object({
-  trafficRelated: z.boolean(),
-  incidentType: z.enum([...incidentTypes, 'unknown']),
-  severity: z.enum(['low', 'medium', 'high', 'unknown']),
-  summary: z.string().trim().min(1).max(220),
-  evidence: z.array(z.string().trim().min(1).max(120)).max(4),
-  confidence: z.enum(['low', 'medium', 'high']),
-}).strict();
+const apiIncidentResponseSchema = z
+  .object({
+    trafficRelated: z.boolean(),
+    incidentType: z.enum([...incidentTypes, 'unknown']),
+    severity: z.enum(['low', 'medium', 'high', 'unknown']),
+    summary: z.string().trim().min(1).max(220),
+    evidence: z.array(z.string().trim().min(1).max(120)).max(4),
+    confidence: z.enum(['low', 'medium', 'high']),
+  })
+  .strict();
 
-const apiSignResponseSchema = z.object({
-  trafficSign: z.boolean(),
-  category: z.enum(['prohibition', 'warning', 'mandatory', 'information', 'supplementary', 'unknown']),
-  label: z.string().trim().min(1).max(120),
-  visibleText: z.string().trim().max(120),
-  confidence: z.enum(['low', 'medium', 'high']),
-}).strict();
+const apiSignResponseSchema = z
+  .object({
+    trafficSign: z.boolean(),
+    category: z.enum(['prohibition', 'warning', 'mandatory', 'information', 'supplementary', 'unknown']),
+    label: z.string().trim().min(1).max(120),
+    visibleText: z.string().trim().max(120),
+    confidence: z.enum(['low', 'medium', 'high']),
+  })
+  .strict();
 
 const incidentJsonSchema = {
   type: 'object',
@@ -45,7 +52,10 @@ const signJsonSchema = {
   type: 'object',
   properties: {
     trafficSign: { type: 'boolean' },
-    category: { type: 'string', enum: ['prohibition', 'warning', 'mandatory', 'information', 'supplementary', 'unknown'] },
+    category: {
+      type: 'string',
+      enum: ['prohibition', 'warning', 'mandatory', 'information', 'supplementary', 'unknown'],
+    },
     label: { type: 'string' },
     visibleText: { type: 'string' },
     confidence: { type: 'string', enum: ['low', 'medium', 'high'] },
@@ -81,7 +91,10 @@ type GeminiInteraction = {
 function extractInteractionText(interaction: GeminiInteraction): string | undefined {
   if (typeof interaction.output_text === 'string') return interaction.output_text;
 
-  const modelOutput = interaction.steps?.slice().reverse().find((step) => step.type === 'model_output');
+  const modelOutput = interaction.steps
+    ?.slice()
+    .reverse()
+    .find((step) => step.type === 'model_output');
   const stepText = modelOutput?.content
     ?.filter((part) => part.type === 'text' && typeof part.text === 'string')
     .map((part) => part.text as string)
@@ -104,9 +117,15 @@ export class GeminiTrafficImageAnalyzer implements TrafficImageAnalyzer {
     private readonly enabled = false,
   ) {}
 
-  async analyze(image: Buffer, mimeType: TrafficImageMimeType, task: TrafficImageAnalysisTask): Promise<TrafficImageAnalysisDto> {
-    if (!this.enabled) throw new AppError(503, 'GEMINI_NOT_ENABLED', 'AI ảnh chưa được bật cho ứng dụng này.');
-    if (!this.apiKey) throw new AppError(503, 'GEMINI_NOT_CONFIGURED', 'Chức năng AI ảnh chưa được cấu hình.');
+  async analyze(
+    image: Buffer,
+    mimeType: TrafficImageMimeType,
+    task: TrafficImageAnalysisTask,
+  ): Promise<TrafficImageAnalysisDto> {
+    if (!this.enabled)
+      throw new AppError(503, 'GEMINI_NOT_ENABLED', 'AI ảnh chưa được bật cho ứng dụng này.');
+    if (!this.apiKey)
+      throw new AppError(503, 'GEMINI_NOT_CONFIGURED', 'Chức năng AI ảnh chưa được cấu hình.');
     const validatedTask = trafficImageAnalysisTaskSchema.parse(task);
     const schema = validatedTask === 'incident' ? incidentJsonSchema : signJsonSchema;
     const payload = {
@@ -119,35 +138,45 @@ export class GeminiTrafficImageAnalyzer implements TrafficImageAnalyzer {
       store: false,
     };
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25_000);
     let response: Response;
     try {
       response = await fetch(this.endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': this.apiKey },
         body: JSON.stringify(payload),
-        signal: controller.signal,
+        // Keep the deadline active while the response body is being read below.
+        signal: AbortSignal.timeout(25_000),
       });
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
+      if (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')) {
         throw new AppError(504, 'GEMINI_TIMEOUT', 'AI xử lý ảnh quá thời gian chờ. Vui lòng thử lại.');
       }
       throw new AppError(502, 'GEMINI_UNAVAILABLE', 'Không kết nối được dịch vụ AI ảnh.');
-    } finally {
-      clearTimeout(timeout);
     }
 
     if (!response.ok) {
-      if (response.status === 429) throw new AppError(429, 'GEMINI_RATE_LIMITED', 'AI đang quá tải hoặc hết lượt sử dụng. Vui lòng thử lại sau.');
-      if (response.status === 401 || response.status === 403) throw new AppError(503, 'GEMINI_CONFIGURATION_ERROR', 'Khóa Gemini không hợp lệ hoặc chưa được cấp quyền.');
+      if (response.status === 429)
+        throw new AppError(
+          429,
+          'GEMINI_RATE_LIMITED',
+          'AI đang quá tải hoặc hết lượt sử dụng. Vui lòng thử lại sau.',
+        );
+      if (response.status === 401 || response.status === 403)
+        throw new AppError(
+          503,
+          'GEMINI_CONFIGURATION_ERROR',
+          'Khóa Gemini không hợp lệ hoặc chưa được cấp quyền.',
+        );
       throw new AppError(502, 'GEMINI_PROVIDER_ERROR', 'Dịch vụ AI chưa thể phân tích ảnh lúc này.');
     }
 
     let interaction: GeminiInteraction;
     try {
-      interaction = await response.json() as GeminiInteraction;
-    } catch {
+      interaction = (await response.json()) as GeminiInteraction;
+    } catch (error) {
+      if (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')) {
+        throw new AppError(504, 'GEMINI_TIMEOUT', 'AI xử lý ảnh quá thời gian chờ. Vui lòng thử lại.');
+      }
       throw new AppError(502, 'GEMINI_INVALID_RESPONSE', 'AI trả về dữ liệu không hợp lệ.');
     }
     const outputText = extractInteractionText(interaction);
@@ -171,11 +200,21 @@ export class GeminiTrafficImageAnalyzer implements TrafficImageAnalyzer {
 
     if (validatedTask === 'incident') {
       const result = apiIncidentResponseSchema.safeParse(modelResult);
-      if (!result.success) throw new AppError(502, 'GEMINI_INVALID_RESPONSE', 'Kết quả phân tích sự cố chưa đúng định dạng.');
-      return trafficIncidentImageAnalysisSchema.parse({ task: 'incident', ...result.data, canDetermineSpeed: false });
+      if (!result.success)
+        throw new AppError(502, 'GEMINI_INVALID_RESPONSE', 'Kết quả phân tích sự cố chưa đúng định dạng.');
+      return trafficIncidentImageAnalysisSchema.parse({
+        task: 'incident',
+        ...result.data,
+        canDetermineSpeed: false,
+      });
     }
     const result = apiSignResponseSchema.safeParse(modelResult);
-    if (!result.success) throw new AppError(502, 'GEMINI_INVALID_RESPONSE', 'Kết quả nhận diện biển báo chưa đúng định dạng.');
-    return trafficSignImageAnalysisSchema.parse({ task: 'traffic_sign', ...result.data, changesRouteRules: false });
+    if (!result.success)
+      throw new AppError(502, 'GEMINI_INVALID_RESPONSE', 'Kết quả nhận diện biển báo chưa đúng định dạng.');
+    return trafficSignImageAnalysisSchema.parse({
+      task: 'traffic_sign',
+      ...result.data,
+      changesRouteRules: false,
+    });
   }
 }

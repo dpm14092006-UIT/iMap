@@ -28,6 +28,8 @@ npm run dev -w @routetwin/web
 ## Kiểm tra
 
 ```bash
+npm run format     # tự định dạng code bằng Prettier
+npm run lint       # kiểm tra ESLint
 npm run typecheck
 npm test
 npm run build

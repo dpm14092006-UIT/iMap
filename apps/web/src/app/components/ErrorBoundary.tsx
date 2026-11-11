@@ -1,0 +1,37 @@
+import { Component, type ErrorInfo, type ReactNode } from 'react';
+
+type ErrorBoundaryState = { failed: boolean };
+
+/** Chặn lỗi render để người dùng thấy lời nhắn và nút tải lại thay vì màn hình trắng. */
+export class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { failed: false };
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('Lỗi giao diện chưa được xử lý', error, info.componentStack);
+  }
+
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <main className="grid min-h-dvh place-items-center bg-slate-50 px-6 text-center text-ink" role="alert">
+        <div className="max-w-sm">
+          <h1 className="text-xl font-bold tracking-tight">Đã có lỗi xảy ra</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Ứng dụng gặp sự cố khi hiển thị. Tải lại trang để tiếp tục; các tuyến đã lưu của bạn vẫn còn.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-5 min-h-11 rounded-xl bg-brand-600 px-5 text-sm font-bold text-white transition hover:bg-brand-700"
+          >
+            Tải lại trang
+          </button>
+        </div>
+      </main>
+    );
+  }
+}

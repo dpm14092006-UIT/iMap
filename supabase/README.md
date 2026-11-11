@@ -8,7 +8,7 @@ supabase link --project-ref <project-ref>
 supabase db push --linked
 ```
 
-Lệnh cuối áp dụng lần lượt `migrations/0001_initial.sql`, `migrations/0002_n2_traffic_auth_ai.sql`, `migrations/0003_traffic_report_photos.sql` và `migrations/0004_community_traffic_confirmations.sql`. Migration thứ hai thiết lập Auth/RLS, RPC PostGIS, báo cáo cộng đồng và private Storage bucket; migration thứ ba gỡ metadata/quota AI cũ và gắn ảnh minh chứng vào traffic reports; migration thứ tư tổng hợp các xác nhận gần đây mà vẫn giữ từng báo cáo gốc. Có thể chạy SQL thủ công theo đúng thứ tự trong Dashboard, nhưng cần đánh dấu migration đã áp dụng trước khi quay lại dùng CLI.
+Lệnh cuối áp dụng lần lượt `migrations/0001_initial.sql` đến `migrations/0005_backend_hardening.sql`. Migration thứ hai thiết lập Auth/RLS, RPC PostGIS, báo cáo cộng đồng và private Storage bucket; migration thứ ba gỡ metadata/quota AI cũ và gắn ảnh minh chứng vào traffic reports; migration thứ tư tổng hợp các xác nhận gần đây mà vẫn giữ từng báo cáo gốc; migration thứ năm thêm quota dùng chung giữa các API instances cho phân tích ảnh, điểm dừng và voice, đồng thời tuần tự hóa giới hạn tạo báo cáo theo tài khoản. Có thể chạy SQL thủ công theo đúng thứ tự trong Dashboard, nhưng cần đánh dấu migration đã áp dụng trước khi quay lại dùng CLI.
 
 Sau đó bật `pg_cron` trong Dashboard và chạy `ops/traffic-expiry-cron.sql` một lần. `GET /api/traffic-reports` vẫn ẩn ngay các báo cáo quá hạn nếu Cron chưa bật; Cron cập nhật trạng thái DB và phát Realtime event đúng lúc.
 
@@ -26,6 +26,8 @@ Không dùng secret key trong web. API nhận publishable key cùng access token
 Sau khi có schema từ `0001`, chạy **toàn bộ từng file theo thứ tự `0002 → 0003 → 0004`**. Khi phát lại chuỗi migration, cần kết thúc ở `0004` để giữ cấu trúc RPC mới nhất. Nếu SQL Editor còn query cũ, mở query mới và copy lại nội dung file đã sửa.
 
 `repairs/0002_rpc_return_type_v2.sql` là bản sao thủ công của `0002`, có dòng nhận diện `FIXED-0002-RPC-RETURN-TYPE-v2`; dùng thay cho `0002`, không phải migration bổ sung.
+
+Migration `0005` giới hạn Gemini traffic-image analysis ở 10 lượt/tài khoản/giờ và tìm điểm dừng/voice ở 5 lượt/tài khoản/phút cho từng tính năng. API chỉ gọi quota ảnh khi Gemini được bật; các hạn mức được tăng atomically trong Postgres để mọi instance dùng chung. Job `expire_stale_traffic_reports()` dọn bucket quota cũ hơn 48 giờ.
 
 Lưu ý: `0003` giữ hành vi có sẵn là xóa bảng metadata/quota AI cũ; không xóa file ảnh trong Storage.
 

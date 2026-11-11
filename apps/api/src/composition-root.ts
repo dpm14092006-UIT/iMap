@@ -5,6 +5,7 @@ import { FindRouteStopsUseCase } from './modules/route-stops/application/use-cas
 import { OverpassStopPlaceProvider } from './modules/route-stops/infrastructure/providers/OverpassStopPlaceProvider.js';
 import { AiStopIntentParser } from './modules/route-stops/infrastructure/providers/AiStopIntentParser.js';
 import { SupabaseTrafficReportRepository } from './modules/traffic/infrastructure/repositories/SupabaseTrafficReportRepository.js';
+import { SupabaseTrafficImageAnalysisQuota } from './modules/traffic/infrastructure/repositories/SupabaseTrafficImageAnalysisQuota.js';
 import { CreateTrafficReportUseCase } from './modules/traffic/application/use-cases/CreateTrafficReportUseCase.js';
 import { ListTrafficReportsUseCase } from './modules/traffic/application/use-cases/ListTrafficReportsUseCase.js';
 import { UpdateRoadClearanceUseCase } from './modules/traffic/application/use-cases/UpdateRoadClearanceUseCase.js';
@@ -37,7 +38,11 @@ export function createContainer() {
     new CreateTrafficReportUseCase(trafficRepository),
     new ListTrafficReportsUseCase(trafficRepository),
     new UpdateRoadClearanceUseCase(trafficRepository),
-    new AnalyzeTrafficImageUseCase(new GeminiTrafficImageAnalyzer(env.GEMINI_API_KEY, env.GEMINI_MODEL, env.GEMINI_TRAFFIC_AI_ENABLED)),
+    new AnalyzeTrafficImageUseCase(
+      new GeminiTrafficImageAnalyzer(env.GEMINI_API_KEY, env.GEMINI_MODEL, env.GEMINI_TRAFFIC_AI_ENABLED),
+      new SupabaseTrafficImageAnalysisQuota(),
+      env.GEMINI_TRAFFIC_AI_ENABLED && Boolean(env.GEMINI_API_KEY),
+    ),
   );
   const placeProvider = new VietmapPlaceSearchProvider(env.VIETMAP_API_KEY);
   const placeSearchController = new PlaceSearchController(
@@ -46,10 +51,18 @@ export function createContainer() {
     placeProvider,
   );
   const routeProvider = new VietmapRouteProvider(env.VIETMAP_API_KEY);
-  const optimizeRoute = new OptimizeRouteUseCase(new VietmapMatrixProvider(env.VIETMAP_API_KEY), routeProvider);
+  const optimizeRoute = new OptimizeRouteUseCase(
+    new VietmapMatrixProvider(env.VIETMAP_API_KEY),
+    routeProvider,
+  );
   const routeController = new RouteController(new CalculateRouteUseCase(routeProvider));
   const stopPlaces = new OverpassStopPlaceProvider(env.OVERPASS_API_URL);
-  const stopParser = new AiStopIntentParser({ provider: env.STOP_AI_PROVIDER, model: env.STOP_AI_MODEL, apiKey: env.GEMINI_API_KEY, ollamaUrl: env.OLLAMA_BASE_URL });
+  const stopParser = new AiStopIntentParser({
+    provider: env.STOP_AI_PROVIDER,
+    model: env.STOP_AI_MODEL,
+    apiKey: env.GEMINI_API_KEY,
+    ollamaUrl: env.OLLAMA_BASE_URL,
+  });
   const findRouteStops = new FindRouteStopsUseCase(routeProvider, stopPlaces, stopParser);
   const explorePlaces = new ExplorePlacesUseCase(stopParser, stopPlaces, findRouteStops);
 
@@ -59,5 +72,13 @@ export function createContainer() {
     new FindPathUseCase(roadGraphSource, { dijkstra: new DijkstraSolver(), astar: new AStarSolver() }),
     new GetRoadGraphInfoUseCase(roadGraphSource),
   );
-  return { optimizeRoute, trafficController, placeSearchController, routeController, findRouteStops, explorePlaces, pathfindingController };
+  return {
+    optimizeRoute,
+    trafficController,
+    placeSearchController,
+    routeController,
+    findRouteStops,
+    explorePlaces,
+    pathfindingController,
+  };
 }

@@ -1,3 +1,20 @@
 <!doctype html>
-<html lang="vi"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/><meta name="theme-color" content="#f8fafc"/><meta name="description" content="Bản đồ Việt Nam với tìm kiếm địa điểm và công cụ lập hành trình."/><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/><link rel="apple-touch-icon" href="/apple-touch-icon.png"/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><title>iMap · Bản đồ &amp; chỉ đường</title></head>
-<body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f8fafc" />
+    <meta name="description" content="Bản đồ Việt Nam với tìm kiếm địa điểm và công cụ lập hành trình." />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Mở sẵn kết nối tới máy chủ ảnh nền bản đồ để ô bản đồ đầu tiên hiện nhanh hơn. -->
+    <link rel="preconnect" href="https://tile.openstreetmap.de" crossorigin />
+    <title>iMap · Bản đồ &amp; chỉ đường</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>iMap cần bật JavaScript để hiển thị bản đồ và chỉ đường.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

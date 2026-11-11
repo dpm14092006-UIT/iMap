@@ -22,5 +22,5 @@ const SIGN_ARROWS: Record<number, string> = {
 
 /** Mũi tên cho một bước chỉ dẫn; không rõ mã thì coi như đi thẳng. */
 export function maneuverArrow(sign: number | undefined): string {
-  return sign === undefined ? '↑' : SIGN_ARROWS[sign] ?? '↑';
+  return sign === undefined ? '↑' : (SIGN_ARROWS[sign] ?? '↑');
 }

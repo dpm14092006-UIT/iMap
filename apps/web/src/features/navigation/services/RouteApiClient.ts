@@ -1,78 +1,119 @@
 import type { OptimizeRouteResult, RouteResult } from '@routetwin/shared';
+import { ApiError, apiRequest } from '../../../shared/api/httpClient';
 import type { RouteObjective, RoutePlan, TransportMode } from '../../map/types';
 import type { Place } from '../../places/types';
 
-type RouteApiError = { error?: { message?: string } };
+/** Kết quả gọi API tuyến đường: tuyến hợp lệ hoặc thông báo lỗi để hiển thị cho người dùng. */
+export type RoutePlanResult = RoutePlan | { error: string };
 
-/** Client boundary for the API's VietMap-backed route calculation. */
+type RouteRequestBody = {
+  points: { lat: number; lng: number }[];
+  vehicle: TransportMode;
+  objective: 'distance' | 'duration';
+  returnToStart?: boolean;
+};
+
+function requestBody(stops: Place[], vehicle: TransportMode, objective: RouteObjective): RouteRequestBody {
+  return {
+    points: stops.map(({ lat, lng }) => ({ lat, lng })),
+    vehicle,
+    // Frontend gọi tiêu chí là "time", API gọi là "duration".
+    objective: objective === 'distance' ? 'distance' : 'duration',
+  };
+}
+
+function postRoute<T>(endpoint: string, body: RouteRequestBody): Promise<T> {
+  return apiRequest<T>(endpoint, { method: 'POST', body: JSON.stringify(body) });
+}
+
+/** Lỗi do máy chủ trả về thì dùng thông báo của máy chủ; lỗi kết nối thì dùng `fallback`. */
+function toError(cause: unknown, fallback: string): { error: string } {
+  return { error: cause instanceof ApiError && cause.status > 0 ? cause.message : fallback };
+}
+
+/** Thứ tự tối ưu hợp lệ khi bắt đầu từ điểm 0 và ghé mỗi điểm đúng một lần (thêm 0 ở cuối nếu quay về). */
+function isValidOrder(order: number[], stopCount: number, returnToStart: boolean): boolean {
+  return (
+    order.every((index) => Number.isInteger(index) && index >= 0 && index < stopCount) &&
+    order.length === stopCount + (returnToStart ? 1 : 0) &&
+    new Set(order).size === stopCount &&
+    order[0] === 0 &&
+    (!returnToStart || order.at(-1) === 0)
+  );
+}
+
+/** Client gọi các endpoint tính tuyến của backend (VietMap). */
 export class RouteApiClient {
-  async createOptimizedPlan(stops: Place[], vehicle: TransportMode, objective: RouteObjective, returnToStart: boolean): Promise<RoutePlan | { error: string }> {
+  /** Tối ưu thứ tự ghé các điểm (giữ cố định điểm đầu) rồi trả tuyến theo thứ tự mới. */
+  async createOptimizedPlan(
+    stops: Place[],
+    vehicle: TransportMode,
+    objective: RouteObjective,
+    returnToStart: boolean,
+  ): Promise<RoutePlanResult> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? '/api'}/routes/optimize`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ points: stops.map(({ lat, lng }) => ({ lat, lng })), vehicle, objective: objective === 'distance' ? 'distance' : 'duration', returnToStart }),
+      const data = await postRoute<OptimizeRouteResult>('/routes/optimize', {
+        ...requestBody(stops, vehicle, objective),
+        returnToStart,
       });
-      const payload = await response.json() as { data?: OptimizeRouteResult } & RouteApiError;
-      if (!response.ok) return { error: payload.error?.message ?? 'Không tối ưu được hành trình.' };
-      const data = payload.data;
-      if (!data || data.order.some((index) => !Number.isInteger(index) || !stops[index]) || data.order.length !== stops.length + (returnToStart ? 1 : 0) || new Set(data.order).size !== stops.length || data.order[0] !== 0 || (returnToStart && data.order.at(-1) !== 0)) return { error: 'Thứ tự tối ưu trả về không hợp lệ.' };
-      return routePlanFromResult(data.route, data.order.map((index) => stops[index]!), vehicle, objective);
-    } catch { return { error: 'Không kết nối được dịch vụ tối ưu hành trình. Hãy thử lại.' }; }
+      if (!Array.isArray(data?.order) || !isValidOrder(data.order, stops.length, returnToStart)) {
+        return { error: 'Thứ tự tối ưu trả về không hợp lệ.' };
+      }
+      return routePlanFromResult(
+        data.route,
+        data.order.map((index) => stops[index]!),
+        vehicle,
+        objective,
+      );
+    } catch (cause) {
+      return toError(cause, 'Không kết nối được dịch vụ tối ưu hành trình. Hãy thử lại.');
+    }
   }
 
-  async createPlan(stops: Place[], vehicle: TransportMode, objective: RouteObjective = 'time'): Promise<RoutePlan | { error: string }> {
+  /** Tính tuyến đi qua các điểm theo đúng thứ tự đã cho. */
+  async createPlan(
+    stops: Place[],
+    vehicle: TransportMode,
+    objective: RouteObjective = 'time',
+  ): Promise<RoutePlanResult> {
     if (stops.length < 2) return { error: 'Chọn ít nhất điểm đi và điểm đến.' };
-    if (vehicle !== 'car' && vehicle !== 'motorcycle') {
-      return { error: 'Dịch vụ định tuyến hiện hỗ trợ ô tô và xe máy.' };
-    }
-
-    let response: Response;
     try {
-      response = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? '/api'}/routes/calculate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          points: stops.map(({ lat, lng }) => ({ lat, lng })),
-          vehicle,
-          objective: objective === 'distance' ? 'distance' : 'duration',
-        }),
-      });
-    } catch {
-      return { error: 'Không kết nối được máy chủ chỉ đường. Hãy kiểm tra API đang chạy.' };
+      const data = await postRoute<RouteResult>('/routes/calculate', requestBody(stops, vehicle, objective));
+      if (!Array.isArray(data?.coordinates) || data.coordinates.length < 2) {
+        return { error: 'Dịch vụ chỉ đường trả về tuyến không hợp lệ.' };
+      }
+      return routePlanFromResult(data, stops, vehicle, objective);
+    } catch (cause) {
+      return toError(cause, 'Không kết nối được máy chủ chỉ đường. Hãy thử lại sau ít phút.');
     }
-
-    const payload = await response.json().catch(() => null) as ({ data?: RouteResult } & RouteApiError) | null;
-    if (!response.ok) return { error: payload?.error?.message ?? 'Không thể tính tuyến lúc này. Hãy thử lại.' };
-    if (!payload?.data || !Array.isArray(payload.data.coordinates) || payload.data.coordinates.length < 2) {
-      return { error: 'Dịch vụ chỉ đường trả về tuyến không hợp lệ.' };
-    }
-
-    return routePlanFromResult(payload.data, stops, vehicle, objective);
   }
 }
 
-
-export function routePlanFromResult(result: RouteResult, stops: Place[], vehicle: TransportMode, objective: RouteObjective = 'time'): RoutePlan {
-    const first = stops[0]!;
-    const last = stops[stops.length - 1]!;
-    const leg = {
-      nodes: stops.map((place) => place.id),
-      // API data is GeoJSON [longitude, latitude]; Leaflet consumes [latitude, longitude].
-      points: result.coordinates.map(([lng, lat]) => [lat, lng] as [number, number]),
-      distanceKm: result.distanceMeters / 1000,
-      durationMin: result.durationSeconds / 60,
-      from: first,
-      to: last,
-      instructions: result.instructions,
-    };
-    return {
-      id: `vietmap-${crypto.randomUUID()}`,
-      kind: stops.length > 2 ? 'multi' : 'route',
-      stops,
-      legs: [leg],
-      distanceKm: leg.distanceKm,
-      durationMin: leg.durationMin,
-      vehicle,
-      objective,
-    };
+/** Đổi kết quả tuyến của API (mét, giây, GeoJSON) sang RoutePlan để vẽ và hiển thị (km, phút, Leaflet). */
+export function routePlanFromResult(
+  result: RouteResult,
+  stops: Place[],
+  vehicle: TransportMode,
+  objective: RouteObjective = 'time',
+): RoutePlan {
+  const leg = {
+    nodes: stops.map((place) => place.id),
+    // API trả GeoJSON [kinh độ, vĩ độ]; Leaflet dùng [vĩ độ, kinh độ].
+    points: result.coordinates.map(([lng, lat]) => [lat, lng] as [number, number]),
+    distanceKm: result.distanceMeters / 1000,
+    durationMin: result.durationSeconds / 60,
+    from: stops[0]!,
+    to: stops[stops.length - 1]!,
+    instructions: result.instructions,
+  };
+  return {
+    id: `vietmap-${crypto.randomUUID()}`,
+    kind: stops.length > 2 ? 'multi' : 'route',
+    stops,
+    legs: [leg],
+    distanceKm: leg.distanceKm,
+    durationMin: leg.durationMin,
+    vehicle,
+    objective,
+  };
 }

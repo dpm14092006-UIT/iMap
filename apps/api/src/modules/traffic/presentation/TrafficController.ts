@@ -1,12 +1,19 @@
 import type { Request, Response } from 'express';
-import { clearanceSchema, trafficBoundsSchema, trafficImageAnalysisTaskSchema, trafficReportIdSchema, trafficReportInputSchema } from '@routetwin/shared';
+import {
+  clearanceSchema,
+  trafficBoundsSchema,
+  trafficImageAnalysisTaskSchema,
+  trafficReportIdSchema,
+  trafficReportInputSchema,
+} from '@routetwin/shared';
 import type { AuthenticatedRequest } from '../../../shared/http/authenticated-request.js';
 import { AppError } from '../../../shared/errors/AppError.js';
-import { CreateTrafficReportUseCase } from '../application/use-cases/CreateTrafficReportUseCase.js';
-import { ListTrafficReportsUseCase } from '../application/use-cases/ListTrafficReportsUseCase.js';
-import { UpdateRoadClearanceUseCase } from '../application/use-cases/UpdateRoadClearanceUseCase.js';
-import { AnalyzeTrafficImageUseCase } from '../application/use-cases/AnalyzeTrafficImageUseCase.js';
+import type { CreateTrafficReportUseCase } from '../application/use-cases/CreateTrafficReportUseCase.js';
+import type { ListTrafficReportsUseCase } from '../application/use-cases/ListTrafficReportsUseCase.js';
+import type { UpdateRoadClearanceUseCase } from '../application/use-cases/UpdateRoadClearanceUseCase.js';
+import type { AnalyzeTrafficImageUseCase } from '../application/use-cases/AnalyzeTrafficImageUseCase.js';
 import type { TrafficImageMimeType } from '../application/ports/TrafficImageAnalyzer.js';
+import { getBearerToken } from '../../../shared/http/request-context.js';
 
 const maxTrafficImageBytes = 5 * 1024 * 1024;
 const allowedImageMimeTypes = new Set<TrafficImageMimeType>(['image/jpeg', 'image/png', 'image/webp']);
@@ -20,34 +27,36 @@ export class TrafficController {
   ) {}
   list = async (req: Request, res: Response): Promise<void> => {
     const bounds = this.parseBounds(req);
-    const accessToken = req.header('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+    const accessToken = getBearerToken(req);
     res.json({ data: await this.listReports.execute(bounds, accessToken) });
   };
   geojson = async (req: Request, res: Response): Promise<void> => {
     const bounds = this.parseBounds(req);
-    const accessToken = req.header('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+    const accessToken = getBearerToken(req);
     const reports = await this.listReports.execute(bounds, accessToken);
-    res.json({ data: {
-      type: 'FeatureCollection',
-      features: reports.map((report) => ({
-        type: 'Feature',
-        id: report.id,
-        geometry: { type: 'Point', coordinates: [report.lng, report.lat] },
-        properties: {
-          incidentType: report.incidentType,
-          severity: report.severity,
-          status: report.status,
-          ...(report.note ? { note: report.note } : {}),
-          hasPhoto: Boolean(report.imagePath),
-          communityReportCount: report.communityReportCount ?? 1,
-          communityReporterCount: report.communityReporterCount ?? 0,
-          communityUpdatedAt: report.communityUpdatedAt ?? null,
-          createdAt: report.createdAt,
-          expiresAt: report.expiresAt,
-          version: report.version,
-        },
-      })),
-    } });
+    res.json({
+      data: {
+        type: 'FeatureCollection',
+        features: reports.map((report) => ({
+          type: 'Feature',
+          id: report.id,
+          geometry: { type: 'Point', coordinates: [report.lng, report.lat] },
+          properties: {
+            incidentType: report.incidentType,
+            severity: report.severity,
+            status: report.status,
+            ...(report.note ? { note: report.note } : {}),
+            hasPhoto: Boolean(report.imagePath),
+            communityReportCount: report.communityReportCount ?? 1,
+            communityReporterCount: report.communityReporterCount ?? 0,
+            communityUpdatedAt: report.communityUpdatedAt ?? null,
+            createdAt: report.createdAt,
+            expiresAt: report.expiresAt,
+            version: report.version,
+          },
+        })),
+      },
+    });
   };
   create = async (req: Request, res: Response): Promise<void> => {
     const input = trafficReportInputSchema.parse(req.body);
@@ -77,7 +86,14 @@ export class TrafficController {
     if (!this.matchesImageSignature(image, mimeType as TrafficImageMimeType)) {
       throw new AppError(415, 'INVALID_IMAGE_CONTENT', 'Nội dung ảnh không khớp với định dạng tệp.');
     }
-    res.json({ data: await this.analyzeImageUseCase.execute(image, mimeType as TrafficImageMimeType, task) });
+    res.json({
+      data: await this.analyzeImageUseCase.execute(
+        image,
+        mimeType as TrafficImageMimeType,
+        task,
+        auth.accessToken,
+      ),
+    });
   };
 
   private parseBounds(req: Request) {
@@ -90,8 +106,14 @@ export class TrafficController {
   }
 
   private matchesImageSignature(image: Buffer, mimeType: TrafficImageMimeType): boolean {
-    if (mimeType === 'image/jpeg') return image.length >= 3 && image[0] === 0xff && image[1] === 0xd8 && image[2] === 0xff;
-    if (mimeType === 'image/png') return image.length >= 8 && image.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
-    return image.length >= 12 && image.toString('ascii', 0, 4) === 'RIFF' && image.toString('ascii', 8, 12) === 'WEBP';
+    if (mimeType === 'image/jpeg')
+      return image.length >= 3 && image[0] === 0xff && image[1] === 0xd8 && image[2] === 0xff;
+    if (mimeType === 'image/png')
+      return image.length >= 8 && image.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    return (
+      image.length >= 12 &&
+      image.toString('ascii', 0, 4) === 'RIFF' &&
+      image.toString('ascii', 8, 12) === 'WEBP'
+    );
   }
 }

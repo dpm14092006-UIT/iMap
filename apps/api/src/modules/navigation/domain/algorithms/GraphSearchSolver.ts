@@ -17,7 +17,12 @@ export abstract class GraphSearchSolver implements ShortestPathSolver {
   abstract readonly name: string;
 
   /** Heuristic h(n). Phải KHÔNG vượt quá chi phí thật để kết quả vẫn tối ưu. */
-  protected abstract estimate(graph: RoadGraph, nodeId: string, goalId: string, options: SearchOptions): number;
+  protected abstract estimate(
+    graph: RoadGraph,
+    nodeId: string,
+    goalId: string,
+    options: SearchOptions,
+  ): number;
 
   solve(graph: RoadGraph, start: string, goal: string, options: SearchOptions): PathResult | null {
     if (!graph.hasNode(start) || !graph.hasNode(goal)) return null;
@@ -33,7 +38,8 @@ export abstract class GraphSearchSolver implements ShortestPathSolver {
       if (closed.has(current)) continue; // bản sao cũ trong heap (lazy deletion)
       closed.add(current);
 
-      if (current === goal) return this.buildResult(start, goal, cameFrom, gScore.get(goal)!, closed.size, options);
+      if (current === goal)
+        return this.buildResult(start, goal, cameFrom, gScore.get(goal)!, closed.size, options);
 
       const currentCost = gScore.get(current)!;
       for (const edge of graph.neighbors(current, options.vehicle)) {
@@ -51,7 +57,14 @@ export abstract class GraphSearchSolver implements ShortestPathSolver {
   }
 
   /** Đi ngược từ đích về điểm đầu theo cameFrom, đồng thời cộng quãng đường và thời gian. */
-  private buildResult(start: string, goal: string, cameFrom: Map<string, Step>, cost: number, visitedNodes: number, options: SearchOptions): PathResult {
+  private buildResult(
+    start: string,
+    goal: string,
+    cameFrom: Map<string, Step>,
+    cost: number,
+    visitedNodes: number,
+    options: SearchOptions,
+  ): PathResult {
     const nodeIds = [goal];
     let distanceMeters = 0;
     let durationSeconds = 0;
@@ -64,6 +77,12 @@ export abstract class GraphSearchSolver implements ShortestPathSolver {
       cursor = step.from;
     }
     nodeIds.reverse();
-    return { nodeIds, distanceMeters, durationSeconds, cost: options.metric === 'distance' ? distanceMeters : durationSeconds, visitedNodes };
+    return {
+      nodeIds,
+      distanceMeters,
+      durationSeconds,
+      cost: options.metric === 'distance' ? distanceMeters : durationSeconds,
+      visitedNodes,
+    };
   }
 }
