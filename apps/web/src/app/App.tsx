@@ -396,11 +396,11 @@ export function App() {
           onUseMyLocation={() => { void setOriginFromGps(); }}
         />
       )}
-      <div hidden={activePanel !== 'multi'}><MultiStopPanel isActive={activePanel === 'multi'} onShowPlan={setActiveRoute} getFocus={() => mapController.current?.getCenter() ?? { lat: 16, lng: 108 }} onClose={() => openPanel(null)} onPlanRoute={async (start, stops, mode, objective, returnToStart) => {
+      <div hidden={activePanel !== 'multi'}><MultiStopPanel isActive={activePanel === 'multi'} onShowPlan={setActiveRoute} getFocus={() => mapController.current?.getCenter() ?? { lat: 16, lng: 108 }} onClose={() => openPanel(null)} onPlanRoute={async (start, stops, mode, objective, returnToStart, algorithm) => {
         const requestId = ++multiPlanGeneration.current;
         const routeStops = [start, ...stops];
         setActiveRoute(null);
-        const result = await routeApi.createOptimizedPlan(routeStops, mode, objective, returnToStart);
+        const result = await routeApi.createOptimizedPlan(routeStops, mode, objective, returnToStart, algorithm);
         if (requestId !== multiPlanGeneration.current) return { error: 'Đã hủy hành trình cũ.' };
         if ('error' in result) return result;
         setActiveRoute(result);
