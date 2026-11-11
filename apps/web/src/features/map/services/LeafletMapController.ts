@@ -2,6 +2,7 @@ import * as L from 'leaflet';
 import type { LatLng, Place } from '../../places/types';
 import type { TrafficFeature, TrafficMapLayer, TrafficSeverity } from '../layers/trafficMapLayer';
 import type { AlgorithmOverlay, Bounds, DraftStops, MapLayer, RoutePlan } from '../types';
+import { routeHazardSection } from '../../traffic/services/routeTraffic';
 
 /** Khung nhìn khởi đầu toàn Việt Nam, không giới hạn pan/zoom vào một thành phố. */
 const VIETNAM_CENTER: L.LatLngExpression = [16, 108];
@@ -45,6 +46,7 @@ export class LeafletMapController {
   // Mỗi loại dữ liệu một layer group riêng để xóa/vẽ lại độc lập.
   private readonly algorithmLayer = L.layerGroup();
   private readonly routeLayer = L.layerGroup();
+  private readonly routeTrafficLayer = L.layerGroup();
   private readonly trafficLayer = L.layerGroup();
   private readonly locationLayer = L.layerGroup();
   private locationMarker: L.Marker | L.CircleMarker | null = null;
@@ -77,6 +79,7 @@ export class LeafletMapController {
     this.streets.addTo(this.map);
     this.algorithmLayer.addTo(this.map); // nằm dưới tuyến VietMap và marker
     this.routeLayer.addTo(this.map);
+    this.routeTrafficLayer.addTo(this.map);
     this.trafficLayer.addTo(this.map);
     this.locationLayer.addTo(this.map);
     this.map.on('moveend', () => handlers.onBoundsChange?.(this.getBounds()));
@@ -95,11 +98,11 @@ export class LeafletMapController {
     const draftStopsKey = [data.draftStops.origin, data.draftStops.destination]
       .map((place) => (place ? `${place.id}:${place.lat},${place.lng}:${place.name}` : ''))
       .join('|');
-    if (
+    const routeChanged =
       routeId !== this.lastRouteId ||
       (routeId !== null && data.isNavigating !== this.lastRouteNavigationState) ||
-      (!routeId && draftStopsKey !== this.lastDraftStopsKey)
-    ) {
+      (!routeId && draftStopsKey !== this.lastDraftStopsKey);
+    if (routeChanged) {
       this.routeLayer.clearLayers();
       if (data.route) this.drawRoute(data.route, data.isNavigating);
       else this.drawDraftStops(data.draftStops);
@@ -109,6 +112,8 @@ export class LeafletMapController {
 
     if (data.algorithmOverlay?.key !== this.lastOverlayKey) this.drawAlgorithmOverlay(data.algorithmOverlay);
     if (data.trafficLayer !== this.lastTrafficMapLayer) this.drawTraffic(data.trafficLayer);
+    if (routeChanged || data.trafficLayer !== this.lastTrafficMapLayer)
+      this.drawRouteTraffic(data.route, data.trafficLayer);
     this.lastTrafficMapLayer = data.trafficLayer;
     this.drawCurrentLocation(data.currentLocation, data.isNavigating, data.headingDegrees);
 
@@ -217,6 +222,40 @@ export class LeafletMapController {
       const label = index === 0 ? 'A' : route.kind === 'route' ? 'B' : String(index);
       this.drawStopMarker(place, label, route.kind === 'route' && isLast ? COLORS.end : COLORS.start);
     });
+  }
+
+  /** Tô riêng đoạn có sự cố để mức vừa/cao hiện lần lượt vàng/đỏ trên tuyến màu xanh. */
+  private drawRouteTraffic(route: RoutePlan | null, traffic: TrafficMapLayer) {
+    this.routeTrafficLayer.clearLayers();
+    if (!route) return;
+    const severityRank: Record<TrafficSeverity, number> = { low: 0, medium: 1, high: 2 };
+    const colors: Record<TrafficSeverity, string> = { low: '#22a06b', medium: '#f4b400', high: '#e53935' };
+    const reports = [...traffic.features]
+      .filter((feature) => feature.properties.status === 'active')
+      .sort((a, b) => severityRank[a.properties.severity] - severityRank[b.properties.severity]);
+
+    for (const feature of reports) {
+      const [lng, lat] = feature.geometry.coordinates;
+      if (typeof lat !== 'number' || typeof lng !== 'number') continue;
+      const section = routeHazardSection(route, { lat, lng });
+      if (!section || section.distanceMeters > 180 || section.points.length < 2) continue;
+      L.polyline(section.points, {
+        color: '#fff',
+        weight: 10,
+        opacity: 0.94,
+        lineCap: 'round',
+        lineJoin: 'round',
+        interactive: false,
+      }).addTo(this.routeTrafficLayer);
+      L.polyline(section.points, {
+        color: colors[feature.properties.severity],
+        weight: 5.5,
+        opacity: 1,
+        lineCap: 'round',
+        lineJoin: 'round',
+        interactive: false,
+      }).addTo(this.routeTrafficLayer);
+    }
   }
 
   /** Marker A/B cho điểm đi/đến đã chọn nhưng chưa tính tuyến. */
