@@ -63,6 +63,13 @@ describe('NavigationGuidanceEngine', () => {
     expect(engine.evaluate({ lat: 10.005, lng: 106.02 }, 10, 0).offRoute).toBe(true);
   });
 
+  it('điểm GPS lệch xa ngang cuối tuyến không bị nhầm là đã đến nơi', () => {
+    const guidance = engine.evaluate({ lat: 10.005, lng: 106.03 }, 10, 0.9);
+
+    expect(guidance.offRoute).toBe(true);
+    expect(guidance.arrived).toBe(false);
+  });
+
   it('GPS kém chính xác thì dung sai lệch tuyến rộng hơn', () => {
     // ~110 m lệch: lệch tuyến với GPS tốt, nhưng bình thường với sai số 100 m.
     const point = { lat: 10.001, lng: 106.02 };

@@ -64,16 +64,17 @@ export class NavigationGuidanceEngine {
     const progressRatio = this.routeMeters > 0 ? progressMeters / this.routeMeters : 0;
     const distanceRemainingMeters = Math.max(0, this.routeMeters - progressMeters);
     const { nextInstruction, distanceToInstructionMeters } = this.findNextInstruction(progressMeters);
+    const offRoute =
+      distanceFromRoute > Math.max(NavigationGuidanceEngine.MIN_OFF_ROUTE_METERS, accuracyMeters * 1.5);
 
     return {
       nextInstruction,
       distanceToInstructionMeters,
       distanceRemainingMeters,
       progressRatio,
-      offRoute:
-        distanceFromRoute > Math.max(NavigationGuidanceEngine.MIN_OFF_ROUTE_METERS, accuracyMeters * 1.5),
+      offRoute,
       nextStopIndex: this.findNextStopIndex(geometryProgress),
-      arrived: this.hasArrived(point, progressRatio, distanceRemainingMeters),
+      arrived: !offRoute && this.hasArrived(point, progressRatio, distanceRemainingMeters),
     };
   }
 
