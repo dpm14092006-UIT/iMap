@@ -29,6 +29,14 @@ Sau khi có schema từ `0001`, chạy **toàn bộ từng file theo thứ tự 
 
 Migration `0005` giới hạn Gemini traffic-image analysis ở 10 lượt/tài khoản/giờ và tìm điểm dừng/voice ở 5 lượt/tài khoản/phút cho từng tính năng. API chỉ gọi quota ảnh khi Gemini được bật; các hạn mức được tăng atomically trong Postgres để mọi instance dùng chung. Job `expire_stale_traffic_reports()` dọn bucket quota cũ hơn 48 giờ.
 
+## Trạng thái áp dụng
+
+| Migration | Đã chạy trên Supabase thật | Ghi chú |
+| --- | --- | --- |
+| `0005_backend_hardening.sql` | Có (11/11/2026, do chủ dự án chạy) | Bắt buộc cho API: nếu thiếu, `consume_user_feature_quota` không tồn tại và tìm điểm dừng/voice trả 503 `FEATURE_QUOTA_UNAVAILABLE`. |
+
+Dự án Supabase mới phải chạy đủ `0001 → 0005` theo thứ tự. Migration `0005` xóa rồi tạo lại `create_traffic_report`, nên nên chạy lúc ít người dùng.
+
 Lưu ý: `0003` giữ hành vi có sẵn là xóa bảng metadata/quota AI cũ; không xóa file ảnh trong Storage.
 
 Đã kiểm tra bằng PostgreSQL nhúng (PGlite): chạy mới, chạy lặp từng file, phát lại cả chuỗi trên schema cuối, bảo toàn bản ghi giao thông mẫu, chữ ký RPC và quyền gọi, rollback khi lỗi. Auth/Storage/Realtime/PostGIS được mô phỏng trong kiểm tra này; đây không phải kiểm thử end-to-end trên Supabase thật.
