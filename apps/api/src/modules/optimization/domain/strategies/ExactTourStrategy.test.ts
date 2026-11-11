@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { MAX_OPTIMIZE_POINTS, optimizeRouteRequestSchema } from '@routetwin/shared';
+import { tourCost } from '../tour.js';
 import { ExactTourStrategy } from './ExactTourStrategy.js';
+
+/** Ma trận bất đối xứng xác định (không ngẫu nhiên) để test lặp lại được. */
+const matrixOf = (n: number) =>
+  Array.from({ length: n }, (_, i) =>
+    Array.from({ length: n }, (_, j) => (i === j ? 0 : 1 + ((i * 7 + j * 13 + i * j) % 17))),
+  );
 const solver = new ExactTourStrategy();
 function brute(matrix: number[][], closed: boolean) {
   let best = Infinity;
@@ -91,5 +99,45 @@ describe('exact road-cost ordering', () => {
         [1, 1, 0],
       ]),
     ).toEqual({ order: [0, 1, 2], cost: 2 });
+  });
+
+  it('giới hạn của thuật toán trùng giới hạn của schema API (một nguồn duy nhất)', () => {
+    expect(ExactTourStrategy.MAX_POINTS).toBe(MAX_OPTIMIZE_POINTS);
+    const point = (i: number) => ({ lat: 10 + i * 0.01, lng: 106 });
+    const request = (count: number) => ({
+      points: Array.from({ length: count }, (_, i) => point(i)),
+      vehicle: 'car',
+    });
+    expect(optimizeRouteRequestSchema.safeParse(request(MAX_OPTIMIZE_POINTS)).success).toBe(true);
+    expect(optimizeRouteRequestSchema.safeParse(request(MAX_OPTIMIZE_POINTS + 1)).success).toBe(false);
+  });
+  it('giải được đủ số điểm tối đa, chạy nhanh và không tệ hơn thứ tự nhập', () => {
+    const matrix = matrixOf(ExactTourStrategy.MAX_POINTS);
+    const startedAt = performance.now();
+    const result = solver.optimize(matrix, true);
+    expect(performance.now() - startedAt).toBeLessThan(2000);
+    expect(result.order).toHaveLength(ExactTourStrategy.MAX_POINTS + 1);
+    expect(new Set(result.order.slice(0, -1)).size).toBe(ExactTourStrategy.MAX_POINTS);
+    expect(result.cost).toBe(tourCost(matrix, result.order));
+    expect(result.cost).toBeLessThanOrEqual(tourCost(matrix, [...matrix.keys(), 0]));
+  });
+  it('từ chối nhiều điểm hơn giới hạn', () => {
+    expect(() => solver.optimize(matrixOf(ExactTourStrategy.MAX_POINTS + 1))).toThrow();
+  });
+  it('khớp vét cạn trên ma trận có ô không có đường', () => {
+    const n = 7;
+    const matrix = matrixOf(n).map((row, i) =>
+      row.map((value, j) => ((i + 2 * j) % 5 === 0 && i !== j ? Infinity : value)),
+    );
+    const permutations = (items: number[]): number[][] =>
+      items.length <= 1
+        ? [items]
+        : items.flatMap((item, i) =>
+            permutations([...items.slice(0, i), ...items.slice(i + 1)]).map((rest) => [item, ...rest]),
+          );
+    const bruteForce = Math.min(
+      ...permutations([1, 2, 3, 4, 5, 6]).map((rest) => tourCost(matrix, [0, ...rest])),
+    );
+    expect(solver.optimize(matrix).cost).toBe(bruteForce);
   });
 });
