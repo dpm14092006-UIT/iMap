@@ -30,6 +30,7 @@ import { Icon } from '../shared/components/Icon';
 import { FeatureNav } from './components/FeatureNav';
 import { PanelFallback } from './components/PanelFallback';
 import { useToast } from './hooks/useToast';
+import { useAppUpdate } from './hooks/useAppUpdate';
 
 // Các panel chỉ tải mã khi người dùng mở, để lần tải đầu chỉ gồm bản đồ và thanh công cụ.
 const PlaceAssistantPanel = lazy(() =>
@@ -113,6 +114,7 @@ export function App() {
   const isAuthenticated = Boolean(user && !user.is_anonymous && accessToken);
   const { layer, setLayer } = useTimeBasedMapLayer(); // nền tối tự bật theo giờ trên mobile
   const savedRoutes = useSavedRoutes();
+  const { updateAvailable, reloadForUpdate } = useAppUpdate();
 
   const [activePanel, setActivePanel] = useState<FeatureKey | null>('directions');
   const [hasOpenedMulti, setHasOpenedMulti] = useState(false);
@@ -503,6 +505,23 @@ export function App() {
             <PlaceSearchBar getFocus={getMapCenter} onSelect={openPlace} />
           </div>
           <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+            {updateAvailable && (
+              <>
+                <span className="sr-only" role="status" aria-live="polite">
+                  Có phiên bản iMap mới. Chọn Cập nhật để tải lại trang.
+                </span>
+                <button
+                  type="button"
+                  onClick={reloadForUpdate}
+                  aria-label="Có phiên bản mới. Cập nhật iMap"
+                  title="Có phiên bản iMap mới"
+                  className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-2.5 text-[10px] font-bold text-brand-700 transition hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 sm:h-10 sm:px-3 sm:text-[11px]"
+                >
+                  <Icon name="refresh" size={15} />
+                  Cập nhật
+                </button>
+              </>
+            )}
             <button
               type="button"
               onClick={() => showToast('Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.')}
@@ -544,7 +563,9 @@ export function App() {
               Ước tính
             </span>
           </div>
-          <div className="route-mobile-status absolute bottom-[calc(56dvh+10px)] left-3 z-10 flex items-center gap-2 rounded-full border border-white/80 bg-white/95 px-3 py-2 text-[10px] font-bold text-ink shadow-lg shadow-slate-900/10 backdrop-blur-md md:hidden">
+          <div
+            className={`route-mobile-status absolute left-3 z-10 flex items-center gap-2 rounded-full border border-white/80 bg-white/95 px-3 py-2 text-[10px] font-bold text-ink shadow-lg shadow-slate-900/10 backdrop-blur-md md:hidden ${activePanel ? 'bottom-[calc(56dvh+62px)]' : 'bottom-[76px]'}`}
+          >
             <Icon name="route" size={14} className="text-brand-600" />
             {routeSummary}
             <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800">
@@ -689,6 +710,7 @@ export function App() {
 
       <MapToolbar
         layer={layer}
+        panelOpen={activePanel !== null}
         onLayerChange={setLayer}
         onShowVietnam={() => mapController.current?.showVietnam()}
         onLocate={() => void locateOnMap()}

@@ -3,6 +3,7 @@ import type { MapLayer } from '../types';
 
 type MapToolbarProps = {
   layer: MapLayer;
+  panelOpen: boolean;
   onLayerChange: (layer: MapLayer) => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
@@ -12,6 +13,7 @@ type MapToolbarProps = {
 
 export function MapToolbar({
   layer,
+  panelOpen,
   onLayerChange,
   onZoomIn,
   onZoomOut,
@@ -19,7 +21,9 @@ export function MapToolbar({
   onShowVietnam,
 }: MapToolbarProps) {
   return (
-    <div className="map-controls absolute bottom-6 right-5 z-20 flex flex-col items-end gap-2 max-md:bottom-[calc(56dvh+10px)] max-md:right-3">
+    <div
+      className={`map-controls absolute bottom-6 right-5 z-20 flex flex-col items-end gap-2 max-md:right-3 max-md:flex-row max-md:items-center ${panelOpen ? 'max-md:bottom-[calc(56dvh+10px)]' : 'max-md:bottom-6'}`}
+    >
       <div
         className="flex items-center rounded-full border border-white bg-white/95 p-1 shadow-lg shadow-slate-900/10 backdrop-blur-md max-md:p-0.5"
         role="group"
@@ -43,7 +47,7 @@ export function MapToolbar({
         </button>
       </div>
       <div
-        className="overflow-hidden rounded-2xl border border-white bg-white/95 shadow-lg shadow-slate-900/10 backdrop-blur-md"
+        className="overflow-hidden rounded-2xl border border-white bg-white/95 shadow-lg shadow-slate-900/10 backdrop-blur-md max-md:flex max-md:items-center max-md:rounded-full"
         role="group"
         aria-label="Điều khiển bản đồ"
       >
@@ -56,7 +60,7 @@ export function MapToolbar({
         >
           <Icon name="globe" size={19} />
         </button>
-        <div className="mx-2 h-px bg-slate-100" />
+        <div className="mx-2 h-px bg-slate-100 max-md:mx-0 max-md:my-2 max-md:h-5 max-md:w-px" />
         <button
           type="button"
           onClick={onLocate}
