@@ -3,5 +3,11 @@
   "framework": "vite",
   "buildCommand": "npm run build -w @routetwin/shared && npm run build -w @routetwin/web",
   "outputDirectory": "dist",
+  "headers": [
+    {
+      "source": "/app-version.json",
+      "headers": [{ "key": "Cache-Control", "value": "no-store, max-age=0" }]
+    }
+  ],
   "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
 }

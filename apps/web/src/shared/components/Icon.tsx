@@ -34,6 +34,7 @@ export type IconName =
   | 'more'
   | 'send'
   | 'route'
+  | 'refresh'
   | 'parking'
   | 'cafe'
   | 'shop'
@@ -221,6 +222,12 @@ const shapes: Record<IconName, ReactNode> = {
       <circle cx="6" cy="18" r="2" />
       <circle cx="18" cy="6" r="2" />
       <path d="M8 18h4a3 3 0 0 0 3-3V9a3 3 0 0 1 3-3" />
+    </>
+  ),
+  refresh: (
+    <>
+      <path d="M20 7v5h-5M4 17v-5h5" />
+      <path d="M5.5 9a7 7 0 0 1 12-2L20 9M4 15l2.5 2a7 7 0 0 0 12-2" />
     </>
   ),
   parking: (
