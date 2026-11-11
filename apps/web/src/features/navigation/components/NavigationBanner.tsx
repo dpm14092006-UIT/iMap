@@ -15,6 +15,7 @@ type NavigationBannerProps = {
   isRecalculating: boolean;
   onRecalculate: () => void;
   onRetry: () => void;
+  onReport: () => void;
   onStop: () => void;
   /** Chế độ Demo (GPS giả) chỉ có khi mở app với ?demo=1. Không truyền thì banner như cũ. */
   demo?: DemoControls;
@@ -54,6 +55,7 @@ export function NavigationBanner({
   isRecalculating,
   onRecalculate,
   onRetry,
+  onReport,
   onStop,
   demo,
 }: NavigationBannerProps) {
@@ -64,7 +66,7 @@ export function NavigationBanner({
 
   return (
     <section
-      className="absolute right-5 top-[136px] z-50 w-[min(370px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-white/80 bg-white/95 shadow-xl shadow-slate-900/15 backdrop-blur-xl max-md:left-3 max-md:right-3 max-md:top-[120px] max-md:w-auto"
+      className="absolute right-5 top-[136px] z-50 w-[min(410px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-white/80 bg-white/95 shadow-xl shadow-slate-900/15 backdrop-blur-xl max-md:left-3 max-md:right-3 max-md:top-[120px] max-md:w-auto"
       aria-label="Điều hướng chuyến đi"
       aria-live="polite"
     >
@@ -76,16 +78,16 @@ export function NavigationBanner({
         />
         {offRoute ? 'ĐANG LỆCH KHỎI TUYẾN' : statusLabels[status]}
       </div>
-      <div className="flex items-start gap-3 p-4">
+      <div className="flex items-center gap-3 px-4 py-3">
         {isGuiding && (
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-600 text-white shadow-sm">
-            <span className="text-[24px] leading-none" aria-hidden="true">
+          <span className="grid h-[54px] w-[54px] shrink-0 place-items-center rounded-xl bg-brand-600 text-white shadow-sm">
+            <span className="text-[28px] leading-none" aria-hidden="true">
               {maneuverArrow(instruction?.sign)}
             </span>
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-bold leading-5 text-ink">
+          <p className="text-[15px] font-bold leading-5 text-ink">
             {offRoute
               ? 'Bạn đang rời khỏi lộ trình'
               : status === 'arrived'
@@ -97,7 +99,7 @@ export function NavigationBanner({
                     : instructionText}
           </p>
           {isGuiding && !offRoute && status === 'navigating' && (
-            <p className="mt-1 text-[11px] font-semibold text-brand-700">
+            <p className="mt-1 text-[12px] font-semibold text-brand-700">
               {distanceToInstructionMeters > 0
                 ? `Trong ${formatDistanceMeters(distanceToInstructionMeters)}`
                 : 'Thực hiện chỉ dẫn tiếp theo'}
@@ -106,7 +108,7 @@ export function NavigationBanner({
           {isGuiding && !offRoute && (
             <p className="mt-1 text-[10px] text-slate-500">
               Còn {formatDistanceMeters(distanceRemainingMeters)} ·{' '}
-              {demo?.mode === 'demo' ? 'GPS giả lập (demo)' : 'GPS đang cập nhật trực tiếp'}
+              {demo?.mode === 'demo' ? 'GPS giả lập (demo)' : 'GPS trực tiếp'}
             </p>
           )}
           {error && status !== 'error' && <p className="mt-1 text-[10px] text-amber-800">{error}</p>}
@@ -150,13 +152,13 @@ export function NavigationBanner({
           )}
         </div>
       )}
-      <div className="flex gap-2 border-t border-slate-100 px-4 py-3">
+      <div className="flex gap-2 border-t border-slate-100 px-3 py-2.5">
         {(offRoute || status === 'error') && (
           <button
             type="button"
             onClick={offRoute ? onRecalculate : onRetry}
             disabled={offRoute ? !canRecalculate || isRecalculating : false}
-            className="flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-3 text-[11px] font-bold text-white transition hover:bg-brand-700 disabled:bg-slate-300"
+            className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-3 text-[11px] font-bold text-white transition hover:bg-brand-700 disabled:bg-slate-300"
           >
             {isRecalculating ? (
               <span
@@ -171,8 +173,16 @@ export function NavigationBanner({
         )}
         <button
           type="button"
+          onClick={onReport}
+          className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 text-[11px] font-bold text-amber-800 transition hover:bg-amber-100"
+        >
+          <Icon name="traffic" size={15} />
+          Báo cáo
+        </button>
+        <button
+          type="button"
           onClick={onStop}
-          className="flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
+          className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
         >
           <Icon name="close" size={14} />
           {status === 'arrived' ? 'Đóng chuyến đi' : 'Kết thúc chuyến đi'}

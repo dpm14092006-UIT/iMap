@@ -84,7 +84,7 @@ Frontend chia theo feature (`map`, `places`, `navigation`, `multi-stop`, `my-rou
 2. **Tọa độ JSON:** `{lat,lng}`; GeoJSON `[lng,lat]`.
 3. **Bản đồ và chỉ đường:** tile nền OpenStreetMap; tuyến ô tô/xe máy từ VietMap Route v4. API key chỉ nằm trong backend.
 4. **Backend giữ khóa bí mật:** khóa VietMap và provider server-side không đi vào `VITE_*`.
-5. **N2 cần cấu hình trước khi chạy thật:** áp dụng migrations `0001_initial.sql`–`0004_community_traffic_confirmations.sql`, bật job hết hạn trong `supabase/ops/traffic-expiry-cron.sql`, rồi điền Supabase keys. Ảnh hiện trường là tùy chọn và được gắn trực tiếp vào báo cáo giao thông.
+5. **N2 cần cấu hình trước khi chạy thật:** áp dụng migrations `0001_initial.sql`–`0005_backend_hardening.sql`, bật job hết hạn trong `supabase/ops/traffic-expiry-cron.sql`, rồi điền Supabase keys. Ảnh hiện trường là tùy chọn và được gắn trực tiếp vào báo cáo giao thông.
 6. AI ảnh (gợi ý sự cố và đọc biển báo) nằm ngay trong Báo cáo giao thông, không có mục AI Vision riêng; cần bật Gemini riêng. Xem [docs/AI_APPLICATIONS.md](docs/AI_APPLICATIONS.md) về giới hạn và quyền riêng tư.
 
 Xem `docs/ARCHITECTURE.md`, `docs/OWNERSHIP.md`, `docs/ROADMAP_2_WEEKS.md`.

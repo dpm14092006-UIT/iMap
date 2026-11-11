@@ -33,8 +33,13 @@ import { basicPlaceFromPoint, placeFromPoint } from '../features/places/services
 import type { LatLng, Place } from '../features/places/types';
 import { vietnamBounds } from '../features/traffic/api/trafficApi';
 import type { IncidentKind, IncidentSeverity } from '../features/traffic/components/TrafficReportPanel';
-import { useTrafficReports } from '../features/traffic/hooks/useTrafficReports';
-import { toIncidents, toReportsMapLayer } from '../features/traffic/services/trafficPresentation';
+import { useTrafficReports, type RealtimeTrafficReport } from '../features/traffic/hooks/useTrafficReports';
+import {
+  incidentLabels,
+  toIncidents,
+  toReportsMapLayer,
+} from '../features/traffic/services/trafficPresentation';
+import { distanceToRouteMeters } from '../features/traffic/services/routeTraffic';
 import { Icon } from '../shared/components/Icon';
 import { FeatureNav } from './components/FeatureNav';
 import { PanelFallback } from './components/PanelFallback';
@@ -87,6 +92,7 @@ const rerouteStrategyLabels: Record<RerouteStrategy, string> = {
 /** Lệch tuyến liên tiếp bao nhiêu lần đo GPS thì tự tính lại, và tối thiểu cách nhau bao lâu. */
 const OFF_ROUTE_FIXES_BEFORE_REROUTE = 3;
 const AUTO_REROUTE_INTERVAL_MS = 20_000;
+const ROUTE_ALERT_CORRIDOR_METERS = 180;
 
 /** Đổi địa điểm do trợ lý (N2) gợi ý sang kiểu Place dùng chung. */
 function placeFromStop(place: StopPlace): Place {
@@ -157,6 +163,30 @@ export function App() {
     stop: stopNavigation,
     updateRoute: updateNavigationRoute,
   } = navigation;
+  const notifiedRealtimeReports = useRef(new Map<string, number>());
+  const onRealtimeTrafficReport = useCallback(
+    (report: RealtimeTrafficReport) => {
+      const route = navigationRoute ?? activeRoute;
+      if (!route || report.status !== 'active') return;
+      if (distanceToRouteMeters(route, { lat: report.lat, lng: report.lng }) > ROUTE_ALERT_CORRIDOR_METERS)
+        return;
+
+      const version = report.version ?? 1;
+      if ((notifiedRealtimeReports.current.get(report.id) ?? 0) >= version) return;
+      notifiedRealtimeReports.current.set(report.id, version);
+      if (notifiedRealtimeReports.current.size > 120) {
+        const oldestId = notifiedRealtimeReports.current.keys().next().value;
+        if (oldestId) notifiedRealtimeReports.current.delete(oldestId);
+      }
+
+      const severityLabel: Record<IncidentSeverity, string> = { low: 'nhẹ', medium: 'vừa', high: 'nặng' };
+      const incidentLabel = incidentLabels[report.incidentType as IncidentKind] ?? 'Sự cố giao thông';
+      showToast(
+        `Cảnh báo tuyến: ${incidentLabel} mức ${severityLabel[report.severity]}. Đã cập nhật đoạn đường.`,
+      );
+    },
+    [activeRoute, navigationRoute, showToast],
+  );
   const isNavigationIdle = navigationStatus === 'idle';
   const isNavigating = navigationStatus === 'navigating' || navigationStatus === 'locating';
   const isNavigationMarkerVisible = navigationStatus !== 'idle' && navigationStatus !== 'error';
@@ -186,7 +216,13 @@ export function App() {
     loading: trafficLoading,
     create: createTrafficReport,
     clearance: updateClearance,
-  } = useTrafficReports(accessToken, user?.id ?? null, trafficBounds, activePanel === 'traffic');
+  } = useTrafficReports(
+    accessToken,
+    user?.id ?? null,
+    trafficBounds,
+    activePanel === 'traffic' || Boolean(navigationRoute ?? activeRoute),
+    onRealtimeTrafficReport,
+  );
   const incidents = useMemo(() => toIncidents(reports), [reports]);
   const reportsLayer = useMemo(() => toReportsMapLayer(reports), [reports]);
   // Chế độ Demo (?demo=1): sự cố giả chỉ nằm trên máy này, vẽ chung với sự cố thật để thấy tuyến mới né chỗ nào.
@@ -709,6 +745,13 @@ export function App() {
         onRecalculate={() => void recalculateNavigation()}
         onRetry={() => {
           if (navigationRoute) startNavigationSession(navigationRoute, navigation.mode);
+        }}
+        onReport={() => {
+          const point = navigationLocation ?? currentLocation;
+          setSelectedMapPoint(point);
+          openPanel('traffic');
+          if (point) mapController.current?.flyTo(point, 16);
+          else showToast('Đang chờ GPS để gắn báo cáo vào vị trí hiện tại.');
         }}
         onStop={stopNavigation}
         demo={
