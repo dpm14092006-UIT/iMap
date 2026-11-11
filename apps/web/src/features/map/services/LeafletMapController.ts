@@ -311,11 +311,7 @@ export class LeafletMapController {
     return content;
   }
 
-  private drawCurrentLocation(
-    point: LatLng | null,
-    isNavigating: boolean,
-    headingDegrees: number | null,
-  ) {
+  private drawCurrentLocation(point: LatLng | null, isNavigating: boolean, headingDegrees: number | null) {
     if (!point) {
       this.locationLayer.clearLayers();
       this.locationMarker = null;
@@ -346,7 +342,10 @@ export class LeafletMapController {
 
     this.locationMarker.setLatLng([point.lat, point.lng]);
     if (mode === 'navigation') {
-      this.locationMarker.getElement()?.style.setProperty('--heading-degrees', `${headingDegrees ?? 0}deg`);
+      const element = this.locationMarker.getElement();
+      if (element instanceof HTMLElement || element instanceof SVGElement) {
+        element.style.setProperty('--heading-degrees', `${headingDegrees ?? 0}deg`);
+      }
     }
   }
 
