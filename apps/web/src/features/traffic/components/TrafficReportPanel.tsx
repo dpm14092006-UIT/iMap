@@ -351,43 +351,43 @@ export function TrafficReportPanel({
             <p className="mb-2 text-[10px] font-semibold text-slate-700">
               Hỗ trợ từ AI <span className="font-normal text-slate-400">(tùy chọn)</span>
             </p>
-            {isAuthenticated && aiStatus === 'ready' ? (
-              <>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    aria-busy={analysisTask === 'incident'}
-                    disabled={Boolean(analysisTask) || busy}
-                    onClick={() => void analyzePhoto('incident')}
-                    className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-2 text-[10px] font-semibold text-brand-700 hover:bg-brand-100 disabled:opacity-50"
-                  >
-                    {analysisTask === 'incident' ? 'Đang phân tích…' : 'Gợi ý loại sự cố'}
-                  </button>
-                  <button
-                    type="button"
-                    aria-busy={analysisTask === 'traffic_sign'}
-                    disabled={Boolean(analysisTask) || busy}
-                    onClick={() => void analyzePhoto('traffic_sign')}
-                    className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 text-[10px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                  >
-                    {analysisTask === 'traffic_sign' ? 'Đang nhận diện…' : 'Nhận diện biển báo'}
-                  </button>
-                </div>
+            <>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  aria-busy={analysisTask === 'incident'}
+                  disabled={Boolean(analysisTask) || busy || aiStatus !== 'ready'}
+                  onClick={() => void analyzePhoto('incident')}
+                  className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-2 text-[10px] font-semibold text-brand-700 hover:bg-brand-100 disabled:opacity-50"
+                >
+                  {analysisTask === 'incident' ? 'Đang phân tích…' : 'Gợi ý loại sự cố'}
+                </button>
+                <button
+                  type="button"
+                  aria-busy={analysisTask === 'traffic_sign'}
+                  disabled={Boolean(analysisTask) || busy || aiStatus !== 'ready'}
+                  onClick={() => void analyzePhoto('traffic_sign')}
+                  className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 text-[10px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  {analysisTask === 'traffic_sign' ? 'Đang nhận diện…' : 'Nhận diện biển báo'}
+                </button>
+              </div>
+              {aiStatus === 'ready' ? (
                 <p className="mt-2 text-[9px] leading-4 text-slate-500">
                   Ảnh chỉ được gửi đến Google Gemini khi bạn bấm một nút trên. Với gói miễn phí, Google có thể
                   dùng nội dung để cải thiện dịch vụ và người đánh giá có thể xem. Tránh ảnh có khuôn mặt hoặc
                   biển số.
                 </p>
-              </>
-            ) : (
-              <p className="mt-2 text-[9px] leading-4 text-slate-500">
-                {!isAuthenticated
-                  ? 'Đăng nhập để sử dụng gợi ý AI.'
-                  : aiStatus === 'checking'
+              ) : (
+                <p className="mt-2 text-[9px] leading-4 text-slate-500">
+                  {aiStatus === 'checking'
                     ? 'Đang kiểm tra cấu hình Gemini…'
-                    : 'AI ảnh chưa sẵn sàng. Cần cấu hình GEMINI_API_KEY ở backend.'}
-              </p>
-            )}
+                    : aiStatus === 'unavailable'
+                      ? 'AI ảnh chưa bật trên backend. Cần GEMINI_TRAFFIC_AI_ENABLED=true và GEMINI_API_KEY.'
+                      : 'Đăng nhập để sử dụng gợi ý AI.'}
+                </p>
+              )}
+            </>
             {analysisTask && (
               <p className="mt-2 text-[10px] text-brand-700" role="status">
                 Đang phân tích ảnh…
