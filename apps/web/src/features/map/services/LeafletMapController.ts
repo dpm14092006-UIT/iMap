@@ -27,6 +27,8 @@ export type MapControllerData = {
   draftStops: DraftStops;
   trafficLayer: TrafficMapLayer;
   currentLocation: LatLng | null;
+  headingDegrees: number | null;
+  isNavigating: boolean;
   isPicking: boolean;
   /** Tuyến Dijkstra/A* và khung vùng dữ liệu (null nếu chưa chạy thuật toán). */
   algorithmOverlay: AlgorithmOverlay | null;
@@ -45,7 +47,10 @@ export class LeafletMapController {
   private readonly routeLayer = L.layerGroup();
   private readonly trafficLayer = L.layerGroup();
   private readonly locationLayer = L.layerGroup();
+  private locationMarker: L.Marker | L.CircleMarker | null = null;
+  private locationMarkerMode: 'passive' | 'navigation' | null = null;
   private lastRouteId: string | null = null;
+  private lastRouteNavigationState: boolean | null = null;
   private lastDraftStopsKey = '';
   private lastOverlayKey: string | null = null;
   private lastTrafficMapLayer: TrafficMapLayer | null = null;
@@ -90,17 +95,22 @@ export class LeafletMapController {
     const draftStopsKey = [data.draftStops.origin, data.draftStops.destination]
       .map((place) => (place ? `${place.id}:${place.lat},${place.lng}:${place.name}` : ''))
       .join('|');
-    if (routeId !== this.lastRouteId || (!routeId && draftStopsKey !== this.lastDraftStopsKey)) {
+    if (
+      routeId !== this.lastRouteId ||
+      (routeId !== null && data.isNavigating !== this.lastRouteNavigationState) ||
+      (!routeId && draftStopsKey !== this.lastDraftStopsKey)
+    ) {
       this.routeLayer.clearLayers();
-      if (data.route) this.drawRoute(data.route);
+      if (data.route) this.drawRoute(data.route, data.isNavigating);
       else this.drawDraftStops(data.draftStops);
     }
     this.lastDraftStopsKey = draftStopsKey;
+    this.lastRouteNavigationState = data.isNavigating;
 
     if (data.algorithmOverlay?.key !== this.lastOverlayKey) this.drawAlgorithmOverlay(data.algorithmOverlay);
     if (data.trafficLayer !== this.lastTrafficMapLayer) this.drawTraffic(data.trafficLayer);
     this.lastTrafficMapLayer = data.trafficLayer;
-    this.drawCurrentLocation(data.currentLocation);
+    this.drawCurrentLocation(data.currentLocation, data.isNavigating, data.headingDegrees);
 
     // Chỉ tự zoom vừa tuyến khi có tuyến MỚI, tránh giật bản đồ mỗi lần render.
     if (data.route && data.route.id !== this.lastRouteId) {
@@ -180,7 +190,7 @@ export class LeafletMapController {
     this.map.getContainer().classList.toggle('is-picking', isPicking);
   }
 
-  private drawRoute(route: RoutePlan) {
+  private drawRoute(route: RoutePlan, isNavigating: boolean) {
     for (const leg of route.legs) {
       const points = leg.points.map(([lat, lng]) => L.latLng(lat, lng));
       if (points.length < 2) continue;
@@ -201,6 +211,7 @@ export class LeafletMapController {
       }).addTo(this.routeLayer);
     }
     route.stops.forEach((place, index) => {
+      if (isNavigating && index === 0) return;
       const isLast = index === route.stops.length - 1;
       // Tuyến 1 chặng dùng nhãn A/B, nhiều điểm dùng số thứ tự.
       const label = index === 0 ? 'A' : route.kind === 'route' ? 'B' : String(index);
@@ -300,16 +311,52 @@ export class LeafletMapController {
     return content;
   }
 
-  private drawCurrentLocation(point: LatLng | null) {
-    this.locationLayer.clearLayers();
-    if (!point) return;
-    L.circleMarker([point.lat, point.lng], {
-      radius: 8,
-      fillColor: '#2476ea',
-      fillOpacity: 1,
-      color: '#fff',
-      weight: 3,
-    }).addTo(this.locationLayer);
+  private drawCurrentLocation(
+    point: LatLng | null,
+    isNavigating: boolean,
+    headingDegrees: number | null,
+  ) {
+    if (!point) {
+      this.locationLayer.clearLayers();
+      this.locationMarker = null;
+      this.locationMarkerMode = null;
+      return;
+    }
+
+    const mode = isNavigating ? 'navigation' : 'passive';
+    if (!this.locationMarker || this.locationMarkerMode !== mode) {
+      this.locationLayer.clearLayers();
+      this.locationMarker =
+        mode === 'navigation'
+          ? L.marker([point.lat, point.lng], {
+              icon: this.navigationIcon(),
+              keyboard: false,
+              interactive: false,
+              zIndexOffset: 1000,
+            }).addTo(this.locationLayer)
+          : L.circleMarker([point.lat, point.lng], {
+              radius: 8,
+              fillColor: '#2476ea',
+              fillOpacity: 1,
+              color: '#fff',
+              weight: 3,
+            }).addTo(this.locationLayer);
+      this.locationMarkerMode = mode;
+    }
+
+    this.locationMarker.setLatLng([point.lat, point.lng]);
+    if (mode === 'navigation') {
+      this.locationMarker.getElement()?.style.setProperty('--heading-degrees', `${headingDegrees ?? 0}deg`);
+    }
+  }
+
+  private navigationIcon() {
+    return L.divIcon({
+      className: 'routetwin-navigation-marker',
+      html: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 3 43 43 24 34 5 43Z" /></svg>',
+      iconSize: [48, 48],
+      iconAnchor: [24, 24],
+    });
   }
 
   private fit(points: L.LatLngExpression[]) {

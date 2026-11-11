@@ -132,6 +132,7 @@ export function App() {
     status: navigationStatus,
     route: navigationRoute,
     location: navigationLocation,
+    headingDegrees: navigationHeadingDegrees,
     nextStopIndex,
     offRoute,
     offRouteFixes,
@@ -141,7 +142,8 @@ export function App() {
   } = navigation;
   const isNavigationIdle = navigationStatus === 'idle';
   const isNavigating = navigationStatus === 'navigating' || navigationStatus === 'locating';
-  const mapLocation = navigationLocation ?? currentLocation;
+  const isNavigationMarkerVisible = navigationStatus !== 'idle' && navigationStatus !== 'error';
+  const mapLocation = isNavigationIdle ? currentLocation : navigationLocation;
   const [isRecalculatingNavigation, setIsRecalculatingNavigation] = useState(false);
   const lastAutomaticRerouteAt = useRef(0);
   // Giữ id tuyến đang dẫn trong ref để bỏ kết quả tính lại nếu chuyến đi đã đổi trong lúc chờ API.
@@ -488,7 +490,9 @@ export function App() {
           activePanel === 'directions' && directions.waypoints.length === 0 ? comparison.overlay : null
         }
         draftStops={draftStops}
+        headingDegrees={navigationHeadingDegrees}
         isPicking={pickTarget !== null}
+        isNavigating={isNavigationMarkerVisible}
         layer={layer}
         onMapClick={(point) => void handleMapClick(point)}
         route={activeRoute}

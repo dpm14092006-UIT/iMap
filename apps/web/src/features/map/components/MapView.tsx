@@ -13,6 +13,8 @@ type MapViewProps = {
   /** Dữ liệu sự cố theo hợp đồng chung với N2. */
   trafficLayer: TrafficMapLayer;
   currentLocation: LatLng | null;
+  headingDegrees: number | null;
+  isNavigating: boolean;
   /** Đang ở chế độ chọn điểm trên bản đồ (đổi con trỏ). */
   isPicking: boolean;
   /** Tuyến Dijkstra/A* để so sánh (null nếu chưa chạy). */
@@ -29,6 +31,8 @@ export function MapView({
   draftStops,
   trafficLayer,
   currentLocation,
+  headingDegrees,
+  isNavigating,
   isPicking,
   algorithmOverlay,
   controllerRef,
@@ -65,10 +69,23 @@ export function MapView({
       draftStops,
       trafficLayer,
       currentLocation,
+      headingDegrees,
+      isNavigating,
       isPicking,
       algorithmOverlay,
     });
-  }, [controllerRef, layer, route, draftStops, trafficLayer, currentLocation, isPicking, algorithmOverlay]);
+  }, [
+    controllerRef,
+    layer,
+    route,
+    draftStops,
+    trafficLayer,
+    currentLocation,
+    headingDegrees,
+    isNavigating,
+    isPicking,
+    algorithmOverlay,
+  ]);
 
   return (
     <div
