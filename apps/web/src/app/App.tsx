@@ -8,6 +8,7 @@ import { useCurrentLocation } from '../features/map/hooks/useCurrentLocation';
 import { useTimeBasedMapLayer } from '../features/map/hooks/useTimeBasedMapLayer';
 import type { LeafletMapController } from '../features/map/services/LeafletMapController';
 import type { DraftStops, FeatureKey, RouteObjective, RoutePlan, TransportMode } from '../features/map/types';
+import type { AlgorithmChoice } from '../features/multi-stop/utils/algorithms';
 import { useSavedRoutes } from '../features/my-routes/hooks/useSavedRoutes';
 import type { SavedRoute } from '../features/my-routes/types';
 import { NavigationBanner } from '../features/navigation/components/NavigationBanner';
@@ -385,10 +386,17 @@ export function App() {
     vehicle: TransportMode,
     objective: RouteObjective,
     returnToStart: boolean,
+    algorithm: AlgorithmChoice,
   ): Promise<RoutePlan | { error: string }> => {
     const requestId = ++multiPlanGeneration.current;
     setActiveRoute(null);
-    const result = await routeApi.createOptimizedPlan([start, ...stops], vehicle, objective, returnToStart);
+    const result = await routeApi.createOptimizedPlan(
+      [start, ...stops],
+      vehicle,
+      objective,
+      returnToStart,
+      algorithm,
+    );
     if (requestId !== multiPlanGeneration.current) return { error: 'Đã hủy hành trình cũ.' };
     if ('error' in result) return result;
     setActiveRoute(result);

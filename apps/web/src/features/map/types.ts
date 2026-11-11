@@ -31,6 +31,16 @@ export type RoutePlan = {
   durationMin: number;
   vehicle: TransportMode;
   objective: RouteObjective;
+  /** Chỉ có khi hành trình nhiều điểm đã được sắp xếp lại thứ tự. */
+  optimization?: RouteOptimization;
+};
+
+/** Kết quả sắp xếp thứ tự ghé: thuật toán đã dùng và chi phí trước/sau (giây hoặc mét). */
+export type RouteOptimization = {
+  algorithm: 'exact' | 'heuristic';
+  originalCost: number | null;
+  optimizedCost: number;
+  objective: 'distance' | 'duration';
 };
 
 /** Điểm đi/đến đã chọn nhưng chưa tính tuyến, vẫn hiển thị marker A/B trên bản đồ. */

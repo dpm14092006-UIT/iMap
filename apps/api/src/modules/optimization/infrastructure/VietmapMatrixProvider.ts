@@ -1,7 +1,6 @@
 import { z } from 'zod';
-import type { OptimizeRouteRequest } from '@routetwin/shared';
 import { AppError } from '../../../shared/errors/AppError.js';
-import type { MatrixProvider } from '../domain/ports/MatrixProvider.js';
+import type { MatrixProvider, MatrixRequest } from '../domain/ports/MatrixProvider.js';
 const matrixSchema = z.array(z.array(z.union([z.number().finite().nonnegative(), z.literal(-1), z.null()])));
 const responseSchema = z.object({
   code: z.string(),
@@ -10,7 +9,7 @@ const responseSchema = z.object({
 });
 export class VietmapMatrixProvider implements MatrixProvider {
   constructor(private readonly key?: string) {}
-  async getCosts(input: OptimizeRouteRequest): Promise<number[][]> {
+  async getCosts(input: MatrixRequest): Promise<number[][]> {
     if (!this.key) throw new AppError(503, 'MATRIX_NOT_CONFIGURED', 'Chưa cấu hình VietMap Matrix.');
     const url = new URL('https://maps.vietmap.vn/api/matrix/v4');
     url.search = new URLSearchParams({
