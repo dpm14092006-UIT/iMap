@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { apiRequest } from '../../../shared/api/httpClient';
+import { assistantApi } from '../services/assistantApi';
 import { recordingToWav } from '../services/voiceAudio';
 export function useApiSpeechDraft(onDraft: (text: string) => void, accessToken: string) {
   const [available, setAvailable] = useState(false),
@@ -40,7 +40,8 @@ export function useApiSpeechDraft(onDraft: (text: string) => void, accessToken: 
     setAvailable(false);
     const controller = new AbortController();
     if (typeof MediaRecorder !== 'undefined' && typeof navigator.mediaDevices?.getUserMedia === 'function') {
-      void apiRequest<{ available: boolean }>('/voice/config', { signal: controller.signal }, accessToken)
+      void assistantApi
+        .voiceConfig(controller.signal, accessToken)
         .then((config) => {
           if (!controller.signal.aborted) setAvailable(config.available);
         })
@@ -90,16 +91,7 @@ export function useApiSpeechDraft(onDraft: (text: string) => void, accessToken: 
             if (version !== generation.current) return;
             const controller = new AbortController();
             request.current = controller;
-            const result = await apiRequest<{ text: string }>(
-              '/voice/transcribe',
-              {
-                method: 'POST',
-                body: audio,
-                headers: { 'Content-Type': 'audio/wav' },
-                signal: controller.signal,
-              },
-              accessToken,
-            );
+            const result = await assistantApi.transcribe(audio, controller.signal, accessToken);
             if (version === generation.current) currentDraft.current(result.text);
           } catch (cause) {
             if (version === generation.current)

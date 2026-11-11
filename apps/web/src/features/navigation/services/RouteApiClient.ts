@@ -1,5 +1,7 @@
 import type { OptimizeRouteRequest, OptimizeRouteResult, RouteResult } from '@routetwin/shared';
-import { ApiError, apiRequest } from '../../../shared/api/httpClient';
+import { ApiError } from '../../../shared/api/ApiError';
+import type { HttpClient } from '../../../shared/api/HttpClient';
+import { httpClient } from '../../../shared/api/HttpClient';
 import type { RouteObjective, RoutePlan, TransportMode } from '../../map/types';
 import type { Place } from '../../places/types';
 
@@ -23,13 +25,9 @@ function requestBody(stops: Place[], vehicle: TransportMode, objective: RouteObj
   };
 }
 
-function postRoute<T>(endpoint: string, body: RouteRequestBody): Promise<T> {
-  return apiRequest<T>(endpoint, { method: 'POST', body: JSON.stringify(body) });
-}
-
 /** Lỗi do máy chủ trả về thì dùng thông báo của máy chủ; lỗi kết nối thì dùng `fallback`. */
 function toError(cause: unknown, fallback: string): { error: string } {
-  return { error: cause instanceof ApiError && cause.status > 0 ? cause.message : fallback };
+  return { error: cause instanceof ApiError && cause.isServerError ? cause.message : fallback };
 }
 
 /** Thứ tự tối ưu hợp lệ khi bắt đầu từ điểm 0 và ghé mỗi điểm đúng một lần (thêm 0 ở cuối nếu quay về). */
@@ -45,6 +43,8 @@ function isValidOrder(order: number[], stopCount: number, returnToStart: boolean
 
 /** Client gọi các endpoint tính tuyến của backend (VietMap). */
 export class RouteApiClient {
+  constructor(private readonly http: HttpClient = httpClient) {}
+
   /** Tối ưu thứ tự ghé các điểm (giữ cố định điểm đầu) rồi trả tuyến theo thứ tự mới. */
   async createOptimizedPlan(
     stops: Place[],
@@ -54,7 +54,7 @@ export class RouteApiClient {
     algorithm: OptimizeRouteRequest['algorithm'] = 'auto',
   ): Promise<RoutePlanResult> {
     try {
-      const data = await postRoute<OptimizeRouteResult>('/routes/optimize', {
+      const data = await this.http.post<OptimizeRouteResult>('/routes/optimize', {
         ...requestBody(stops, vehicle, objective),
         returnToStart,
         algorithm,
@@ -90,7 +90,10 @@ export class RouteApiClient {
   ): Promise<RoutePlanResult> {
     if (stops.length < 2) return { error: 'Chọn ít nhất điểm đi và điểm đến.' };
     try {
-      const data = await postRoute<RouteResult>('/routes/calculate', requestBody(stops, vehicle, objective));
+      const data = await this.http.post<RouteResult>(
+        '/routes/calculate',
+        requestBody(stops, vehicle, objective),
+      );
       if (!Array.isArray(data?.coordinates) || data.coordinates.length < 2) {
         return { error: 'Dịch vụ chỉ đường trả về tuyến không hợp lệ.' };
       }

@@ -24,9 +24,31 @@ flowchart TB
 
 - **Repository**: `TrafficReportRepository` → `SupabaseTrafficReportRepository` trong composition production; `InMemoryTrafficReportRepository` chỉ là local/test adapter.
 - **Adapter**: `PlaceSearchProvider` → `PhotonPlaceSearchProvider`; `RouteProvider` → `VietmapRouteProvider`; `TrafficReportRepository` → `SupabaseTrafficReportRepository`; `TrafficImageAnalyzer` → `GeminiTrafficImageAnalyzer`.
-- **Strategy**: `OptimizationStrategy` để thay `NearestNeighbor`/`TwoOpt`.
+- **Strategy**: `OptimizationStrategy` để thay `ExactTourStrategy` (Held–Karp) / `TwoOptStrategy` (NN + 2-opt); `ShortestPathSolver` để thay Dijkstra/A*.
 - **Dependency Injection bằng constructor**: `new CreateTrafficReportUseCase(repo)`; wiring tại `composition-root.ts`.
 - **DTO + Zod**: đầu vào HTTP không phải domain entity.
+
+## Cấu trúc OOP phía web (`apps/web/src`)
+
+Web dùng React nên giao diện là hàm component; **toàn bộ logic không thuộc giao diện nằm trong lớp** với trách nhiệm đơn:
+
+| Tầng | Lớp | Vai trò |
+| --- | --- | --- |
+| Truyền tải | `HttpClient`, `ApiError` | Gọi HTTP duy nhất: bóc phong bì `{ data }`, timeout, lỗi tiếng Việt |
+| API client | `PlaceApiClient`, `TrafficApiClient`, `PathfindingApiClient`, `AssistantApiClient`, `RouteApiClient` | Mỗi module backend một client, nhận `HttpClient` qua constructor |
+| Lưu trữ | `SavedRouteRepository` (interface) ← `LocalStorageSavedRouteRepository`; `TrafficPhotoStorage` | Ẩn nơi lưu; đổi cài đặt không sửa hook |
+| Miền dẫn đường | `Geodesy`, `RoutePath`, `NavigationGuidanceEngine` | Toán khoảng cách/tiến độ/lệch tuyến, có test, không biết React |
+| Bản đồ | `LeafletMapController` | Adapter bọc Leaflet; React chỉ gọi method public |
+| Giọng nói | `SpeechDraftSession` | Phiên nhận dạng giọng nói của trình duyệt |
+| Giao diện | `ErrorBoundary` + component/hook | Hook chỉ nối lớp với React (state, effect) |
+
+Quy tắc: component không gọi `fetch` hay `localStorage` trực tiếp; hook nhận lớp qua tham số (mặc định là bản dùng chung) để thay bằng bản giả khi test.
+
+## Cấu trúc OOP phía API (`apps/api/src`)
+
+Mỗi module theo `presentation (Controller/Router) → application (UseCase + Port) → domain → infrastructure (Adapter)`.
+Hạ tầng dùng chung ở `shared/http`: `SessionAuthenticator` (xác thực), `FeatureQuotaGuard` (hạn mức theo người dùng),
+`ConcurrencyLimiter` (giới hạn song song mỗi instance); `CloudflareWhisperTranscriber` đóng gói nhà cung cấp giọng nói.
 
 ## Hợp đồng module UI
 

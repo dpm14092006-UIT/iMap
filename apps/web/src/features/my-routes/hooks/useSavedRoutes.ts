@@ -1,19 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { RoutePlan } from '../../map/types';
+import {
+  LocalStorageSavedRouteRepository,
+  type SavedRouteRepository,
+} from '../services/SavedRouteRepository';
 import type { SavedRoute } from '../types';
 
-/** Khóa localStorage. Tăng "v2" vì kiểu Place đã đổi (district -> address). */
-const STORAGE_KEY = 'routetwin-saved-routes-v2';
-
-function readSavedRoutes(): SavedRoute[] {
-  try {
-    const value = localStorage.getItem(STORAGE_KEY);
-    const routes = value ? (JSON.parse(value) as SavedRoute[]) : [];
-    return Array.isArray(routes) ? routes.filter((route) => Boolean(route?.origin?.name && route?.kind)) : [];
-  } catch {
-    return [];
-  }
-}
+const defaultRepository = new LocalStorageSavedRouteRepository();
 
 function toSavedRoute(plan: RoutePlan): SavedRoute {
   const first = plan.stops[0]!;
@@ -38,17 +31,13 @@ function toSavedRoute(plan: RoutePlan): SavedRoute {
   };
 }
 
-/** Tuyến đã lưu trên thiết bị (localStorage). Sẽ chuyển sang API khi có module my-routes ở backend. */
-export function useSavedRoutes() {
-  const [routes, setRoutes] = useState<SavedRoute[]>(readSavedRoutes);
+/** Danh sách tuyến đã lưu; nơi lưu thật nằm sau `SavedRouteRepository`. */
+export function useSavedRoutes(repository: SavedRouteRepository = defaultRepository) {
+  const [routes, setRoutes] = useState<SavedRoute[]>(() => repository.load());
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(routes));
-    } catch {
-      /* Trình duyệt có thể chặn storage (chế độ riêng tư, hết dung lượng). */
-    }
-  }, [routes]);
+    repository.save(routes);
+  }, [repository, routes]);
 
   /** Lưu tuyến lên đầu danh sách; tuyến trùng tiêu đề được thay bằng bản mới. */
   const save = useCallback((plan: RoutePlan) => {

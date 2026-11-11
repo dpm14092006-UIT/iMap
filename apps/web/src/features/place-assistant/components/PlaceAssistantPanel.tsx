@@ -9,8 +9,7 @@ import {
 } from '@routetwin/shared';
 import { FloatingPanel } from '../../../app/components/FloatingPanel';
 import type { RoutePlan } from '../../map/types';
-import { apiRequest } from '../../../shared/api/httpClient';
-import { explorePlaces } from '../services/explorePlacesApi';
+import { assistantApi } from '../services/assistantApi';
 import { useApiSpeechDraft } from '../hooks/useApiSpeechDraft';
 import { useSpeechDraft } from '../hooks/useSpeechDraft';
 type Point = { lat: number; lng: number };
@@ -65,11 +64,8 @@ export function PlaceAssistantPanel({
   useEffect(() => {
     const controller = new AbortController();
     setAiConfigured(null);
-    void apiRequest<{ aiConfigured: boolean }>(
-      '/route-stops/config',
-      { signal: controller.signal },
-      accessToken,
-    )
+    void assistantApi
+      .routeStopsConfig(controller.signal, accessToken)
       .then((config) => {
         if (!controller.signal.aborted) setAiConfigured(config.aiConfigured);
       })
@@ -107,7 +103,7 @@ export function PlaceAssistantPanel({
     setError('');
     setResult(null);
     try {
-      const data = await explorePlaces(
+      const data = await assistantApi.explorePlaces(
         {
           query: text,
           context: inputMode === 'voice' ? context : [],

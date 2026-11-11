@@ -1,29 +1,30 @@
 import type { RequestHandler } from 'express';
-import type { AuthenticatedRequest } from './authenticated-request.js';
-import { SupabaseClientFactory } from '../supabase/SupabaseClientFactory.js';
 import { AppError } from '../errors/AppError.js';
+import { SupabaseClientFactory } from '../supabase/SupabaseClientFactory.js';
+import type { AuthenticatedRequest } from './authenticated-request.js';
 import { getBearerToken } from './request-context.js';
 
-export function requireAuth(clientFactory = new SupabaseClientFactory()): RequestHandler {
-  return async (request, _response, next) => {
+/**
+ * Xác minh phiên đăng nhập Supabase của từng yêu cầu (không tin token do client tự khai).
+ * Từ chối khách chưa đăng nhập, phiên hết hạn và tài khoản ẩn danh; thành công thì gắn `request.auth`.
+ */
+export class SessionAuthenticator {
+  constructor(private readonly clients = new SupabaseClientFactory()) {}
+
+  readonly handler: RequestHandler = async (request, _response, next) => {
     const token = getBearerToken(request);
     if (!token) {
       next(new AppError(401, 'AUTH_REQUIRED', 'Vui lòng đăng nhập để thực hiện thao tác này'));
       return;
     }
     try {
-      const { data, error } = await clientFactory.create().auth.getUser(token);
+      const { data, error } = await this.clients.create().auth.getUser(token);
       if (error) {
-        const upstreamStatus = Number((error as { status?: number }).status ?? 0);
-        next(
-          [400, 401, 403].includes(upstreamStatus)
-            ? new AppError(401, 'INVALID_SESSION', 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn')
-            : new AppError(503, 'AUTH_UNAVAILABLE', 'Không thể xác minh tài khoản lúc này'),
-        );
+        next(this.toAuthError(Number((error as { status?: number }).status ?? 0)));
         return;
       }
       if (!data.user) {
-        next(new AppError(401, 'INVALID_SESSION', 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn'));
+        next(this.toAuthError(401));
         return;
       }
       if (data.user.is_anonymous) {
@@ -39,7 +40,19 @@ export function requireAuth(clientFactory = new SupabaseClientFactory()): Reques
       (request as AuthenticatedRequest).auth = { userId: data.user.id, accessToken: token };
       next();
     } catch {
-      next(new AppError(503, 'AUTH_UNAVAILABLE', 'Không thể xác minh tài khoản lúc này'));
+      next(this.toAuthError(0));
     }
   };
+
+  /** Token bị từ chối (400/401/403) là lỗi phiên; mọi trường hợp khác là dịch vụ xác thực không sẵn sàng. */
+  private toAuthError(upstreamStatus: number): AppError {
+    return [400, 401, 403].includes(upstreamStatus)
+      ? new AppError(401, 'INVALID_SESSION', 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn')
+      : new AppError(503, 'AUTH_UNAVAILABLE', 'Không thể xác minh tài khoản lúc này');
+  }
+}
+
+/** Middleware yêu cầu đăng nhập bằng tài khoản thật. */
+export function requireAuth(clients = new SupabaseClientFactory()): RequestHandler {
+  return new SessionAuthenticator(clients).handler;
 }

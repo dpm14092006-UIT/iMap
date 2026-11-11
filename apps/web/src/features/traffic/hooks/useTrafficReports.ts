@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TrafficReportBounds, TrafficReportDto, TrafficReportInput } from '@routetwin/shared';
-import { trafficApi, vietnamBounds } from '../api/trafficApi';
+import { trafficApi, trafficPhotos, vietnamBounds } from '../api/trafficApi';
 import { getSupabaseClient } from '../../auth/services/supabaseClient';
 
 export function useTrafficReports(
@@ -77,13 +77,13 @@ export function useTrafficReports(
       let imagePath: string | undefined;
       if (photo) {
         if (!userId) throw new Error('Không xác định được tài khoản để lưu ảnh.');
-        imagePath = await trafficApi.uploadPhoto(photo, userId);
+        imagePath = await trafficPhotos.upload(photo, userId);
       }
       let report: TrafficReportDto;
       try {
         report = await trafficApi.create({ ...input, ...(imagePath ? { imagePath } : {}) }, accessToken);
       } catch (error) {
-        if (imagePath) await trafficApi.removePhoto(imagePath).catch(() => undefined);
+        if (imagePath) await trafficPhotos.remove(imagePath).catch(() => undefined);
         throw error;
       }
       await refresh();
