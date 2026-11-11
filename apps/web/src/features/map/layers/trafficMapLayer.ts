@@ -38,11 +38,8 @@ export type TrafficFeatureProperties = {
 export type TrafficFeature = Feature<Point, TrafficFeatureProperties>;
 export type TrafficMapLayer = FeatureCollection<Point, TrafficFeatureProperties>;
 
-/** Layer rỗng, dùng khi chưa có dữ liệu sự cố. */
-export const emptyTrafficLayer: TrafficMapLayer = { type: 'FeatureCollection', features: [] };
-
 /** Dữ liệu tối thiểu để tạo một feature từ tọa độ {lat, lng}. */
-export type TrafficPointInput = Omit<TrafficFeatureProperties, 'status' | 'verified'> & {
+type TrafficPointInput = Omit<TrafficFeatureProperties, 'status' | 'verified'> & {
   lat: number;
   lng: number;
   status?: TrafficFeatureProperties['status'];

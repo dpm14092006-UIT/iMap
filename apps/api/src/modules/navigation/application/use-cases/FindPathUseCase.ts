@@ -1,4 +1,10 @@
-import type { PathAlgorithm, PathfindingRequest, PathfindingResult, PathfindingRun, SnappedPoint } from '@routetwin/shared';
+import type {
+  PathAlgorithm,
+  PathfindingRequest,
+  PathfindingResult,
+  PathfindingRun,
+  SnappedPoint,
+} from '@routetwin/shared';
 import { AppError } from '../../../../shared/errors/AppError.js';
 import type { GraphNode, RoadGraph } from '../../domain/algorithms/RoadGraph.js';
 import type { ShortestPathSolver } from '../../domain/algorithms/ShortestPathSolver.js';
@@ -26,9 +32,13 @@ export class FindPathUseCase {
 
     const runs = request.algorithms.map((algorithm): PathfindingRun => {
       const started = performance.now();
-      const result = this.solvers[algorithm].solve(graph, start.node.id, goal.node.id, { vehicle: request.vehicle, metric });
+      const result = this.solvers[algorithm].solve(graph, start.node.id, goal.node.id, {
+        vehicle: request.vehicle,
+        metric,
+      });
       const runtimeMs = performance.now() - started;
-      if (!result) throw new AppError(422, 'PATH_NOT_FOUND', 'Không tìm được đường giữa hai điểm trong vùng dữ liệu.');
+      if (!result)
+        throw new AppError(422, 'PATH_NOT_FOUND', 'Không tìm được đường giữa hai điểm trong vùng dữ liệu.');
       return {
         algorithm,
         distanceMeters: Math.round(result.distanceMeters),
@@ -52,15 +62,30 @@ export class FindPathUseCase {
   }
 
   /** Gắn tọa độ vào node gần nhất của mạng đường; báo lỗi nếu quá xa (ngoài vùng dữ liệu). */
-  private snap(graph: RoadGraph, point: { lat: number; lng: number }, vehicle: PathfindingRequest['vehicle'], label: string) {
+  private snap(
+    graph: RoadGraph,
+    point: { lat: number; lng: number },
+    vehicle: PathfindingRequest['vehicle'],
+    label: string,
+  ) {
     const nearest = graph.nearestNode(point, vehicle);
     if (!nearest || nearest.distanceMeters > this.maxSnapMeters) {
-      throw new AppError(422, 'OUTSIDE_GRAPH_COVERAGE', `${label[0]!.toUpperCase()}${label.slice(1)} nằm ngoài vùng dữ liệu bản đồ của thuật toán (trung tâm TP.HCM).`);
+      throw new AppError(
+        422,
+        'OUTSIDE_GRAPH_COVERAGE',
+        `${label[0]!.toUpperCase()}${label.slice(1)} nằm ngoài vùng dữ liệu bản đồ của thuật toán (trung tâm TP.HCM).`,
+      );
     }
     return nearest;
   }
 
-  private toSnappedPoint({ node, distanceMeters }: { node: GraphNode; distanceMeters: number }): SnappedPoint {
+  private toSnappedPoint({
+    node,
+    distanceMeters,
+  }: {
+    node: GraphNode;
+    distanceMeters: number;
+  }): SnappedPoint {
     return { lat: node.lat, lng: node.lng, offsetMeters: Math.round(distanceMeters) };
   }
 }

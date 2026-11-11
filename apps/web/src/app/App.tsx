@@ -1,74 +1,100 @@
-import type { TrafficReportBounds } from '@routetwin/shared';
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import type { RouteStopCandidate, StopPlace } from '@routetwin/shared';
+import type { RouteStopCandidate, StopPlace, TrafficReportBounds } from '@routetwin/shared';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AssistantAccessPanel } from '../features/auth/components/AssistantAccessPanel';
 import { useAuth } from '../features/auth/context/AuthProvider';
 import { MapToolbar } from '../features/map/components/MapToolbar';
 import { MapView } from '../features/map/components/MapView';
 import { useCurrentLocation } from '../features/map/hooks/useCurrentLocation';
 import { useTimeBasedMapLayer } from '../features/map/hooks/useTimeBasedMapLayer';
-import { toTrafficMapLayer } from '../features/map/layers/trafficMapLayer';
 import type { LeafletMapController } from '../features/map/services/LeafletMapController';
-import type { DraftStops, FeatureKey, RoutePlan } from '../features/map/types';
-import { MultiStopPanel } from '../features/multi-stop/components/MultiStopPanel';
-import { SavedRoutesPanel } from '../features/my-routes/components/SavedRoutesPanel';
+import type { DraftStops, FeatureKey, RouteObjective, RoutePlan, TransportMode } from '../features/map/types';
+import { useSavedRoutes } from '../features/my-routes/hooks/useSavedRoutes';
 import type { SavedRoute } from '../features/my-routes/types';
-import { RoutePanel, type PickTarget } from '../features/navigation/components/RoutePanel';
+import { NavigationBanner } from '../features/navigation/components/NavigationBanner';
+import type { PickTarget } from '../features/navigation/components/RoutePanel';
 import { useAlgorithmComparison } from '../features/navigation/hooks/useAlgorithmComparison';
 import { useDirections } from '../features/navigation/hooks/useDirections';
+import { useNavigationSession } from '../features/navigation/hooks/useNavigationSession';
 import { RouteApiClient, routePlanFromResult } from '../features/navigation/services/RouteApiClient';
 import { formatDistanceKm, formatDurationMinutes } from '../features/navigation/utils/format';
-import { PlacePanel } from '../features/places/components/PlacePanel';
 import { PlaceSearchBar } from '../features/places/components/PlaceSearchBar';
 import { popularPlaces } from '../features/places/data/popularPlaces';
 import { basicPlaceFromPoint, placeFromPoint } from '../features/places/services/placeFromPoint';
 import type { LatLng, Place } from '../features/places/types';
-import { TrafficReportPanel, type DemoIncident, type IncidentKind, type IncidentSeverity } from '../features/traffic/components/TrafficReportPanel';
+import { vietnamBounds } from '../features/traffic/api/trafficApi';
+import type { IncidentKind, IncidentSeverity } from '../features/traffic/components/TrafficReportPanel';
 import { useTrafficReports } from '../features/traffic/hooks/useTrafficReports';
+import { toIncidents, toReportsMapLayer } from '../features/traffic/services/trafficPresentation';
 import { Icon } from '../shared/components/Icon';
 import { FeatureNav } from './components/FeatureNav';
+import { PanelFallback } from './components/PanelFallback';
 import { useToast } from './hooks/useToast';
 
-// Panel nặng (trợ lý giọng nói, đăng nhập) chỉ tải khi người dùng mở.
-const PlaceAssistantPanel = lazy(() => import('../features/place-assistant/components/PlaceAssistantPanel').then((module) => ({ default: module.PlaceAssistantPanel })));
-const AuthPanel = lazy(() => import('../features/auth/components/AuthPanel').then((module) => ({ default: module.AuthPanel })));
-
-// Điểm đi/đến mặc định khi mở app lần đầu.
-const defaultOrigin = null;
-const defaultDestination = null;
-
-// Khóa localStorage. Tăng "v2" vì kiểu Place đã đổi (district -> address).
-const routeStorageKey = 'routetwin-saved-routes-v2';
-const incidentLabels: Record<IncidentKind, string> = { traffic_jam: 'Kẹt xe', accident: 'Tai nạn', construction: 'Thi công', flood: 'Ngập đường', road_closure: 'Đường đóng', obstacle: 'Vật cản' };
+// Các panel chỉ tải mã khi người dùng mở, để lần tải đầu chỉ gồm bản đồ và thanh công cụ.
+const PlaceAssistantPanel = lazy(() =>
+  import('../features/place-assistant/components/PlaceAssistantPanel').then((module) => ({
+    default: module.PlaceAssistantPanel,
+  })),
+);
+const AuthPanel = lazy(() =>
+  import('../features/auth/components/AuthPanel').then((module) => ({ default: module.AuthPanel })),
+);
+const RoutePanel = lazy(() =>
+  import('../features/navigation/components/RoutePanel').then((module) => ({ default: module.RoutePanel })),
+);
+const MultiStopPanel = lazy(() =>
+  import('../features/multi-stop/components/MultiStopPanel').then((module) => ({
+    default: module.MultiStopPanel,
+  })),
+);
+const SavedRoutesPanel = lazy(() =>
+  import('../features/my-routes/components/SavedRoutesPanel').then((module) => ({
+    default: module.SavedRoutesPanel,
+  })),
+);
+const PlacePanel = lazy(() =>
+  import('../features/places/components/PlacePanel').then((module) => ({ default: module.PlacePanel })),
+);
+const TrafficReportPanel = lazy(() =>
+  import('../features/traffic/components/TrafficReportPanel').then((module) => ({
+    default: module.TrafficReportPanel,
+  })),
+);
 
 /** Khoảng cách (độ) tối đa để coi một click là "chọn" địa điểm gợi ý gần đó (~200 m). */
 const PLACE_CLICK_TOLERANCE = 0.002;
-
-function readStored<T>(key: string, fallback: T): T {
-  try {
-    const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) as T : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function writeStored<T>(key: string, value: T) {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* Trình duyệt có thể chặn storage. */ }
-}
-
-function readSavedRoutes(): SavedRoute[] {
-  return readStored<SavedRoute[]>(routeStorageKey, []).filter((route) => Boolean(route?.origin?.name && route?.kind));
-}
+/** Tâm Việt Nam, dùng khi bản đồ chưa sẵn sàng để trả tâm thật. */
+const VIETNAM_CENTER: LatLng = { lat: 16, lng: 108 };
+/** Lệch tuyến liên tiếp bao nhiêu lần đo GPS thì tự tính lại, và tối thiểu cách nhau bao lâu. */
+const OFF_ROUTE_FIXES_BEFORE_REROUTE = 3;
+const AUTO_REROUTE_INTERVAL_MS = 20_000;
 
 /** Đổi địa điểm do trợ lý (N2) gợi ý sang kiểu Place dùng chung. */
 function placeFromStop(place: StopPlace): Place {
-  return { id: place.id, name: place.name, address: place.address, category: place.category, lat: place.lat, lng: place.lng, source: 'osm' };
+  return {
+    id: place.id,
+    name: place.name,
+    address: place.address,
+    category: place.category,
+    lat: place.lat,
+    lng: place.lng,
+    source: 'osm',
+  };
 }
 
 /** Địa điểm gợi ý gần điểm click nhất, hoặc null nếu không có điểm nào đủ gần. */
 function findPlaceNear(point: LatLng): Place | null {
-  return popularPlaces.find((place) => Math.abs(place.lat - point.lat) < PLACE_CLICK_TOLERANCE && Math.abs(place.lng - point.lng) < PLACE_CLICK_TOLERANCE) ?? null;
+  return (
+    popularPlaces.find(
+      (place) =>
+        Math.abs(place.lat - point.lat) < PLACE_CLICK_TOLERANCE &&
+        Math.abs(place.lng - point.lng) < PLACE_CLICK_TOLERANCE,
+    ) ?? null
+  );
+}
+
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
 }
 
 /**
@@ -79,86 +105,120 @@ function findPlaceNear(point: LatLng): Place | null {
 export function App() {
   const routeApi = useMemo(() => new RouteApiClient(), []);
   const mapController = useRef<LeafletMapController | null>(null);
+  const getMapCenter = useCallback(() => mapController.current?.getCenter() ?? VIETNAM_CENTER, []);
   const { toast, showToast } = useToast();
   const { location: currentLocation, locate } = useCurrentLocation();
   const { user, accessToken, loading: authLoading } = useAuth();
   const isAuthenticated = Boolean(user && !user.is_anonymous && accessToken);
   const { layer, setLayer } = useTimeBasedMapLayer(); // nền tối tự bật theo giờ trên mobile
+  const savedRoutes = useSavedRoutes();
 
   const [activePanel, setActivePanel] = useState<FeatureKey | null>('directions');
-  const multiPlanGeneration = useRef(0);
-  useEffect(() => { if (activePanel && activePanel !== 'multi') multiPlanGeneration.current++; }, [activePanel]);
+  const [hasOpenedMulti, setHasOpenedMulti] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  const [selectedMapPoint, setSelectedMapPoint] = useState<LatLng | null>(null);
   const [activeRoute, setActiveRoute] = useState<RoutePlan | null>(null);
   const [pickTarget, setPickTarget] = useState<PickTarget | null>(null);
   const [isLocating, setIsLocating] = useState(false);
-  const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>(readSavedRoutes);
   const [authOpen, setAuthOpen] = useState(false);
+  const [trafficBounds, setTrafficBounds] = useState<TrafficReportBounds>(vietnamBounds);
 
-  const [trafficBounds, setTrafficBounds] = useState<TrafficReportBounds>({ minLat: 7, minLng: 102, maxLat: 24, maxLng: 117 });
+  // --- Dẫn đường theo GPS ---
+  const navigation = useNavigationSession();
+  const {
+    status: navigationStatus,
+    route: navigationRoute,
+    location: navigationLocation,
+    nextStopIndex,
+    offRoute,
+    offRouteFixes,
+    start: startNavigationSession,
+    stop: stopNavigation,
+    updateRoute: updateNavigationRoute,
+  } = navigation;
+  const isNavigationIdle = navigationStatus === 'idle';
+  const isNavigating = navigationStatus === 'navigating' || navigationStatus === 'locating';
+  const mapLocation = navigationLocation ?? currentLocation;
+  const [isRecalculatingNavigation, setIsRecalculatingNavigation] = useState(false);
+  const lastAutomaticRerouteAt = useRef(0);
+  // Giữ id tuyến đang dẫn trong ref để bỏ kết quả tính lại nếu chuyến đi đã đổi trong lúc chờ API.
+  const navigationRouteIdRef = useRef<string | null>(null);
+  navigationRouteIdRef.current = navigationRoute?.id ?? null;
 
-  // --- Phần traffic (N2): báo cáo lấy từ API; bản đồ nhận qua hợp đồng TrafficMapLayer. ---
-  const { reports, error: trafficError, loading: trafficLoading, create: createTrafficReport, clearance: updateClearance } = useTrafficReports(accessToken, user?.id ?? null, trafficBounds);
-  const [selectedMapPoint, setSelectedMapPoint] = useState<LatLng | null>(null);
-  const incidents = useMemo<DemoIncident[]>(() => reports.map((report) => ({
-    id: report.id,
-    type: report.incidentType,
-    severity: report.severity,
-    description: report.note || incidentLabels[report.incidentType],
-    time: new Date(report.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-    lat: report.lat,
-    lng: report.lng,
-    communityReportCount: report.communityReportCount ?? 1,
-    communityReporterCount: report.communityReporterCount ?? 0,
-    communityUpdatedAt: report.communityUpdatedAt ?? undefined,
-    imagePath: report.imagePath,
-    status: report.status,
-  })), [reports]);
-  const trafficLayer = useMemo(() => toTrafficMapLayer(reports.map((report) => ({
-    id: report.id,
-    incidentType: report.incidentType,
-    severity: report.severity,
-    title: report.note || incidentLabels[report.incidentType],
-    lat: report.lat,
-    lng: report.lng,
-    status: report.status,
-    verified: (report.communityReporterCount ?? 0) > 1,
-    reportedAt: report.createdAt,
-    communityReportCount: report.communityReportCount ?? 1,
-    communityReporterCount: report.communityReporterCount ?? 0,
-    ...(report.communityUpdatedAt ? { communityUpdatedAt: report.communityUpdatedAt } : {}),
-  }))), [reports]);
+  // Tuyến trên bản đồ bị thay bằng tuyến khác thì dừng chuyến đang dẫn.
+  useEffect(() => {
+    if (navigationRoute && !isNavigationIdle && activeRoute?.id !== navigationRoute.id) stopNavigation();
+  }, [activeRoute?.id, navigationRoute, isNavigationIdle, stopNavigation]);
+
+  // Bản đồ bám theo vị trí GPS trong lúc dẫn đường.
+  useEffect(() => {
+    if (navigationLocation && (navigationStatus === 'navigating' || navigationStatus === 'arrived')) {
+      mapController.current?.followLocation(navigationLocation);
+    }
+  }, [navigationLocation, navigationStatus]);
+
+  // --- Giao thông (N2): báo cáo lấy từ API; bản đồ nhận qua hợp đồng TrafficMapLayer. ---
+  const {
+    reports,
+    error: trafficError,
+    loading: trafficLoading,
+    create: createTrafficReport,
+    clearance: updateClearance,
+  } = useTrafficReports(accessToken, user?.id ?? null, trafficBounds, activePanel === 'traffic');
+  const incidents = useMemo(() => toIncidents(reports), [reports]);
+  const trafficLayer = useMemo(() => toReportsMapLayer(reports), [reports]);
 
   const directions = useDirections({
     routeApi,
     activeRoute,
     onRouteChange: setActiveRoute,
-    initialOrigin: defaultOrigin,
-    initialDestination: defaultDestination,
+    initialOrigin: null,
+    initialDestination: null,
   });
 
   // So sánh Dijkstra / A* cho cùng điểm đi, điểm đến và loại xe của panel chỉ đường.
-  const comparison = useAlgorithmComparison({ origin: directions.origin, destination: directions.destination, vehicle: directions.vehicle });
+  const comparison = useAlgorithmComparison({
+    origin: directions.origin,
+    destination: directions.destination,
+    vehicle: directions.vehicle,
+  });
 
   // Marker A/B cho điểm đã chọn nhưng chưa tính tuyến (chỉ khi panel chỉ đường đang mở).
   const draftStops = useMemo<DraftStops>(
-    () => activePanel === 'directions' ? { origin: directions.origin, destination: directions.destination } : { origin: null, destination: null },
+    () =>
+      activePanel === 'directions'
+        ? { origin: directions.origin, destination: directions.destination }
+        : { origin: null, destination: null },
     [activePanel, directions.origin, directions.destination],
   );
 
-  useEffect(() => { writeStored(routeStorageKey, savedRoutes); }, [savedRoutes]);
+  // Rời panel nhiều điểm thì bỏ kết quả tối ưu còn đang chờ, tránh vẽ đè tuyến của panel khác.
+  const multiPlanGeneration = useRef(0);
+  useEffect(() => {
+    if (activePanel && activePanel !== 'multi') multiPlanGeneration.current++;
+  }, [activePanel]);
 
   // Nhấn Esc để thoát chế độ chọn điểm trên bản đồ.
   useEffect(() => {
     if (!pickTarget) return;
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') setPickTarget(null); };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setPickTarget(null);
+    };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [pickTarget]);
 
   const openPanel = (key: FeatureKey | null) => {
     setActivePanel(key);
+    if (key === 'multi') setHasOpenedMulti(true);
     setPickTarget(null);
+  };
+  const closePanel = () => openPanel(null);
+
+  const selectFeature = (key: FeatureKey) => {
+    setSelectedPlace(null);
+    openPanel(key);
+    if (key === 'traffic') setSelectedMapPoint(null);
   };
 
   const openPlace = (place: Place) => {
@@ -203,7 +263,7 @@ export function App() {
       mapController.current?.flyTo(fix.point, 16);
       showToast(`Đã định vị · sai số khoảng ${fix.accuracyMeters} m`);
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Không lấy được vị trí.');
+      showToast(errorMessage(error, 'Không lấy được vị trí.'));
     }
   };
 
@@ -215,37 +275,80 @@ export function App() {
       directions.setOrigin(await placeFromPoint(fix.point, 'gps'));
       mapController.current?.flyTo(fix.point, 15);
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Không lấy được vị trí.');
+      showToast(errorMessage(error, 'Không lấy được vị trí.'));
     } finally {
       setIsLocating(false);
     }
   };
 
-  // --- My Routes (sẽ chuyển sang API ở ngày 4) ---
+  const startNavigation = (route: RoutePlan) => {
+    startNavigationSession(route);
+    openPanel(null);
+  };
+
+  /** Tính lại tuyến từ vị trí GPS hiện tại tới các điểm còn lại (tự động khi lệch tuyến, hoặc bấm nút). */
+  const recalculateNavigation = useCallback(
+    async (automatic = false) => {
+      if (!navigationRoute || !navigationLocation || isRecalculatingNavigation) return;
+      const route = navigationRoute;
+      const remainingStops = route.stops.slice(nextStopIndex);
+      const destinationStops = remainingStops.length ? remainingStops : route.stops.slice(-1);
+      if (!destinationStops.length) return;
+
+      setIsRecalculatingNavigation(true);
+      const result = await routeApi.createPlan(
+        [basicPlaceFromPoint(navigationLocation, 'gps'), ...destinationStops],
+        route.vehicle,
+        route.objective,
+      );
+      setIsRecalculatingNavigation(false);
+      if (navigationRouteIdRef.current !== route.id) return;
+      if ('error' in result) {
+        if (!automatic) showToast(result.error);
+        return;
+      }
+      setActiveRoute(result);
+      updateNavigationRoute(result);
+      if (!automatic) showToast('Đã tính lại tuyến từ vị trí GPS hiện tại');
+    },
+    [
+      navigationRoute,
+      navigationLocation,
+      nextStopIndex,
+      updateNavigationRoute,
+      isRecalculatingNavigation,
+      routeApi,
+      showToast,
+    ],
+  );
+
+  // Lệch tuyến đủ lâu thì tự tính lại, nhưng không dồn dập hơn AUTO_REROUTE_INTERVAL_MS.
+  useEffect(() => {
+    if (!offRoute || offRouteFixes < OFF_ROUTE_FIXES_BEFORE_REROUTE || isRecalculatingNavigation) return;
+    const now = Date.now();
+    if (now - lastAutomaticRerouteAt.current < AUTO_REROUTE_INTERVAL_MS) return;
+    lastAutomaticRerouteAt.current = now;
+    void recalculateNavigation(true);
+  }, [offRoute, offRouteFixes, isRecalculatingNavigation, recalculateNavigation]);
+
+  // --- Tuyến đã lưu ---
   const savePlan = (plan: RoutePlan) => {
-    const first = plan.stops[0]!;
-    const last = plan.stops[plan.stops.length - 1]!;
-    const title = plan.kind === 'multi' ? `Hành trình ${Math.max(0, plan.stops.length - 1)} điểm · ${first.name}` : `${first.name} → ${last.name}`;
-    const item: SavedRoute = {
-      id: `${plan.id}-${Date.now()}`,
-      kind: plan.kind,
-      title,
-      origin: first,
-      destination: last,
-      stops: plan.stops,
-      vehicle: plan.vehicle,
-      plan,
-      originId: first.id,
-      originName: first.name,
-      destinationId: last.id,
-      destinationName: last.name,
-    };
-    setSavedRoutes((current) => [item, ...current.filter((route) => route.title !== title)]);
+    savedRoutes.save(plan);
     showToast('Đã lưu hành trình trên thiết bị này');
   };
 
+  const deleteSavedRoute = (id: string) => {
+    savedRoutes.remove(id);
+    showToast('Đã xóa hành trình đã lưu');
+  };
+
   const openSavedRoute = async (saved: SavedRoute) => {
-    const stops = saved.stops && saved.stops.length > 1 ? saved.stops : saved.destination ? [saved.origin, saved.destination] : [];
+    const stops =
+      saved.stops && saved.stops.length > 1
+        ? saved.stops
+        : saved.destination
+          ? [saved.origin, saved.destination]
+          : [];
     if (stops.length < 2) {
       showToast('Không thể mở lại hành trình này.');
       return;
@@ -254,7 +357,11 @@ export function App() {
     // Tuyến 2 điểm: mở trong panel chỉ đường để xem chỉ dẫn và đổi xe được.
     if (saved.kind === 'route') {
       openPanel('directions');
-      const result = await directions.open({ origin: stops[0]!, destination: stops[stops.length - 1]!, vehicle: saved.vehicle });
+      const result = await directions.open({
+        origin: stops[0]!,
+        destination: stops[stops.length - 1]!,
+        vehicle: saved.vehicle,
+      });
       if (result) showToast('Đã tính lại tuyến đã lưu bằng VietMap');
       return;
     }
@@ -271,13 +378,46 @@ export function App() {
     showToast('Đã tính lại hành trình đã lưu bằng VietMap');
   };
 
-  // --- Traffic (N2): gửi và xác minh báo cáo qua API, yêu cầu đăng nhập ---
-  const reportIncident = async (type: IncidentKind, severity: IncidentSeverity, point: LatLng, note: string, photo: File | null) => {
+  // --- Hành trình nhiều điểm ---
+  const planMultiStopRoute = async (
+    start: Place,
+    stops: Place[],
+    vehicle: TransportMode,
+    objective: RouteObjective,
+    returnToStart: boolean,
+  ): Promise<RoutePlan | { error: string }> => {
+    const requestId = ++multiPlanGeneration.current;
+    setActiveRoute(null);
+    const result = await routeApi.createOptimizedPlan([start, ...stops], vehicle, objective, returnToStart);
+    if (requestId !== multiPlanGeneration.current) return { error: 'Đã hủy hành trình cũ.' };
+    if ('error' in result) return result;
+    setActiveRoute(result);
+    setSelectedPlace(null);
+    showToast('Đã tối ưu thứ tự ghé theo đường đi VietMap');
+    return result;
+  };
+
+  const resetMultiStopRoute = (planId?: string) => {
+    multiPlanGeneration.current++;
+    if (activeRoute?.id === planId) setActiveRoute(null);
+  };
+
+  // --- Giao thông (N2): gửi và xác minh báo cáo qua API, yêu cầu đăng nhập ---
+  const reportIncident = async (
+    type: IncidentKind,
+    severity: IncidentSeverity,
+    point: LatLng,
+    note: string,
+    photo: File | null,
+  ) => {
     if (!accessToken) {
       setAuthOpen(true);
       throw new Error('Đăng nhập để gửi báo cáo.');
     }
-    await createTrafficReport({ incidentType: type, severity, lat: point.lat, lng: point.lng, ...(note ? { note } : {}) }, photo ?? undefined);
+    await createTrafficReport(
+      { incidentType: type, severity, lat: point.lat, lng: point.lng, ...(note ? { note } : {}) },
+      photo ?? undefined,
+    );
     setSelectedMapPoint(null);
     mapController.current?.flyTo(point, 15);
     showToast('Đã đồng bộ báo cáo giao thông');
@@ -298,131 +438,266 @@ export function App() {
       return;
     }
     const stop = placeFromStop(candidate.place);
-    setActiveRoute(routePlanFromResult(candidate.route, [activeRoute.stops[0]!, stop, activeRoute.stops[1]!], activeRoute.vehicle));
+    setActiveRoute(
+      routePlanFromResult(
+        candidate.route,
+        [activeRoute.stops[0]!, stop, activeRoute.stops[1]!],
+        activeRoute.vehicle,
+      ),
+    );
     showToast(`Đã thêm điểm ghé: ${stop.name}`);
   };
 
   const removeAssistantStop = async () => {
     if (!activeRoute || activeRoute.stops.length < 3) return;
     const originalId = activeRoute.id;
-    const result = await routeApi.createPlan([activeRoute.stops[0]!, activeRoute.stops[activeRoute.stops.length - 1]!], activeRoute.vehicle);
+    const result = await routeApi.createPlan(
+      [activeRoute.stops[0]!, activeRoute.stops[activeRoute.stops.length - 1]!],
+      activeRoute.vehicle,
+    );
     if ('error' in result) {
       showToast(result.error);
       return;
     }
-    setActiveRoute((current) => current?.id === originalId ? result : current);
+    setActiveRoute((current) => (current?.id === originalId ? result : current));
   };
 
-  const selectFeature = (key: FeatureKey) => {
-    setSelectedPlace(null);
-    openPanel(key);
-    if (key === 'traffic') setSelectedMapPoint(null);
-  };
-
-  const routeSummary = activeRoute ? `${formatDistanceKm(activeRoute.distanceKm)} · ${formatDurationMinutes(activeRoute.durationMin)}` : '';
+  const routeSummary = activeRoute
+    ? `${formatDistanceKm(activeRoute.distanceKm)} · ${formatDurationMinutes(activeRoute.durationMin)}`
+    : '';
+  const showRouteSummary = Boolean(activeRoute) && isNavigationIdle;
+  const canUseAssistant = !authLoading && isAuthenticated;
 
   return (
     <main id="map" className="relative h-[100dvh] min-h-[560px] overflow-hidden bg-[#e8ece7] text-ink">
       <MapView
         controllerRef={mapController}
         onBoundsChange={setTrafficBounds}
-        currentLocation={currentLocation}
-        algorithmOverlay={activePanel === 'directions' && directions.waypoints.length === 0 ? comparison.overlay : null}
+        currentLocation={mapLocation}
+        algorithmOverlay={
+          activePanel === 'directions' && directions.waypoints.length === 0 ? comparison.overlay : null
+        }
         draftStops={draftStops}
         isPicking={pickTarget !== null}
         layer={layer}
-        onMapClick={(point) => { void handleMapClick(point); }}
+        onMapClick={(point) => void handleMapClick(point)}
         route={activeRoute}
         trafficLayer={trafficLayer}
       />
 
       <header className="app-header absolute inset-x-0 top-0 z-40 border-b border-white/80 bg-white/90 shadow-[0_2px_12px_rgba(20,37,58,.04)] backdrop-blur-xl">
         <div className="mx-auto flex h-[58px] max-w-[1920px] items-center gap-3 px-3 sm:h-[68px] sm:px-5">
-          <div className="flex shrink-0 items-center gap-2" aria-label="iMap"><img src="/favicon.svg" alt="" width="32" height="32" /><span className="text-lg font-bold tracking-tight text-brand-700">iMap</span></div>
-          <div className="hidden min-w-0 max-w-[720px] flex-1 md:block"><PlaceSearchBar getFocus={() => mapController.current?.getCenter() ?? { lat: 16, lng: 108 }} onSelect={openPlace} /></div>
+          <div className="flex shrink-0 items-center gap-2">
+            <img src="/favicon.svg" alt="" width="32" height="32" />
+            <span className="text-lg font-bold tracking-tight text-brand-700">iMap</span>
+          </div>
+          <div className="hidden min-w-0 max-w-[720px] flex-1 md:block">
+            <PlaceSearchBar getFocus={getMapCenter} onSelect={openPlace} />
+          </div>
           <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
-            <button type="button" onClick={() => showToast('Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.')} aria-label="Thông tin bản đồ" className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-brand-200 hover:text-brand-700"><Icon name="more" size={19} /></button>
-            <a href="/login" aria-label={user ? `Tài khoản ${user.email ?? ''}` : 'Đăng nhập tài khoản'} className={`grid h-9 w-9 place-items-center rounded-full text-xs font-bold ring-2 ring-white transition sm:h-10 sm:w-10 ${user ? 'bg-brand-100 text-brand-700' : 'bg-[#e8e1d7] text-[#685849]'}`}>{user?.email?.slice(0, 2).toUpperCase() ?? 'ĐN'}</a>
+            <button
+              type="button"
+              onClick={() => showToast('Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.')}
+              aria-label="Thông tin bản đồ"
+              className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-brand-200 hover:text-brand-700"
+            >
+              <Icon name="more" size={19} />
+            </button>
+            <a
+              href="/login"
+              aria-label={user ? `Tài khoản ${user.email ?? ''}` : 'Đăng nhập tài khoản'}
+              className={`grid h-9 w-9 place-items-center rounded-full text-xs font-bold ring-2 ring-white transition sm:h-10 sm:w-10 ${user ? 'bg-brand-100 text-brand-700' : 'bg-[#e8e1d7] text-[#685849]'}`}
+            >
+              {user?.email?.slice(0, 2).toUpperCase() ?? 'ĐN'}
+            </a>
           </div>
         </div>
-        <div className="px-3 pb-2 md:hidden"><PlaceSearchBar getFocus={() => mapController.current?.getCenter() ?? { lat: 16, lng: 108 }} onSelect={openPlace} /></div>
+        <div className="px-3 pb-2 md:hidden">
+          <PlaceSearchBar getFocus={getMapCenter} onSelect={openPlace} />
+        </div>
       </header>
 
-      <FeatureNav isAuthenticated={isAuthenticated} active={activePanel} incidentCount={incidents.length} onSelect={selectFeature} />
+      {isNavigationIdle && (
+        <FeatureNav
+          isAuthenticated={isAuthenticated}
+          active={activePanel}
+          incidentCount={incidents.length}
+          onSelect={selectFeature}
+        />
+      )}
 
       {/* Tóm tắt tuyến đang hiển thị (desktop: góc phải; mobile: trên bottom sheet). */}
-      {activeRoute && <div className="map-live-status absolute right-5 top-[140px] z-10 hidden items-center gap-2 rounded-full border border-white/80 bg-white/90 px-3 py-2 text-[10px] font-semibold text-slate-600 shadow-sm backdrop-blur lg:flex">
-        {activeRoute ? <><Icon name="route" size={14} className="text-brand-600" />{routeSummary}<span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] text-amber-800">Ước tính</span></> : <><span className="h-2 w-2 rounded-full bg-emerald-500" />Bản đồ Việt Nam</>}
-      </div>}
-      {activeRoute && <div className="route-mobile-status absolute bottom-[calc(56dvh+10px)] left-3 z-10 flex items-center gap-2 rounded-full border border-white/80 bg-white/95 px-3 py-2 text-[10px] font-bold text-ink shadow-lg shadow-slate-900/10 backdrop-blur-md md:hidden"><Icon name="route" size={14} className="text-brand-600" />{routeSummary}<span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800">Ước tính</span></div>}
+      {showRouteSummary && (
+        <>
+          <div className="map-live-status absolute right-5 top-[140px] z-10 hidden items-center gap-2 rounded-full border border-white/80 bg-white/90 px-3 py-2 text-[10px] font-semibold text-slate-600 shadow-sm backdrop-blur lg:flex">
+            <Icon name="route" size={14} className="text-brand-600" />
+            {routeSummary}
+            <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] text-amber-800">
+              Ước tính
+            </span>
+          </div>
+          <div className="route-mobile-status absolute bottom-[calc(56dvh+10px)] left-3 z-10 flex items-center gap-2 rounded-full border border-white/80 bg-white/95 px-3 py-2 text-[10px] font-bold text-ink shadow-lg shadow-slate-900/10 backdrop-blur-md md:hidden">
+            <Icon name="route" size={14} className="text-brand-600" />
+            {routeSummary}
+            <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800">
+              Ước tính
+            </span>
+          </div>
+        </>
+      )}
+
+      <NavigationBanner
+        status={navigationStatus}
+        instruction={navigation.nextInstruction}
+        distanceToInstructionMeters={navigation.distanceToInstructionMeters}
+        distanceRemainingMeters={navigation.distanceRemainingMeters}
+        offRoute={offRoute}
+        error={navigation.error}
+        canRecalculate={Boolean(navigationRoute && navigationLocation)}
+        isRecalculating={isRecalculatingNavigation}
+        onRecalculate={() => void recalculateNavigation()}
+        onRetry={() => {
+          if (navigationRoute) startNavigationSession(navigationRoute);
+        }}
+        onStop={stopNavigation}
+      />
 
       {/* Hướng dẫn khi đang chọn điểm trên bản đồ. */}
       {pickTarget && (
-        <div className="absolute left-1/2 top-[140px] z-[85] flex -translate-x-1/2 items-center gap-3 rounded-full bg-slate-900/90 py-2 pl-4 pr-2 text-[11px] font-semibold text-white shadow-xl backdrop-blur max-md:top-[172px]" role="status">
+        <div
+          className="absolute left-1/2 top-[140px] z-[85] flex -translate-x-1/2 items-center gap-3 rounded-full bg-slate-900/90 py-2 pl-4 pr-2 text-[11px] font-semibold text-white shadow-xl backdrop-blur max-md:top-[172px]"
+          role="status"
+        >
           <Icon name="pin" size={15} className="text-emerald-300" />
           Chạm vào bản đồ để chọn {pickTarget === 'origin' ? 'điểm đi' : 'điểm đến'}
-          <button type="button" onClick={() => setPickTarget(null)} className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] hover:bg-white/25">Hủy</button>
+          <button
+            type="button"
+            onClick={() => setPickTarget(null)}
+            className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] hover:bg-white/25"
+          >
+            Hủy
+          </button>
         </div>
       )}
 
-      {activePanel === 'assistant' && (!authLoading && user && !user.is_anonymous && accessToken
-        ? (
-          <Suspense fallback={<div className="absolute left-5 top-[143px] z-40 rounded-xl bg-white p-4 text-xs shadow-float">Đang mở trợ lý…</div>}>
+      {activePanel === 'assistant' &&
+        (canUseAssistant && user && accessToken ? (
+          <Suspense fallback={<PanelFallback label="Đang mở trợ lý…" />}>
             <PlaceAssistantPanel
               key={user.id}
               accessToken={accessToken}
               route={activeRoute}
               selectedPoint={selectedMapPoint}
-              getMapCenter={() => mapController.current?.getCenter() ?? { lat: 16, lng: 108 }}
-              onClose={() => openPanel(null)}
+              getMapCenter={getMapCenter}
+              onClose={closePanel}
               onFocus={(place) => mapController.current?.flyTo(place)}
               onDirections={(place) => openDirections(placeFromStop(place))}
               onAddStop={addAssistantStop}
-              onRemoveStop={() => { void removeAssistantStop(); }}
+              onRemoveStop={() => void removeAssistantStop()}
             />
           </Suspense>
-        )
-        : <AssistantAccessPanel loading={authLoading} onClose={() => openPanel(null)} />)}
+        ) : (
+          <AssistantAccessPanel loading={authLoading} onClose={closePanel} />
+        ))}
+
       {activePanel === 'directions' && (
-        <RoutePanel
-          getSearchFocus={() => mapController.current?.getCenter() ?? { lat: 16, lng: 108 }}
-          comparison={comparison}
-          directions={directions}
-          isLocating={isLocating}
-          pickTarget={pickTarget}
-          onClose={() => openPanel(null)}
-          onPickOnMap={(target) => setPickTarget((current) => current === target ? null : target)}
-          onSave={() => { if (directions.route) savePlan(directions.route); }}
-          onUseMyLocation={() => { void setOriginFromGps(); }}
-        />
+        <Suspense fallback={<PanelFallback label="Đang mở chỉ đường…" />}>
+          <RoutePanel
+            getSearchFocus={getMapCenter}
+            comparison={comparison}
+            directions={directions}
+            isLocating={isLocating}
+            pickTarget={pickTarget}
+            onClose={closePanel}
+            onPickOnMap={(target) => setPickTarget((current) => (current === target ? null : target))}
+            onSave={() => {
+              if (directions.route) savePlan(directions.route);
+            }}
+            onStartNavigation={startNavigation}
+            isNavigating={isNavigating}
+            onUseMyLocation={() => void setOriginFromGps()}
+          />
+        </Suspense>
       )}
-      <div hidden={activePanel !== 'multi'}><MultiStopPanel isActive={activePanel === 'multi'} onShowPlan={setActiveRoute} getFocus={() => mapController.current?.getCenter() ?? { lat: 16, lng: 108 }} onClose={() => openPanel(null)} onPlanRoute={async (start, stops, mode, objective, returnToStart) => {
-        const requestId = ++multiPlanGeneration.current;
-        const routeStops = [start, ...stops];
-        setActiveRoute(null);
-        const result = await routeApi.createOptimizedPlan(routeStops, mode, objective, returnToStart);
-        if (requestId !== multiPlanGeneration.current) return { error: 'Đã hủy hành trình cũ.' };
-        if ('error' in result) return result;
-        setActiveRoute(result);
-        setSelectedPlace(null);
-        showToast('Đã tối ưu thứ tự ghé theo đường đi VietMap');
-        return result;
-      }} onReset={(planId) => { multiPlanGeneration.current++; if (activeRoute?.id === planId) setActiveRoute(null); }} onSave={savePlan} /></div>
-      {activePanel === 'traffic' && <TrafficReportPanel incidents={incidents} selectedPoint={selectedMapPoint} isAuthenticated={isAuthenticated} accessToken={accessToken} loading={trafficLoading} error={trafficError} onClose={() => openPanel(null)} onSignIn={() => setAuthOpen(true)} onReport={reportIncident} onClearance={verifyIncident} />}
-      {activePanel === 'saved' && <SavedRoutesPanel routes={savedRoutes} onClose={() => openPanel(null)} onDelete={(id) => { setSavedRoutes((current) => current.filter((route) => route.id !== id)); showToast('Đã xóa hành trình đã lưu'); }} onOpen={(route) => { void openSavedRoute(route); }} />}
-      {authOpen && <Suspense fallback={<div className="absolute left-5 top-[143px] z-40 rounded-xl bg-white px-4 py-3 text-xs font-medium text-slate-600 shadow-float max-md:bottom-4 max-md:left-3 max-md:top-auto" role="status">Đang mở tài khoản…</div>}><AuthPanel onClose={() => setAuthOpen(false)} /></Suspense>}
-      {activePanel === 'place' && selectedPlace && <PlacePanel place={selectedPlace} onClose={() => openPanel(null)} onDirections={openDirections} />}
+
+      {/* Panel nhiều điểm được giữ lại (ẩn) sau lần mở đầu để không mất danh sách điểm đang soạn. */}
+      {hasOpenedMulti && (
+        <div hidden={activePanel !== 'multi'}>
+          <Suspense fallback={null}>
+            <MultiStopPanel
+              isActive={activePanel === 'multi'}
+              onShowPlan={setActiveRoute}
+              onStartNavigation={startNavigation}
+              isNavigating={isNavigating}
+              getFocus={getMapCenter}
+              onClose={closePanel}
+              onPlanRoute={planMultiStopRoute}
+              onReset={resetMultiStopRoute}
+              onSave={savePlan}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {activePanel === 'traffic' && (
+        <Suspense fallback={<PanelFallback label="Đang mở giao thông…" />}>
+          <TrafficReportPanel
+            incidents={incidents}
+            selectedPoint={selectedMapPoint}
+            isAuthenticated={isAuthenticated}
+            accessToken={accessToken}
+            loading={trafficLoading}
+            error={trafficError}
+            onClose={closePanel}
+            onSignIn={() => setAuthOpen(true)}
+            onReport={reportIncident}
+            onClearance={verifyIncident}
+          />
+        </Suspense>
+      )}
+
+      {activePanel === 'saved' && (
+        <Suspense fallback={<PanelFallback label="Đang mở tuyến đã lưu…" />}>
+          <SavedRoutesPanel
+            routes={savedRoutes.routes}
+            onClose={closePanel}
+            onDelete={deleteSavedRoute}
+            onOpen={(route) => void openSavedRoute(route)}
+          />
+        </Suspense>
+      )}
+
+      {authOpen && (
+        <Suspense fallback={<PanelFallback label="Đang mở tài khoản…" />}>
+          <AuthPanel onClose={() => setAuthOpen(false)} />
+        </Suspense>
+      )}
+
+      {activePanel === 'place' && selectedPlace && (
+        <Suspense fallback={null}>
+          <PlacePanel place={selectedPlace} onClose={closePanel} onDirections={openDirections} />
+        </Suspense>
+      )}
 
       <MapToolbar
         layer={layer}
         onLayerChange={setLayer}
         onShowVietnam={() => mapController.current?.showVietnam()}
-        onLocate={() => { void locateOnMap(); }}
+        onLocate={() => void locateOnMap()}
         onZoomIn={() => mapController.current?.zoomIn()}
         onZoomOut={() => mapController.current?.zoomOut()}
       />
 
-      {toast && <div className="toast-message absolute left-1/2 top-[145px] z-[90] flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/70 bg-slate-900/90 px-4 py-2.5 text-center text-[11px] font-semibold text-white shadow-xl backdrop-blur max-md:top-[174px]" role="status" aria-live="polite"><Icon name="check" size={15} className="shrink-0 text-emerald-300" />{toast}</div>}
+      {toast && (
+        <div
+          className="toast-message absolute left-1/2 top-[145px] z-[90] flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/70 bg-slate-900/90 px-4 py-2.5 text-center text-[11px] font-semibold text-white shadow-xl backdrop-blur max-md:top-[174px]"
+          role="status"
+          aria-live="polite"
+        >
+          <Icon name="check" size={15} className="shrink-0 text-emerald-300" />
+          {toast}
+        </div>
+      )}
     </main>
   );
 }

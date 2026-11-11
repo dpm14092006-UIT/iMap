@@ -11,7 +11,10 @@ import type { OsmExtract } from './osmTypes.js';
 export class OsmFileGraphSource implements RoadGraphSource {
   private loading: Promise<LoadedRoadGraph> | null = null;
 
-  constructor(private readonly filePath: string, private readonly builder = new OsmGraphBuilder()) {}
+  constructor(
+    private readonly filePath: string,
+    private readonly builder = new OsmGraphBuilder(),
+  ) {}
 
   load(): Promise<LoadedRoadGraph> {
     this.loading ??= this.readAndBuild().catch((error: unknown) => {
@@ -26,7 +29,11 @@ export class OsmFileGraphSource implements RoadGraphSource {
     try {
       extract = JSON.parse(await readFile(this.filePath, 'utf8')) as OsmExtract;
     } catch {
-      throw new AppError(503, 'ROAD_GRAPH_UNAVAILABLE', 'Chưa có dữ liệu đồ thị OSM. Hãy chạy "npm run osm:import" trước.');
+      throw new AppError(
+        503,
+        'ROAD_GRAPH_UNAVAILABLE',
+        'Chưa có dữ liệu đồ thị OSM. Hãy chạy "npm run osm:import" trước.',
+      );
     }
     return {
       graph: this.builder.build(extract),

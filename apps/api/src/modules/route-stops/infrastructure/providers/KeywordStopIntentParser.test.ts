@@ -16,7 +16,11 @@ describe('honest rules fallback', () => {
   ])('extracts %s', async (query, category, distance, time) => {
     const result = await parser.parse(query);
     expect(result.source).toBe('rules');
-    expect(result.intent).toMatchObject({ category, maxExtraDistanceMeters: distance, maxExtraDurationSeconds: time });
+    expect(result.intent).toMatchObject({
+      category,
+      maxExtraDistanceMeters: distance,
+      maxExtraDurationSeconds: time,
+    });
   });
   it('does not guess ambiguous or negated categories', async () => {
     expect((await parser.parse('Tìm trạm xăng hoặc cà phê')).intent.category).toBe('unknown');
@@ -26,6 +30,8 @@ describe('honest rules fallback', () => {
     expect((await parser.parse('Tìm cà phê để ngồi 30 phút')).intent.maxExtraDurationSeconds).toBeNull();
   });
   it('exposes unavailable filters instead of asserting open-now or quiet', async () => {
-    expect((await parser.parse('Tìm cà phê đang mở cửa, yên tĩnh')).intent.unsupportedRequirements).toHaveLength(2);
+    expect(
+      (await parser.parse('Tìm cà phê đang mở cửa, yên tĩnh')).intent.unsupportedRequirements,
+    ).toHaveLength(2);
   });
 });

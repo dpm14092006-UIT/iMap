@@ -17,7 +17,12 @@ const HCMC_CENTER: LatLng = { lat: 10.779, lng: 106.701 };
  * - Gõ liên tục: chỉ gọi API sau khi dừng gõ DEBOUNCE_MS.
  * - Gõ tiếp khi request cũ chưa xong: request cũ bị abort, không ghi đè kết quả mới.
  */
-export function usePlaceSearch(query: string, focus: LatLng = HCMC_CENTER, enabled = true, kind: 'all' | 'street' = 'all') {
+export function usePlaceSearch(
+  query: string,
+  focus: LatLng = HCMC_CENTER,
+  enabled = true,
+  kind: 'all' | 'street' = 'all',
+) {
   const [results, setResults] = useState<PlaceSearchSuggestion[]>([]);
   const [status, setStatus] = useState<PlaceSearchStatus>('idle');
   const trimmed = query.trim();
@@ -34,16 +39,21 @@ export function usePlaceSearch(query: string, focus: LatLng = HCMC_CENTER, enabl
 
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
-      setResults([]); setError(''); setStatus('loading');
+      setResults([]);
+      setError('');
+      setStatus('loading');
       try {
         const found = await placeApi.suggest(trimmed, focus, controller.signal, kind);
         if (controller.signal.aborted) return;
         setResults(found);
-        setCompletedQuery(requestKey); setStatus('ready');
+        setCompletedQuery(requestKey);
+        setStatus('ready');
       } catch (cause) {
         if (controller.signal.aborted) return; // request bị hủy do người dùng gõ tiếp
         setResults([]);
-        setCompletedQuery(requestKey); setError(cause instanceof Error ? cause.message : 'Không kết nối được dịch vụ tìm kiếm.'); setStatus('error');
+        setCompletedQuery(requestKey);
+        setError(cause instanceof Error ? cause.message : 'Không kết nối được dịch vụ tìm kiếm.');
+        setStatus('error');
       }
     }, DEBOUNCE_MS);
 
@@ -55,5 +65,14 @@ export function usePlaceSearch(query: string, focus: LatLng = HCMC_CENTER, enabl
     // Phụ thuộc vào lat/lng thay vì object focus để không gọi lại khi object được tạo mới.
   }, [trimmed, focus.lat, focus.lng, enabled, requestKey, kind]);
 
-  return { results: completedQuery === requestKey ? results : [], status: trimmed.length < MIN_QUERY_LENGTH ? 'idle' as const : completedQuery !== requestKey ? 'loading' as const : status, error: completedQuery === requestKey ? error : '' };
+  return {
+    results: completedQuery === requestKey ? results : [],
+    status:
+      trimmed.length < MIN_QUERY_LENGTH
+        ? ('idle' as const)
+        : completedQuery !== requestKey
+          ? ('loading' as const)
+          : status,
+    error: completedQuery === requestKey ? error : '',
+  };
 }

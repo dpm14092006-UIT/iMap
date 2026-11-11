@@ -12,6 +12,9 @@
     "build": "npm run build -w @routetwin/shared && npm run build -w @routetwin/api && npm run build -w @routetwin/web",
     "test": "npm run build -w @routetwin/shared && npm run test -w @routetwin/api && npm run test -w @routetwin/web",
     "typecheck": "npm run build -w @routetwin/shared && npm run typecheck -w @routetwin/api && npm run typecheck -w @routetwin/web",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "osm:import": "tsx scripts/osm/import-osm.ts",
     "benchmark:pathfinding": "tsx scripts/benchmark/benchmark-pathfinding.ts"
   },
@@ -19,9 +22,15 @@
     "node": ">=20.19"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.15.0",
     "concurrently": "^9.1.2",
+    "eslint": "^10.14.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "prettier": "^3.9.10",
     "tsx": "^4.19.2",
     "typescript": "^5.8.3",
-    "@types/node": "^22.15.0"
+    "typescript-eslint": "^8.72.2"
   }
 }

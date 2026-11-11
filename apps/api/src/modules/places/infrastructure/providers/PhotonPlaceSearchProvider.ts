@@ -30,7 +30,12 @@ export class PhotonPlaceSearchProvider implements PlaceSearchProvider {
   constructor(private readonly baseUrl = 'https://photon.komoot.io') {}
 
   async suggest(query: string, focus: GeoFocus = HCMC_CENTER): Promise<PlaceSuggestion[]> {
-    const params = new URLSearchParams({ q: query, limit: String(SUGGESTION_LIMIT), lat: String(focus.lat), lon: String(focus.lng) });
+    const params = new URLSearchParams({
+      q: query,
+      limit: String(SUGGESTION_LIMIT),
+      lat: String(focus.lat),
+      lon: String(focus.lng),
+    });
     const payload = await this.request(`/api/?${params}`);
     return (payload.features ?? []).flatMap((feature) => this.toSuggestion(feature) ?? []);
   }
@@ -50,11 +55,16 @@ export class PhotonPlaceSearchProvider implements PlaceSearchProvider {
     } catch {
       throw new AppError(502, 'PLACE_SEARCH_UNAVAILABLE', 'Không thể kết nối dịch vụ tìm kiếm địa điểm');
     }
-    if (!response.ok) throw new AppError(502, 'PLACE_SEARCH_UNAVAILABLE', 'Dịch vụ tìm kiếm địa điểm đang bận');
+    if (!response.ok)
+      throw new AppError(502, 'PLACE_SEARCH_UNAVAILABLE', 'Dịch vụ tìm kiếm địa điểm đang bận');
     try {
-      return await response.json() as PhotonResponse;
+      return (await response.json()) as PhotonResponse;
     } catch {
-      throw new AppError(502, 'PLACE_SEARCH_INVALID_RESPONSE', 'Dịch vụ tìm kiếm trả về dữ liệu không hợp lệ');
+      throw new AppError(
+        502,
+        'PLACE_SEARCH_INVALID_RESPONSE',
+        'Dịch vụ tìm kiếm trả về dữ liệu không hợp lệ',
+      );
     }
   }
 
@@ -72,7 +82,10 @@ export class PhotonPlaceSearchProvider implements PlaceSearchProvider {
       .filter((value): value is string => Boolean(value?.trim()))
       .filter((value, index, values) => values.indexOf(value) === index) // bỏ phần trùng (vd. city = state)
       .join(', ');
-    const identity = place.osm_type && place.osm_id ? `${place.osm_type}-${place.osm_id}` : `${lat.toFixed(5)}-${lng.toFixed(5)}`;
+    const identity =
+      place.osm_type && place.osm_id
+        ? `${place.osm_type}-${place.osm_id}`
+        : `${lat.toFixed(5)}-${lng.toFixed(5)}`;
     return { id: `osm-${identity}`, name, address: address || 'OpenStreetMap', lat, lng };
   }
 }

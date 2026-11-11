@@ -14,7 +14,11 @@ export const pathfindingRequestSchema = z.object({
   vehicle: z.enum(['car', 'motorcycle']),
   objective: z.enum(['distance', 'duration']).default('duration'),
   /** Mặc định chạy cả hai để so sánh. */
-  algorithms: z.array(z.enum(pathAlgorithms)).min(1).max(pathAlgorithms.length).default(['dijkstra', 'astar']),
+  algorithms: z
+    .array(z.enum(pathAlgorithms))
+    .min(1)
+    .max(pathAlgorithms.length)
+    .default(['dijkstra', 'astar']),
 });
 export type PathfindingRequest = z.infer<typeof pathfindingRequestSchema>;
 

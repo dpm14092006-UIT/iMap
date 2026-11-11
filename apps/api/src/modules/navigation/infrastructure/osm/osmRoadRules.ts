@@ -75,7 +75,8 @@ export type TravelDirection = 'both' | 'forward' | 'backward';
 
 /** Xác định đường một chiều cho từng loại xe (VD: `oneway:motorcycle=no` cho xe máy đi hai chiều). */
 export function travelDirection(tags: OsmTags, vehicle: Vehicle): TravelDirection {
-  const vehicleSpecific = vehicle === 'motorcycle' ? tags['oneway:motorcycle'] ?? tags['oneway:moped'] : undefined;
+  const vehicleSpecific =
+    vehicle === 'motorcycle' ? (tags['oneway:motorcycle'] ?? tags['oneway:moped']) : undefined;
   // Vòng xuyến và cao tốc mặc định là một chiều.
   const impliedOneway = tags.junction === 'roundabout' || tags.highway === 'motorway' ? 'yes' : 'no';
   const value = vehicleSpecific ?? tags.oneway ?? impliedOneway;
@@ -96,6 +97,18 @@ export function speedKmh(tags: OsmTags): number {
 
 /** Danh sách tag cần giữ khi import (bỏ tag thừa để file dữ liệu gọn). */
 export const RELEVANT_TAGS = [
-  'highway', 'name', 'oneway', 'oneway:motorcycle', 'oneway:moped', 'junction', 'maxspeed', 'area',
-  'access', 'vehicle', 'motor_vehicle', 'motorcar', 'motorcycle', 'moped',
+  'highway',
+  'name',
+  'oneway',
+  'oneway:motorcycle',
+  'oneway:moped',
+  'junction',
+  'maxspeed',
+  'area',
+  'access',
+  'vehicle',
+  'motor_vehicle',
+  'motorcar',
+  'motorcycle',
+  'moped',
 ];

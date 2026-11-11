@@ -15,17 +15,33 @@ describe('PhotonPlaceSearchProvider', () => {
   it('suggest: đổi GeoJSON [lng,lat] sang {lat,lng} và bỏ kết quả thiếu tọa độ', async () => {
     mockFetchJson({
       features: [
-        { properties: { osm_type: 'N', osm_id: 1, name: 'Chợ Bến Thành', district: 'Quận 1', city: 'Hồ Chí Minh' }, geometry: { coordinates: [106.6983, 10.7721] } },
+        {
+          properties: {
+            osm_type: 'N',
+            osm_id: 1,
+            name: 'Chợ Bến Thành',
+            district: 'Quận 1',
+            city: 'Hồ Chí Minh',
+          },
+          geometry: { coordinates: [106.6983, 10.7721] },
+        },
         { properties: { name: 'Không có tọa độ' }, geometry: {} },
       ],
     });
     const result = await new PhotonPlaceSearchProvider().suggest('ben thanh');
-    expect(result).toEqual([{ id: 'osm-N-1', name: 'Chợ Bến Thành', address: 'Quận 1, Hồ Chí Minh', lat: 10.7721, lng: 106.6983 }]);
+    expect(result).toEqual([
+      { id: 'osm-N-1', name: 'Chợ Bến Thành', address: 'Quận 1, Hồ Chí Minh', lat: 10.7721, lng: 106.6983 },
+    ]);
   });
 
   it('reverse: dùng "số nhà + đường" làm tên khi không có tên POI', async () => {
     const fetchMock = mockFetchJson({
-      features: [{ properties: { housenumber: '12', street: 'Lê Lợi', city: 'Hồ Chí Minh' }, geometry: { coordinates: [106.7, 10.77] } }],
+      features: [
+        {
+          properties: { housenumber: '12', street: 'Lê Lợi', city: 'Hồ Chí Minh' },
+          geometry: { coordinates: [106.7, 10.77] },
+        },
+      ],
     });
     const result = await new PhotonPlaceSearchProvider().reverse({ lat: 10.77, lng: 106.7 });
     expect(result?.name).toBe('12 Lê Lợi');

@@ -1,8 +1,8 @@
 import { z } from 'zod';
-const optionalValue = z.preprocess(
-  (value) => typeof value === 'string' && value.trim() === '' ? undefined : value,
-  z.string().trim().optional(),
-);
+/** Biến môi trường để trống ("KEY=") được coi như chưa khai báo. */
+const emptyToUndefined = (value: unknown) =>
+  typeof value === 'string' && value.trim() === '' ? undefined : value;
+const optionalValue = z.preprocess(emptyToUndefined, z.string().trim().optional());
 const envSchema = z.object({
   API_PORT: z.coerce.number().int().positive().default(4000),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
@@ -15,15 +15,14 @@ const envSchema = z.object({
   CLOUDFLARE_ACCOUNT_ID: optionalValue,
   CLOUDFLARE_AI_TOKEN: optionalValue,
   VIETMAP_API_KEY: optionalValue,
-  GEMINI_TRAFFIC_AI_ENABLED: z.string().trim().toLowerCase().default('false').transform((value) => value === 'true'),
-  GEMINI_MODEL: z.preprocess(
-    (value) => typeof value === 'string' && value.trim() === '' ? undefined : value,
-    z.string().trim().default('gemini-3.8-flash'),
-  ),
-  SUPABASE_URL: z.preprocess(
-    (value) => typeof value === 'string' && value.trim() === '' ? undefined : value,
-    z.string().url().optional(),
-  ),
+  GEMINI_TRAFFIC_AI_ENABLED: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .default('false')
+    .transform((value) => value === 'true'),
+  GEMINI_MODEL: z.preprocess(emptyToUndefined, z.string().trim().default('gemini-3.8-flash')),
+  SUPABASE_URL: z.preprocess(emptyToUndefined, z.string().url().optional()),
   SUPABASE_PUBLISHABLE_KEY: optionalValue,
   SUPABASE_ANON_KEY: optionalValue,
   // File đồ thị OSM cho Dijkstra/A* (tạo bằng `npm run osm:import`), tính từ thư mục apps/api.

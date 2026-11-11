@@ -2,10 +2,11 @@ import type { RequestHandler } from 'express';
 import type { AuthenticatedRequest } from './authenticated-request.js';
 import { SupabaseClientFactory } from '../supabase/SupabaseClientFactory.js';
 import { AppError } from '../errors/AppError.js';
+import { getBearerToken } from './request-context.js';
 
 export function requireAuth(clientFactory = new SupabaseClientFactory()): RequestHandler {
   return async (request, _response, next) => {
-    const token = request.header('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+    const token = getBearerToken(request);
     if (!token) {
       next(new AppError(401, 'AUTH_REQUIRED', 'Vui lòng đăng nhập để thực hiện thao tác này'));
       return;
@@ -14,9 +15,11 @@ export function requireAuth(clientFactory = new SupabaseClientFactory()): Reques
       const { data, error } = await clientFactory.create().auth.getUser(token);
       if (error) {
         const upstreamStatus = Number((error as { status?: number }).status ?? 0);
-        next([400, 401, 403].includes(upstreamStatus)
-          ? new AppError(401, 'INVALID_SESSION', 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn')
-          : new AppError(503, 'AUTH_UNAVAILABLE', 'Không thể xác minh tài khoản lúc này'));
+        next(
+          [400, 401, 403].includes(upstreamStatus)
+            ? new AppError(401, 'INVALID_SESSION', 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn')
+            : new AppError(503, 'AUTH_UNAVAILABLE', 'Không thể xác minh tài khoản lúc này'),
+        );
         return;
       }
       if (!data.user) {
@@ -24,7 +27,13 @@ export function requireAuth(clientFactory = new SupabaseClientFactory()): Reques
         return;
       }
       if (data.user.is_anonymous) {
-        next(new AppError(403, 'ACCOUNT_REQUIRED', 'Vui lòng đăng ký tài khoản và đăng nhập để sử dụng tính năng này'));
+        next(
+          new AppError(
+            403,
+            'ACCOUNT_REQUIRED',
+            'Vui lòng đăng ký tài khoản và đăng nhập để sử dụng tính năng này',
+          ),
+        );
         return;
       }
       (request as AuthenticatedRequest).auth = { userId: data.user.id, accessToken: token };

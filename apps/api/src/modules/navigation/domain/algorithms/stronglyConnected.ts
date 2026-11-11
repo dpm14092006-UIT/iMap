@@ -7,7 +7,10 @@
  *
  * Viết dạng vòng lặp (không đệ quy) để không tràn stack với đồ thị hàng chục nghìn node.
  */
-export function largestStronglyConnectedComponent(nodeIds: string[], neighbors: (id: string) => string[]): Set<string> {
+export function largestStronglyConnectedComponent(
+  nodeIds: string[],
+  neighbors: (id: string) => string[],
+): Set<string> {
   // Đồ thị đảo chiều: cần cho lượt duyệt thứ hai.
   const reversed = new Map<string, string[]>(nodeIds.map((id) => [id, []]));
   for (const id of nodeIds) for (const next of neighbors(id)) reversed.get(next)?.push(id);
@@ -18,7 +21,9 @@ export function largestStronglyConnectedComponent(nodeIds: string[], neighbors: 
   for (const root of nodeIds) {
     if (visited.has(root)) continue;
     visited.add(root);
-    const stack: { id: string; next: string[]; index: number }[] = [{ id: root, next: neighbors(root), index: 0 }];
+    const stack: { id: string; next: string[]; index: number }[] = [
+      { id: root, next: neighbors(root), index: 0 },
+    ];
     while (stack.length > 0) {
       const frame = stack[stack.length - 1]!;
       const child = frame.next[frame.index++];

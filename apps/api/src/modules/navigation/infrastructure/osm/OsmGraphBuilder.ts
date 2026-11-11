@@ -20,8 +20,12 @@ export class OsmGraphBuilder {
     if (vehicles.length === 0) return;
 
     // Xe được đi theo chiều thuận (theo thứ tự node) và chiều ngược.
-    const forward: Vehicle[] = vehicles.filter((vehicle) => travelDirection(way.tags, vehicle) !== 'backward');
-    const backward: Vehicle[] = vehicles.filter((vehicle) => travelDirection(way.tags, vehicle) !== 'forward');
+    const forward: Vehicle[] = vehicles.filter(
+      (vehicle) => travelDirection(way.tags, vehicle) !== 'backward',
+    );
+    const backward: Vehicle[] = vehicles.filter(
+      (vehicle) => travelDirection(way.tags, vehicle) !== 'forward',
+    );
     const speed = speedKmh(way.tags);
     const name = way.tags.name;
 

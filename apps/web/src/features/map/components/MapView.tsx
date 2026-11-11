@@ -23,7 +23,18 @@ type MapViewProps = {
 };
 
 /** Component React bọc LeafletMapController: tạo bản đồ 1 lần, sau đó chỉ truyền dữ liệu mới. */
-export function MapView({ layer, route, draftStops, trafficLayer, currentLocation, isPicking, algorithmOverlay, controllerRef, onMapClick, onBoundsChange }: MapViewProps) {
+export function MapView({
+  layer,
+  route,
+  draftStops,
+  trafficLayer,
+  currentLocation,
+  isPicking,
+  algorithmOverlay,
+  controllerRef,
+  onMapClick,
+  onBoundsChange,
+}: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   // Giữ handler mới nhất trong ref để không phải tạo lại bản đồ khi callback đổi.
   const handlersRef = useRef({ onMapClick, onBoundsChange });
@@ -48,8 +59,23 @@ export function MapView({ layer, route, draftStops, trafficLayer, currentLocatio
 
   // Vẽ lại khi dữ liệu thay đổi.
   useEffect(() => {
-    controllerRef.current?.update({ layer, route, draftStops, trafficLayer, currentLocation, isPicking, algorithmOverlay });
+    controllerRef.current?.update({
+      layer,
+      route,
+      draftStops,
+      trafficLayer,
+      currentLocation,
+      isPicking,
+      algorithmOverlay,
+    });
   }, [controllerRef, layer, route, draftStops, trafficLayer, currentLocation, isPicking, algorithmOverlay]);
 
-  return <div ref={containerRef} className="routetwin-leaflet absolute inset-0 z-0" role="region" aria-label="Bản đồ tương tác Việt Nam" />;
+  return (
+    <div
+      ref={containerRef}
+      className="routetwin-leaflet absolute inset-0 z-0"
+      role="region"
+      aria-label="Bản đồ tương tác Việt Nam"
+    />
+  );
 }

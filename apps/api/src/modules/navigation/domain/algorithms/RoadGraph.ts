@@ -38,7 +38,8 @@ export class RoadGraph {
   private fastestSpeedKmh = 0;
 
   addNode(node: GraphNode): void {
-    if (!Number.isFinite(node.lat) || !Number.isFinite(node.lng)) throw new RangeError(`Tọa độ node ${node.id} không hợp lệ`);
+    if (!Number.isFinite(node.lat) || !Number.isFinite(node.lng))
+      throw new RangeError(`Tọa độ node ${node.id} không hợp lệ`);
     if (this.nodes.has(node.id)) return;
     this.nodes.set(node.id, node);
     this.adjacency.set(node.id, []);
@@ -46,9 +47,12 @@ export class RoadGraph {
 
   /** Thêm cạnh from -> edge.to. Cả hai node phải được addNode trước. */
   addDirectedEdge(from: string, edge: GraphEdge): void {
-    if (!this.nodes.has(from) || !this.nodes.has(edge.to)) throw new RangeError(`Cạnh ${from} -> ${edge.to} nối tới node chưa tồn tại`);
-    if (!Number.isFinite(edge.distanceMeters) || edge.distanceMeters < 0) throw new RangeError('Độ dài cạnh không hợp lệ');
-    if (!Number.isFinite(edge.speedKmh) || edge.speedKmh <= 0) throw new RangeError('Tốc độ cạnh phải lớn hơn 0');
+    if (!this.nodes.has(from) || !this.nodes.has(edge.to))
+      throw new RangeError(`Cạnh ${from} -> ${edge.to} nối tới node chưa tồn tại`);
+    if (!Number.isFinite(edge.distanceMeters) || edge.distanceMeters < 0)
+      throw new RangeError('Độ dài cạnh không hợp lệ');
+    if (!Number.isFinite(edge.speedKmh) || edge.speedKmh <= 0)
+      throw new RangeError('Tốc độ cạnh phải lớn hơn 0');
     if (edge.allowedVehicles.length === 0) return; // không xe nào đi được thì bỏ qua
 
     this.adjacency.get(from)!.push(edge);
@@ -89,7 +93,9 @@ export class RoadGraph {
   mainNetwork(vehicle: Vehicle): Set<string> {
     let network = this.mainNetworks.get(vehicle);
     if (!network) {
-      network = largestStronglyConnectedComponent([...this.nodes.keys()], (id) => this.neighbors(id, vehicle).map((edge) => edge.to));
+      network = largestStronglyConnectedComponent([...this.nodes.keys()], (id) =>
+        this.neighbors(id, vehicle).map((edge) => edge.to),
+      );
       this.mainNetworks.set(vehicle, network);
     }
     return network;
@@ -100,7 +106,10 @@ export class RoadGraph {
    * Chỉ chọn node trong mạng chính nên hai điểm bất kỳ đã snap luôn có đường đi tới nhau.
    * Quét tuyến tính O(V) — đủ nhanh cho đồ thị một khu vực nhỏ.
    */
-  nearestNode(point: { lat: number; lng: number }, vehicle: Vehicle): { node: GraphNode; distanceMeters: number } | null {
+  nearestNode(
+    point: { lat: number; lng: number },
+    vehicle: Vehicle,
+  ): { node: GraphNode; distanceMeters: number } | null {
     let best: { node: GraphNode; distanceMeters: number } | null = null;
     for (const id of this.mainNetwork(vehicle)) {
       const node = this.nodes.get(id)!;

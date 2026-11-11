@@ -6,12 +6,21 @@ import type { LatLng, Place, PlaceSearchSuggestion } from '../types';
 
 /** Bỏ dấu tiếng Việt và chữ hoa để so khớp "ben thanh" với "Bến Thành". */
 function normalize(value: string) {
-  return value.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim();
+  return value
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .trim();
 }
 
 /** Hai địa điểm coi là trùng nếu cùng tên và cách nhau rất gần (~400 m). */
 function isSamePlace(a: PlaceSearchSuggestion, b: PlaceSearchSuggestion) {
-  return a.id === b.id || (normalize(a.name) === normalize(b.name) && normalize(a.address) === normalize(b.address));
+  return (
+    a.id === b.id ||
+    (normalize(a.name) === normalize(b.name) && normalize(a.address) === normalize(b.address))
+  );
 }
 
 type PlaceComboboxProps = {
@@ -54,16 +63,28 @@ export function PlaceCombobox({
   const [resolving, setResolving] = useState(false);
   const [selectionError, setSelectionError] = useState('');
   const selectionRef = useRef<AbortController | null>(null);
-  useEffect(() => { selectionRef.current?.abort(); setResolving(false); setSelectionError(''); }, [value]);
+  useEffect(() => {
+    selectionRef.current?.abort();
+    setResolving(false);
+    setSelectionError('');
+  }, [value]);
   useEffect(() => () => selectionRef.current?.abort(), []);
-  const { results: remotePlaces, status, error: searchError } = usePlaceSearch(value, focus, open, searchKind);
+  const {
+    results: remotePlaces,
+    status,
+    error: searchError,
+  } = usePlaceSearch(value, focus, open, searchKind);
 
   // Gộp địa điểm có sẵn (ưu tiên) với kết quả từ API, bỏ trùng và giới hạn số lượng.
   const matches = useMemo(() => {
     const query = normalize(value);
     if (query.length < MIN_QUERY_LENGTH) return [];
-    const local = (searchKind === 'street' ? [] : places).filter((place) => normalize(`${place.name} ${place.address} ${place.category}`).includes(query));
-    const remainingLocal = local.filter((place) => !remotePlaces.some((candidate) => isSamePlace(place, candidate)));
+    const local = (searchKind === 'street' ? [] : places).filter((place) =>
+      normalize(`${place.name} ${place.address} ${place.category}`).includes(query),
+    );
+    const remainingLocal = local.filter(
+      (place) => !remotePlaces.some((candidate) => isSamePlace(place, candidate)),
+    );
     return [...remotePlaces, ...remainingLocal].slice(0, maxSuggestions);
   }, [maxSuggestions, places, remotePlaces, value, searchKind]);
 
@@ -71,20 +92,34 @@ export function PlaceCombobox({
 
   const choose = async (suggestion: PlaceSearchSuggestion) => {
     selectionRef.current?.abort();
-    const controller = new AbortController(); selectionRef.current = controller;
-    setResolving(true); setSelectionError('');
+    const controller = new AbortController();
+    selectionRef.current = controller;
+    setResolving(true);
+    setSelectionError('');
     try {
       const place = await placeApi.resolve(suggestion, controller.signal);
       if (controller.signal.aborted) return;
-      onChange(place.name); onSelect(place); setOpen(false);
+      onChange(place.name);
+      onSelect(place);
+      setOpen(false);
     } catch (cause) {
-      if (!controller.signal.aborted) setSelectionError(cause instanceof Error ? cause.message : 'Không lấy được tọa độ địa điểm.');
-    } finally { if (!controller.signal.aborted) setResolving(false); }
+      if (!controller.signal.aborted)
+        setSelectionError(cause instanceof Error ? cause.message : 'Không lấy được tọa độ địa điểm.');
+    } finally {
+      if (!controller.signal.aborted) setResolving(false);
+    }
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Escape') { setOpen(false); selectionRef.current?.abort(); setResolving(false); }
-    if (resolving) { if (event.key === 'Enter') event.preventDefault(); return; }
+    if (event.key === 'Escape') {
+      setOpen(false);
+      selectionRef.current?.abort();
+      setResolving(false);
+    }
+    if (resolving) {
+      if (event.key === 'Enter') event.preventDefault();
+      return;
+    }
     if (!showList || matches.length === 0) return;
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
@@ -98,15 +133,27 @@ export function PlaceCombobox({
   };
 
   /** Thông báo khi danh sách trống, tùy theo trạng thái gọi API. */
-  const emptyMessage = status === 'loading'
-    ? 'Đang tìm địa điểm…'
-    : status === 'error'
-      ? searchError || 'Không kết nối được dịch vụ tìm kiếm. Thử lại hoặc chọn trên bản đồ.'
-      : 'Chưa tìm thấy địa chỉ phù hợp. Thử thêm phường, tỉnh/thành hoặc chọn điểm trên bản đồ.';
+  const emptyMessage =
+    status === 'loading'
+      ? 'Đang tìm địa điểm…'
+      : status === 'error'
+        ? searchError || 'Không kết nối được dịch vụ tìm kiếm. Thử lại hoặc chọn trên bản đồ.'
+        : 'Chưa tìm thấy địa chỉ phù hợp. Thử thêm phường, tỉnh/thành hoặc chọn điểm trên bản đồ.';
 
   return (
-    <div className={`relative ${className}`} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}>
-      {icon && <Icon name={icon} size={18} className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-400" />}
+    <div
+      className={`relative ${className}`}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
+    >
+      {icon && (
+        <Icon
+          name={icon}
+          size={18}
+          className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-400"
+        />
+      )}
       <input
         aria-label={ariaLabel}
         aria-autocomplete="list"
@@ -116,49 +163,114 @@ export function PlaceCombobox({
         autoComplete="off"
         className={`h-12 w-full rounded-xl border border-slate-200 bg-slate-50/80 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100 ${icon ? 'pl-10' : 'pl-3'} pr-3 ${inputClassName}`}
         onChange={(event) => {
-          selectionRef.current?.abort(); setResolving(false); setSelectionError('');
+          selectionRef.current?.abort();
+          setResolving(false);
+          setSelectionError('');
           if (getFocus) setFocus(getFocus());
           onChange(event.target.value);
           setActiveIndex(0);
           setOpen(true);
         }}
-        onFocus={() => { if (getFocus) setFocus(getFocus()); setOpen(true); }}
+        onFocus={() => {
+          if (getFocus) setFocus(getFocus());
+          setOpen(true);
+        }}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         role="combobox"
         value={value}
       />
-      {selectionError && <p role="alert" className="mt-1 text-xs text-amber-800">{selectionError}</p>}
+      {selectionError && (
+        <p role="alert" className="mt-1 text-xs text-amber-800">
+          {selectionError}
+        </p>
+      )}
       {showList && (
-        <div id={listId} className="absolute left-0 right-0 top-[calc(100%+7px)] z-[80] overflow-hidden rounded-2xl border border-slate-100 bg-white p-1.5 shadow-float" role="listbox">
-          <div className="mb-1 flex gap-1 border-b border-slate-100 p-1" role="group" aria-label="Loại tìm kiếm">
-            {(['all', 'street'] as const).map((kind) => <button type="button" key={kind} aria-pressed={searchKind === kind} onMouseDown={(event) => event.preventDefault()} onClick={() => { selectionRef.current?.abort(); setResolving(false); setSearchKind(kind); setActiveIndex(0); }} className={`rounded-lg px-3 py-1.5 text-[11px] ${searchKind === kind ? 'bg-brand-50 font-semibold text-brand-700' : 'text-slate-500'}`}>{kind === 'all' ? 'Tất cả' : 'Tên đường'}</button>)}
+        <div className="absolute left-0 right-0 top-[calc(100%+7px)] z-[80] overflow-hidden rounded-2xl border border-slate-100 bg-white p-1.5 shadow-float">
+          <div
+            className="mb-1 flex gap-1 border-b border-slate-100 p-1"
+            role="group"
+            aria-label="Loại tìm kiếm"
+          >
+            {(['all', 'street'] as const).map((kind) => (
+              <button
+                type="button"
+                key={kind}
+                aria-pressed={searchKind === kind}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  selectionRef.current?.abort();
+                  setResolving(false);
+                  setSearchKind(kind);
+                  setActiveIndex(0);
+                }}
+                className={`rounded-lg px-3 py-1.5 text-[11px] ${searchKind === kind ? 'bg-brand-50 font-semibold text-brand-700' : 'text-slate-500'}`}
+              >
+                {kind === 'all' ? 'Tất cả' : 'Tên đường'}
+              </button>
+            ))}
           </div>
-          {matches.length > 0 ? matches.map((place, index) => (
+          {matches.length > 0 ? (
+            <div id={listId} role="listbox" aria-label="Gợi ý địa điểm">
+              {matches.map((place, index) => (
+                <button
+                  key={place.id}
+                  id={`${listId}-${index}`}
+                  type="button"
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-slate-50 focus:outline-none ${index === activeIndex ? 'bg-slate-50' : ''}`}
+                  onMouseDown={(event) => event.preventDefault()} // giữ focus ở input khi click
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => {
+                    void choose(place);
+                  }}
+                  disabled={resolving}
+                  role="option"
+                  aria-selected={index === activeIndex}
+                >
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
+                    <Icon name="pin" size={17} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13px] font-semibold text-ink">{place.name}</span>
+                    <span className="mt-0.5 block text-[11px] text-slate-500">{place.address}</span>
+                  </span>
+                  <Icon name="arrow-up-right" size={15} className="shrink-0 text-slate-400" />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="px-3 py-3 text-xs leading-5 text-slate-500">{emptyMessage}</p>
+          )}
+          {matches.length === 0 && status === 'ready' && /^\d[\dA-Za-z/-]*\s+/.test(value.trim()) && (
             <button
-              key={place.id}
-              id={`${listId}-${index}`}
               type="button"
-              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-slate-50 focus:outline-none ${index === activeIndex ? 'bg-slate-50' : ''}`}
-              onMouseDown={(event) => event.preventDefault()} // giữ focus ở input khi click
-              onMouseEnter={() => setActiveIndex(index)}
-              onClick={() => { void choose(place); }}
-              disabled={resolving}
-              role="option"
-              aria-selected={index === activeIndex}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                onChange(value.trim().replace(/^\d[\dA-Za-z/-]*\s+/, ''));
+                setSearchKind('street');
+                setActiveIndex(0);
+              }}
+              className="px-3 pb-3 text-left text-[11px] font-semibold text-brand-700"
             >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600"><Icon name="pin" size={17} /></span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-semibold text-ink">{place.name}</span>
-                <span className="mt-0.5 block text-[11px] text-slate-500">{place.address}</span>
-              </span>
-              <Icon name="arrow-up-right" size={15} className="shrink-0 text-slate-400" />
+              Tìm tên đường, bỏ số nhà
             </button>
-          )) : <p className="px-3 py-3 text-xs leading-5 text-slate-500">{emptyMessage}</p>}
-          {matches.length === 0 && status === 'ready' && /^\d[\dA-Za-z/\-]*\s+/.test(value.trim()) && <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { onChange(value.trim().replace(/^\d[\dA-Za-z/\-]*\s+/, '')); setSearchKind('street'); setActiveIndex(0); }} className="px-3 pb-3 text-left text-[11px] font-semibold text-brand-700">Tìm tên đường, bỏ số nhà</button>}
-          {status === 'error' && matches.length > 0 && <p role="alert" className="px-3 py-2 text-xs text-amber-800">{emptyMessage}</p>}
-          <div role="status" className="border-t border-slate-100 px-3 py-2 text-[10px] font-medium text-slate-400">
-            {resolving ? 'Đang lấy tọa độ địa điểm…' : status === 'loading' ? 'Đang tìm thêm…' : status === 'ready' || remotePlaces.some((place) => place.source === 'vietmap') ? 'VietMap · ưu tiên gần khu vực tìm kiếm' : 'Địa điểm gợi ý có sẵn'}
+          )}
+          {status === 'error' && matches.length > 0 && (
+            <p role="alert" className="px-3 py-2 text-xs text-amber-800">
+              {emptyMessage}
+            </p>
+          )}
+          <div
+            role="status"
+            className="border-t border-slate-100 px-3 py-2 text-[10px] font-medium text-slate-400"
+          >
+            {resolving
+              ? 'Đang lấy tọa độ địa điểm…'
+              : status === 'loading'
+                ? 'Đang tìm thêm…'
+                : status === 'ready' || remotePlaces.some((place) => place.source === 'vietmap')
+                  ? 'VietMap · ưu tiên gần khu vực tìm kiếm'
+                  : 'Địa điểm gợi ý có sẵn'}
           </div>
         </div>
       )}

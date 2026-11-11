@@ -30,7 +30,8 @@ export class PlaceSearchController {
   suggest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const input = searchQuerySchema.parse(req.query);
-      const focus = input.lat !== undefined && input.lng !== undefined ? { lat: input.lat, lng: input.lng } : undefined;
+      const focus =
+        input.lat !== undefined && input.lng !== undefined ? { lat: input.lat, lng: input.lng } : undefined;
       res.json({ data: await this.searchPlaces.execute(input.q, focus, input.kind) });
     } catch (error) {
       next(error);
@@ -40,9 +41,12 @@ export class PlaceSearchController {
   resolve = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = z.object({ id: z.string().trim().min(1).max(4096) }).parse(req.query);
-      if (!this.provider?.resolve) throw new AppError(503, 'PLACE_RESOLVE_UNAVAILABLE', 'Dịch vụ lấy tọa độ chưa sẵn sàng.');
+      if (!this.provider?.resolve)
+        throw new AppError(503, 'PLACE_RESOLVE_UNAVAILABLE', 'Dịch vụ lấy tọa độ chưa sẵn sàng.');
       res.json({ data: await this.provider.resolve(id) });
-    } catch (error) { next(error); }
+    } catch (error) {
+      next(error);
+    }
   };
 
   reverse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

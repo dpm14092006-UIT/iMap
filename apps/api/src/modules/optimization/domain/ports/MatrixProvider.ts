@@ -1,4 +1,6 @@
+import type { OptimizeRouteRequest } from '@routetwin/shared';
+
 export interface MatrixProvider {
-  /** Ma trận thời gian/chi phí có hướng; matrix[i][j] có thể khác matrix[j][i]. */
-  getDurationMatrix(points: ReadonlyArray<{lat: number; lng: number}>, vehicle: 'car'|'motorcycle'): Promise<number[][]>;
+  /** Ma trận chi phí có hướng (giây hoặc mét theo `objective`); matrix[i][j] có thể khác matrix[j][i]. */
+  getCosts(input: OptimizeRouteRequest): Promise<number[][]>;
 }
