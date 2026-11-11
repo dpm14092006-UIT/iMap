@@ -71,12 +71,12 @@
 
 | ID | Công việc | Giờ | DoD | ✔ |
 |---|---|---|---|---|
-| 4.1 | Domain `RerouteDetector`: phát hiện lệch tuyến (khoảng cách điểm tới polyline > ngưỡng) hoặc tuyến cắt qua sự cố traffic | 1.5 | Unit test các ca lệch / không lệch / đường bị chặn | [ ] |
-| 4.2 | `RerouteUseCase`: tính tuyến mới từ vị trí hiện tại tới đích (có thể tránh vùng sự cố) | 1.5 | Trả tuyến mới + lý do reroute | [ ] |
-| 4.3 | UI mô phỏng: chế độ “giả lập di chuyển” dọc tuyến (kéo/auto-play), lệch → banner “Đang tính lại tuyến” → vẽ tuyến mới | 2 | Demo được không cần GPS thật | [ ] |
-| 4.4 | Nhận dữ liệu sự cố từ N2 qua `TrafficMapLayer`/`useTrafficReports` (tạm dùng dữ liệu mẫu nếu N2 chưa xong) | 0.5 | Reroute phản ứng với sự cố mẫu | [ ] |
-| 4.5 | Module `my-routes` backend: port `SavedRouteRepository`, use cases (save/list/rename/delete), `InMemory` adapter trước, **sẵn sàng đổi sang Supabase** của N2 | 1.5 | `GET/POST/PATCH/DELETE /api/my-routes` thay 501; test use case | [ ] |
-| 4.6 | Frontend `useSavedRoutes` gọi API (fallback localStorage), mở lại tuyến = tính lại tuyến hiện tại, không lưu GPS log | 1 | Lưu/xóa/mở lại hoạt động; xác nhận khi xóa | [ ] |
+| 4.1 | Phát hiện lệch tuyến: dùng `NavigationGuidanceEngine` của N2; N1 thêm `IncidentAheadDetector` (sự cố trên tuyến trong 1,5 km phía trước) | 1.5 | Unit test sự cố phía trước / đã qua / xa tuyến / chỉ báo 1 lần | [x] |
+| 4.2 | `RerouteUseCase` + `POST /api/routes/reroute`: tuyến thay thế VietMap → điểm vòng tránh → báo `unavoidable` | 1.5 | Trả tuyến mới + chiến lược đã dùng | [x] thử thật: chuyển tuyến thay thế khi sự cố giữa tuyến |
+| 4.3 | Dẫn đường GPS thật (N2, `useNavigationSession`) + chế độ **Demo** (N1): `PositionSource` → `BrowserGpsSource` / `SimulatedGpsSource`, bật bằng `?demo=1`, đổi Thật ↔ Demo giữa chuyến | 2 | Demo được không cần GPS thật | [x] đã thử: rẽ nhầm → tính lại; sự cố → tuyến thay thế |
+| 4.4 | Tránh sự cố thật từ `TrafficMapLayer` của N2 (đang hoạt động, mức Vừa trở lên) khi tính lại tuyến | 0.5 | Reroute gửi danh sách sự cố cần tránh | [x] cần Supabase để thử với dữ liệu thật |
+| 4.5 | My Routes lưu lên Supabase | 1.5 | — | [ ] **chuyển cho N2** (theo thống nhất) |
+| 4.6 | Frontend My Routes | 1 | — | [ ] **N2 đã có bản localStorage**, bản Supabase do N2 làm |
 
 **Deliverable D4:** Reroute demo được; My Routes đi qua API, chỉ cần cắm auth/Supabase của N2.
 
@@ -115,5 +115,5 @@
 | 1 | 7 | 6 | 1.7 dời sang D3–D4 |
 | 2 | 6 | 6 | Thêm UI so sánh thuật toán (không cần key VietMap) |
 | 3 | 5 | 5 | N2 làm lõi Held–Karp; N1 thêm 2-opt, Strategy, benchmark (`docs/BENCHMARK_TSP.md`) |
-| 4 | 6 | 0 | |
+| 4 | 6 | 4 | Rerouting tránh sự cố gắn vào dẫn đường GPS của N2; My Routes chuyển cho N2 |
 | 5 | 7 | 0 | |

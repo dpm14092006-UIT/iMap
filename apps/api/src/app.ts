@@ -68,7 +68,14 @@ export function createApp(container = createContainer()) {
   app.use('/api/route-stops', createRouteStopsRouter(container.findRouteStops, container.explorePlaces));
   app.use('/api/voice', createVoiceRouter());
   app.use('/api/routes/optimize', createOptimizationRouter(container.optimizationController));
-  app.use('/api/routes', createRoutesRouter(container.routeController, container.pathfindingController));
+  app.use(
+    '/api/routes',
+    createRoutesRouter(
+      container.routeController,
+      container.pathfindingController,
+      container.rerouteController,
+    ),
+  );
   app.get('/api/my-routes', notImplemented('Supabase saved routes'));
   app.use((req, res) =>
     res.status(404).json({
