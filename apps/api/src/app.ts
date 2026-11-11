@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { createContainer } from './composition-root.js';
 import { env, supabaseConfigured } from './config/env.js';
 import { createRoutesRouter } from './modules/navigation/presentation/routes.routes.js';
+import { createOptimizationRouter } from './modules/optimization/presentation/optimization.routes.js';
 import { createPlacesRouter } from './modules/places/presentation/places.routes.js';
 import { createRouteStopsRouter } from './modules/route-stops/presentation/route-stops.routes.js';
 import { createTrafficRouter } from './modules/traffic/presentation/traffic.routes.js';
@@ -66,14 +67,8 @@ export function createApp(container = createContainer()) {
   app.use('/api/places', createPlacesRouter(container.placeSearchController));
   app.use('/api/route-stops', createRouteStopsRouter(container.findRouteStops, container.explorePlaces));
   app.use('/api/voice', createVoiceRouter());
+  app.use('/api/routes/optimize', createOptimizationRouter(container.optimizationController));
   app.use('/api/routes', createRoutesRouter(container.routeController, container.pathfindingController));
-  app.post('/api/routes/optimize', async (req, res, next) => {
-    try {
-      res.json({ data: await container.optimizeRoute.execute(req.body) });
-    } catch (error) {
-      next(error);
-    }
-  });
   app.get('/api/my-routes', notImplemented('Supabase saved routes'));
   app.use((req, res) =>
     res.status(404).json({

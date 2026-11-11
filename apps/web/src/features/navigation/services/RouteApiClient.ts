@@ -1,4 +1,4 @@
-import type { OptimizeRouteResult, RouteResult } from '@routetwin/shared';
+import type { OptimizeRouteRequest, OptimizeRouteResult, RouteResult } from '@routetwin/shared';
 import { ApiError, apiRequest } from '../../../shared/api/httpClient';
 import type { RouteObjective, RoutePlan, TransportMode } from '../../map/types';
 import type { Place } from '../../places/types';
@@ -11,6 +11,7 @@ type RouteRequestBody = {
   vehicle: TransportMode;
   objective: 'distance' | 'duration';
   returnToStart?: boolean;
+  algorithm?: OptimizeRouteRequest['algorithm'];
 };
 
 function requestBody(stops: Place[], vehicle: TransportMode, objective: RouteObjective): RouteRequestBody {
@@ -50,21 +51,32 @@ export class RouteApiClient {
     vehicle: TransportMode,
     objective: RouteObjective,
     returnToStart: boolean,
+    algorithm: OptimizeRouteRequest['algorithm'] = 'auto',
   ): Promise<RoutePlanResult> {
     try {
       const data = await postRoute<OptimizeRouteResult>('/routes/optimize', {
         ...requestBody(stops, vehicle, objective),
         returnToStart,
+        algorithm,
       });
       if (!Array.isArray(data?.order) || !isValidOrder(data.order, stops.length, returnToStart)) {
         return { error: 'Thứ tự tối ưu trả về không hợp lệ.' };
       }
-      return routePlanFromResult(
+      const plan = routePlanFromResult(
         data.route,
         data.order.map((index) => stops[index]!),
         vehicle,
         objective,
       );
+      return {
+        ...plan,
+        optimization: {
+          algorithm: data.algorithm,
+          originalCost: data.originalCost,
+          optimizedCost: data.optimizedCost,
+          objective: data.objective,
+        },
+      };
     } catch (cause) {
       return toError(cause, 'Không kết nối được dịch vụ tối ưu hành trình. Hãy thử lại.');
     }

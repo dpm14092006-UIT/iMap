@@ -1,6 +1,15 @@
-import type { OptimizeRouteRequest } from '@routetwin/shared';
+/** Đầu vào để lấy ma trận chi phí giữa các điểm. */
+export type MatrixRequest = {
+  points: ReadonlyArray<{ lat: number; lng: number }>;
+  vehicle: 'car' | 'motorcycle';
+  objective: 'distance' | 'duration';
+};
 
+/**
+ * Port lấy ma trận chi phí đường bộ có hướng (giây hoặc mét).
+ * matrix[i][j] có thể khác matrix[j][i]; Infinity = không có đường đi.
+ * Triển khai thật: VietmapMatrixProvider (infrastructure).
+ */
 export interface MatrixProvider {
-  /** Ma trận chi phí có hướng (giây hoặc mét theo `objective`); matrix[i][j] có thể khác matrix[j][i]. */
-  getCosts(input: OptimizeRouteRequest): Promise<number[][]>;
+  getCosts(input: MatrixRequest): Promise<number[][]>;
 }

@@ -1,11 +1,13 @@
 import { OptimizeRouteUseCase } from './modules/optimization/application/OptimizeRouteUseCase.js';
 import { VietmapMatrixProvider } from './modules/optimization/infrastructure/VietmapMatrixProvider.js';
+import { ExactTourStrategy } from './modules/optimization/domain/strategies/ExactTourStrategy.js';
+import { TwoOptStrategy } from './modules/optimization/domain/strategies/TwoOptStrategy.js';
+import { OptimizationController } from './modules/optimization/presentation/OptimizationController.js';
 import { ExplorePlacesUseCase } from './modules/route-stops/application/use-cases/ExplorePlacesUseCase.js';
 import { FindRouteStopsUseCase } from './modules/route-stops/application/use-cases/FindRouteStopsUseCase.js';
 import { OverpassStopPlaceProvider } from './modules/route-stops/infrastructure/providers/OverpassStopPlaceProvider.js';
 import { AiStopIntentParser } from './modules/route-stops/infrastructure/providers/AiStopIntentParser.js';
 import { SupabaseTrafficReportRepository } from './modules/traffic/infrastructure/repositories/SupabaseTrafficReportRepository.js';
-import { SupabaseTrafficImageAnalysisQuota } from './modules/traffic/infrastructure/repositories/SupabaseTrafficImageAnalysisQuota.js';
 import { CreateTrafficReportUseCase } from './modules/traffic/application/use-cases/CreateTrafficReportUseCase.js';
 import { ListTrafficReportsUseCase } from './modules/traffic/application/use-cases/ListTrafficReportsUseCase.js';
 import { UpdateRoadClearanceUseCase } from './modules/traffic/application/use-cases/UpdateRoadClearanceUseCase.js';
@@ -40,8 +42,6 @@ export function createContainer() {
     new UpdateRoadClearanceUseCase(trafficRepository),
     new AnalyzeTrafficImageUseCase(
       new GeminiTrafficImageAnalyzer(env.GEMINI_API_KEY, env.GEMINI_MODEL, env.GEMINI_TRAFFIC_AI_ENABLED),
-      new SupabaseTrafficImageAnalysisQuota(),
-      env.GEMINI_TRAFFIC_AI_ENABLED && Boolean(env.GEMINI_API_KEY),
     ),
   );
   const placeProvider = new VietmapPlaceSearchProvider(env.VIETMAP_API_KEY);
@@ -51,9 +51,12 @@ export function createContainer() {
     placeProvider,
   );
   const routeProvider = new VietmapRouteProvider(env.VIETMAP_API_KEY);
-  const optimizeRoute = new OptimizeRouteUseCase(
-    new VietmapMatrixProvider(env.VIETMAP_API_KEY),
-    routeProvider,
+  // Tối ưu nhiều điểm: Held–Karp (chính xác, mặc định) hoặc NN + 2-opt (gần đúng, để so sánh).
+  const optimizationController = new OptimizationController(
+    new OptimizeRouteUseCase(new VietmapMatrixProvider(env.VIETMAP_API_KEY), routeProvider, {
+      exact: new ExactTourStrategy(),
+      heuristic: new TwoOptStrategy(),
+    }),
   );
   const routeController = new RouteController(new CalculateRouteUseCase(routeProvider));
   const stopPlaces = new OverpassStopPlaceProvider(env.OVERPASS_API_URL);
@@ -73,7 +76,7 @@ export function createContainer() {
     new GetRoadGraphInfoUseCase(roadGraphSource),
   );
   return {
-    optimizeRoute,
+    optimizationController,
     trafficController,
     placeSearchController,
     routeController,

@@ -5,6 +5,8 @@ import { popularPlaces } from '../../places/data/popularPlaces';
 import type { RouteObjective, RoutePlan, TransportMode } from '../../map/types';
 import type { LatLng, Place } from '../../places/types';
 import { PlaceCombobox } from '../../places/components/PlaceCombobox';
+import { algorithmOptions, MAX_EXACT_STOPS, MAX_STOPS, type AlgorithmChoice } from '../utils/algorithms';
+import { OptimizationSummary } from './OptimizationSummary';
 
 type MultiStopPanelProps = {
   isActive: boolean;
@@ -20,11 +22,10 @@ type MultiStopPanelProps = {
     mode: TransportMode,
     objective: RouteObjective,
     returnToStart: boolean,
+    algorithm: AlgorithmChoice,
   ) => Promise<RoutePlan | { error: string }>;
   onSave?: (plan: RoutePlan) => void;
 };
-
-const MAX_STOPS = 8;
 
 /** Hai điểm coi là trùng nhau khi tọa độ lệch dưới ~0,1 m. */
 function isSamePoint(a: LatLng, b: LatLng) {
@@ -52,6 +53,9 @@ export function MultiStopPanel({
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [objective, setObjective] = useState<RouteObjective>('time');
+  const [algorithm, setAlgorithm] = useState<AlgorithmChoice>('auto');
+  // Held–Karp chỉ hỗ trợ tối đa MAX_EXACT_STOPS điểm ghé.
+  const exactTooMany = algorithm === 'exact' && stops.length > MAX_EXACT_STOPS;
   useEffect(() => {
     if (isActive && plan) onShowPlan(plan);
   }, [isActive, plan, onShowPlan]);
@@ -103,7 +107,7 @@ export function MultiStopPanel({
     setIsLoading(true);
     setError('');
     try {
-      const result = await onPlanRoute(start, stops, mode, objective, returnToStart);
+      const result = await onPlanRoute(start, stops, mode, objective, returnToStart, algorithm);
       if ('error' in result) {
         setError(result.error);
         setPlan(null);
@@ -191,6 +195,28 @@ export function MultiStopPanel({
           </label>
         </div>
 
+        <label className="mb-3 block">
+          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[.08em] text-slate-500">
+            Thuật toán sắp xếp
+          </span>
+          <select
+            value={algorithm}
+            onChange={(event) => {
+              setAlgorithm(event.target.value as AlgorithmChoice);
+              setPlan(null);
+            }}
+            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-ink outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+          >
+            {algorithmOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <span className="mt-1 block text-[10px] leading-4 text-slate-500">
+            Tự động/Chính xác: Held–Karp, luôn ra thứ tự tối ưu. Nhanh: NN + 2-opt, gần đúng để so sánh.
+          </span>
+        </label>
         <label className="mb-4 flex cursor-pointer items-center gap-2 text-[11px] font-medium text-slate-600">
           <input
             type="checkbox"
@@ -256,7 +282,7 @@ export function MultiStopPanel({
           <button
             type="button"
             onClick={() => void optimize()}
-            disabled={isLoading || !start || stops.length < 1}
+            disabled={isLoading || !start || stops.length < 1 || exactTooMany}
             className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 text-xs font-bold text-white shadow-md shadow-brand-600/20 transition hover:bg-brand-700 disabled:bg-slate-300 disabled:shadow-none"
           >
             {isLoading ? (
@@ -271,6 +297,14 @@ export function MultiStopPanel({
           </button>
         </div>
       </fieldset>
+      {exactTooMany && (
+        <p
+          className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] leading-5 text-amber-900"
+          role="alert"
+        >
+          Thuật toán chính xác chỉ hỗ trợ tối đa {MAX_EXACT_STOPS} điểm ghé. Hãy chọn "Tự động" hoặc "Nhanh".
+        </p>
+      )}
       {error && (
         <p
           className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] leading-5 text-amber-900"
@@ -306,6 +340,7 @@ export function MultiStopPanel({
             <Icon name={isNavigating ? 'check' : 'directions'} size={15} />
             {isNavigating ? 'Đang dẫn đường' : 'Bắt đầu chuyến đi'}
           </button>
+          {plan.optimization && <OptimizationSummary optimization={plan.optimization} />}
           <ol className="mt-3 space-y-1.5">
             {plan.stops.map((place, index) => (
               <li

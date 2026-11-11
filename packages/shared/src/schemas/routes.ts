@@ -25,13 +25,23 @@ export type RouteResult = {
   instructions: RouteInstruction[];
 };
 
-/** Fixed departure, up to eight stops; departure is repeated only in the optimized closed tour. */
+/**
+ * Thuật toán sắp xếp điểm ghé:
+ * - exact:     Held–Karp, tối ưu chính xác (tới 16 điểm ≈ 30 ms)
+ * - heuristic: Nearest Neighbor + 2-opt, gần đúng, nhanh hơn; dùng để so sánh
+ * - auto:      exact khi trong giới hạn của Held–Karp, ngược lại heuristic
+ */
+export const tourAlgorithms = ['auto', 'exact', 'heuristic'] as const;
+export const MAX_OPTIMIZE_POINTS = 16;
+
+/** Fixed departure, up to fifteen stops; departure is repeated only in the optimized closed tour. */
 export const optimizeRouteRequestSchema = z
   .object({
-    points: z.array(geoPointSchema).min(2).max(9),
+    points: z.array(geoPointSchema).min(2).max(MAX_OPTIMIZE_POINTS),
     vehicle: z.enum(['car', 'motorcycle']),
     objective: z.enum(['distance', 'duration']).default('duration'),
     returnToStart: z.boolean().default(false),
+    algorithm: z.enum(tourAlgorithms).default('auto'),
   })
   .refine(
     ({ points }) =>
@@ -49,7 +59,10 @@ export type OptimizeRouteRequest = z.infer<typeof optimizeRouteRequestSchema>;
 export type OptimizeRouteResult = {
   order: number[];
   route: RouteResult;
+  /** Chi phí nếu đi theo thứ tự người dùng nhập (null nếu thứ tự đó không đi được). */
   originalCost: number | null;
   optimizedCost: number;
   objective: 'distance' | 'duration';
+  /** Thuật toán thực sự đã dùng (auto được quy về exact hoặc heuristic). */
+  algorithm: 'exact' | 'heuristic';
 };
