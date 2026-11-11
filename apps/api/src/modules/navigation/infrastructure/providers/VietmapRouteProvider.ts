@@ -1,6 +1,7 @@
 import type { RouteRequest, RouteResult } from '@routetwin/shared';
 import { z } from 'zod';
 import { AppError } from '../../../../shared/errors/AppError.js';
+import type { AlternativeRouteProvider } from '../../domain/ports/AlternativeRouteProvider.js';
 import type { RouteProvider } from '../../domain/ports/RouteProvider.js';
 
 const vietmapResponseSchema = z.object({
@@ -33,13 +34,21 @@ const vietmapResponseSchema = z.object({
     .default([]),
 });
 
-export class VietmapRouteProvider implements RouteProvider {
+type VietmapPath = z.infer<typeof vietmapResponseSchema>['paths'][number];
+
+export class VietmapRouteProvider implements RouteProvider, AlternativeRouteProvider {
   constructor(
     private readonly apiKey: string | undefined,
     private readonly timeoutMs = 12_000,
   ) {}
 
+  /** Tuyến tốt nhất theo tiêu chí (thời gian hoặc quãng đường). */
   async calculate(input: RouteRequest): Promise<RouteResult> {
+    return (await this.calculateAlternatives(input))[0]!;
+  }
+
+  /** Mọi tuyến VietMap trả về (thường 2: tuyến chính + 1 tuyến thay thế), tốt nhất đứng đầu. */
+  async calculateAlternatives(input: RouteRequest): Promise<RouteResult[]> {
     const apiKey = this.apiKey?.trim();
     if (!apiKey) {
       throw new AppError(
@@ -130,17 +139,21 @@ export class VietmapRouteProvider implements RouteProvider {
       throw new AppError(502, 'ROUTE_PROVIDER_ERROR', detail || 'VietMap không tính được tuyến.');
     }
 
-    const path = [...parsed.data.paths].sort((a, b) =>
-      input.objective === 'distance' ? a.distance - b.distance : a.time - b.time,
-    )[0]!;
-    if (path.points.coordinates.length < 2) {
+    const paths = [...parsed.data.paths]
+      .filter((path) => path.points.coordinates.length >= 2)
+      .sort((a, b) => (input.objective === 'distance' ? a.distance - b.distance : a.time - b.time));
+    if (paths.length === 0) {
       throw new AppError(
         502,
         'ROUTE_PROVIDER_INVALID_RESPONSE',
         'VietMap trả về tuyến thiếu tọa độ đường đi.',
       );
     }
+    return paths.map((path) => this.toRouteResult(path));
+  }
 
+  /** Đổi một path của VietMap sang DTO dùng chung (đơn vị: mét, giây). */
+  private toRouteResult(path: VietmapPath): RouteResult {
     return {
       source: 'vietmap',
       distanceMeters: path.distance,

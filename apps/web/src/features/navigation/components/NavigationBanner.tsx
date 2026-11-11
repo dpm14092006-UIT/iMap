@@ -1,4 +1,5 @@
 import { Icon } from '../../../shared/components/Icon';
+import type { NavigationMode } from '../domain/position/PositionSource';
 import type { NavigationStatus } from '../hooks/useNavigationSession';
 import { formatDistanceMeters } from '../utils/format';
 import { maneuverArrow } from '../utils/maneuver';
@@ -15,7 +16,24 @@ type NavigationBannerProps = {
   onRecalculate: () => void;
   onRetry: () => void;
   onStop: () => void;
+  /** Chế độ Demo (GPS giả) chỉ có khi mở app với ?demo=1. Không truyền thì banner như cũ. */
+  demo?: DemoControls;
 };
+
+/** Điều khiển chế độ Thật / Demo trên banner. */
+export type DemoControls = {
+  mode: NavigationMode;
+  isPaused: boolean;
+  onModeChange: (mode: NavigationMode) => void;
+  onTogglePause: () => void;
+  onWrongTurn: () => void;
+  onIncidentAhead: () => void;
+};
+
+const modeOptions: { id: NavigationMode; label: string }[] = [
+  { id: 'real', label: 'Thật' },
+  { id: 'demo', label: 'Demo' },
+];
 
 const statusLabels: Partial<Record<NavigationStatus, string>> = {
   locating: 'ĐANG TÌM GPS',
@@ -37,6 +55,7 @@ export function NavigationBanner({
   onRecalculate,
   onRetry,
   onStop,
+  demo,
 }: NavigationBannerProps) {
   if (status === 'idle') return null;
 
@@ -86,7 +105,8 @@ export function NavigationBanner({
           )}
           {isGuiding && !offRoute && (
             <p className="mt-1 text-[10px] text-slate-500">
-              Còn {formatDistanceMeters(distanceRemainingMeters)} · GPS đang cập nhật trực tiếp
+              Còn {formatDistanceMeters(distanceRemainingMeters)} ·{' '}
+              {demo?.mode === 'demo' ? 'GPS giả lập (demo)' : 'GPS đang cập nhật trực tiếp'}
             </p>
           )}
           {error && status !== 'error' && <p className="mt-1 text-[10px] text-amber-800">{error}</p>}
@@ -97,6 +117,39 @@ export function NavigationBanner({
           )}
         </div>
       </div>
+      {demo && (
+        <div className="space-y-2 border-t border-slate-100 bg-slate-50/80 px-4 py-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-[.08em] text-slate-500">
+              Nguồn vị trí
+            </span>
+            <div
+              className="flex rounded-lg bg-white p-0.5 shadow-sm"
+              role="group"
+              aria-label="Chế độ dẫn đường"
+            >
+              {modeOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={demo.mode === option.id}
+                  onClick={() => demo.onModeChange(option.id)}
+                  className={`rounded-md px-2.5 py-1 text-[10px] font-semibold transition ${demo.mode === option.id ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:text-ink'}`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {demo.mode === 'demo' && isGuiding && (
+            <div className="flex flex-wrap gap-1.5">
+              <DemoButton label={demo.isPaused ? '▶ Tiếp tục' : '⏸ Tạm dừng'} onClick={demo.onTogglePause} />
+              <DemoButton label="↪ Rẽ nhầm" onClick={demo.onWrongTurn} />
+              <DemoButton label="⚠ Sự cố phía trước" onClick={demo.onIncidentAhead} />
+            </div>
+          )}
+        </div>
+      )}
       <div className="flex gap-2 border-t border-slate-100 px-4 py-3">
         {(offRoute || status === 'error') && (
           <button
@@ -126,5 +179,18 @@ export function NavigationBanner({
         </button>
       </div>
     </section>
+  );
+}
+
+/** Nút nhỏ cho các thao tác của chế độ Demo. */
+function DemoButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[10px] font-semibold text-slate-700 transition hover:border-brand-200 hover:text-brand-700"
+    >
+      {label}
+    </button>
   );
 }

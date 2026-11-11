@@ -37,6 +37,19 @@ export class RoutePath {
     this.totalMeters = offset;
   }
 
+  /** Điểm nằm trên tuyến sau khi đi được `progressMeters` mét từ đầu tuyến (dùng cho chế độ demo). */
+  pointAt(progressMeters: number): LatLng {
+    const last = this.segments[this.segments.length - 1];
+    if (!last) return { lat: 0, lng: 0 };
+    const target = Math.max(0, Math.min(progressMeters, this.totalMeters));
+    const segment = this.segments.find((item) => item.offset + item.length >= target) ?? last;
+    const fraction = segment.length === 0 ? 0 : (target - segment.offset) / segment.length;
+    return {
+      lat: segment.start.lat + (segment.end.lat - segment.start.lat) * fraction,
+      lng: segment.start.lng + (segment.end.lng - segment.start.lng) * fraction,
+    };
+  }
+
   /**
    * Vị trí trên tuyến gần `point` nhất. Với `minProgress`, chỉ xét các đoạn mà tiến độ ≥ minProgress
    * (dùng để không "nhảy lùi" khi tuyến đi qua cùng một con đường hai lần).

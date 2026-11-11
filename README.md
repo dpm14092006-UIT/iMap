@@ -72,6 +72,7 @@ Frontend chia theo feature (`map`, `places`, `navigation`, `multi-stop`, `my-rou
 | `GET /api/places/details?id=...` | N1 | VietMap Place v4; chỉ gọi khi chọn một gợi ý |
 | `GET /api/places/reverse` | N1 | VietMap reverse geocoding (tọa độ → địa chỉ) |
 | `POST /api/routes/calculate` | N1 | VietMap Route v4; cần `VIETMAP_API_KEY` |
+| `POST /api/routes/reroute` | N1 | Tính lại tuyến từ vị trí hiện tại; tránh sự cố bằng tuyến thay thế VietMap hoặc điểm vòng tránh (dùng khi dẫn đường) |
 | `POST /api/routes/algorithm` | N1 | Dijkstra / A* trên đồ thị OSM trung tâm TP.HCM |
 | `GET /api/routes/algorithm/graph` | N1 | Vùng phủ + kích thước đồ thị OSM |
 | `POST /api/routes/optimize` | N1 | Matrix VietMap + Held–Karp (chính xác) hoặc NN + 2-opt (gần đúng), tối đa 15 điểm ghé |
@@ -104,6 +105,13 @@ VietMap Search dùng `VIETMAP_API_KEY` ở backend, cùng biến cấu hình v�
 Bản đồ khởi đầu ở khung nhìn Việt Nam, có nút quay về toàn quốc. Báo cáo giao thông được truy vấn theo vùng đang xem, giới hạn số lượng theo API; phóng to để xem chi tiết. Đồ thị Dijkstra/A* cài đặt riêng vẫn chỉ phủ trung tâm TP.HCM; tuyến VietMap không dùng đồ thị này.
 
 Xem [kết quả kiểm tra tìm kiếm](docs/SEARCH_VERIFICATION.md).
+
+## Dẫn đường, tính lại tuyến và chế độ Demo
+
+- **Dẫn đường:** bấm "Bắt đầu chuyến đi" sau khi tìm tuyến. App theo dõi vị trí, hiện chỉ dẫn rẽ tiếp theo và quãng đường còn lại.
+- **Tính lại tuyến (N1):** khi lệch tuyến đủ lâu, hoặc có sự cố đang hoạt động (mức Vừa trở lên) nằm trên tuyến trong 1,5 km phía trước, app gọi `POST /api/routes/reroute` từ vị trí hiện tại. Server chọn tuyến tốt nhất không đi qua sự cố → tuyến thay thế của VietMap → đi vòng qua điểm cạnh sự cố; nếu không né được (sự cố nằm trên con đường duy nhất vào/ra điểm) thì báo rõ để người dùng chú ý.
+- **Chế độ Demo (GPS giả):** mở app với `?demo=1` (ví dụ `http://localhost:5173/?demo=1`). Khi bắt đầu chuyến đi, xe tự chạy dọc tuyến; banner dẫn đường có công tắc **Thật / Demo** (đổi được giữa chuyến) và các nút Tạm dừng, Rẽ nhầm, Sự cố phía trước. Sự cố giả chỉ nằm trên máy, không gửi lên hệ thống báo cáo. Link thường không hiện các điều khiển này.
+- Thiết kế: `useNavigationSession` đọc vị trí qua interface `PositionSource` với hai cài đặt `BrowserGpsSource` (GPS thật) và `SimulatedGpsSource` (GPS giả) — Strategy pattern, engine dẫn đường dùng chung.
 
 ## Thứ tự điểm dừng
 

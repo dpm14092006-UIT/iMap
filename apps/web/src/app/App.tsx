@@ -17,6 +17,15 @@ import { useAlgorithmComparison } from '../features/navigation/hooks/useAlgorith
 import { useDirections } from '../features/navigation/hooks/useDirections';
 import { useNavigationSession } from '../features/navigation/hooks/useNavigationSession';
 import { RouteApiClient, routePlanFromResult } from '../features/navigation/services/RouteApiClient';
+import { rerouteApi } from '../features/navigation/services/RerouteApiClient';
+import {
+  IncidentAheadDetector,
+  type RouteIncident,
+} from '../features/navigation/domain/IncidentAheadDetector';
+import { RoutePath } from '../features/navigation/domain/RoutePath';
+import { isDemoModeEnabled } from '../features/navigation/utils/demoMode';
+import { toTrafficMapLayer } from '../features/map/layers/trafficMapLayer';
+import type { RerouteStrategy } from '@routetwin/shared';
 import { formatDistanceKm, formatDurationMinutes } from '../features/navigation/utils/format';
 import { PlaceSearchBar } from '../features/places/components/PlaceSearchBar';
 import { popularPlaces } from '../features/places/data/popularPlaces';
@@ -67,6 +76,14 @@ const TrafficReportPanel = lazy(() =>
 const PLACE_CLICK_TOLERANCE = 0.002;
 /** Tâm Việt Nam, dùng khi bản đồ chưa sẵn sàng để trả tâm thật. */
 const VIETNAM_CENTER: LatLng = { lat: 16, lng: 108 };
+/** Thông báo cho người dùng biết tuyến mới được chọn thế nào (kết quả của /routes/reroute). */
+const rerouteStrategyLabels: Record<RerouteStrategy, string> = {
+  direct: 'Đã tính lại tuyến từ vị trí hiện tại',
+  alternative: 'Đã chuyển sang tuyến thay thế để tránh sự cố',
+  detour: 'Đã đi vòng để tránh sự cố',
+  unavoidable: 'Không tìm được đường tránh sự cố, hãy chú ý',
+};
+
 /** Lệch tuyến liên tiếp bao nhiêu lần đo GPS thì tự tính lại, và tối thiểu cách nhau bao lâu. */
 const OFF_ROUTE_FIXES_BEFORE_REROUTE = 3;
 const AUTO_REROUTE_INTERVAL_MS = 20_000;
@@ -171,7 +188,45 @@ export function App() {
     clearance: updateClearance,
   } = useTrafficReports(accessToken, user?.id ?? null, trafficBounds, activePanel === 'traffic');
   const incidents = useMemo(() => toIncidents(reports), [reports]);
-  const trafficLayer = useMemo(() => toReportsMapLayer(reports), [reports]);
+  const reportsLayer = useMemo(() => toReportsMapLayer(reports), [reports]);
+  // Chế độ Demo (?demo=1): sự cố giả chỉ nằm trên máy này, vẽ chung với sự cố thật để thấy tuyến mới né chỗ nào.
+  const demoEnabled = useMemo(() => isDemoModeEnabled(), []);
+  const [demoIncidents, setDemoIncidents] = useState<RouteIncident[]>([]);
+  const trafficLayer = useMemo(
+    () =>
+      demoIncidents.length === 0
+        ? reportsLayer
+        : {
+            ...reportsLayer,
+            features: [
+              ...reportsLayer.features,
+              ...toTrafficMapLayer(
+                demoIncidents.map((incident) => ({
+                  id: incident.id,
+                  incidentType: 'road_closure',
+                  severity: 'high' as const,
+                  title: incident.title,
+                  lat: incident.lat,
+                  lng: incident.lng,
+                })),
+              ).features,
+            ],
+          },
+    [reportsLayer, demoIncidents],
+  );
+  // Sự cố cần tránh khi dẫn đường: đang hoạt động, mức độ từ "Vừa" trở lên (gồm cả sự cố giả của demo).
+  const routeIncidents = useMemo<RouteIncident[]>(
+    () =>
+      trafficLayer.features
+        .filter((feature) => feature.properties.status === 'active' && feature.properties.severity !== 'low')
+        .map((feature) => ({
+          id: feature.properties.id,
+          title: feature.properties.title,
+          lng: feature.geometry.coordinates[0]!,
+          lat: feature.geometry.coordinates[1]!,
+        })),
+    [trafficLayer],
+  );
 
   const directions = useDirections({
     routeApi,
@@ -287,13 +342,15 @@ export function App() {
   };
 
   const startNavigation = (route: RoutePlan) => {
-    startNavigationSession(route);
+    // Mở app với ?demo=1 thì mặc định chạy GPS giả; đổi lại "Thật" ngay trên banner.
+    startNavigationSession(route, demoEnabled ? 'demo' : 'real');
     openPanel(null);
   };
 
   /** Tính lại tuyến từ vị trí GPS hiện tại tới các điểm còn lại (tự động khi lệch tuyến, hoặc bấm nút). */
   const recalculateNavigation = useCallback(
-    async (automatic = false) => {
+    /** @param reason lý do hiển thị cho người dùng (vd. "Ngập đường phía trước 500 m") */
+    async (automatic = false, reason?: string) => {
       if (!navigationRoute || !navigationLocation || isRecalculatingNavigation) return;
       const route = navigationRoute;
       const remainingStops = route.stops.slice(nextStopIndex);
@@ -301,20 +358,40 @@ export function App() {
       if (!destinationStops.length) return;
 
       setIsRecalculatingNavigation(true);
-      const result = await routeApi.createPlan(
-        [basicPlaceFromPoint(navigationLocation, 'gps'), ...destinationStops],
-        route.vehicle,
-        route.objective,
-      );
-      setIsRecalculatingNavigation(false);
-      if (navigationRouteIdRef.current !== route.id) return;
-      if ('error' in result) {
-        if (!automatic) showToast(result.error);
+      let plan: RoutePlan;
+      let strategy: RerouteStrategy;
+      try {
+        // /routes/reroute: tính từ vị trí hiện tại và cố gắng tránh mọi sự cố đang biết.
+        const result = await rerouteApi.reroute({
+          from: navigationLocation,
+          stops: destinationStops.map(({ lat, lng }) => ({ lat, lng })),
+          vehicle: route.vehicle,
+          objective: route.objective === 'distance' ? 'distance' : 'duration',
+          avoid: routeIncidents.slice(0, 30).map(({ lat, lng }) => ({
+            lat,
+            lng,
+            radiusMeters: IncidentAheadDetector.INCIDENT_RADIUS_METERS,
+          })),
+        });
+        plan = routePlanFromResult(
+          result.route,
+          [basicPlaceFromPoint(navigationLocation, 'gps'), ...destinationStops],
+          route.vehicle,
+          route.objective,
+        );
+        strategy = result.strategy;
+      } catch (error) {
+        if (!automatic || reason) showToast(errorMessage(error, 'Không tính lại được tuyến.'));
         return;
+      } finally {
+        setIsRecalculatingNavigation(false);
       }
-      setActiveRoute(result);
-      updateNavigationRoute(result);
-      if (!automatic) showToast('Đã tính lại tuyến từ vị trí GPS hiện tại');
+      if (navigationRouteIdRef.current !== route.id) return;
+      setActiveRoute(plan);
+      updateNavigationRoute(plan);
+      if (reason || !automatic || strategy !== 'direct') {
+        showToast(`${reason ? `${reason} · ` : ''}${rerouteStrategyLabels[strategy]}`);
+      }
     },
     [
       navigationRoute,
@@ -322,10 +399,51 @@ export function App() {
       nextStopIndex,
       updateNavigationRoute,
       isRecalculatingNavigation,
-      routeApi,
+      routeIncidents,
       showToast,
     ],
   );
+
+  // Sự cố chặn đường phía trước (trong 1,5 km) thì tính lại tuyến ngay, không đợi tới nơi mới lệch tuyến.
+  const incidentDetector = useRef(new IncidentAheadDetector());
+  const navigationPath = useMemo(
+    () => (navigationRoute ? new RoutePath(navigationRoute.legs) : null),
+    [navigationRoute],
+  );
+  useEffect(() => {
+    if (!isNavigationIdle) return;
+    incidentDetector.current.reset();
+    setDemoIncidents([]); // kết thúc chuyến thì xóa sự cố giả
+  }, [isNavigationIdle]);
+
+  /** Demo: đặt một "đường đóng" giả ở phía trước xe 600 m để xem app tự né. */
+  const addDemoIncidentAhead = () => {
+    if (!navigationPath) return;
+    const progressMeters = navigation.progressRatio * navigationPath.totalMeters;
+    const point = navigationPath.pointAt(Math.min(navigationPath.totalMeters - 50, progressMeters + 600));
+    setDemoIncidents((current) => [
+      ...current,
+      { id: `demo-${Date.now()}`, title: 'Đường đóng (demo)', ...point },
+    ]);
+  };
+  useEffect(() => {
+    if (navigationStatus !== 'navigating' || !navigationPath || isRecalculatingNavigation) return;
+    const progressMeters = navigation.progressRatio * navigationPath.totalMeters;
+    const ahead = incidentDetector.current.findAhead(navigationPath, progressMeters, routeIncidents);
+    if (!ahead) return;
+    incidentDetector.current.markHandled(ahead.incident.id); // tránh được hay không cũng chỉ xử lý một lần
+    void recalculateNavigation(
+      true,
+      `${ahead.incident.title} phía trước ${Math.round(ahead.distanceAheadMeters)} m`,
+    );
+  }, [
+    navigationStatus,
+    navigationPath,
+    navigation.progressRatio,
+    routeIncidents,
+    isRecalculatingNavigation,
+    recalculateNavigation,
+  ]);
 
   // Lệch tuyến đủ lâu thì tự tính lại, nhưng không dồn dập hơn AUTO_REROUTE_INTERVAL_MS.
   useEffect(() => {
@@ -590,9 +708,21 @@ export function App() {
         isRecalculating={isRecalculatingNavigation}
         onRecalculate={() => void recalculateNavigation()}
         onRetry={() => {
-          if (navigationRoute) startNavigationSession(navigationRoute);
+          if (navigationRoute) startNavigationSession(navigationRoute, navigation.mode);
         }}
         onStop={stopNavigation}
+        demo={
+          demoEnabled
+            ? {
+                mode: navigation.mode,
+                isPaused: navigation.isDemoPaused,
+                onModeChange: navigation.setMode,
+                onTogglePause: navigation.toggleDemoPause,
+                onWrongTurn: navigation.simulateWrongTurn,
+                onIncidentAhead: addDemoIncidentAhead,
+              }
+            : undefined
+        }
       />
 
       {/* Hướng dẫn khi đang chọn điểm trên bản đồ. */}
