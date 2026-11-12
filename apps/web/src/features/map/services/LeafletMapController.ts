@@ -1,23 +1,61 @@
 import * as L from 'leaflet';
+import { iconSvg } from '../../../shared/components/Icon';
+import { poiMetaFor } from '../../explore/data/poiCatalog';
+import type { Poi } from '../../explore/types';
+import { formatDistanceKm, formatDurationCompact, formatDurationMinutes } from '../../navigation/utils/format';
+import { minutesSlowerThanFastest, routeLabels } from '../../navigation/utils/routeLabels';
 import type { LatLng, Place } from '../../places/types';
 import type { TrafficFeature, TrafficMapLayer, TrafficSeverity } from '../layers/trafficMapLayer';
-import type { AlgorithmOverlay, Bounds, DraftStops, MapLayer, RoutePlan } from '../types';
+import type {
+  AlgorithmOverlay,
+  Bounds,
+  Coordinate,
+  DraftStops,
+  MapLayer,
+  MapOverlays,
+  RoutePlan,
+} from '../types';
+import {
+  CONGESTION_COLORS,
+  CONGESTION_LABELS,
+  CONGESTION_RANK,
+  splitRouteByCongestion,
+  worstCongestionLevel,
+} from '../../traffic/services/routeCongestion';
 import { routeHazardSection } from '../../traffic/services/routeTraffic';
+import { pickRouteLabelPoints } from './routeLabelPlacement';
 
 /** Khung nhìn khởi đầu toàn Việt Nam, không giới hạn pan/zoom vào một thành phố. */
 const VIETNAM_CENTER: L.LatLngExpression = [16, 108];
 const COLORS = {
-  start: '#20a26b',
-  end: '#2476ea',
-  route: '#2476ea',
-  multiRoute: '#167dcb',
+  start: '#0d9488',
+  end: '#4338ca',
+  routeFrom: [0x43, 0x38, 0xca],
+  routeTo: [0x0d, 0x94, 0x88],
+  alternative: '#a5b4fc',
   dijkstra: '#8b5cf6',
   astar: '#f97316',
   coverage: '#64748b',
 };
+/** Mức sự cố → màu giao thông (cùng bảng màu với chú giải: vàng / đỏ / đỏ sẫm). */
+const SEVERITY_COLORS: Record<TrafficSeverity, string> = {
+  low: '#facc15',
+  medium: '#ef4444',
+  high: '#991b1b',
+};
+const HALO_RADIUS_METERS: Record<TrafficSeverity, number> = { low: 200, medium: 280, high: 360 };
+/** Số đoạn dùng để mô phỏng dải màu gradient dọc theo tuyến (Leaflet không hỗ trợ gradient). */
+const GRADIENT_SEGMENTS = 28;
+/** Dưới ngưỡng này (px) là điện thoại: nhãn tuyến rút gọn, chừa chỗ cho bảng kéo ở đáy. */
+const MOBILE_QUERY = '(max-width: 767px)';
+/** Vùng bản đồ bị giao diện nổi che (px, tính từ mép khung bản đồ). */
+export type FitInsets = { left: number; bottom: number };
 
 export type MapControllerHandlers = {
   onMapClick: (point: LatLng) => void;
+  /** Bấm vào tuyến phụ hoặc nhãn tuyến trên bản đồ. */
+  onSelectRoute?: (routeId: string) => void;
+  onPoiClick?: (poiId: string) => void;
   onBoundsChange?: (bounds: { minLat: number; minLng: number; maxLat: number; maxLng: number }) => void;
 };
 
@@ -34,6 +72,9 @@ export type MapControllerData = {
   isPicking: boolean;
   /** Tuyến Dijkstra/A* và khung vùng dữ liệu (null nếu chưa chạy thuật toán). */
   algorithmOverlay: AlgorithmOverlay | null;
+  overlays: MapOverlays;
+  pois: Poi[];
+  highlightedPoiId: string | null;
 };
 
 /**
@@ -44,28 +85,46 @@ export class LeafletMapController {
   readonly map: L.Map;
   private readonly streets: L.TileLayer;
   private readonly imagery: L.TileLayer;
+  private readonly terrain: L.TileLayer;
   // Mỗi loại dữ liệu một layer group riêng để xóa/vẽ lại độc lập.
   private readonly algorithmLayer = L.layerGroup();
   private readonly routeLayer = L.layerGroup();
+  private readonly labelLayer = L.layerGroup();
   private readonly routeTrafficLayer = L.layerGroup();
+  private readonly trafficHaloLayer = L.layerGroup();
   private readonly trafficLayer = L.layerGroup();
+  private readonly poiLayer = L.layerGroup();
+  private readonly poiMarkers = new Map<string, L.Marker>();
+  private lastPois: Poi[] | null = null;
   private readonly locationLayer = L.layerGroup();
   private locationMarker: L.Marker | L.CircleMarker | null = null;
   private locationMarkerMode: 'passive' | 'navigation' | null = null;
   private lastRouteId: string | null = null;
+  private lastFitPoints: L.LatLngExpression[] | null = null;
+  private fitInsets: FitInsets | null = null;
+  private lastLabels: { routes: RoutePlan[]; selected: RoutePlan } | null = null;
+  private readonly mobileQuery = window.matchMedia(MOBILE_QUERY);
+  private readonly onMobileChange = () => {
+    if (this.lastLabels) this.drawRouteLabels(this.lastLabels.routes, this.lastLabels.selected);
+  };
   private lastRouteOptionsKey = '';
   private lastRouteNavigationState: boolean | null = null;
+  private lastCongestionVisible: boolean | null = null;
   private lastDraftStopsKey = '';
   private lastOverlayKey: string | null = null;
   private lastTrafficMapLayer: TrafficMapLayer | null = null;
-  private activeLayer: MapLayer = 'street';
 
-  constructor(container: HTMLElement, handlers: MapControllerHandlers) {
+  constructor(
+    container: HTMLElement,
+    private readonly handlers: MapControllerHandlers,
+  ) {
     this.map = L.map(container, { zoomControl: false, preferCanvas: true, attributionControl: true }).setView(
       VIETNAM_CENTER,
       5,
     );
-    this.map.attributionControl.setPosition('bottomleft');
+    // Dock nằm đè góc trái nên ghi công và thước tỉ lệ đặt ở góc dưới phải.
+    this.map.attributionControl.setPosition('bottomright');
+    L.control.scale({ imperial: false, position: 'bottomright' }).addTo(this.map);
     this.streets = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution:
@@ -78,11 +137,20 @@ export class LeafletMapController {
         attribution: 'Imagery © Esri, Vantor, Earthstar Geographics, and the GIS User Community',
       },
     );
+    this.terrain = L.tileLayer('https://tile.opentopomap.org/{z}/{x}/{y}.png', {
+      maxZoom: 17,
+      attribution:
+        '<a href="https://opentopomap.org" target="_blank" rel="noreferrer">© OpenTopoMap (CC-BY-SA)</a>',
+    });
     this.streets.addTo(this.map);
+    this.trafficHaloLayer.addTo(this.map); // quầng giao thông nằm dưới tuyến
     this.algorithmLayer.addTo(this.map); // nằm dưới tuyến VietMap và marker
     this.routeLayer.addTo(this.map);
+    this.labelLayer.addTo(this.map);
+    this.mobileQuery.addEventListener('change', this.onMobileChange);
     this.routeTrafficLayer.addTo(this.map);
     this.trafficLayer.addTo(this.map);
+    this.poiLayer.addTo(this.map);
     this.locationLayer.addTo(this.map);
     this.map.on('moveend', () => handlers.onBoundsChange?.(this.getBounds()));
     handlers.onBoundsChange?.(this.getBounds());
@@ -93,8 +161,10 @@ export class LeafletMapController {
 
   /** Vẽ lại bản đồ theo dữ liệu mới nhất. */
   update(data: MapControllerData) {
-    this.setLayer(data.layer);
+    this.applyBase(data.layer, data.overlays.terrain);
+    this.setOverlayVisibility(data.overlays);
     this.setPicking(data.isPicking);
+    this.setPoiMarkers(data.pois, data.highlightedPoiId);
 
     const routeId = data.route?.id ?? null;
     const routeOptionsKey = data.routeOptions.map((route) => route.id).join('|');
@@ -105,17 +175,22 @@ export class LeafletMapController {
       routeId !== this.lastRouteId ||
       routeOptionsKey !== this.lastRouteOptionsKey ||
       (routeId !== null && data.isNavigating !== this.lastRouteNavigationState) ||
+      data.overlays.traffic !== this.lastCongestionVisible ||
       (!routeId && draftStopsKey !== this.lastDraftStopsKey);
     if (routeChanged) {
       this.routeLayer.clearLayers();
+      this.labelLayer.clearLayers();
+      this.lastLabels = null;
       if (data.route) {
-        if (!data.isNavigating && data.route.kind === 'route')
-          this.drawAlternativeRoutes(data.routeOptions, data.route.id);
-        this.drawRoute(data.route, data.isNavigating);
+        const showOptions = !data.isNavigating && data.route.kind === 'route';
+        if (showOptions) this.drawAlternativeRoutes(data.routeOptions, data.route.id, data.overlays.traffic);
+        this.drawRoute(data.route, data.isNavigating, data.overlays.traffic);
+        if (showOptions) this.drawRouteLabels(data.routeOptions, data.route);
       } else this.drawDraftStops(data.draftStops);
     }
     this.lastDraftStopsKey = draftStopsKey;
     this.lastRouteNavigationState = data.isNavigating;
+    this.lastCongestionVisible = data.overlays.traffic;
 
     if (data.algorithmOverlay?.key !== this.lastOverlayKey) this.drawAlgorithmOverlay(data.algorithmOverlay);
     if (data.trafficLayer !== this.lastTrafficMapLayer) this.drawTraffic(data.trafficLayer);
@@ -141,24 +216,30 @@ export class LeafletMapController {
     this.lastOverlayKey = overlay?.key ?? null;
   }
 
-  /** 'dark' dùng chung tile OSM với 'street' nhưng thêm class CSS để đảo màu (xem styles.css). */
-  setLayer(layer: MapLayer) {
-    const expectedLayerIsVisible =
-      layer === 'satellite' ? this.map.hasLayer(this.imagery) : this.map.hasLayer(this.streets);
-    if (this.activeLayer === layer && expectedLayerIsVisible) {
-      this.map.getContainer().classList.toggle('map-theme-dark', layer === 'dark');
-      return;
+  /**
+   * Chọn nền: vệ tinh, địa hình (lớp phủ) hoặc đường phố. 'dark' dùng chung tile OSM với 'street'
+   * nhưng thêm class CSS để đảo màu (xem styles.css).
+   */
+  private applyBase(layer: MapLayer, terrain: boolean) {
+    const base = layer === 'satellite' ? this.imagery : terrain ? this.terrain : this.streets;
+    for (const candidate of [this.streets, this.imagery, this.terrain]) {
+      if (candidate !== base && this.map.hasLayer(candidate)) this.map.removeLayer(candidate);
     }
-    this.activeLayer = layer;
-    if (layer === 'satellite') {
-      this.map.getContainer().classList.remove('map-theme-dark');
-      this.map.removeLayer(this.streets);
-      this.imagery.addTo(this.map);
-    } else {
-      this.map.removeLayer(this.imagery);
-      this.streets.addTo(this.map);
-      this.map.getContainer().classList.toggle('map-theme-dark', layer === 'dark');
-    }
+    if (!this.map.hasLayer(base)) base.addTo(this.map);
+    this.map.getContainer().classList.toggle('map-theme-dark', layer === 'dark');
+  }
+
+  /** Bật/tắt quầng giao thông + màu đoạn tắc trên tuyến (traffic) và marker sự cố (incidents). */
+  private setOverlayVisibility({ traffic, incidents }: MapOverlays) {
+    this.toggleGroup(this.trafficHaloLayer, traffic);
+    this.toggleGroup(this.routeTrafficLayer, traffic);
+    this.toggleGroup(this.trafficLayer, incidents);
+  }
+
+  private toggleGroup(group: L.LayerGroup, visible: boolean) {
+    const present = this.map.hasLayer(group);
+    if (visible && !present) group.addTo(this.map);
+    else if (!visible && present) group.remove();
   }
 
   private getBounds() {
@@ -188,6 +269,21 @@ export class LeafletMapController {
     else if (this.map.getCenter().distanceTo(target) > 25)
       this.map.panTo(target, { animate: true, duration: 0.35 });
   }
+  getZoom(): number {
+    return this.map.getZoom();
+  }
+  /** Zoom vừa khít một tuyến (nút "Xem trước"). */
+  fitRoute(route: RoutePlan) {
+    this.fit(route.legs.flatMap((leg) => leg.points));
+  }
+  /** Báo vùng bị bảng chức năng chiếm (trái ở desktop, đáy ở mobile); null khi không có bảng. */
+  setFitInsets(insets: FitInsets | null) {
+    this.fitInsets = insets;
+  }
+  /** Zoom lại vừa vùng vừa fit gần nhất (khi bảng đổi kích thước). */
+  refit() {
+    if (this.lastFitPoints) this.fit(this.lastFitPoints);
+  }
   getCenter(): LatLng {
     const point = this.map.getCenter();
     return { lat: point.lat, lng: point.lng };
@@ -196,6 +292,7 @@ export class LeafletMapController {
     this.map.invalidateSize({ pan: false });
   }
   destroy() {
+    this.mobileQuery.removeEventListener('change', this.onMobileChange);
     this.map.remove();
   }
 
@@ -204,25 +301,25 @@ export class LeafletMapController {
     this.map.getContainer().classList.toggle('is-picking', isPicking);
   }
 
-  private drawRoute(route: RoutePlan, isNavigating: boolean) {
+  private drawRoute(route: RoutePlan, isNavigating: boolean, showCongestion = false) {
+    const congestion = showCongestion && route.congestion?.segments.length ? route.congestion : null;
     for (const leg of route.legs) {
       const points = leg.points.map(([lat, lng]) => L.latLng(lat, lng));
       if (points.length < 2) continue;
-      // Vẽ 2 lớp: viền trắng dày bên dưới + màu tuyến bên trên để nổi trên nền bản đồ.
+      if (congestion && route.legs.length === 1) {
+        this.drawCongestionLine(leg.points, congestion.segments);
+        continue;
+      }
+      // Viền trắng dày bên dưới để tuyến nổi trên mọi nền bản đồ.
       L.polyline(points, {
         color: '#fff',
         weight: 10,
         opacity: 0.94,
         lineCap: 'round',
         lineJoin: 'round',
+        interactive: false,
       }).addTo(this.routeLayer);
-      L.polyline(points, {
-        color: route.kind === 'multi' ? COLORS.multiRoute : COLORS.route,
-        weight: 5.5,
-        opacity: 0.98,
-        lineCap: 'round',
-        lineJoin: 'round',
-      }).addTo(this.routeLayer);
+      this.drawGradientLine(points);
     }
     route.stops.forEach((place, index) => {
       if (isNavigating && index === 0) return;
@@ -233,24 +330,133 @@ export class LeafletMapController {
     });
   }
 
-  /** Vẽ các phương án không được chọn thành nét mảnh, phía dưới tuyến chính. */
-  private drawAlternativeRoutes(routes: RoutePlan[], selectedId: string) {
+  /**
+   * Tuyến chọn kiểu Google Maps: viền tối bên dưới, mỗi đoạn tô theo mức ùn tắc VietMap.
+   * Đoạn 'unknown' giữ dải màu thương hiệu của tuyến thường.
+   */
+  private drawCongestionLine(
+    coordinates: Coordinate[],
+    segments: NonNullable<RoutePlan['congestion']>['segments'],
+  ) {
+    const parts = splitRouteByCongestion(coordinates, segments);
+    const all = coordinates.map(([lat, lng]) => L.latLng(lat, lng));
+    const casing = { lineCap: 'round', lineJoin: 'round', interactive: false } as const;
+    L.polyline(all, { ...casing, color: '#1e293b', weight: 10.5, opacity: 0.92 }).addTo(this.routeLayer);
+    // Mức nặng vẽ sau cùng để không bị đoạn thoáng liền kề che chỗ nối.
+    [...parts]
+      .sort((a, b) => CONGESTION_RANK[a.level] - CONGESTION_RANK[b.level])
+      .forEach(({ level, points }) => {
+        const latLngs = points.map(([lat, lng]) => L.latLng(lat, lng));
+        const color = CONGESTION_COLORS[level];
+        if (color) L.polyline(latLngs, { ...casing, color, weight: 6, opacity: 1 }).addTo(this.routeLayer);
+        else this.drawGradientLine(latLngs);
+      });
+  }
+
+  /** Tô tuyến chọn bằng dải màu indigo → teal: chia thành nhiều đoạn, mỗi đoạn một màu nội suy. */
+  private drawGradientLine(points: L.LatLng[]) {
+    const segments = Math.min(GRADIENT_SEGMENTS, points.length - 1);
+    for (let index = 0; index < segments; index++) {
+      const from = Math.floor((index * (points.length - 1)) / segments);
+      const to = Math.floor(((index + 1) * (points.length - 1)) / segments);
+      const ratio = (index + 0.5) / segments;
+      const color = COLORS.routeFrom.map((start, channel) =>
+        Math.round(start + (COLORS.routeTo[channel]! - start) * ratio),
+      );
+      L.polyline(points.slice(from, to + 1), {
+        color: `rgb(${color.join(',')})`,
+        weight: 5.5,
+        opacity: 1,
+        lineCap: 'round',
+        lineJoin: 'round',
+        interactive: false,
+      }).addTo(this.routeLayer);
+    }
+  }
+
+  /** Vẽ các phương án không được chọn thành nét xám-tím nhạt; bấm vào để chọn tuyến đó. */
+  private drawAlternativeRoutes(routes: RoutePlan[], selectedId: string, showCongestion = false) {
     for (const route of routes) {
       if (route.id === selectedId) continue;
       for (const leg of route.legs) {
         const points = leg.points.map(([lat, lng]) => L.latLng(lat, lng));
         if (points.length < 2) continue;
+        // Viền xám đậm giúp nét phụ nổi trên cả nền sáng lẫn nền tối.
         L.polyline(points, {
-          color: '#64748b',
-          weight: 5,
-          opacity: 0.62,
-          dashArray: '5 8',
+          color: '#475569',
+          weight: 9,
+          opacity: 0.55,
           lineCap: 'round',
           lineJoin: 'round',
           interactive: false,
         }).addTo(this.routeLayer);
+        L.polyline(points, {
+          color: COLORS.alternative,
+          weight: 5.5,
+          opacity: 0.95,
+          lineCap: 'round',
+          lineJoin: 'round',
+        })
+          .on('click', (event) => {
+            L.DomEvent.stopPropagation(event);
+            this.handlers.onSelectRoute?.(route.id);
+          })
+          .addTo(this.routeLayer);
+        // Lớp mảnh theo mức ùn tắc nằm trên nét xám-tím; không tương tác nên bấm vẫn chọn tuyến.
+        if (showCongestion && route.congestion?.segments.length && route.legs.length === 1) {
+          for (const part of splitRouteByCongestion(leg.points, route.congestion.segments)) {
+            const color = CONGESTION_COLORS[part.level];
+            if (!color) continue;
+            L.polyline(
+              part.points.map(([lat, lng]) => L.latLng(lat, lng)),
+              { color, weight: 2.5, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false },
+            ).addTo(this.routeLayer);
+          }
+        }
       }
     }
+  }
+
+  /**
+   * Nhãn thời gian giữa mỗi tuyến: tuyến chọn nền gradient, tuyến phụ nền trắng. Mỗi nhãn nằm ở điểm
+   * xa các tuyến khác nhất. Điện thoại chỉ hiện thời gian + chấm ùn tắc.
+   */
+  private drawRouteLabels(routes: RoutePlan[], selected: RoutePlan) {
+    this.labelLayer.clearLayers();
+    this.lastLabels = { routes, selected };
+    const all = routes.some((route) => route.id === selected.id) ? routes : [selected, ...routes];
+    const compact = this.mobileQuery.matches;
+    const paths = all.map((route): Coordinate[] => route.legs.flatMap((leg) => leg.points));
+    const points = pickRouteLabelPoints(paths);
+    all.forEach((route, index) => {
+      if (paths[index]!.length < 2) return;
+      const isSelected = route.id === selected.id;
+      const text = `${formatDurationMinutes(route.durationMin)} · ${formatDistanceKm(route.distanceKm)}`;
+      const labels = routeLabels(route, all);
+      const delta = minutesSlowerThanFastest(route, all);
+      const hint = [...labels, ...(delta >= 1 ? [`+${delta} phút`] : [])].join(' · ');
+      const title = hint ? `${text} (${hint})` : text;
+      const worst = worstCongestionLevel(route.congestion);
+      const worstColor = worst ? CONGESTION_COLORS[worst] : null;
+      const dot = worstColor
+        ? `<i class="routetwin-route-dot" style="background:${worstColor}" title="${CONGESTION_LABELS[worst!]}" aria-hidden="true"></i>`
+        : '';
+      const body = compact
+        ? `${dot}<span>${formatDurationCompact(route.durationMin)}</span>`
+        : `${iconSvg(route.vehicle === 'car' ? 'car' : 'motorcycle', 14)}${dot}<span>${text}</span>${hint ? `<small>${hint}</small>` : ''}`;
+      const icon = L.divIcon({
+        className: 'routetwin-route-label-wrap',
+        html: `<button type="button" class="routetwin-route-label${compact ? ' is-compact' : ''}${isSelected ? ' is-selected' : ''}" aria-label="Chọn tuyến ${title}" title="${title}">${body}</button>`,
+        iconSize: [0, 0],
+      });
+      const [lat, lng] = points[index]!;
+      L.marker([lat, lng], { icon, keyboard: false, zIndexOffset: isSelected ? 600 : 400 })
+        .on('click', (event) => {
+          L.DomEvent.stopPropagation(event);
+          this.handlers.onSelectRoute?.(route.id);
+        })
+        .addTo(this.labelLayer);
+    });
   }
 
   /** Tô riêng đoạn có sự cố để mức vừa/cao hiện lần lượt vàng/đỏ trên tuyến màu xanh. */
@@ -258,7 +464,6 @@ export class LeafletMapController {
     this.routeTrafficLayer.clearLayers();
     if (!route) return;
     const severityRank: Record<TrafficSeverity, number> = { low: 0, medium: 1, high: 2 };
-    const colors: Record<TrafficSeverity, string> = { low: '#22a06b', medium: '#f4b400', high: '#e53935' };
     const reports = [...traffic.features]
       .filter((feature) => feature.properties.status === 'active')
       .sort((a, b) => severityRank[a.properties.severity] - severityRank[b.properties.severity]);
@@ -277,7 +482,7 @@ export class LeafletMapController {
         interactive: false,
       }).addTo(this.routeTrafficLayer);
       L.polyline(section.points, {
-        color: colors[feature.properties.severity],
+        color: SEVERITY_COLORS[feature.properties.severity],
         weight: 5.5,
         opacity: 1,
         lineCap: 'round',
@@ -347,11 +552,21 @@ export class LeafletMapController {
   /** Vẽ sự cố giao thông theo hợp đồng TrafficMapLayer (bỏ qua sự cố đã thông thoáng). */
   private drawTraffic(layer: TrafficMapLayer) {
     this.trafficLayer.clearLayers();
+    this.trafficHaloLayer.clearLayers();
     for (const feature of layer.features) {
       if (feature.properties.status !== 'active') continue;
       const [lng, lat] = feature.geometry.coordinates; // GeoJSON: [lng, lat]
       if (typeof lat !== 'number' || typeof lng !== 'number') continue;
       const { severity, communityReporterCount = 0 } = feature.properties;
+      L.circle([lat, lng], {
+        radius: HALO_RADIUS_METERS[severity],
+        color: SEVERITY_COLORS[severity],
+        fillColor: SEVERITY_COLORS[severity],
+        fillOpacity: 0.22,
+        weight: 1.5,
+        opacity: 0.7,
+        interactive: false,
+      }).addTo(this.trafficHaloLayer);
       const marker = L.marker([lat, lng], {
         icon: this.trafficIcon(severity, communityReporterCount),
         keyboard: false,
@@ -374,7 +589,7 @@ export class LeafletMapController {
       'p',
       `${reportCount} báo cáo / 75 m trong 30 phút từ ${reporterCount} người${freshness}`,
     );
-    detail.className = 'mb-0 mt-1 text-xs text-slate-500';
+    detail.className = 'mb-0 mt-1 text-xs text-slate-500 dark:text-slate-400';
     content.append(this.textElement('strong', properties.title), detail);
     return content;
   }
@@ -400,7 +615,7 @@ export class LeafletMapController {
             }).addTo(this.locationLayer)
           : L.circleMarker([point.lat, point.lng], {
               radius: 8,
-              fillColor: '#2476ea',
+              fillColor: '#4338ca',
               fillOpacity: 1,
               color: '#fff',
               weight: 3,
@@ -426,8 +641,74 @@ export class LeafletMapController {
     });
   }
 
+  /**
+   * Zoom vừa các điểm trong phần bản đồ còn nhìn thấy: chừa chỗ cho thanh trên (đo thực tế), bảng
+   * trái (desktop/tablet, rộng 360-400px) hoặc bảng kéo ở đáy (mobile) và cụm nút nổi bên phải.
+   */
   private fit(points: L.LatLngExpression[]) {
-    this.map.fitBounds(L.latLngBounds(points).pad(0.18), { padding: [70, 70], maxZoom: 15 });
+    this.lastFitPoints = points;
+    const container = this.map.getContainer();
+    const { clientWidth, clientHeight } = container;
+    const wide = clientWidth >= 768;
+    const header = container.parentElement?.querySelector('header');
+    const headerBottom = header ? header.getBoundingClientRect().bottom - container.getBoundingClientRect().top : 0;
+    const top = Math.max(wide ? 100 : 64, Math.round(headerBottom) + 12);
+    let left: number;
+    let right: number;
+    let bottom: number;
+    if (wide) {
+      left = this.fitInsets ? this.fitInsets.left + 24 : clientWidth >= 1024 ? 510 : 460;
+      right = 90;
+      bottom = 80;
+    } else {
+      left = 28;
+      right = 68; // cụm nút định vị / Việt Nam nằm sát mép phải
+      bottom = (this.fitInsets ? this.fitInsets.bottom : 0) + 56; // chừa chỗ cho nút Lớp và cụm nút nổi
+      // Bảng quá cao (nấc đầy): vẫn giữ tối thiểu một dải bản đồ để thấy tuyến.
+      bottom = Math.min(bottom, Math.max(48, clientHeight - top - 140));
+    }
+    const tooSmall = clientWidth - left - right < 200 || clientHeight - top - bottom < 140;
+    this.map.fitBounds(L.latLngBounds(points), {
+      ...(tooSmall
+        ? { padding: [70, 70] }
+        : { paddingTopLeft: [left, top], paddingBottomRight: [right, bottom] }),
+      maxZoom: 15,
+    });
+  }
+
+  /** Marker POI theo danh mục; chỉ vẽ lại khi danh sách đổi, còn làm nổi bật thì chỉ đổi class. */
+  private setPoiMarkers(pois: Poi[], highlightedId: string | null) {
+    if (pois !== this.lastPois) {
+      this.lastPois = pois;
+      this.poiLayer.clearLayers();
+      this.poiMarkers.clear();
+      for (const poi of pois) {
+        const meta = poiMetaFor(poi.category);
+        const marker = L.marker([poi.lat, poi.lng], {
+          icon: L.divIcon({
+            className: 'routetwin-poi-marker',
+            html: `<span style="--marker-color:${meta.color}">${iconSvg(meta.icon, 16)}</span>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 36],
+          }),
+          keyboard: false,
+        });
+        marker.bindTooltip(this.textElement('span', poi.name), {
+          direction: 'top',
+          offset: [0, -30],
+          className: 'routetwin-tooltip',
+        });
+        marker.on('click', (event) => {
+          L.DomEvent.stopPropagation(event);
+          this.handlers.onPoiClick?.(poi.id);
+        });
+        marker.addTo(this.poiLayer);
+        this.poiMarkers.set(poi.id, marker);
+      }
+    }
+    for (const [id, marker] of this.poiMarkers) {
+      marker.getElement()?.classList.toggle('is-highlighted', id === highlightedId);
+    }
   }
 
   /** Marker sự cố: màu theo mức độ; hiện số người xác nhận khi có từ 2 người trở lên, nếu không thì "!". */

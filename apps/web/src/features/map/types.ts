@@ -1,9 +1,9 @@
-import type { RouteInstruction } from '@routetwin/shared';
+import type { RouteCongestion, RouteInstruction, RouteVariant } from '@routetwin/shared';
 import type { Place } from '../places/types';
 
-/** Các panel chức năng mở được từ thanh FeatureNav (và panel chi tiết địa điểm). */
-export type FeatureKey = 'directions' | 'multi' | 'traffic' | 'saved' | 'place' | 'assistant';
-/** 'dark' là nền bản đồ tối (tự bật theo giờ trên mobile, xem useTimeBasedMapLayer). */
+/** Các panel chức năng mở được từ dock (cùng panel chi tiết địa điểm và kết quả POI). */
+export type FeatureKey = 'directions' | 'multi' | 'traffic' | 'saved' | 'place' | 'assistant' | 'poi';
+/** 'dark' là nền bản đồ tối, tự bật từ 18:00 đến 06:00 (xem useTimeBasedMapLayer). */
 export type MapLayer = 'street' | 'satellite' | 'dark';
 export type TransportMode = 'car' | 'motorcycle';
 export type RouteObjective = 'time' | 'distance';
@@ -32,6 +32,10 @@ export type RoutePlan = {
   vehicle: TransportMode;
   objective: RouteObjective;
   tollCostVnd?: number;
+  /** Mức ùn tắc theo đoạn từ VietMap (chỉ khi tuyến 2 điểm); chỉ số khớp `legs[0].points`. */
+  congestion?: RouteCongestion;
+  /** Vì sao phương án này tồn tại (tuyến mặc định hay tránh trạm thu phí/cao tốc/phà). */
+  variant?: RouteVariant;
   /** Chỉ có khi hành trình nhiều điểm đã được sắp xếp lại thứ tự. */
   optimization?: RouteOptimization;
 };
@@ -57,3 +61,6 @@ export type AlgorithmOverlay = {
   paths: { algorithm: 'dijkstra' | 'astar'; points: Coordinate[] }[];
   coverage: Bounds | null;
 };
+
+/** Công tắc các lớp phủ trên bản đồ. */
+export type MapOverlays = { traffic: boolean; incidents: boolean; terrain: boolean };

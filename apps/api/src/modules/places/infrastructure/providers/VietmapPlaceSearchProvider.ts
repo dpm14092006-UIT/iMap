@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import type { PlaceSuggestion } from '@routetwin/shared';
 import type { GeoFocus, PlaceSearchProvider } from '../../application/ports/PlaceSearchProvider.js';
-import { AppError } from '../../../../shared/errors/AppError.js';
+import {
+  invalidPlaceResponse,
+  requestVietmapPlaces,
+  type VietmapPlaceEndpoint,
+} from './vietmapPlaceRequest.js';
 
 const suggestionSchema = z.object({
   ref_id: z.string().min(1),
@@ -116,37 +120,10 @@ export class VietmapPlaceSearchProvider implements PlaceSearchProvider {
   }
 
   private invalidResponse() {
-    return new AppError(
-      502,
-      'PLACE_SEARCH_INVALID_RESPONSE',
-      'VietMap trả về dữ liệu địa điểm không hợp lệ.',
-    );
+    return invalidPlaceResponse();
   }
 
-  private async request(
-    endpoint: 'autocomplete' | 'search' | 'place' | 'reverse',
-    params: Record<string, string>,
-  ): Promise<unknown> {
-    if (!this.apiKey)
-      throw new AppError(503, 'PLACE_SEARCH_NOT_CONFIGURED', 'Chưa cấu hình VietMap Search ở máy chủ.');
-    const url = new URL(`https://maps.vietmap.vn/api/${endpoint}/v4`);
-    url.search = new URLSearchParams({ ...params, apikey: this.apiKey }).toString();
-    let response: Response;
-    try {
-      response = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    } catch {
-      throw new AppError(502, 'PLACE_SEARCH_UNAVAILABLE', 'Không kết nối được VietMap Search. Hãy thử lại.');
-    }
-    if (response.status === 401 || response.status === 403)
-      throw new AppError(502, 'PLACE_SEARCH_AUTH', 'Key VietMap chưa được cấp quyền tìm địa điểm.');
-    if (response.status === 429 || response.status === 423)
-      throw new AppError(429, 'PLACE_SEARCH_QUOTA', 'VietMap Search đã đạt hạn mức hoặc chưa được bật.');
-    if (!response.ok)
-      throw new AppError(502, 'PLACE_SEARCH_UNAVAILABLE', 'VietMap Search đang bận. Hãy thử lại.');
-    try {
-      return await response.json();
-    } catch {
-      throw this.invalidResponse();
-    }
+  private request(endpoint: VietmapPlaceEndpoint, params: Record<string, string>): Promise<unknown> {
+    return requestVietmapPlaces(this.apiKey, endpoint, params);
   }
 }

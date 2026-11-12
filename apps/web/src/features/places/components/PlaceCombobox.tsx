@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type Ref } from 'react';
 import { Icon, type IconName } from '../../../shared/components/Icon';
 import { MIN_QUERY_LENGTH, usePlaceSearch } from '../hooks/usePlaceSearch';
 import { placeApi } from '../api/placeApi';
@@ -36,6 +36,8 @@ type PlaceComboboxProps = {
   inputClassName?: string;
   ariaLabel: string;
   maxSuggestions?: number;
+  /** Để nơi dùng focus ô nhập bằng phím tắt. */
+  inputRef?: Ref<HTMLInputElement>;
 };
 
 /**
@@ -54,6 +56,7 @@ export function PlaceCombobox({
   inputClassName = '',
   ariaLabel,
   maxSuggestions = 6,
+  inputRef,
 }: PlaceComboboxProps) {
   const listId = useId();
   const [open, setOpen] = useState(false);
@@ -151,17 +154,18 @@ export function PlaceCombobox({
         <Icon
           name={icon}
           size={18}
-          className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-400 dark:text-slate-500"
         />
       )}
       <input
+        ref={inputRef}
         aria-label={ariaLabel}
         aria-autocomplete="list"
         aria-controls={listId}
         aria-expanded={showList && matches.length > 0}
         aria-activedescendant={showList && matches[activeIndex] ? `${listId}-${activeIndex}` : undefined}
         autoComplete="off"
-        className={`h-12 w-full rounded-xl border border-slate-200 bg-slate-50/80 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100 ${icon ? 'pl-10' : 'pl-3'} pr-3 ${inputClassName}`}
+        className={`h-12 w-full rounded-xl border border-slate-200 bg-slate-50/80 text-sm text-slate-800 outline-none transition placeholder:text-slate-500 hover:border-slate-300 dark:hover:border-white/20 focus:border-brand-500 dark:focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-brand-100 dark:border-white/15 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-slate-800 dark:focus:ring-brand-500/30 ${icon ? 'pl-10' : 'pl-3'} pr-3 ${inputClassName}`}
         onChange={(event) => {
           selectionRef.current?.abort();
           setResolving(false);
@@ -181,14 +185,14 @@ export function PlaceCombobox({
         value={value}
       />
       {selectionError && (
-        <p role="alert" className="mt-1 text-xs text-amber-800">
+        <p role="alert" className="mt-1 text-xs text-amber-800 dark:text-amber-200">
           {selectionError}
         </p>
       )}
       {showList && (
-        <div className="absolute left-0 right-0 top-[calc(100%+7px)] z-[80] overflow-hidden rounded-2xl border border-slate-100 bg-white p-1.5 shadow-float">
+        <div className="absolute left-0 right-0 top-[calc(100%+7px)] z-[80] overflow-hidden rounded-2xl border border-slate-100 bg-white p-1.5 shadow-float dark:shadow-float-dark dark:border-white/10 dark:bg-slate-800">
           <div
-            className="mb-1 flex gap-1 border-b border-slate-100 p-1"
+            className="mb-1 flex gap-1 border-b border-slate-100 dark:border-white/10 p-1"
             role="group"
             aria-label="Loại tìm kiếm"
           >
@@ -204,7 +208,7 @@ export function PlaceCombobox({
                   setSearchKind(kind);
                   setActiveIndex(0);
                 }}
-                className={`rounded-lg px-3 py-1.5 text-[11px] ${searchKind === kind ? 'bg-brand-50 font-semibold text-brand-700' : 'text-slate-500'}`}
+                className={`rounded-lg px-3 py-1.5 text-[11px] ${searchKind === kind ? 'bg-brand-50 font-semibold text-brand-700 dark:bg-brand-500/20 dark:text-brand-200' : 'text-slate-500 dark:text-slate-400'}`}
               >
                 {kind === 'all' ? 'Tất cả' : 'Tên đường'}
               </button>
@@ -217,7 +221,7 @@ export function PlaceCombobox({
                   key={place.id}
                   id={`${listId}-${index}`}
                   type="button"
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-slate-50 focus:outline-none ${index === activeIndex ? 'bg-slate-50' : ''}`}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-slate-50 focus:outline-none dark:hover:bg-white/10 ${index === activeIndex ? 'bg-slate-50 dark:bg-white/10' : ''}`}
                   onMouseDown={(event) => event.preventDefault()} // giữ focus ở input khi click
                   onMouseEnter={() => setActiveIndex(index)}
                   onClick={() => {
@@ -227,19 +231,21 @@ export function PlaceCombobox({
                   role="option"
                   aria-selected={index === activeIndex}
                 >
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/20 dark:text-brand-200">
                     <Icon name="pin" size={17} />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-semibold text-ink">{place.name}</span>
-                    <span className="mt-0.5 block text-[11px] text-slate-500">{place.address}</span>
+                    <span className="block truncate text-[13px] font-semibold text-ink dark:text-white">
+                      {place.name}
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">{place.address}</span>
                   </span>
-                  <Icon name="arrow-up-right" size={15} className="shrink-0 text-slate-400" />
+                  <Icon name="arrow-up-right" size={15} className="shrink-0 text-slate-400 dark:text-slate-500" />
                 </button>
               ))}
             </div>
           ) : (
-            <p className="px-3 py-3 text-xs leading-5 text-slate-500">{emptyMessage}</p>
+            <p className="px-3 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">{emptyMessage}</p>
           )}
           {matches.length === 0 && status === 'ready' && /^\d[\dA-Za-z/-]*\s+/.test(value.trim()) && (
             <button
@@ -250,19 +256,19 @@ export function PlaceCombobox({
                 setSearchKind('street');
                 setActiveIndex(0);
               }}
-              className="px-3 pb-3 text-left text-[11px] font-semibold text-brand-700"
+              className="px-3 pb-3 text-left text-[11px] font-semibold text-brand-700 dark:text-indigo-300"
             >
               Tìm tên đường, bỏ số nhà
             </button>
           )}
           {status === 'error' && matches.length > 0 && (
-            <p role="alert" className="px-3 py-2 text-xs text-amber-800">
+            <p role="alert" className="px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
               {emptyMessage}
             </p>
           )}
           <div
             role="status"
-            className="border-t border-slate-100 px-3 py-2 text-[10px] font-medium text-slate-400"
+            className="border-t border-slate-100 dark:border-white/10 px-3 py-2 text-[11px] font-medium text-slate-400 dark:text-slate-500"
           >
             {resolving
               ? 'Đang lấy tọa độ địa điểm…'

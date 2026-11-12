@@ -71,6 +71,8 @@ Frontend chia theo feature (`map`, `places`, `navigation`, `multi-stop`, `my-rou
 | `GET /api/places/suggest` | N1 | VietMap Autocomplete v4; gợi ý chưa có tọa độ |
 | `GET /api/places/details?id=...` | N1 | VietMap Place v4; chỉ gọi khi chọn một gợi ý |
 | `GET /api/places/reverse` | N1 | VietMap reverse geocoding (tọa độ → địa chỉ) |
+| `POST /api/places/along-route` | N1 | Địa điểm thật dọc tuyến (VietMap Autocomplete + Place v4, khử trùng, tính đi vòng) |
+| `GET /api/places/nearby` | N1 | Địa điểm thật quanh một tâm theo từ khóa hoặc danh mục |
 | `POST /api/routes/calculate` | N1 | VietMap Route v4; cần `VIETMAP_API_KEY` |
 | `POST /api/routes/algorithm` | N1 | Dijkstra / A* trên đồ thị OSM trung tâm TP.HCM |
 | `GET /api/routes/algorithm/graph` | N1 | Vùng phủ + kích thước đồ thị OSM |

@@ -13,7 +13,7 @@
     sans-serif;
   font-synthesis: none;
   color: #172b43;
-  background: #e9efe3;
+  background: #e8ece7;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -45,13 +45,26 @@ button {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
-select:focus-visible {
-  outline: 3px solid rgba(49, 118, 232, 0.35);
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid rgba(99, 102, 241, 0.45);
   outline-offset: 2px;
 }
 ::selection {
-  background: #dbeafe;
-  color: #1f51ad;
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+/* Chiều cao thanh tab đáy (chỉ có trên mobile) và vùng đáy bị bảng kéo chiếm. */
+main {
+  --tab-h: 0px;
+  --sheet-h: 0px;
+  --shell-bottom: calc(var(--tab-h) + var(--sheet-h));
+}
+@media (max-width: 767px) {
+  main {
+    --tab-h: calc(64px + env(safe-area-inset-bottom));
+  }
 }
 
 .routetwin-leaflet {
@@ -62,10 +75,21 @@ select:focus-visible {
   border-radius: 5px;
   background: rgba(255, 255, 255, 0.84);
   color: #475569;
-  font-size: 9px;
+  font-size: 10px;
+}
+/* Điều khiển góc dưới của Leaflet luôn nằm phía trên thanh tab / bảng kéo. */
+.routetwin-leaflet .leaflet-bottom {
+  bottom: var(--shell-bottom, 0px);
+  transition: bottom 180ms ease-out;
+}
+.routetwin-leaflet .leaflet-control-scale-line {
+  border-color: #475569;
+  background: rgba(255, 255, 255, 0.8);
+  color: #334155;
+  font-size: 10px;
 }
 .routetwin-leaflet .leaflet-control-attribution a {
-  color: #315d8a;
+  color: #4338ca;
 }
 .routetwin-leaflet .leaflet-tile {
   filter: saturate(0.92);
@@ -81,7 +105,12 @@ select:focus-visible {
   background: rgb(15 23 42 / 82%);
 }
 .routetwin-leaflet.map-theme-dark .leaflet-control-attribution a {
-  color: #93c5fd;
+  color: #a5b4fc;
+}
+.routetwin-leaflet.map-theme-dark .leaflet-control-scale-line {
+  border-color: #94a3b8;
+  background: rgb(15 23 42 / 70%);
+  color: #cbd5e1;
 }
 .routetwin-tooltip {
   border: 0;
@@ -127,10 +156,10 @@ select:focus-visible {
 .routetwin-navigation-marker::before {
   position: absolute;
   inset: 4px;
-  border: 1px solid rgba(36, 118, 234, 0.18);
+  border: 1px solid rgba(79, 70, 229, 0.22);
   border-radius: 50%;
-  background: rgba(36, 118, 234, 0.16);
-  box-shadow: 0 2px 12px rgba(36, 100, 210, 0.18);
+  background: rgba(79, 70, 229, 0.16);
+  box-shadow: 0 2px 12px rgba(67, 56, 202, 0.2);
   content: '';
 }
 .routetwin-navigation-marker svg {
@@ -144,7 +173,7 @@ select:focus-visible {
   transition: transform 180ms linear;
 }
 .routetwin-navigation-marker path {
-  fill: #2476ea;
+  fill: #4338ca;
   stroke: #fff;
   stroke-linejoin: round;
   stroke-width: 3px;
@@ -176,14 +205,14 @@ select:focus-visible {
 .route-connector {
   position: absolute;
   z-index: 0;
-  left: 4px;
-  top: 12px;
-  bottom: 12px;
-  border-left: 1.5px dashed #c3d1dc;
+  left: 15px;
+  top: 28px;
+  bottom: 28px;
+  border-left: 2px dotted #a5b4fc;
 }
 .panel-scroll {
   overscroll-behavior: contain;
-  scrollbar-color: #d7dee7 transparent;
+  scrollbar-color: #cbd5e1 transparent;
   scrollbar-width: thin;
 }
 .panel-scroll::-webkit-scrollbar {
@@ -191,7 +220,7 @@ select:focus-visible {
 }
 .panel-scroll::-webkit-scrollbar-thumb {
   border-radius: 99px;
-  background: #d7dee7;
+  background: #cbd5e1;
 }
 .panel-scroll::-webkit-scrollbar-track {
   background: transparent;
@@ -199,10 +228,6 @@ select:focus-visible {
 .toast-message {
   max-width: calc(100vw - 24px);
   animation: toast-in 0.18s ease-out;
-}
-.map-controls button:focus-visible {
-  position: relative;
-  z-index: 1;
 }
 
 @keyframes toast-in {
@@ -216,20 +241,157 @@ select:focus-visible {
   }
 }
 
-@media (max-width: 767px) {
-  .feature-nav {
-    mask-image: linear-gradient(90deg, #000 0%, #000 92%, transparent 100%);
-  }
-  .floating-panel {
-    border-left: 0;
-    border-right: 0;
-    border-bottom: 0;
-    box-shadow: 0 -14px 36px rgba(25, 42, 69, 0.12);
-  }
-  .route-intro,
-  .route-note {
-    display: none;
-  }
+/* Marker địa điểm (POI) theo danh mục. */
+.routetwin-poi-marker {
+  border: 0;
+  background: transparent;
+}
+.routetwin-poi-marker span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 2.5px solid white;
+  border-radius: 50% 50% 50% 8px;
+  background: var(--marker-color);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.34);
+  color: white;
+  transform: rotate(-45deg) scale(1);
+  transition: transform 140ms ease-out;
+}
+.routetwin-poi-marker span svg {
+  transform: rotate(45deg);
+}
+.routetwin-poi-marker.is-highlighted {
+  z-index: 900 !important;
+}
+.routetwin-poi-marker.is-highlighted span {
+  transform: rotate(-45deg) scale(1.3);
+  box-shadow:
+    0 0 0 4px rgba(99, 102, 241, 0.35),
+    0 4px 12px rgba(15, 23, 42, 0.4);
+}
+/* Nhãn thời gian / quãng đường đặt giữa mỗi tuyến. */
+.routetwin-route-label-wrap {
+  border: 0;
+  background: transparent;
+}
+.routetwin-route-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px 4px 7px;
+  border: 0;
+  border-radius: 999px;
+  background: white;
+  box-shadow:
+    0 2px 10px rgba(30, 27, 75, 0.28),
+    0 0 0 1px rgba(30, 27, 75, 0.08);
+  color: #312e81;
+  font:
+    700 12px Inter,
+    system-ui,
+    sans-serif;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+.routetwin-route-label.is-selected {
+  background: linear-gradient(135deg, #4338ca, #0d9488);
+  color: white;
+  z-index: 2;
+}
+.routetwin-route-label.is-compact {
+  gap: 4px;
+  padding: 3px 8px 3px 6px;
+  font-size: 12px;
+}
+.routetwin-route-dot {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1.5px white;
+}
+.routetwin-route-label small {
+  font-weight: 600;
+  font-size: 11px;
+  opacity: 0.8;
+}
+.routetwin-route-label svg {
+  flex: none;
+}
+
+/* Chế độ tối cho phần tử Leaflet (nằm ngoài React nên dùng tổ tiên `.dark`). */
+.dark {
+  color: #f1f5f9;
+  color-scheme: dark;
+}
+.dark ::selection {
+  background: rgb(99 102 241 / 45%);
+  color: #f1f5f9;
+}
+.dark .routetwin-tooltip,
+.dark .leaflet-tooltip {
+  background: rgb(15 23 42 / 96%);
+  box-shadow: 0 2px 12px rgb(0 0 0 / 50%);
+  color: #e2e8f0;
+}
+.dark .leaflet-tooltip-top::before,
+.dark .leaflet-tooltip-bottom::before,
+.dark .leaflet-tooltip-left::before,
+.dark .leaflet-tooltip-right::before {
+  border-top-color: rgb(15 23 42 / 96%);
+  border-bottom-color: rgb(15 23 42 / 96%);
+  border-left-color: rgb(15 23 42 / 96%);
+  border-right-color: rgb(15 23 42 / 96%);
+}
+.dark .routetwin-tooltip::before {
+  display: none;
+}
+.dark .leaflet-popup-content-wrapper,
+.dark .leaflet-popup-tip {
+  background: #1e293b;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 55%);
+  color: #e2e8f0;
+}
+.dark .leaflet-popup-close-button {
+  color: #94a3b8;
+}
+.dark .leaflet-popup-close-button:hover {
+  color: #f1f5f9;
+}
+.dark .routetwin-route-label {
+  background: #1e293b;
+  box-shadow:
+    0 2px 10px rgb(0 0 0 / 55%),
+    0 0 0 1px rgb(255 255 255 / 12%);
+  color: #c7d2fe;
+}
+.dark .routetwin-route-label.is-selected {
+  background: linear-gradient(135deg, #4338ca, #0d9488);
+  color: white;
+}
+.dark .routetwin-route-dot {
+  box-shadow: 0 0 0 1.5px #1e293b;
+}
+.dark .routetwin-route-label.is-selected .routetwin-route-dot {
+  box-shadow: 0 0 0 1.5px rgb(255 255 255 / 85%);
+}
+.dark .route-connector {
+  border-left-color: rgb(165 180 252 / 45%);
+}
+.dark .routetwin-route-marker span,
+.dark .routetwin-poi-marker span,
+.dark .routetwin-incident-marker {
+  border-color: #e2e8f0;
+}
+.dark .routetwin-navigation-marker path {
+  fill: #818cf8;
+  stroke: #0f172a;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -241,4 +403,17 @@ select:focus-visible {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+.dark .panel-scroll {
+  scrollbar-color: #475569 transparent;
+}
+.dark .panel-scroll::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { MapLayer } from '../types';
 
+/** Tối từ 18:00 đến 06:00 sáng hôm sau (giờ địa phương của trình duyệt). */
 export function scheduledMapLayer(now = new Date()): 'street' | 'dark' {
   return now.getHours() >= 18 || now.getHours() < 6 ? 'dark' : 'street';
 }
@@ -16,18 +17,13 @@ export function nextMapThemeChange(now: Date): Date {
   return next;
 }
 
-/** Browser local time; re-sync when returning from sleep or a background tab. */
+/**
+ * Giao diện tối tự động theo giờ trên mọi kích thước màn hình; đồng bộ lại khi máy thức dậy
+ * hoặc tab quay lại. Vệ tinh giữ ảnh vệ tinh nhưng phần giao diện vẫn theo lịch.
+ */
 export function useTimeBasedMapLayer() {
-  const [mobile, setMobile] = useState(() => window.matchMedia('(max-width: 767px)').matches);
   const [theme, setTheme] = useState(scheduledMapLayer);
   const [satellite, setSatellite] = useState(false);
-  useEffect(() => {
-    const media = window.matchMedia('(max-width: 767px)');
-    const syncViewport = () => setMobile(media.matches);
-    syncViewport();
-    media.addEventListener('change', syncViewport);
-    return () => media.removeEventListener('change', syncViewport);
-  }, []);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
     const sync = () => {
@@ -46,8 +42,8 @@ export function useTimeBasedMapLayer() {
     };
   }, []);
   return {
-    automatic: mobile,
-    layer: satellite ? ('satellite' as const) : mobile ? theme : ('street' as const),
+    isDark: theme === 'dark',
+    layer: satellite ? ('satellite' as const) : theme,
     setLayer: (layer: MapLayer) => setSatellite(layer === 'satellite'),
   };
 }

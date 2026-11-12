@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FloatingPanel } from '../../../app/components/FloatingPanel';
+import { SheetPanel } from '../../../app/layout/SheetPanel';
 import { Icon } from '../../../shared/components/Icon';
 import { popularPlaces } from '../../places/data/popularPlaces';
 import type { RouteObjective, RoutePlan, TransportMode } from '../../map/types';
@@ -25,6 +25,8 @@ type MultiStopPanelProps = {
     algorithm: AlgorithmChoice,
   ) => Promise<RoutePlan | { error: string }>;
   onSave?: (plan: RoutePlan) => void;
+  /** Điểm đi và các điểm cần ghé điền sẵn (App đổi `key` để áp dụng lại). */
+  initialStops?: { start: Place | null; stops: Place[] };
 };
 
 /** Hai điểm coi là trùng nhau khi tọa độ lệch dưới ~0,1 m. */
@@ -42,10 +44,11 @@ export function MultiStopPanel({
   onSave,
   getFocus,
   onReset,
+  initialStops,
 }: MultiStopPanelProps) {
-  const [stops, setStops] = useState<Place[]>([]);
-  const [start, setStart] = useState<Place | null>(null);
-  const [startText, setStartText] = useState('');
+  const [stops, setStops] = useState<Place[]>(initialStops?.stops ?? []);
+  const [start, setStart] = useState<Place | null>(initialStops?.start ?? null);
+  const [startText, setStartText] = useState(initialStops?.start?.name ?? '');
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<TransportMode>('motorcycle');
   const [returnToStart, setReturnToStart] = useState(false);
@@ -123,8 +126,14 @@ export function MultiStopPanel({
   };
 
   return (
-    <FloatingPanel eyebrow="LẬP KẾ HOẠCH" title="Hành trình nhiều điểm" icon="multi-stop" onClose={onClose}>
-      <p className="mb-4 text-[12px] leading-5 text-slate-500">
+    <SheetPanel
+      eyebrow="LẬP KẾ HOẠCH"
+      title="Hành trình nhiều điểm"
+      icon="multi-stop"
+      onClose={onClose}
+      hidden={!isActive}
+    >
+      <p className="mb-4 text-[12px] leading-5 text-slate-500 dark:text-slate-400">
         Chọn các điểm cần ghé. Tự sắp xếp thứ tự tốt nhất theo thời gian hoặc quãng đường, giữ cố định điểm
         xuất phát.
       </p>
@@ -133,20 +142,20 @@ export function MultiStopPanel({
           <button
             type="button"
             onClick={reset}
-            className="mb-3 text-[10px] font-semibold text-slate-500 underline"
+            className="mb-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 underline"
           >
             Xóa hành trình
           </button>
         )}
-        <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-[.09em] text-slate-500">
+        <div className="mb-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/60 p-3">
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[.09em] text-slate-500 dark:text-slate-400">
             Điểm xuất phát
           </p>
           <PlaceCombobox
             ariaLabel="Điểm xuất phát hành trình nhiều điểm"
             className="w-full"
             icon="current-location"
-            inputClassName="h-10 bg-white"
+            inputClassName="h-10 bg-white dark:bg-slate-800"
             getFocus={getFocus}
             onChange={(value) => {
               setStartText(value);
@@ -162,7 +171,7 @@ export function MultiStopPanel({
 
         <div className="mb-4 grid grid-cols-2 gap-3">
           <label className="min-w-0">
-            <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[.08em] text-slate-500">
+            <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[.08em] text-slate-500 dark:text-slate-400">
               Phương tiện
             </span>
             <select
@@ -171,14 +180,14 @@ export function MultiStopPanel({
                 setMode(event.target.value as TransportMode);
                 setPlan(null);
               }}
-              className="h-10 w-full rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-ink outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+              className="h-10 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/60 px-2.5 text-xs font-semibold text-ink dark:text-slate-100 outline-none focus:border-brand-500 dark:focus:border-indigo-400 focus:ring-4 focus:ring-brand-100 dark:focus:ring-indigo-400/25"
             >
               <option value="motorcycle">Xe máy</option>
               <option value="car">Ô tô</option>
             </select>
           </label>
           <label className="min-w-0">
-            <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[.08em] text-slate-500">
+            <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[.08em] text-slate-500 dark:text-slate-400">
               Ưu tiên
             </span>
             <select
@@ -187,7 +196,7 @@ export function MultiStopPanel({
                 setObjective(event.target.value as RouteObjective);
                 setPlan(null);
               }}
-              className="h-10 w-full rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-ink outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+              className="h-10 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/60 px-2.5 text-xs font-semibold text-ink dark:text-slate-100 outline-none focus:border-brand-500 dark:focus:border-indigo-400 focus:ring-4 focus:ring-brand-100 dark:focus:ring-indigo-400/25"
             >
               <option value="time">Thời gian</option>
               <option value="distance">Quãng đường</option>
@@ -196,7 +205,7 @@ export function MultiStopPanel({
         </div>
 
         <label className="mb-3 block">
-          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[.08em] text-slate-500">
+          <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[.08em] text-slate-500 dark:text-slate-400">
             Thuật toán sắp xếp
           </span>
           <select
@@ -205,7 +214,7 @@ export function MultiStopPanel({
               setAlgorithm(event.target.value as AlgorithmChoice);
               setPlan(null);
             }}
-            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-ink outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+            className="h-10 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/60 px-2.5 text-xs font-semibold text-ink dark:text-slate-100 outline-none focus:border-brand-500 dark:focus:border-indigo-400 focus:ring-4 focus:ring-brand-100 dark:focus:ring-indigo-400/25"
           >
             {algorithmOptions.map((option) => (
               <option key={option.id} value={option.id}>
@@ -213,11 +222,11 @@ export function MultiStopPanel({
               </option>
             ))}
           </select>
-          <span className="mt-1 block text-[10px] leading-4 text-slate-500">
+          <span className="mt-1 block text-[11px] leading-4 text-slate-500 dark:text-slate-400">
             Tự động/Chính xác: Held–Karp, luôn ra thứ tự tối ưu. Nhanh: NN + 2-opt, gần đúng để so sánh.
           </span>
         </label>
-        <label className="mb-4 flex cursor-pointer items-center gap-2 text-[11px] font-medium text-slate-600">
+        <label className="mb-4 flex cursor-pointer items-center gap-2 text-[11px] font-medium text-slate-600 dark:text-slate-300">
           <input
             type="checkbox"
             checked={returnToStart}
@@ -225,13 +234,13 @@ export function MultiStopPanel({
               setReturnToStart(event.target.checked);
               setPlan(null);
             }}
-            className="h-3.5 w-3.5 accent-brand-600"
+            className="h-3.5 w-3.5 accent-brand-600 dark:accent-indigo-400"
           />
           Quay lại điểm xuất phát
         </label>
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-[12px] font-bold text-ink">Điểm cần ghé</p>
-          <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500">
+          <p className="text-[12px] font-bold text-ink dark:text-slate-100">Điểm cần ghé</p>
+          <span className="rounded-full bg-slate-100 dark:bg-slate-700/50 px-2 py-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
             {stops.length}/{MAX_STOPS}
           </span>
         </div>
@@ -239,16 +248,16 @@ export function MultiStopPanel({
           {stops.map((place, index) => (
             <li
               key={place.id}
-              className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-3 py-2.5"
+              className="flex items-center gap-2.5 rounded-xl border border-slate-100 dark:border-white/10 bg-white dark:bg-slate-800/60 px-3 py-2.5"
             >
               <span
-                className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-bold ${index === 0 ? 'bg-brand-50 text-brand-700' : 'bg-slate-100 text-slate-600'}`}
+                className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-[11px] font-bold ${index === 0 ? 'bg-brand-50 dark:bg-indigo-400/10 text-brand-700 dark:text-indigo-300' : 'bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300'}`}
               >
                 {String(index + 1).padStart(2, '0')}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[12px] font-semibold text-ink">{place.name}</span>
-                <span className="mt-0.5 block text-[10px] text-slate-500">{place.address}</span>
+                <span className="block truncate text-[12px] font-semibold text-ink dark:text-slate-100">{place.name}</span>
+                <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">{place.address}</span>
               </span>
               <button
                 type="button"
@@ -256,7 +265,7 @@ export function MultiStopPanel({
                   setStops((current) => current.filter((stop) => stop.id !== place.id));
                   setPlan(null);
                 }}
-                className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 dark:text-slate-500 transition hover:bg-red-50 dark:hover:bg-red-500/15 hover:text-red-600 dark:hover:text-red-300"
                 aria-label={`Xóa ${place.name}`}
               >
                 <Icon name="close" size={16} />
@@ -270,7 +279,7 @@ export function MultiStopPanel({
             ariaLabel="Tìm điểm dừng để thêm"
             className="w-full"
             icon="plus"
-            inputClassName="h-[44px] bg-white"
+            inputClassName="h-[44px] bg-white dark:bg-slate-800"
             onChange={setQuery}
             onSelect={addStop}
             places={popularPlaces.filter((place) => !stops.some((stop) => stop.id === place.id))}
@@ -278,12 +287,12 @@ export function MultiStopPanel({
             value={query}
           />
         </div>
-        <div className="sticky bottom-0 z-20 -mx-5 bg-gradient-to-t from-white via-white/95 to-transparent px-5 pb-1 pt-3">
+        <div className="sticky bottom-0 z-20 -mx-5 bg-gradient-to-t from-white dark:from-slate-900 via-white/95 dark:via-slate-900/95 to-transparent px-5 pb-1 pt-3">
           <button
             type="button"
             onClick={() => void optimize()}
             disabled={isLoading || !start || stops.length < 1 || exactTooMany}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 text-xs font-bold text-white shadow-md shadow-brand-600/20 transition hover:bg-brand-700 disabled:bg-slate-300 disabled:shadow-none"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 text-xs font-bold text-white shadow-md shadow-brand-600/20 transition hover:bg-brand-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 dark:disabled:text-slate-400 disabled:shadow-none"
           >
             {isLoading ? (
               <span
@@ -299,7 +308,7 @@ export function MultiStopPanel({
       </fieldset>
       {exactTooMany && (
         <p
-          className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] leading-5 text-amber-900"
+          className="mt-3 rounded-xl border border-amber-200 dark:border-amber-300/20 bg-amber-50 dark:bg-amber-400/10 px-3 py-2.5 text-[11px] leading-5 text-amber-900 dark:text-amber-100"
           role="alert"
         >
           Thuật toán chính xác chỉ hỗ trợ tối đa {MAX_EXACT_STOPS} điểm ghé. Hãy chọn "Tự động" hoặc "Nhanh".
@@ -307,18 +316,18 @@ export function MultiStopPanel({
       )}
       {error && (
         <p
-          className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] leading-5 text-amber-900"
+          className="mt-3 rounded-xl border border-amber-200 dark:border-amber-300/20 bg-amber-50 dark:bg-amber-400/10 px-3 py-2.5 text-[11px] leading-5 text-amber-900 dark:text-amber-100"
           role="alert"
         >
           {error}
         </p>
       )}
       {plan && (
-        <div className="mt-3 rounded-xl border border-brand-100 bg-brand-50/70 px-3 py-3" role="status">
+        <div className="mt-3 rounded-xl border border-brand-100 dark:border-indigo-300/20 bg-brand-50/70 dark:bg-indigo-400/10 px-3 py-3" role="status">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-bold text-brand-800">Đã sắp xếp hành trình</p>
-              <p className="mt-1 text-[10px] text-brand-800/80">
+              <p className="text-[11px] font-bold text-brand-800 dark:text-indigo-300">Đã sắp xếp hành trình</p>
+              <p className="mt-1 text-[11px] text-brand-800/80 dark:text-indigo-300/80">
                 {plan.distanceKm.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} km ·{' '}
                 {Math.round(plan.durationMin)} phút
               </p>
@@ -326,7 +335,7 @@ export function MultiStopPanel({
             <button
               type="button"
               onClick={() => onSave?.(plan)}
-              className="rounded-lg border border-brand-200 bg-white px-2.5 py-2 text-[10px] font-semibold text-brand-700"
+              className="rounded-lg border border-brand-200 dark:border-indigo-300/25 bg-white dark:bg-slate-800/60 px-2.5 py-2 text-[11px] font-semibold text-brand-700 dark:text-indigo-300"
             >
               Lưu
             </button>
@@ -345,9 +354,9 @@ export function MultiStopPanel({
             {plan.stops.map((place, index) => (
               <li
                 key={`${place.id}-${index}`}
-                className="flex items-center gap-2 text-[10px] font-medium text-slate-700"
+                className="flex items-center gap-2 text-[11px] font-medium text-slate-700 dark:text-slate-200"
               >
-                <span className="grid h-5 w-5 place-items-center rounded-full bg-white text-[9px] font-bold text-brand-700">
+                <span className="grid h-5 w-5 place-items-center rounded-full bg-white dark:bg-slate-800/60 text-[11px] font-bold text-brand-700 dark:text-indigo-300">
                   {index === 0
                     ? 'A'
                     : index === plan.stops.length - 1 && place.id === start?.id
@@ -360,10 +369,10 @@ export function MultiStopPanel({
           </ol>
         </div>
       )}
-      <div className="mt-4 border-t border-slate-100 pt-3 text-[10px] leading-5 text-slate-500">
+      <div className="mt-4 border-t border-slate-100 dark:border-white/10 pt-3 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
         Tối ưu theo chi phí đường bộ VietMap, có xét chiều di chuyển. Để đi theo thứ tự tự chọn, dùng mục Chỉ
         đường.
       </div>
-    </FloatingPanel>
+    </SheetPanel>
   );
 }

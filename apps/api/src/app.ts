@@ -64,7 +64,7 @@ export function createApp(container = createContainer()) {
     }),
   );
   app.use('/api/traffic-reports', createTrafficRouter(container.trafficController));
-  app.use('/api/places', createPlacesRouter(container.placeSearchController));
+  app.use('/api/places', createPlacesRouter(container.placeSearchController, container.poiSearchController));
   app.use('/api/route-stops', createRouteStopsRouter(container.findRouteStops, container.explorePlaces));
   app.use('/api/voice', createVoiceRouter());
   app.use('/api/routes/optimize', createOptimizationRouter(container.optimizationController));
