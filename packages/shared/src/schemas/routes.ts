@@ -8,7 +8,7 @@ export const routeRequestSchema = z.object({
   vehicle: z.enum(['car', 'motorcycle']),
   objective: z.enum(['distance', 'duration']).default('duration'),
   alternatives: z.boolean().optional(),
-  avoid: z.array(z.enum(['ferry'])).optional(),
+  avoid: z.array(z.enum(['ferry', 'toll', 'motorway'])).optional(),
 });
 export type RouteRequest = z.infer<typeof routeRequestSchema>;
 export type RouteInstruction = {
@@ -19,13 +19,28 @@ export type RouteInstruction = {
   sign?: number;
   heading?: number;
 };
+/** Vì sao phương án này tồn tại: tuyến mặc định hay tuyến tính với tùy chọn tránh. */
+export const routeVariants = ['default', 'avoid-toll', 'avoid-motorway', 'avoid-ferry'] as const;
+export type RouteVariant = (typeof routeVariants)[number];
+export const congestionLevels = ['low', 'moderate', 'heavy', 'severe', 'unknown'] as const;
+export type CongestionLevel = (typeof congestionLevels)[number];
+/** Một đoạn tuyến có cùng mức ùn tắc; from/to là chỉ số trong `coordinates` (gồm cả hai đầu). */
+export type CongestionSegment = { level: CongestionLevel; from: number; to: number };
+export type RouteCongestion = {
+  segments: CongestionSegment[];
+  /** Tổng chiều dài (mét) các đoạn VietMap báo ùn tắc (congestion_distance). */
+  heavyMeters: number;
+};
 export type RoutePathResult = {
   source: 'vietmap';
+  variant?: RouteVariant;
   distanceMeters: number;
   durationSeconds: number;
   coordinates: [number, number][]; // GeoJSON [lng, lat]
   instructions: RouteInstruction[];
   tollCostVnd?: number;
+  /** Mức giao thông theo đoạn từ VietMap; vắng mặt khi không có dữ liệu (tuyến nhiều điểm, lỗi...). */
+  congestion?: RouteCongestion;
 };
 export type RouteResult = RoutePathResult & {
   /** Các tuyến thay thế mà Route v4 trả về khi alternatives=true. */

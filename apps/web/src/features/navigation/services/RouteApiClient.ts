@@ -177,5 +177,7 @@ export function routePlanFromResult(
     vehicle,
     objective,
     ...(result.tollCostVnd === undefined ? {} : { tollCostVnd: result.tollCostVnd }),
+    ...(result.variant === undefined ? {} : { variant: result.variant }),
+    ...(result.congestion === undefined ? {} : { congestion: result.congestion }),
   };
 }

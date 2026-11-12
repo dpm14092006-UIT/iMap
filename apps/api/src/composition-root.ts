@@ -18,6 +18,11 @@ import { VietmapPlaceSearchProvider } from './modules/places/infrastructure/prov
 import { SearchPlacesUseCase } from './modules/places/application/use-cases/SearchPlacesUseCase.js';
 import { ReverseGeocodeUseCase } from './modules/places/application/use-cases/ReverseGeocodeUseCase.js';
 import { PlaceSearchController } from './modules/places/presentation/PlaceSearchController.js';
+import { VietmapPoiSearchProvider } from './modules/places/infrastructure/providers/VietmapPoiSearchProvider.js';
+import { CachedPoiSearchProvider } from './modules/places/infrastructure/providers/CachedPoiSearchProvider.js';
+import { SearchPoisAlongRouteUseCase } from './modules/places/application/use-cases/SearchPoisAlongRouteUseCase.js';
+import { SearchPoisNearbyUseCase } from './modules/places/application/use-cases/SearchPoisNearbyUseCase.js';
+import { PoiSearchController } from './modules/places/presentation/PoiSearchController.js';
 import { VietmapRouteProvider } from './modules/navigation/infrastructure/providers/VietmapRouteProvider.js';
 import { CalculateRouteUseCase } from './modules/navigation/application/use-cases/CalculateRouteUseCase.js';
 import { RouteController } from './modules/navigation/presentation/RouteController.js';
@@ -50,6 +55,11 @@ export function createContainer() {
     new ReverseGeocodeUseCase(placeProvider),
     placeProvider,
   );
+  const poiProvider = new CachedPoiSearchProvider(new VietmapPoiSearchProvider(env.VIETMAP_API_KEY));
+  const poiSearchController = new PoiSearchController(
+    new SearchPoisAlongRouteUseCase(poiProvider),
+    new SearchPoisNearbyUseCase(poiProvider),
+  );
   const routeProvider = new VietmapRouteProvider(env.VIETMAP_API_KEY);
   // Tối ưu nhiều điểm: Held–Karp (chính xác, mặc định) hoặc NN + 2-opt (gần đúng, để so sánh).
   const optimizationController = new OptimizationController(
@@ -79,6 +89,7 @@ export function createContainer() {
     optimizationController,
     trafficController,
     placeSearchController,
+    poiSearchController,
     routeController,
     findRouteStops,
     explorePlaces,

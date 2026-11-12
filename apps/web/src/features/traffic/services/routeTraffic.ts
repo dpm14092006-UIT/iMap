@@ -1,4 +1,5 @@
 import type { RoutePlan, Coordinate } from '../../map/types';
+import type { TrafficMapLayer, TrafficSeverity } from '../../map/layers/trafficMapLayer';
 import type { LatLng } from '../../places/types';
 
 type ClosestRoutePoint = {
@@ -79,6 +80,20 @@ export function shouldNotifyTrafficReportOnRoute(route: RoutePlan, report: Route
     (report.vehicleScope === 'both' || report.vehicleScope === route.vehicle) &&
     distanceToRouteMeters(route, { lat: report.lat, lng: report.lng }) <= ROUTE_ALERT_CORRIDOR_METERS
   );
+}
+
+/** Mức sự cố nặng nhất đang nằm trong hành lang quanh tuyến; null nếu tuyến thông thoáng. */
+export function routeTrafficSeverity(route: RoutePlan, layer: TrafficMapLayer): TrafficSeverity | null {
+  const rank: Record<TrafficSeverity, number> = { low: 0, medium: 1, high: 2 };
+  let worst: TrafficSeverity | null = null;
+  for (const { properties, geometry } of layer.features) {
+    if (properties.status !== 'active') continue;
+    const [lng, lat] = geometry.coordinates;
+    if (typeof lat !== 'number' || typeof lng !== 'number') continue;
+    if (distanceToRouteMeters(route, { lat, lng }) > ROUTE_ALERT_CORRIDOR_METERS) continue;
+    if (worst === null || rank[properties.severity] > rank[worst]) worst = properties.severity;
+  }
+  return worst;
 }
 
 function pointAtDistance(points: Coordinate[], targetDistance: number): Coordinate {

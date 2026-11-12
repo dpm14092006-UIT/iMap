@@ -104,3 +104,93 @@ describe('VietmapRouteProvider', () => {
     ).rejects.toMatchObject({ statusCode: 503, code: 'VIETMAP_NOT_CONFIGURED' });
   });
 });
+
+describe('VietmapRouteProvider avoid', () => {
+  it('gửi nhiều tùy chọn tránh, phân tách bằng dấu phẩy', async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify(vietmapResponse)));
+    vi.stubGlobal('fetch', fetcher);
+    await new VietmapRouteProvider('test-key').calculate({
+      points: [
+        { lat: 10.7721, lng: 106.6983 },
+        { lat: 10.7949, lng: 106.7218 },
+      ],
+      vehicle: 'car',
+      objective: 'duration',
+      avoid: ['toll', 'motorway', 'toll'],
+    });
+    expect(new URL(String(fetcher.mock.calls[0]![0])).searchParams.get('avoid')).toBe('toll,motorway');
+  });
+});
+
+describe('VietmapRouteProvider congestion', () => {
+  const twoPoints = [
+    { lat: 10.7721, lng: 106.6983 },
+    { lat: 10.7949, lng: 106.7218 },
+  ];
+  const withAnnotations = (annotations: unknown) => ({
+    ...vietmapResponse,
+    paths: [{ ...vietmapResponse.paths[0]!, annotations }],
+  });
+  const run = async (body: unknown, points = twoPoints) => {
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify(body)));
+    vi.stubGlobal('fetch', fetcher);
+    const result = await new VietmapRouteProvider('test-key').calculate({
+      points,
+      vehicle: 'car',
+      objective: 'duration',
+    });
+    return { result, params: new URL(String(fetcher.mock.calls[0]![0])).searchParams };
+  };
+
+  it('yêu cầu annotations khi đúng 2 điểm và map sang dạng gọn, chỉ cộng độ dài đoạn ùn/tắc vào heavyMeters, bỏ history_speed', async () => {
+    const { result, params } = await run(
+      withAnnotations({
+        congestion: [
+          { value: 'low', first: 0, last: 1 },
+          { value: 'severe', first: 1, last: 2 },
+          { value: 'weird', first: 2, last: 2 },
+          { value: 'heavy', first: 2, last: 99 }, // vượt số tọa độ -> bỏ
+        ],
+        congestion_distance: [
+          { value: 120.5, first: 0, last: 1 },
+          { value: 300.4, first: 1, last: 2 },
+          { value: 80, first: 2, last: 2 },
+          { value: 900, first: 2, last: 99 },
+        ],
+        history_speed: [{ value: 30, first: 0, last: 1 }],
+      }),
+    );
+    expect(params.get('annotations')).toBe('congestion,congestion_distance');
+    expect(result.congestion).toEqual({
+      segments: [
+        { level: 'low', from: 0, to: 1 },
+        { level: 'severe', from: 1, to: 2 },
+        { level: 'unknown', from: 2, to: 2 },
+      ],
+      heavyMeters: 300, // chỉ cộng đoạn severe/heavy hợp lệ; low không tính
+    });
+    expect(JSON.stringify(result)).not.toContain('history_speed');
+  });
+
+  it('không gửi annotations khi có hơn 2 điểm và bỏ qua congestion', async () => {
+    const { result, params } = await run(
+      withAnnotations({ congestion: [{ value: 'heavy', first: 0, last: 1 }] }),
+      [...twoPoints, { lat: 10.8, lng: 106.7 }],
+    );
+    expect(params.has('annotations')).toBe(false);
+    expect(result.congestion).toBeUndefined();
+  });
+
+  it('vẫn trả tuyến khi thiếu hoặc sai cấu trúc annotations', async () => {
+    for (const body of [
+      vietmapResponse,
+      withAnnotations(null),
+      withAnnotations({ congestion: 'oops' }),
+      withAnnotations({ congestion: [{ value: 'low', first: 'a', last: 1 }] }),
+    ]) {
+      const { result } = await run(body);
+      expect(result.distanceMeters).toBe(5294.8);
+      expect(result.congestion).toBeUndefined();
+    }
+  });
+});

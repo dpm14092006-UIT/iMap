@@ -1,9 +1,10 @@
 import type { TrafficReportBounds } from '@routetwin/shared';
 import { useEffect, useRef, type MutableRefObject } from 'react';
+import type { Poi } from '../../explore/types';
 import type { LatLng } from '../../places/types';
 import type { TrafficMapLayer } from '../layers/trafficMapLayer';
 import { LeafletMapController } from '../services/LeafletMapController';
-import type { AlgorithmOverlay, DraftStops, MapLayer, RoutePlan } from '../types';
+import type { AlgorithmOverlay, DraftStops, MapLayer, MapOverlays, RoutePlan } from '../types';
 
 type MapViewProps = {
   layer: MapLayer;
@@ -20,9 +21,15 @@ type MapViewProps = {
   isPicking: boolean;
   /** Tuyến Dijkstra/A* để so sánh (null nếu chưa chạy). */
   algorithmOverlay: AlgorithmOverlay | null;
+  overlays: MapOverlays;
+  /** Địa điểm đang hiển thị từ chức năng khám phá / tìm dọc tuyến. */
+  pois: Poi[];
+  highlightedPoiId: string | null;
   controllerRef: MutableRefObject<LeafletMapController | null>;
   onMapClick: (point: LatLng) => void;
   onBoundsChange: (bounds: TrafficReportBounds) => void;
+  onSelectRoute: (routeId: string) => void;
+  onPoiClick: (poiId: string) => void;
 };
 
 /** Component React bọc LeafletMapController: tạo bản đồ 1 lần, sau đó chỉ truyền dữ liệu mới. */
@@ -37,14 +44,19 @@ export function MapView({
   isNavigating,
   isPicking,
   algorithmOverlay,
+  overlays,
+  pois,
+  highlightedPoiId,
   controllerRef,
   onMapClick,
   onBoundsChange,
+  onSelectRoute,
+  onPoiClick,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   // Giữ handler mới nhất trong ref để không phải tạo lại bản đồ khi callback đổi.
-  const handlersRef = useRef({ onMapClick, onBoundsChange });
-  handlersRef.current = { onMapClick, onBoundsChange };
+  const handlersRef = useRef({ onMapClick, onBoundsChange, onSelectRoute, onPoiClick });
+  handlersRef.current = { onMapClick, onBoundsChange, onSelectRoute, onPoiClick };
 
   // Tạo bản đồ khi mount, hủy khi unmount.
   useEffect(() => {
@@ -52,6 +64,8 @@ export function MapView({
     const controller = new LeafletMapController(containerRef.current, {
       onBoundsChange: (bounds) => handlersRef.current.onBoundsChange(bounds),
       onMapClick: (point) => handlersRef.current.onMapClick(point),
+      onSelectRoute: (routeId) => handlersRef.current.onSelectRoute(routeId),
+      onPoiClick: (poiId) => handlersRef.current.onPoiClick(poiId),
     });
     controllerRef.current = controller;
     const resizeObserver = new ResizeObserver(() => controller.invalidateSize());
@@ -76,6 +90,9 @@ export function MapView({
       isNavigating,
       isPicking,
       algorithmOverlay,
+      overlays,
+      pois,
+      highlightedPoiId,
     });
   }, [
     controllerRef,
@@ -89,6 +106,9 @@ export function MapView({
     isNavigating,
     isPicking,
     algorithmOverlay,
+    overlays,
+    pois,
+    highlightedPoiId,
   ]);
 
   return (

@@ -29,7 +29,7 @@ export function PlaceField({ place, onChange, ariaLabel, placeholder, getFocus }
       getFocus={getFocus}
       ariaLabel={ariaLabel}
       icon={null}
-      inputClassName="h-[46px] bg-white pl-3"
+      inputClassName="h-[46px] bg-white dark:bg-slate-800 pl-3"
       onChange={(value) => {
         setText(value);
         if (place) onChange(null);

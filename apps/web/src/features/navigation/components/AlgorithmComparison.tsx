@@ -23,23 +23,20 @@ export function AlgorithmComparison({ comparison, canRun }: AlgorithmComparisonP
     dijkstra && astar ? Math.round(100 * (1 - astar.visitedNodes / dijkstra.visitedNodes)) : null;
 
   return (
-    <section
-      className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-3"
-      aria-label="So sánh thuật toán"
-    >
+    <section className="text-ink dark:text-slate-100" aria-label="So sánh thuật toán">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-[12px] font-bold text-ink">So sánh thuật toán</p>
-          <p className="mt-0.5 text-[10px] text-slate-500">Dijkstra & A* trên đồ thị OSM trung tâm TP.HCM</p>
+          <p className="text-[12px] font-bold text-ink dark:text-slate-100">So sánh thuật toán</p>
+          <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">Dijkstra & A* trên đồ thị OSM trung tâm TP.HCM</p>
         </div>
-        <div className="flex rounded-lg bg-white p-0.5 shadow-sm" role="group" aria-label="Tiêu chí tối ưu">
+        <div className="flex rounded-lg bg-white dark:bg-slate-800/60 p-0.5 shadow-sm" role="group" aria-label="Tiêu chí tối ưu">
           {objectives.map((item) => (
             <button
               key={item.id}
               type="button"
               aria-pressed={objective === item.id}
               onClick={() => comparison.setObjective(item.id)}
-              className={`rounded-md px-2 py-1 text-[10px] font-semibold transition ${objective === item.id ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:text-ink'}`}
+              className={`rounded-md px-2 py-1 text-[11px] font-semibold transition ${objective === item.id ? 'bg-brand-50 dark:bg-indigo-400/10 text-brand-700 dark:text-indigo-300' : 'text-slate-500 dark:text-slate-400 hover:text-ink dark:hover:text-slate-100'}`}
             >
               {item.label}
             </button>
@@ -51,11 +48,11 @@ export function AlgorithmComparison({ comparison, canRun }: AlgorithmComparisonP
         type="button"
         disabled={!canRun || isLoading}
         onClick={() => void comparison.run()}
-        className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white text-[11px] font-bold text-brand-700 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+        className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-brand-200 dark:border-indigo-300/25 bg-white dark:bg-slate-800/60 text-[11px] font-bold text-brand-700 dark:text-indigo-300 transition hover:bg-brand-50 dark:hover:bg-white/10 disabled:cursor-not-allowed disabled:border-slate-200 dark:disabled:border-white/10 disabled:text-slate-400 dark:disabled:text-slate-500"
       >
         {isLoading ? (
           <span
-            className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-brand-200 border-t-brand-600"
+            className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-brand-200 dark:border-indigo-300/25 border-t-brand-600 dark:border-t-indigo-300"
             aria-hidden="true"
           />
         ) : (
@@ -66,7 +63,7 @@ export function AlgorithmComparison({ comparison, canRun }: AlgorithmComparisonP
 
       {error && (
         <p
-          className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[10px] leading-4 text-amber-900"
+          className="mt-2 rounded-lg border border-amber-200 dark:border-amber-300/20 bg-amber-50 dark:bg-amber-400/10 px-2.5 py-2 text-[11px] leading-4 text-amber-900 dark:text-amber-100"
           role="alert"
         >
           {error}
@@ -75,8 +72,8 @@ export function AlgorithmComparison({ comparison, canRun }: AlgorithmComparisonP
 
       {result && (
         <div className="mt-3" aria-live="polite">
-          <table className="w-full text-left text-[10px] text-slate-700">
-            <thead className="text-slate-500">
+          <table className="w-full text-left text-[11px] text-slate-700 dark:text-slate-200">
+            <thead className="text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="py-1 font-semibold">Thuật toán</th>
                 <th className="font-semibold">Quãng đường</th>
@@ -87,8 +84,8 @@ export function AlgorithmComparison({ comparison, canRun }: AlgorithmComparisonP
             </thead>
             <tbody>
               {result.runs.map((run) => (
-                <tr key={run.algorithm} className="border-t border-slate-200">
-                  <td className="py-1.5 font-bold text-ink">
+                <tr key={run.algorithm} className="border-t border-slate-200 dark:border-white/10">
+                  <td className="py-1.5 font-bold text-ink dark:text-slate-100">
                     <span
                       className={`mr-1.5 inline-block h-2 w-3 rounded-sm align-middle ${run.algorithm === 'astar' ? 'bg-orange-500' : 'bg-violet-500'}`}
                       aria-hidden="true"
@@ -104,11 +101,11 @@ export function AlgorithmComparison({ comparison, canRun }: AlgorithmComparisonP
             </tbody>
           </table>
           {saving !== null && (
-            <p className="mt-2 rounded-lg bg-emerald-50 px-2.5 py-2 text-[10px] font-semibold text-emerald-800">
+            <p className="mt-2 rounded-lg bg-emerald-50 dark:bg-emerald-400/10 px-2.5 py-2 text-[11px] font-semibold text-emerald-800 dark:text-emerald-300">
               A* duyệt ít hơn {saving}% số node, cùng chi phí tối ưu.
             </p>
           )}
-          <p className="mt-2 text-[9px] leading-4 text-slate-500">
+          <p className="mt-2 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
             Điểm được gắn vào đường gần nhất (lệch {result.snappedFrom.offsetMeters} m /{' '}
             {result.snappedTo.offsetMeters} m). *Thời gian ước tính khi đường thông thoáng, chưa tính kẹt xe.
             Dữ liệu © OpenStreetMap.

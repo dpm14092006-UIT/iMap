@@ -1,4 +1,4 @@
-import type { RouteRequest, RouteResult } from '@routetwin/shared';
+import type { CongestionLevel, RouteCongestion, RouteRequest, RouteResult } from '@routetwin/shared';
 import { z } from 'zod';
 import { AppError } from '../../../../shared/errors/AppError.js';
 import type { RouteProvider } from '../../domain/ports/RouteProvider.js';
@@ -17,6 +17,8 @@ const vietmapResponseSchema = z.object({
           type: z.literal('LineString'),
           coordinates: z.array(z.tuple([z.number().finite(), z.number().finite()])),
         }),
+        // Lỗi/thiếu annotations không được làm hỏng tuyến: đọc lỏng ở đây, kiểm tra kỹ ở parseCongestion.
+        annotations: z.unknown().optional(),
         instructions: z
           .array(
             z.object({
@@ -33,6 +35,52 @@ const vietmapResponseSchema = z.object({
     )
     .default([]),
 });
+
+const congestionAnnotationsSchema = z.object({
+  congestion: z.array(
+    z.object({
+      value: z.string(),
+      first: z.number().int().nonnegative(),
+      last: z.number().int().nonnegative(),
+    }),
+  ),
+  congestion_distance: z
+    .array(
+      z.object({
+        value: z.number().finite().nonnegative(),
+        first: z.number().int().nonnegative().optional(),
+        last: z.number().int().nonnegative().optional(),
+      }),
+    )
+    .optional()
+    .default([]),
+});
+
+const KNOWN_LEVELS = new Set<string>(['low', 'moderate', 'heavy', 'severe']);
+
+/** Đổi annotations của VietMap sang dạng gọn; trả undefined khi thiếu hoặc sai cấu trúc. */
+export function parseCongestion(annotations: unknown, coordinateCount: number): RouteCongestion | undefined {
+  const parsed = congestionAnnotationsSchema.safeParse(annotations);
+  if (!parsed.success) return undefined;
+  const { congestion, congestion_distance: distances } = parsed.data;
+  const segments: RouteCongestion['segments'] = [];
+  let heavyMeters = 0;
+  congestion.forEach(({ value, first, last }, index) => {
+    if (first > last || last >= coordinateCount) return;
+    const level = (KNOWN_LEVELS.has(value) ? value : 'unknown') as CongestionLevel;
+    segments.push({ level, from: first, to: last });
+    // congestion_distance liệt kê độ dài (mét) của MỌI đoạn (tổng ≈ chiều dài tuyến), nên chỉ cộng
+    // các đoạn ùn/tắc; ghép theo first/last, hoặc theo vị trí khi VietMap không kèm chỉ số.
+    if (level !== 'heavy' && level !== 'severe') return;
+    const meters =
+      distances.find((item) => item.first === first && item.last === last) ??
+      (distances.every((item) => item.first === undefined) ? distances[index] : undefined);
+    heavyMeters += meters?.value ?? 0;
+  });
+  if (!segments.length) return undefined;
+  heavyMeters = Math.round(heavyMeters);
+  return { segments, heavyMeters };
+}
 
 export class VietmapRouteProvider implements RouteProvider {
   constructor(
@@ -56,7 +104,9 @@ export class VietmapRouteProvider implements RouteProvider {
     url.searchParams.set('points_encoded', 'false');
     url.searchParams.set('vehicle', input.vehicle);
     url.searchParams.set('alternative', String(input.alternatives ?? false));
-    if (input.avoid?.includes('ferry')) url.searchParams.set('avoid', 'ferry');
+    // Tài liệu VietMap: annotations tính theo từng chặng nên chỉ tin cậy khi đúng 2 điểm.
+    if (input.points.length === 2) url.searchParams.set('annotations', 'congestion,congestion_distance');
+    if (input.avoid?.length) url.searchParams.set('avoid', [...new Set(input.avoid)].join(','));
 
     let response: Response;
     try {
@@ -144,24 +194,31 @@ export class VietmapRouteProvider implements RouteProvider {
       );
     }
 
-    const toRoutePath = (path: (typeof usablePaths)[number]) => ({
-      source: 'vietmap' as const,
-      distanceMeters: path.distance,
-      durationSeconds: Math.round(path.time / 1000),
-      // Đã đúng thứ tự GeoJSON [lng, lat] của dự án nên giữ nguyên.
-      coordinates: path.points.coordinates,
-      instructions: path.instructions
-        .filter((instruction) => instruction.text.trim() || instruction.street_name.trim())
-        .map((instruction) => ({
-          distanceMeters: instruction.distance,
-          durationSeconds: Math.round(instruction.time / 1000),
-          text: instruction.text,
-          streetName: instruction.street_name,
-          ...(instruction.sign === undefined ? {} : { sign: instruction.sign }),
-          ...(instruction.heading === undefined ? {} : { heading: instruction.heading }),
-        })),
-      ...(path.toll_cost === undefined ? {} : { tollCostVnd: path.toll_cost }),
-    });
+    const toRoutePath = (path: (typeof usablePaths)[number]) => {
+      const congestion =
+        input.points.length === 2
+          ? parseCongestion(path.annotations, path.points.coordinates.length)
+          : undefined;
+      return {
+        source: 'vietmap' as const,
+        distanceMeters: path.distance,
+        durationSeconds: Math.round(path.time / 1000),
+        // Đã đúng thứ tự GeoJSON [lng, lat] của dự án nên giữ nguyên.
+        coordinates: path.points.coordinates,
+        instructions: path.instructions
+          .filter((instruction) => instruction.text.trim() || instruction.street_name.trim())
+          .map((instruction) => ({
+            distanceMeters: instruction.distance,
+            durationSeconds: Math.round(instruction.time / 1000),
+            text: instruction.text,
+            streetName: instruction.street_name,
+            ...(instruction.sign === undefined ? {} : { sign: instruction.sign }),
+            ...(instruction.heading === undefined ? {} : { heading: instruction.heading }),
+          })),
+        ...(path.toll_cost === undefined ? {} : { tollCostVnd: path.toll_cost }),
+        ...(congestion ? { congestion } : {}),
+      };
+    };
     const [primary, ...alternatives] = usablePaths.map(toRoutePath);
     return {
       ...primary!,

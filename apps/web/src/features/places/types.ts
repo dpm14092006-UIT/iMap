@@ -4,8 +4,9 @@
  * - osm:     kết quả tìm kiếm từ Photon / OpenStreetMap
  * - map:     điểm người dùng chọn trực tiếp trên bản đồ
  * - gps:     vị trí hiện tại lấy từ GPS của thiết bị
+ * - poi:     địa điểm thật (VietMap) từ chức năng khám phá quanh đây / dọc tuyến
  */
-export type PlaceSource = 'popular' | 'osm' | 'vietmap' | 'map' | 'gps';
+export type PlaceSource = 'popular' | 'osm' | 'vietmap' | 'map' | 'gps' | 'poi';
 
 /** Một địa điểm dùng chung cho tìm kiếm, chỉ đường, nhiều điểm và tuyến đã lưu. */
 export type Place = {
