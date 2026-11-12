@@ -17,7 +17,7 @@ Import repo GitHub, chọn nhánh `dpm` cho bản tính năng này. Tạo projec
 |---|---|
 | `CORS_ORIGIN` | Origin web chính xác, ví dụ `https://imap-web.vercel.app`; nhiều origin cách nhau dấu phẩy, không kèm path/slash cuối |
 | `VIETMAP_API_KEY` | Key định tuyến hiện có; voice miễn phí không làm VietMap thành miễn phí |
-| `RATE_LIMIT_POI_PER_MIN`, `RATE_LIMIT_ROUTES_PER_MIN`, `RATE_LIMIT_PLACES_PER_MIN` | Lượt/phút/IP cho tìm POI (20), tính tuyến (30), gợi ý/chi tiết/reverse (60). Bộ đếm trong RAM mỗi instance serverless, không phải giới hạn toàn cục |
+| `RATE_LIMIT_POI_PER_MIN`, `RATE_LIMIT_ROUTES_PER_MIN`, `RATE_LIMIT_PLACES_PER_MIN`, `RATE_LIMIT_OPTIMIZE_PER_MIN` | Lượt/phút/IP cho tìm POI (20), tính tuyến (30), gợi ý/chi tiết/reverse (60), tối ưu nhiều điểm (10). Bộ đếm trong RAM mỗi instance serverless, không phải giới hạn toàn cục |
 | `TRUST_PROXY_HOPS` | Đặt `1` khi chạy sau proxy của Vercel để `req.ip` là IP máy khách; mặc định `0` (nếu để 0 sau proxy, mọi người dùng chung một bộ đếm) |
 | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | Cấu hình Supabase hiện có để tính năng traffic/auth liên quan hoạt động |
 | `OVERPASS_API_URL` | Mặc định `https://overpass-api.de/api/interpreter`; public service best effort |

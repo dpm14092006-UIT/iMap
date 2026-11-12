@@ -43,18 +43,16 @@ describe('CalculateRouteUseCase', () => {
     expect(result.variant).toBeUndefined();
   });
 
-  it('gọi song song bản gốc cùng tránh trạm thu phí, cao tốc, phà và gắn nhãn biến thể', async () => {
+  it('gọi song song bản gốc cùng tránh trạm thu phí, phà (không bao giờ motorway) và gắn nhãn biến thể', async () => {
     const provider = providerBy({
       '': [path(97.9, 85)],
       toll: [path(113.9, 108, 0.1, 0), path(118.9, 115, 0.2, 0)],
-      motorway: [path(113.1, 123, 0.3, 27_000)],
       ferry: [path(97.9, 85), path(101.5, 90, 0.4)],
     });
     const result = await new CalculateRouteUseCase(provider).execute(request);
     expect(provider.calculate.mock.calls.map(([input]) => input.avoid ?? [])).toEqual([
       [],
       ['toll'],
-      ['motorway'],
       ['ferry'],
     ]);
     const all = [result, ...(result.alternatives ?? [])];
@@ -70,13 +68,11 @@ describe('CalculateRouteUseCase', () => {
     const provider = providerBy({
       ferry: [path(98, 85)],
       'ferry,toll': [path(114, 108, 0.1)],
-      'ferry,motorway': [path(113, 123, 0.3)],
     });
     await new CalculateRouteUseCase(provider).execute({ ...request, avoid: ['ferry'] });
     expect(provider.calculate.mock.calls.map(([input]) => input.avoid)).toEqual([
       ['ferry'],
       ['ferry', 'toll'],
-      ['ferry', 'motorway'],
     ]);
   });
 
@@ -84,15 +80,13 @@ describe('CalculateRouteUseCase', () => {
     const provider = providerBy({
       '': [path(98, 85)],
       toll: new Error('boom'),
-      motorway: [path(113, 123, 0.3)],
-      ferry: new Error('timeout'),
+      ferry: [path(101.5, 90, 0.4)],
     });
     const logger = { warn: vi.fn() };
     const result = await new CalculateRouteUseCase(provider, logger).execute(request, { requestId: 'req-1' });
     expect(result.alternatives).toHaveLength(1);
-    // Cao tốc không kiểm chứng được nên chỉ là "alternative", không bao giờ là nhãn tránh cao tốc.
-    expect(result.alternatives![0]).toMatchObject({ variant: 'alternative' });
-    expect(logger.warn).toHaveBeenCalledTimes(2);
+    expect(result.alternatives![0]).toMatchObject({ variant: 'avoid-ferry' });
+    expect(logger.warn).toHaveBeenCalledTimes(1);
     expect(logger.warn).toHaveBeenCalledWith(expect.any(String), {
       requestId: 'req-1',
       avoid: 'toll',
@@ -104,19 +98,17 @@ describe('CalculateRouteUseCase', () => {
     const provider = providerBy({
       '': [path(98, 85, 0, 44_000)],
       toll: [path(114, 108, 0.1, 0), path(119, 115, 0.2, 12_000)], // một tuyến vẫn thu phí
-      motorway: [path(113, 123, 0.3, 27_000)],
       ferry: [path(98, 85, 0, 44_000)],
     });
     const result = await new CalculateRouteUseCase(provider).execute(request);
     const all = [result, ...(result.alternatives ?? [])];
-    expect(all.map((item) => item.variant)).toEqual(['default', 'alternative', 'alternative', 'alternative']);
+    expect(all.map((item) => item.variant)).toEqual(['default', 'alternative', 'alternative']);
   });
 
   it('không nhận avoid-toll khi thiếu thông tin toll_cost (tuyến nhiều điểm)', async () => {
     const provider = providerBy({
       '': [path(98, 85)],
       toll: [path(114, 108, 0.1)],
-      motorway: new Error('x'),
       ferry: new Error('y'),
     });
     const result = await new CalculateRouteUseCase(provider, { warn: vi.fn() }).execute(request);
@@ -127,7 +119,6 @@ describe('CalculateRouteUseCase', () => {
     const provider = providerBy({
       '': new Error('main failed'),
       toll: [path(113, 108, 0.1)],
-      motorway: [path(113, 123, 0.3)],
       ferry: [path(113, 123, 0.3)],
     });
     await expect(new CalculateRouteUseCase(provider).execute(request)).rejects.toThrow('main failed');
@@ -137,10 +128,9 @@ describe('CalculateRouteUseCase', () => {
     const provider = providerBy({
       '': [path(100, 90)],
       toll: [path(100.5, 90.5)], // trùng hình học, lệch <1% / <2%
-      motorway: [path(100.5, 90.5, 0.05)], // khác hình học (~5 km)
-      ferry: [path(104, 90)], // lệch khoảng cách >1%
+      ferry: [path(104, 90), path(100.5, 90.5, 0.05)], // lệch khoảng cách >1%; khác hình học (~5 km)
     });
     const result = await new CalculateRouteUseCase(provider).execute(request);
-    expect(result.alternatives?.map((item) => item.variant)).toEqual(['avoid-ferry', 'alternative']);
+    expect(result.alternatives?.map((item) => item.distanceMeters)).toEqual([104_000, 100_500]);
   });
 });

@@ -116,9 +116,9 @@ describe('VietmapRouteProvider avoid', () => {
       ],
       vehicle: 'car',
       objective: 'duration',
-      avoid: ['toll', 'motorway', 'toll'],
+      avoid: ['toll', 'ferry', 'toll'],
     });
-    expect(new URL(String(fetcher.mock.calls[0]![0])).searchParams.get('avoid')).toBe('toll,motorway');
+    expect(new URL(String(fetcher.mock.calls[0]![0])).searchParams.get('avoid')).toBe('toll,ferry');
   });
 });
 

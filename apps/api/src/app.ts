@@ -75,7 +75,10 @@ export function createApp(container = createContainer()) {
   );
   app.use('/api/route-stops', createRouteStopsRouter(container.findRouteStops, container.explorePlaces));
   app.use('/api/voice', createVoiceRouter());
-  app.use('/api/routes/optimize', createOptimizationRouter(container.optimizationController));
+  app.use(
+    '/api/routes/optimize',
+    createOptimizationRouter(container.optimizationController, container.rateLimits.optimize),
+  );
   app.use(
     '/api/routes',
     createRoutesRouter(container.routeController, container.pathfindingController, {

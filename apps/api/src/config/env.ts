@@ -29,6 +29,7 @@ const envSchema = z.object({
   RATE_LIMIT_POI_PER_MIN: z.coerce.number().int().positive().default(20),
   RATE_LIMIT_ROUTES_PER_MIN: z.coerce.number().int().positive().default(30),
   RATE_LIMIT_PLACES_PER_MIN: z.coerce.number().int().positive().default(60),
+  RATE_LIMIT_OPTIMIZE_PER_MIN: z.coerce.number().int().positive().default(10),
   // Số proxy tin cậy phía trước API (Vercel/nginx = 1) để `req.ip` là IP thật; 0 = không tin X-Forwarded-For.
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).default(0),
   // File đồ thị OSM cho Dijkstra/A* (tạo bằng `npm run osm:import`), tính từ thư mục apps/api.

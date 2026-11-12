@@ -4,7 +4,7 @@ import type { RouteController } from './RouteController.js';
 
 const passThrough: RequestHandler = (_req, _res, next) => next();
 
-/** Các endpoint dưới /api/routes. `calculate` giới hạn tốc độ vì mỗi lượt gọi tới 4 lời gọi VietMap. */
+/** Các endpoint dưới /api/routes. `calculate` giới hạn tốc độ vì mỗi lượt gọi tới 3 lời gọi VietMap. */
 export function createRoutesRouter(
   routeController: RouteController,
   pathfindingController: PathfindingController,

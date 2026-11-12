@@ -8,7 +8,7 @@ export const routeRequestSchema = z.object({
   vehicle: z.enum(['car', 'motorcycle']),
   objective: z.enum(['distance', 'duration']).default('duration'),
   alternatives: z.boolean().optional(),
-  avoid: z.array(z.enum(['ferry', 'toll', 'motorway'])).optional(),
+  avoid: z.array(z.enum(['ferry', 'toll'])).optional(),
 });
 export type RouteRequest = z.infer<typeof routeRequestSchema>;
 export type RouteInstruction = {
