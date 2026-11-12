@@ -8,6 +8,13 @@ type ClosestRoutePoint = {
 };
 
 const METERS_PER_DEGREE = 111_320;
+export const ROUTE_ALERT_CORRIDOR_METERS = 180;
+
+type RouteTrafficReport = {
+  lat: number;
+  lng: number;
+  status: 'active' | 'cleared' | 'expired';
+};
 
 function project(point: Coordinate, origin: LatLng): [number, number] {
   const cosLatitude = Math.cos((origin.lat * Math.PI) / 180);
@@ -62,6 +69,14 @@ export function distanceToRouteMeters(route: RoutePlan, point: LatLng): number {
     if (closest && closest.distanceMeters < closestDistance) closestDistance = closest.distanceMeters;
   }
   return closestDistance;
+}
+
+/** Chỉ phát cảnh báo cho sự cố còn hoạt động nằm trong hành lang 180 m quanh tuyến. */
+export function shouldNotifyTrafficReportOnRoute(route: RoutePlan, report: RouteTrafficReport): boolean {
+  return (
+    report.status === 'active' &&
+    distanceToRouteMeters(route, { lat: report.lat, lng: report.lng }) <= ROUTE_ALERT_CORRIDOR_METERS
+  );
 }
 
 function pointAtDistance(points: Coordinate[], targetDistance: number): Coordinate {
