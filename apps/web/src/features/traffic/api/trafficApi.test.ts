@@ -41,6 +41,7 @@ describe('traffic report submission', () => {
       {
         incidentType: 'traffic_jam',
         severity: 'high',
+        vehicleScope: 'car',
         lat: 10,
         lng: 106,
         imagePath:
@@ -54,6 +55,7 @@ describe('traffic report submission', () => {
     expect(new Headers(request?.headers).get('Authorization')).toBe('Bearer test-access-token');
     expect(JSON.parse(String(request?.body))).toMatchObject({
       severity: 'high',
+      vehicleScope: 'car',
       imagePath: expect.stringContaining('.png'),
     });
   });

@@ -7,6 +7,7 @@ export const incidentTypes = [
   'road_closure',
   'obstacle',
 ] as const;
+export const trafficVehicleScopeSchema = z.enum(['car', 'motorcycle', 'both']);
 export const trafficImageAnalysisTaskSchema = z.enum(['incident', 'traffic_sign']);
 export const imageAnalysisConfidenceSchema = z.enum(['low', 'medium', 'high']);
 export const trafficIncidentImageAnalysisSchema = z.object({
@@ -40,6 +41,7 @@ const trafficPhotoPathSchema = z
 export const trafficReportInputSchema = z.object({
   incidentType: z.enum(incidentTypes),
   severity: z.enum(['low', 'medium', 'high']),
+  vehicleScope: trafficVehicleScopeSchema.default('both'),
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
   note: z.string().max(300).optional(),
@@ -63,6 +65,7 @@ export const trafficReportDtoSchema = z.object({
   id: z.string().uuid(),
   incidentType: z.enum(incidentTypes),
   severity: z.enum(['low', 'medium', 'high']),
+  vehicleScope: trafficVehicleScopeSchema,
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
   note: z.string().max(300).optional(),
@@ -80,5 +83,6 @@ export const trafficReportDtoSchema = z.object({
 export type TrafficReportInput = z.infer<typeof trafficReportInputSchema>;
 export type TrafficReportBounds = z.infer<typeof trafficBoundsSchema>;
 export type TrafficReportDto = z.infer<typeof trafficReportDtoSchema>;
+export type TrafficVehicleScope = z.infer<typeof trafficVehicleScopeSchema>;
 export type TrafficImageAnalysisTask = z.infer<typeof trafficImageAnalysisTaskSchema>;
 export type TrafficImageAnalysisDto = z.infer<typeof trafficImageAnalysisDtoSchema>;

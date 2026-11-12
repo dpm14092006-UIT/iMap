@@ -25,6 +25,7 @@ export type MapControllerHandlers = {
 export type MapControllerData = {
   layer: MapLayer;
   route: RoutePlan | null;
+  routeOptions: RoutePlan[];
   draftStops: DraftStops;
   trafficLayer: TrafficMapLayer;
   currentLocation: LatLng | null;
@@ -52,6 +53,7 @@ export class LeafletMapController {
   private locationMarker: L.Marker | L.CircleMarker | null = null;
   private locationMarkerMode: 'passive' | 'navigation' | null = null;
   private lastRouteId: string | null = null;
+  private lastRouteOptionsKey = '';
   private lastRouteNavigationState: boolean | null = null;
   private lastDraftStopsKey = '';
   private lastOverlayKey: string | null = null;
@@ -95,17 +97,22 @@ export class LeafletMapController {
     this.setPicking(data.isPicking);
 
     const routeId = data.route?.id ?? null;
+    const routeOptionsKey = data.routeOptions.map((route) => route.id).join('|');
     const draftStopsKey = [data.draftStops.origin, data.draftStops.destination]
       .map((place) => (place ? `${place.id}:${place.lat},${place.lng}:${place.name}` : ''))
       .join('|');
     const routeChanged =
       routeId !== this.lastRouteId ||
+      routeOptionsKey !== this.lastRouteOptionsKey ||
       (routeId !== null && data.isNavigating !== this.lastRouteNavigationState) ||
       (!routeId && draftStopsKey !== this.lastDraftStopsKey);
     if (routeChanged) {
       this.routeLayer.clearLayers();
-      if (data.route) this.drawRoute(data.route, data.isNavigating);
-      else this.drawDraftStops(data.draftStops);
+      if (data.route) {
+        if (!data.isNavigating && data.route.kind === 'route')
+          this.drawAlternativeRoutes(data.routeOptions, data.route.id);
+        this.drawRoute(data.route, data.isNavigating);
+      } else this.drawDraftStops(data.draftStops);
     }
     this.lastDraftStopsKey = draftStopsKey;
     this.lastRouteNavigationState = data.isNavigating;
@@ -118,11 +125,13 @@ export class LeafletMapController {
     this.drawCurrentLocation(data.currentLocation, data.isNavigating, data.headingDegrees);
 
     // Chỉ tự zoom vừa tuyến khi có tuyến MỚI, tránh giật bản đồ mỗi lần render.
-    if (data.route && data.route.id !== this.lastRouteId) {
-      const coordinates = data.route.legs.flatMap((leg) => leg.points);
+    if (data.route && (data.route.id !== this.lastRouteId || routeOptionsKey !== this.lastRouteOptionsKey)) {
+      const routes = !data.isNavigating && data.route.kind === 'route' ? data.routeOptions : [data.route];
+      const coordinates = routes.flatMap((route) => route.legs.flatMap((leg) => leg.points));
       if (coordinates.length) this.fit(coordinates);
     }
     this.lastRouteId = routeId;
+    this.lastRouteOptionsKey = routeOptionsKey;
 
     const overlay = data.algorithmOverlay;
     if (overlay && overlay.key !== this.lastOverlayKey) {
@@ -222,6 +231,26 @@ export class LeafletMapController {
       const label = index === 0 ? 'A' : route.kind === 'route' ? 'B' : String(index);
       this.drawStopMarker(place, label, route.kind === 'route' && isLast ? COLORS.end : COLORS.start);
     });
+  }
+
+  /** Vẽ các phương án không được chọn thành nét mảnh, phía dưới tuyến chính. */
+  private drawAlternativeRoutes(routes: RoutePlan[], selectedId: string) {
+    for (const route of routes) {
+      if (route.id === selectedId) continue;
+      for (const leg of route.legs) {
+        const points = leg.points.map(([lat, lng]) => L.latLng(lat, lng));
+        if (points.length < 2) continue;
+        L.polyline(points, {
+          color: '#64748b',
+          weight: 5,
+          opacity: 0.62,
+          dashArray: '5 8',
+          lineCap: 'round',
+          lineJoin: 'round',
+          interactive: false,
+        }).addTo(this.routeLayer);
+      }
+    }
   }
 
   /** Tô riêng đoạn có sự cố để mức vừa/cao hiện lần lượt vàng/đỏ trên tuyến màu xanh. */

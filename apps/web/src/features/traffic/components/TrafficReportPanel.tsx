@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
-import type { TrafficImageAnalysisDto, TrafficImageAnalysisTask } from '@routetwin/shared';
+import type {
+  TrafficImageAnalysisDto,
+  TrafficImageAnalysisTask,
+  TrafficVehicleScope,
+} from '@routetwin/shared';
 import { FloatingPanel } from '../../../app/components/FloatingPanel';
 import { Icon } from '../../../shared/components/Icon';
 import { trafficApi, trafficPhotos } from '../api/trafficApi';
@@ -8,10 +12,12 @@ import { incidentLabels } from '../services/trafficPresentation';
 export type IncidentKind =
   'traffic_jam' | 'accident' | 'construction' | 'flood' | 'road_closure' | 'obstacle';
 export type IncidentSeverity = 'low' | 'medium' | 'high';
+export type { TrafficVehicleScope };
 export type DemoIncident = {
   id: string;
   type: IncidentKind;
   severity: IncidentSeverity;
+  vehicleScope: TrafficVehicleScope;
   description: string;
   time: string;
   lat: number;
@@ -47,6 +53,7 @@ type TrafficReportPanelProps = {
   selectedPoint: { lat: number; lng: number } | null;
   isAuthenticated: boolean;
   accessToken: string | null;
+  defaultVehicle: Exclude<TrafficVehicleScope, 'both'>;
   loading: boolean;
   error: string;
   onClose: () => void;
@@ -54,6 +61,7 @@ type TrafficReportPanelProps = {
   onReport: (
     type: IncidentKind,
     severity: IncidentSeverity,
+    vehicleScope: TrafficVehicleScope,
     point: { lat: number; lng: number },
     note: string,
     photo: File | null,
@@ -66,6 +74,7 @@ export function TrafficReportPanel({
   selectedPoint,
   isAuthenticated,
   accessToken,
+  defaultVehicle,
   loading,
   error,
   onClose,
@@ -75,6 +84,7 @@ export function TrafficReportPanel({
 }: TrafficReportPanelProps) {
   const [type, setType] = useState<IncidentKind>('traffic_jam');
   const [severity, setSeverity] = useState<IncidentSeverity>('medium');
+  const [vehicleScope, setVehicleScope] = useState<TrafficVehicleScope>(defaultVehicle);
   const [note, setNote] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState('');
@@ -86,6 +96,8 @@ export function TrafficReportPanel({
   const [busyReportId, setBusyReportId] = useState('');
   const [actionMessage, setActionMessage] = useState('');
   const [actionError, setActionError] = useState('');
+
+  useEffect(() => setVehicleScope(defaultVehicle), [defaultVehicle]);
 
   useEffect(() => {
     if (!photo) {
@@ -191,7 +203,7 @@ export function TrafficReportPanel({
     setActionError('');
     setActionMessage('');
     try {
-      await onReport(type, severity, selectedPoint, note.trim(), photo);
+      await onReport(type, severity, vehicleScope, selectedPoint, note.trim(), photo);
       setNote('');
       setPhoto(null);
       setImageAnalysis(null);
@@ -267,6 +279,32 @@ export function TrafficReportPanel({
             >
               <span className={`h-1.5 w-1.5 rounded-full ${item.color}`} />
               {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="mb-3">
+        <div className="mb-1.5 text-[10px] font-semibold text-slate-600">Áp dụng cho loại xe</div>
+        <div
+          className="grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1"
+          role="group"
+          aria-label="Loại xe áp dụng báo cáo"
+        >
+          {(
+            [
+              ['motorcycle', 'Xe máy'],
+              ['car', 'Ô tô'],
+              ['both', 'Cả hai'],
+            ] as const
+          ).map(([scope, label]) => (
+            <button
+              key={scope}
+              type="button"
+              aria-pressed={vehicleScope === scope}
+              onClick={() => setVehicleScope(scope)}
+              className={`rounded-md px-1.5 py-1.5 text-[9px] font-semibold transition ${vehicleScope === scope ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-ink'}`}
+            >
+              {label}
             </button>
           ))}
         </div>
@@ -523,7 +561,13 @@ export function TrafficReportPanel({
                         {selectedType?.label ?? 'Sự cố'} · {incident.description}
                       </span>
                       <span className="mt-0.5 block text-[10px] text-slate-500">
-                        {incident.time} · {incident.lat.toFixed(4)}, {incident.lng.toFixed(4)}
+                        {incident.time} ·{' '}
+                        {incident.vehicleScope === 'both'
+                          ? 'Ô tô + xe máy'
+                          : incident.vehicleScope === 'car'
+                            ? 'Ô tô'
+                            : 'Xe máy'}{' '}
+                        · {incident.lat.toFixed(4)}, {incident.lng.toFixed(4)}
                       </span>
                     </span>
                   </div>

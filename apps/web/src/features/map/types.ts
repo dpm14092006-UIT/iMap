@@ -31,6 +31,7 @@ export type RoutePlan = {
   durationMin: number;
   vehicle: TransportMode;
   objective: RouteObjective;
+  tollCostVnd?: number;
   /** Chỉ có khi hành trình nhiều điểm đã được sắp xếp lại thứ tự. */
   optimization?: RouteOptimization;
 };

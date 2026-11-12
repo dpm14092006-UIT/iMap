@@ -14,7 +14,11 @@ type RouteRequestBody = {
   objective: 'distance' | 'duration';
   returnToStart?: boolean;
   algorithm?: OptimizeRouteRequest['algorithm'];
+  alternatives?: boolean;
+  avoid?: 'ferry'[];
 };
+
+export type RoutePlansResult = { routes: RoutePlan[] } | { error: string };
 
 function requestBody(stops: Place[], vehicle: TransportMode, objective: RouteObjective): RouteRequestBody {
   return {
@@ -102,6 +106,48 @@ export class RouteApiClient {
       return toError(cause, 'Không kết nối được máy chủ chỉ đường. Hãy thử lại sau ít phút.');
     }
   }
+
+  /** Tính nhiều phương án cho hai điểm, có thể yêu cầu VietMap tránh phà. */
+  async createPlans(
+    stops: Place[],
+    vehicle: TransportMode,
+    objective: RouteObjective = 'time',
+    avoidFerry = false,
+  ): Promise<RoutePlansResult> {
+    if (stops.length < 2) return { error: 'Chọn ít nhất điểm đi và điểm đến.' };
+    try {
+      const data = await this.http.post<RouteResult>('/routes/calculate', {
+        ...requestBody(stops, vehicle, objective),
+        alternatives: true,
+        ...(avoidFerry ? { avoid: ['ferry'] } : {}),
+      });
+      const candidates = [data, ...(data.alternatives ?? [])].filter(
+        (path) => Array.isArray(path.coordinates) && path.coordinates.length >= 2,
+      );
+      if (!candidates.length) return { error: 'Dịch vụ chỉ đường trả về tuyến không hợp lệ.' };
+
+      // VietMap có thể trả cùng một hình học lặp lại; gộp để danh sách gọn và dễ so sánh.
+      const unique = candidates.filter((path, index) => {
+        const next = candidates.findIndex(
+          (candidate) =>
+            candidate.distanceMeters === path.distanceMeters &&
+            candidate.durationSeconds === path.durationSeconds &&
+            candidate.coordinates.length === path.coordinates.length &&
+            candidate.coordinates.every(
+              ([lng, lat], coordinateIndex) =>
+                path.coordinates[coordinateIndex]?.[0] === lng &&
+                path.coordinates[coordinateIndex]?.[1] === lat,
+            ),
+        );
+        return next === index;
+      });
+      return {
+        routes: unique.map((path) => routePlanFromResult(path, stops, vehicle, objective)),
+      };
+    } catch (cause) {
+      return toError(cause, 'Không kết nối được máy chủ chỉ đường. Hãy thử lại sau ít phút.');
+    }
+  }
 }
 
 /** Đổi kết quả tuyến của API (mét, giây, GeoJSON) sang RoutePlan để vẽ và hiển thị (km, phút, Leaflet). */
@@ -130,5 +176,6 @@ export function routePlanFromResult(
     durationMin: leg.durationMin,
     vehicle,
     objective,
+    ...(result.tollCostVnd === undefined ? {} : { tollCostVnd: result.tollCostVnd }),
   };
 }

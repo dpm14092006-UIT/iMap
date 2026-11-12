@@ -14,6 +14,7 @@ type RouteTrafficReport = {
   lat: number;
   lng: number;
   status: 'active' | 'cleared' | 'expired';
+  vehicleScope: 'car' | 'motorcycle' | 'both';
 };
 
 function project(point: Coordinate, origin: LatLng): [number, number] {
@@ -75,6 +76,7 @@ export function distanceToRouteMeters(route: RoutePlan, point: LatLng): number {
 export function shouldNotifyTrafficReportOnRoute(route: RoutePlan, report: RouteTrafficReport): boolean {
   return (
     report.status === 'active' &&
+    (report.vehicleScope === 'both' || report.vehicleScope === route.vehicle) &&
     distanceToRouteMeters(route, { lat: report.lat, lng: report.lng }) <= ROUTE_ALERT_CORRIDOR_METERS
   );
 }
