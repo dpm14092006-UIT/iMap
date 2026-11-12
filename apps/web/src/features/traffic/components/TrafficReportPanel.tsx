@@ -181,9 +181,8 @@ export function TrafficReportPanel({
   const applyIncidentSuggestion = () => {
     if (!imageAnalysis || imageAnalysis.task !== 'incident' || !imageAnalysis.trafficRelated) return;
     if (imageAnalysis.incidentType !== 'unknown') setType(imageAnalysis.incidentType);
-    if (imageAnalysis.severity !== 'unknown') setSeverity(imageAnalysis.severity);
     setNote(imageAnalysis.summary);
-    setActionMessage('Đã điền gợi ý vào biểu mẫu. Hãy kiểm tra và chỉnh sửa trước khi gửi.');
+    setActionMessage('Đã điền loại sự cố và ghi chú. Mức độ vẫn theo lựa chọn thủ công của bạn.');
   };
 
   const submit = async () => {
@@ -256,7 +255,7 @@ export function TrafficReportPanel({
       </div>
 
       <div className="mb-3 flex items-center justify-between gap-2">
-        <span className="text-[11px] font-semibold text-slate-600">Mức độ sự cố</span>
+        <span className="text-[11px] font-semibold text-slate-600">Mức độ sự cố · chọn thủ công</span>
         <div className="flex gap-1">
           {severityOptions.map((item) => (
             <button
@@ -418,7 +417,7 @@ export function TrafficReportPanel({
                   </p>
                 )}
                 <p className="mt-1 text-[9px] text-slate-500">
-                  AI không xác định được tốc độ; mức độ chỉ là gợi ý.
+                  AI chỉ gợi ý loại sự cố và ghi chú. Mức độ do bạn tự chọn.
                 </p>
                 <button
                   type="button"

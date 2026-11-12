@@ -30,7 +30,7 @@ import {
   toIncidents,
   toReportsMapLayer,
 } from '../features/traffic/services/trafficPresentation';
-import { distanceToRouteMeters } from '../features/traffic/services/routeTraffic';
+import { shouldNotifyTrafficReportOnRoute } from '../features/traffic/services/routeTraffic';
 import { Icon } from '../shared/components/Icon';
 import { FeatureNav } from './components/FeatureNav';
 import { PanelFallback } from './components/PanelFallback';
@@ -75,7 +75,6 @@ const VIETNAM_CENTER: LatLng = { lat: 16, lng: 108 };
 /** Lệch tuyến liên tiếp bao nhiêu lần đo GPS thì tự tính lại, và tối thiểu cách nhau bao lâu. */
 const OFF_ROUTE_FIXES_BEFORE_REROUTE = 3;
 const AUTO_REROUTE_INTERVAL_MS = 20_000;
-const ROUTE_ALERT_CORRIDOR_METERS = 180;
 
 /** Đổi địa điểm do trợ lý (N2) gợi ý sang kiểu Place dùng chung. */
 function placeFromStop(place: StopPlace): Place {
@@ -150,9 +149,7 @@ export function App() {
   const onRealtimeTrafficReport = useCallback(
     (report: RealtimeTrafficReport) => {
       const route = navigationRoute ?? activeRoute;
-      if (!route || report.status !== 'active') return;
-      if (distanceToRouteMeters(route, { lat: report.lat, lng: report.lng }) > ROUTE_ALERT_CORRIDOR_METERS)
-        return;
+      if (!route || !shouldNotifyTrafficReportOnRoute(route, report)) return;
 
       const version = report.version ?? 1;
       if ((notifiedRealtimeReports.current.get(report.id) ?? 0) >= version) return;

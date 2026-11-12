@@ -17,7 +17,6 @@ const apiIncidentResponseSchema = z
   .object({
     trafficRelated: z.boolean(),
     incidentType: z.enum([...incidentTypes, 'unknown']),
-    severity: z.enum(['low', 'medium', 'high', 'unknown']),
     summary: z.string().trim().min(1).max(220),
     evidence: z.array(z.string().trim().min(1).max(120)).max(4),
     confidence: z.enum(['low', 'medium', 'high']),
@@ -39,12 +38,11 @@ const incidentJsonSchema = {
   properties: {
     trafficRelated: { type: 'boolean' },
     incidentType: { type: 'string', enum: [...incidentTypes, 'unknown'] },
-    severity: { type: 'string', enum: ['low', 'medium', 'high', 'unknown'] },
     summary: { type: 'string' },
     evidence: { type: 'array', items: { type: 'string' } },
     confidence: { type: 'string', enum: ['low', 'medium', 'high'] },
   },
-  required: ['trafficRelated', 'incidentType', 'severity', 'summary', 'evidence', 'confidence'],
+  required: ['trafficRelated', 'incidentType', 'summary', 'evidence', 'confidence'],
   additionalProperties: false,
 };
 
@@ -68,8 +66,8 @@ const prompts: Record<TrafficImageAnalysisTask, string> = {
   incident: [
     'Bạn hỗ trợ người dùng lập báo cáo giao thông cộng đồng tại Việt Nam từ một ảnh hiện trường.',
     'Chỉ mô tả điều nhìn thấy trực tiếp; không suy đoán tốc độ, nguyên nhân, vị trí, danh tính, thương tích hay tình hình hiện tại từ ảnh tĩnh.',
-    'Nếu ảnh không rõ hoặc không cho biết đây là sự cố giao thông, hãy đặt trafficRelated=false, incidentType="unknown", severity="unknown", confidence="low" và nêu ngắn gọn sự không chắc chắn.',
-    'Chọn incidentType trong traffic_jam, accident, construction, flood, road_closure, obstacle, unknown. severity là gợi ý sơ bộ, không phải kết luận.',
+    'Nếu ảnh không rõ hoặc không cho biết đây là sự cố giao thông, hãy đặt trafficRelated=false, incidentType="unknown", confidence="low" và nêu ngắn gọn sự không chắc chắn.',
+    'Chọn incidentType trong traffic_jam, accident, construction, flood, road_closure, obstacle, unknown. Không đánh giá mức độ nghiêm trọng hoặc mức kẹt xe.',
     'Viết summary ngắn bằng tiếng Việt để người dùng có thể sửa trước khi gửi. evidence tối đa 4 chi tiết nhìn thấy. Không nhận diện khuôn mặt hoặc biển số xe.',
   ].join(' '),
   traffic_sign: [

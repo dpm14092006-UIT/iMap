@@ -13,7 +13,6 @@ export const trafficIncidentImageAnalysisSchema = z.object({
   task: z.literal('incident'),
   trafficRelated: z.boolean(),
   incidentType: z.enum([...incidentTypes, 'unknown']),
-  severity: z.enum(['low', 'medium', 'high', 'unknown']),
   summary: z.string().trim().min(1).max(220),
   evidence: z.array(z.string().trim().min(1).max(120)).max(4),
   confidence: imageAnalysisConfidenceSchema,
