@@ -14,6 +14,7 @@ import { UpdateRoadClearanceUseCase } from './modules/traffic/application/use-ca
 import { TrafficController } from './modules/traffic/presentation/TrafficController.js';
 import { AnalyzeTrafficImageUseCase } from './modules/traffic/application/use-cases/AnalyzeTrafficImageUseCase.js';
 import { GeminiTrafficImageAnalyzer } from './modules/traffic/infrastructure/providers/GeminiTrafficImageAnalyzer.js';
+import { SupabaseTrafficImageAnalysisQuota } from './modules/traffic/infrastructure/repositories/SupabaseTrafficImageAnalysisQuota.js';
 import { VietmapPlaceSearchProvider } from './modules/places/infrastructure/providers/VietmapPlaceSearchProvider.js';
 import { SearchPlacesUseCase } from './modules/places/application/use-cases/SearchPlacesUseCase.js';
 import { ReverseGeocodeUseCase } from './modules/places/application/use-cases/ReverseGeocodeUseCase.js';
@@ -46,8 +47,12 @@ export function createContainer() {
     new CreateTrafficReportUseCase(trafficRepository),
     new ListTrafficReportsUseCase(trafficRepository),
     new UpdateRoadClearanceUseCase(trafficRepository),
+    // Hạn mức theo người dùng (RPC consume_traffic_image_quota, migration 0005: 10 lượt/giờ),
+    // đếm nguyên tử trong Postgres nên đúng trên nhiều instance. Chỉ áp dụng khi Gemini thực sự bật.
     new AnalyzeTrafficImageUseCase(
       new GeminiTrafficImageAnalyzer(env.GEMINI_API_KEY, env.GEMINI_MODEL, env.GEMINI_TRAFFIC_AI_ENABLED),
+      new SupabaseTrafficImageAnalysisQuota(),
+      env.GEMINI_TRAFFIC_AI_ENABLED && Boolean(env.GEMINI_API_KEY),
     ),
   );
   const placeProvider = new VietmapPlaceSearchProvider(env.VIETMAP_API_KEY);
