@@ -1,6 +1,7 @@
 import type { CongestionLevel, RouteCongestion, RouteRequest, RouteResult } from '@routetwin/shared';
 import { z } from 'zod';
 import { AppError } from '../../../../shared/errors/AppError.js';
+import type { AlternativeRouteProvider } from '../../domain/ports/AlternativeRouteProvider.js';
 import type { RouteProvider } from '../../domain/ports/RouteProvider.js';
 
 const vietmapResponseSchema = z.object({
@@ -83,11 +84,17 @@ function parseCongestion(annotations: unknown, coordinateCount: number): RouteCo
   return { segments, heavyMeters };
 }
 
-export class VietmapRouteProvider implements RouteProvider {
+export class VietmapRouteProvider implements RouteProvider, AlternativeRouteProvider {
   constructor(
     private readonly apiKey: string | undefined,
     private readonly timeoutMs = 12_000,
   ) {}
+
+  /** Mọi tuyến VietMap trả về cho một lời gọi (tuyến chính + tuyến thay thế), tốt nhất đứng đầu. Dùng cho tính lại tuyến. */
+  async calculateAlternatives(input: RouteRequest): Promise<RouteResult[]> {
+    const { alternatives, ...primary } = await this.calculate({ ...input, alternatives: true });
+    return [primary, ...(alternatives ?? [])];
+  }
 
   async calculate(input: RouteRequest): Promise<RouteResult> {
     const apiKey = this.apiKey?.trim();
