@@ -26,7 +26,7 @@ export const poiCategorySchema = z.enum(poiCategories);
 export type PoiCategory = z.infer<typeof poiCategorySchema>;
 
 export const poiRadiusLimits = { min: 250, max: 5000, default: 1500 } as const;
-export const poiLimits = { default: 20, max: 30 } as const;
+export const poiLimits = { default: 15, max: 20 } as const;
 export const poiPathMaxPoints = 500;
 
 const poiSearchTermSchema = {

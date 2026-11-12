@@ -14,7 +14,7 @@ import { InstructionList } from './InstructionList';
 
 type RouteOptionCardProps = {
   route: RoutePlan;
-  /** Nhãn như "Nhanh nhất", "Ngắn nhất", "Tránh cao tốc". */
+  /** Nhãn như "Nhanh nhất", "Ngắn nhất", "Tránh trạm thu phí". */
   labels: string[];
   /** Số phút chậm hơn phương án nhanh nhất (0 nếu chính là phương án nhanh nhất). */
   deltaMinutes: number;
@@ -72,7 +72,7 @@ export function RouteOptionCard({
   const heavyMeters = route.congestion?.heavyMeters ?? 0;
   const street = mainStreet(route);
   const instructions = route.legs.flatMap((leg) => leg.instructions ?? []);
-  const toll = route.tollCostVnd ?? 0;
+  const toll = route.tollCostVnd;
   const delta = deltaMinutes >= 1 ? `+${deltaMinutes} phút` : null;
 
   return (
@@ -151,11 +151,14 @@ export function RouteOptionCard({
             Có sự cố giao thông trên tuyến
           </span>
         )}
-        {toll > 0 && (
+        {toll !== undefined && toll > 0 && (
           <span className="mt-1 flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-300">
             <Icon name="warning" size={13} />
-            Tuyến có thu phí (~{new Intl.NumberFormat('vi-VN').format(toll)}₫)
+            Có thu phí ~{new Intl.NumberFormat('vi-VN').format(toll)} ₫
           </span>
+        )}
+        {toll === 0 && (
+          <span className="mt-1 block text-xs text-ink-soft dark:text-slate-400">Không thu phí</span>
         )}
         {hasFerry(route) && (
           <span className="mt-1 flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-300">

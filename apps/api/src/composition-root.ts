@@ -33,6 +33,7 @@ import { FindPathUseCase } from './modules/navigation/application/use-cases/Find
 import { GetRoadGraphInfoUseCase } from './modules/navigation/application/use-cases/GetRoadGraphInfoUseCase.js';
 import { PathfindingController } from './modules/navigation/presentation/PathfindingController.js';
 import { env } from './config/env.js';
+import { perMinuteRateLimit } from './shared/http/RateLimiter.js';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 
@@ -85,7 +86,14 @@ export function createContainer() {
     new FindPathUseCase(roadGraphSource, { dijkstra: new DijkstraSolver(), astar: new AStarSolver() }),
     new GetRoadGraphInfoUseCase(roadGraphSource),
   );
+  // Chặn lạm dụng quota VietMap tính phí: giới hạn theo IP, chạy trước controller/validation.
+  const rateLimits = {
+    poi: perMinuteRateLimit(env.RATE_LIMIT_POI_PER_MIN),
+    routes: perMinuteRateLimit(env.RATE_LIMIT_ROUTES_PER_MIN),
+    places: perMinuteRateLimit(env.RATE_LIMIT_PLACES_PER_MIN),
+  };
   return {
+    rateLimits,
     optimizationController,
     trafficController,
     placeSearchController,

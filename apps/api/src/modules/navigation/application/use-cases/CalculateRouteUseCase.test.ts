@@ -4,12 +4,13 @@ import type { RouteProvider } from '../../domain/ports/RouteProvider.js';
 import { CalculateRouteUseCase } from './CalculateRouteUseCase.js';
 
 /** Đường thẳng dọc kinh tuyến; `offset` (độ kinh) dịch ngang để tạo tuyến khác hẳn. */
-const path = (distanceKm: number, minutes: number, offset = 0): RoutePathResult => ({
+const path = (distanceKm: number, minutes: number, offset = 0, tollCostVnd?: number): RoutePathResult => ({
   source: 'vietmap',
   distanceMeters: distanceKm * 1000,
   durationSeconds: minutes * 60,
   coordinates: Array.from({ length: 50 }, (_, i): [number, number] => [106.7 + offset, 10.3 + i * 0.01]),
   instructions: [],
+  ...(tollCostVnd === undefined ? {} : { tollCostVnd }),
 });
 
 const request: RouteRequest = {
@@ -45,8 +46,8 @@ describe('CalculateRouteUseCase', () => {
   it('gọi song song bản gốc cùng tránh trạm thu phí, cao tốc, phà và gắn nhãn biến thể', async () => {
     const provider = providerBy({
       '': [path(97.9, 85)],
-      toll: [path(113.9, 108, 0.1), path(118.9, 115, 0.2)],
-      motorway: [path(113.1, 123, 0.3)],
+      toll: [path(113.9, 108, 0.1, 0), path(118.9, 115, 0.2, 0)],
+      motorway: [path(113.1, 123, 0.3, 27_000)],
       ferry: [path(97.9, 85), path(101.5, 90, 0.4)],
     });
     const result = await new CalculateRouteUseCase(provider).execute(request);
@@ -58,7 +59,9 @@ describe('CalculateRouteUseCase', () => {
     ]);
     const all = [result, ...(result.alternatives ?? [])];
     expect(all).toHaveLength(4); // tối đa 4, bản trùng của default bị gộp
-    expect(all.map((item) => item.durationSeconds)).toEqual([...all.map((i) => i.durationSeconds)].sort((a, b) => a - b));
+    expect(all.map((item) => item.durationSeconds)).toEqual(
+      [...all.map((i) => i.durationSeconds)].sort((a, b) => a - b),
+    );
     expect(result).toMatchObject({ distanceMeters: 97_900, variant: 'default' });
     expect(all.map((item) => item.variant)).toEqual(['default', 'avoid-ferry', 'avoid-toll', 'avoid-toll']);
   });
@@ -84,9 +87,40 @@ describe('CalculateRouteUseCase', () => {
       motorway: [path(113, 123, 0.3)],
       ferry: new Error('timeout'),
     });
-    const result = await new CalculateRouteUseCase(provider).execute(request);
+    const logger = { warn: vi.fn() };
+    const result = await new CalculateRouteUseCase(provider, logger).execute(request, { requestId: 'req-1' });
     expect(result.alternatives).toHaveLength(1);
-    expect(result.alternatives![0]).toMatchObject({ variant: 'avoid-motorway' });
+    // Cao tốc không kiểm chứng được nên chỉ là "alternative", không bao giờ là nhãn tránh cao tốc.
+    expect(result.alternatives![0]).toMatchObject({ variant: 'alternative' });
+    expect(logger.warn).toHaveBeenCalledTimes(2);
+    expect(logger.warn).toHaveBeenCalledWith(expect.any(String), {
+      requestId: 'req-1',
+      avoid: 'toll',
+      error: 'Error',
+    });
+  });
+
+  it('chỉ giữ avoid-toll khi mọi tuyến của lời gọi có toll_cost = 0, ngược lại thành alternative', async () => {
+    const provider = providerBy({
+      '': [path(98, 85, 0, 44_000)],
+      toll: [path(114, 108, 0.1, 0), path(119, 115, 0.2, 12_000)], // một tuyến vẫn thu phí
+      motorway: [path(113, 123, 0.3, 27_000)],
+      ferry: [path(98, 85, 0, 44_000)],
+    });
+    const result = await new CalculateRouteUseCase(provider).execute(request);
+    const all = [result, ...(result.alternatives ?? [])];
+    expect(all.map((item) => item.variant)).toEqual(['default', 'alternative', 'alternative', 'alternative']);
+  });
+
+  it('không nhận avoid-toll khi thiếu thông tin toll_cost (tuyến nhiều điểm)', async () => {
+    const provider = providerBy({
+      '': [path(98, 85)],
+      toll: [path(114, 108, 0.1)],
+      motorway: new Error('x'),
+      ferry: new Error('y'),
+    });
+    const result = await new CalculateRouteUseCase(provider, { warn: vi.fn() }).execute(request);
+    expect(result.alternatives?.[0]).toMatchObject({ variant: 'alternative' });
   });
 
   it('báo lỗi khi lời gọi chính thất bại', async () => {
@@ -107,6 +141,6 @@ describe('CalculateRouteUseCase', () => {
       ferry: [path(104, 90)], // lệch khoảng cách >1%
     });
     const result = await new CalculateRouteUseCase(provider).execute(request);
-    expect(result.alternatives?.map((item) => item.variant)).toEqual(['avoid-ferry', 'avoid-motorway']);
+    expect(result.alternatives?.map((item) => item.variant)).toEqual(['avoid-ferry', 'alternative']);
   });
 });

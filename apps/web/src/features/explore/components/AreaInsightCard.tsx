@@ -36,6 +36,8 @@ export function AreaInsightCard({ insight, onOpenTraffic }: AreaInsightCardProps
     setCollapsed(next);
     writeCollapsed(next);
   };
+  const trafficHint =
+    'Mức giao thông là ước tính từ giờ cao điểm và báo cáo cộng đồng, không phải dữ liệu thời gian thực';
   const weather = (
     <span className="flex items-center gap-1 font-semibold">
       <Icon name={insight.weatherIcon} size={16} className="text-amber-500" />
@@ -49,7 +51,7 @@ export function AreaInsightCard({ insight, onOpenTraffic }: AreaInsightCardProps
       <button
         type="button"
         onClick={() => toggle(false)}
-        aria-label="Mở rộng thẻ Khu vực này"
+        aria-label="Mở rộng thẻ Khu vực này (thời tiết minh họa, giao thông ước tính)"
         className="flex items-center gap-2 rounded-full bg-white/90 px-3.5 py-2 text-xs text-ink shadow-glass dark:shadow-glass-dark ring-1 ring-black/5 backdrop-blur-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 dark:bg-slate-900/85 dark:text-slate-100 dark:ring-white/10"
       >
         Khu vực này · {weather}
@@ -80,6 +82,7 @@ export function AreaInsightCard({ insight, onOpenTraffic }: AreaInsightCardProps
       <button
         type="button"
         onClick={onOpenTraffic}
+        title={trafficHint}
         className="group mt-2.5 flex w-full items-center gap-3 rounded-2xl bg-black/[.04] px-3 py-2.5 text-left transition hover:bg-black/[.07] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 dark:bg-white/5 dark:hover:bg-white/10"
       >
         <span className="flex gap-0.5" aria-hidden="true">
@@ -94,8 +97,8 @@ export function AreaInsightCard({ insight, onOpenTraffic }: AreaInsightCardProps
           <span className="block text-[13px] font-semibold">{insight.trafficLabel}</span>
           <span className="block text-xs text-ink-soft dark:text-slate-400">
             {insight.delayMinutes > 0
-              ? `Chậm hơn thường lệ ~${insight.delayMinutes} phút`
-              : 'Không chậm hơn thường lệ'}
+              ? `Có thể chậm hơn ~${insight.delayMinutes} phút`
+              : 'Chưa thấy dấu hiệu chậm hơn'}
             {' · '}
             {insight.incidentCount > 0 ? `${insight.incidentCount} sự cố đang báo` : 'Chưa có sự cố'}
           </span>
@@ -107,7 +110,9 @@ export function AreaInsightCard({ insight, onOpenTraffic }: AreaInsightCardProps
         />
         <span className="sr-only">Mở bảng Giao thông</span>
       </button>
-      <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">Thời tiết minh họa</p>
+      <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+        Thời tiết minh họa · Giao thông ước tính từ giờ cao điểm và báo cáo cộng đồng
+      </p>
     </section>
   );
 }
@@ -118,7 +123,7 @@ export function AreaInsightPill({ insight, onOpenTraffic }: AreaInsightCardProps
     <button
       type="button"
       onClick={onOpenTraffic}
-      aria-label={`Khu vực này: ${insight.temperatureC} độ (thời tiết minh họa), ${insight.trafficLabel}. Mở bảng Giao thông`}
+      aria-label={`Khu vực này: ${insight.temperatureC} độ (thời tiết minh họa), ${insight.trafficLabel} (ước tính từ giờ cao điểm và báo cáo cộng đồng). Mở bảng Giao thông`}
       className="flex h-11 items-center gap-2 rounded-full bg-white/90 px-3.5 text-xs font-semibold text-ink shadow-glass dark:shadow-glass-dark ring-1 ring-black/5 backdrop-blur-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 dark:bg-slate-900/85 dark:text-slate-100 dark:ring-white/10"
     >
       <Icon name={insight.weatherIcon} size={16} className="text-amber-500" />

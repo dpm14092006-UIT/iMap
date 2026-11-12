@@ -21,13 +21,14 @@ describe('RouteApiClient alternatives', () => {
         [106.1, 10.1],
       ],
       instructions: [],
+      tollCostVnd: 44000,
     };
     const fetcher = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
           data: {
             ...responsePath,
-            alternatives: [{ ...responsePath, durationSeconds: 780, variant: 'avoid-toll' }],
+            alternatives: [{ ...responsePath, durationSeconds: 780, variant: 'avoid-toll', tollCostVnd: 0 }],
           },
         }),
         {
@@ -43,8 +44,8 @@ describe('RouteApiClient alternatives', () => {
 
     expect(result).toMatchObject({
       routes: [
-        { vehicle: 'car', durationMin: 10 },
-        { vehicle: 'car', durationMin: 13, variant: 'avoid-toll' },
+        { vehicle: 'car', durationMin: 10, tollCostVnd: 44000 },
+        { vehicle: 'car', durationMin: 13, variant: 'avoid-toll', tollCostVnd: 0 },
       ],
     });
     const request = JSON.parse(String(fetcher.mock.calls[0]![1]?.body));

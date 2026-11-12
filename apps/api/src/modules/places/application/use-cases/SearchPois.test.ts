@@ -46,7 +46,7 @@ const along = (overrides: Partial<AlongRoutePoiRequest> = {}): AlongRoutePoiRequ
   path,
   query: 'phở',
   radiusM: 1500,
-  limit: 20,
+  limit: 15,
   ...overrides,
 });
 
@@ -194,7 +194,7 @@ describe('SearchPoisAlongRouteUseCase', () => {
         ],
       }),
     );
-    expect(provider.search).toHaveBeenCalledTimes(11); // 111 km: khoảng cách = dài / 10
+    expect(provider.search).toHaveBeenCalledTimes(8); // 111 km: trần 8 điểm mẫu (chưa có trần sẽ là 11)
     expect(peak).toBe(4);
   });
 });
@@ -241,7 +241,7 @@ describe('lọc độ liên quan theo tên (truy vấn tự do)', () => {
       lng: 106.75,
       query: 'phở',
       radiusM: 1000,
-      limit: 20,
+      limit: 15,
     });
     expect(result.map((poi) => poi.id)).toEqual(['a']);
   });
@@ -253,7 +253,7 @@ describe('SearchPoisNearbyUseCase', () => {
     lng: 106.75,
     query: 'sửa xe',
     radiusM: 1000,
-    limit: 20,
+    limit: 15,
     ...overrides,
   });
 

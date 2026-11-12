@@ -19,8 +19,12 @@ export type RouteInstruction = {
   sign?: number;
   heading?: number;
 };
-/** Vì sao phương án này tồn tại: tuyến mặc định hay tuyến tính với tùy chọn tránh. */
-export const routeVariants = ['default', 'avoid-toll', 'avoid-motorway', 'avoid-ferry'] as const;
+/**
+ * Vì sao phương án này tồn tại: tuyến mặc định, tuyến tính với tùy chọn tránh đã kiểm chứng được,
+ * hoặc `alternative` (tuyến khác hẳn nhưng không kiểm chứng được là đã tránh điều gì).
+ * `avoid-toll` chỉ dùng khi VietMap báo toll_cost = 0 cho tuyến đó.
+ */
+export const routeVariants = ['default', 'alternative', 'avoid-toll', 'avoid-ferry'] as const;
 export type RouteVariant = (typeof routeVariants)[number];
 export const congestionLevels = ['low', 'moderate', 'heavy', 'severe', 'unknown'] as const;
 export type CongestionLevel = (typeof congestionLevels)[number];

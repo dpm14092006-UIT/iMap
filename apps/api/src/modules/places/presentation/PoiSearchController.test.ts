@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import express from 'express';
+import express, { type RequestHandler } from 'express';
 import { once } from 'node:events';
 import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
 import type { PoiResult } from '@routetwin/shared';
+import { createRateLimitMiddleware, RateLimiter } from '../../../shared/http/RateLimiter.js';
 import { ConcurrencyLimiter } from '../../../shared/http/ConcurrencyLimiter.js';
 import { errorHandler } from '../../../shared/http/error-handler.js';
 import { AppError } from '../../../shared/errors/AppError.js';
@@ -39,6 +40,7 @@ async function start(options: {
   along?: (input: unknown) => Promise<PoiResult[]>;
   nearby?: (input: unknown) => Promise<PoiResult[]>;
   limiter?: ConcurrencyLimiter;
+  rateLimit?: RequestHandler;
 }) {
   const along = { execute: vi.fn(options.along ?? (async () => [poi])) };
   const nearby = { execute: vi.fn(options.nearby ?? (async () => [poi])) };
@@ -54,6 +56,7 @@ async function start(options: {
     createPlacesRouter(
       new PlaceSearchController({} as SearchPlacesUseCase, {} as ReverseGeocodeUseCase),
       controller,
+      options.rateLimit ? { poi: options.rateLimit } : {},
     ),
   );
   app.use(errorHandler);
@@ -80,7 +83,7 @@ describe('POST /api/places/along-route', () => {
     const response = await post(base, { path, query: 'phở' });
     expect(response.status).toBe(200);
     expect((await response.json()) as unknown).toEqual({ data: [poi] });
-    expect(along.execute).toHaveBeenCalledWith({ path, query: 'phở', radiusM: 1500, limit: 20 });
+    expect(along.execute).toHaveBeenCalledWith({ path, query: 'phở', radiusM: 1500, limit: 15 });
   });
 
   it.each([
@@ -89,7 +92,7 @@ describe('POST /api/places/along-route', () => {
     ['tuyến quá 500 điểm', { path: Array.from({ length: 501 }, () => [10.77, 106.7]), query: 'phở' }],
     ['bán kính nhỏ hơn 250 m', { path, query: 'phở', radiusM: 100 }],
     ['bán kính lớn hơn 5000 m', { path, query: 'phở', radiusM: 6000 }],
-    ['limit lớn hơn 30', { path, query: 'phở', limit: 31 }],
+    ['limit lớn hơn 20', { path, query: 'phở', limit: 21 }],
     ['danh mục không tồn tại', { path, category: 'spa' }],
     [
       'vĩ độ ngoài phạm vi',
@@ -145,7 +148,7 @@ describe('GET /api/places/nearby', () => {
       lng: 106.75,
       query: 'sửa xe',
       radiusM: 1500,
-      limit: 20,
+      limit: 15,
     });
   });
 
@@ -155,5 +158,21 @@ describe('GET /api/places/nearby', () => {
     expect((await fetch(`${base}/nearby?lat=abc&lng=106.75&category=fuel`)).status).toBe(400);
     expect((await fetch(`${base}/nearby?lat=10.8&lng=106.75&category=fuel&radiusM=10`)).status).toBe(400);
     expect((await fetch(`${base}/nearby?lat=10.8&lng=106.75&category=fuel&radiusM=2000`)).status).toBe(200);
+  });
+});
+
+describe('giới hạn tốc độ theo IP', () => {
+  it('chặn lượt vượt giới hạn bằng 429 RATE_LIMITED trước validation và use case', async () => {
+    const { base, nearby } = await start({
+      rateLimit: createRateLimitMiddleware(new RateLimiter({ limit: 2, windowMs: 60_000 })),
+    });
+    // Request thiếu lat vẫn bị tính vào giới hạn (limiter chạy trước validation).
+    expect((await fetch(`${base}/nearby?lng=106.75&category=fuel`)).status).toBe(400);
+    expect((await fetch(`${base}/nearby?lat=10.8&lng=106.75&category=fuel`)).status).toBe(200);
+    const blocked = await fetch(`${base}/nearby?lat=10.8&lng=106.75&category=fuel`);
+    expect(blocked.status).toBe(429);
+    expect(blocked.headers.get('retry-after')).not.toBeNull();
+    expect(((await blocked.json()) as { error: { code: string } }).error.code).toBe('RATE_LIMITED');
+    expect(nearby.execute).toHaveBeenCalledTimes(1);
   });
 });

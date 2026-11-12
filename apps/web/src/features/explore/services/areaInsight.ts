@@ -10,7 +10,7 @@ export type AreaInsight = {
   weatherIcon: IconName;
   trafficLevel: TrafficLevel;
   trafficLabel: string;
-  /** Ước tính chậm hơn thường lệ bao nhiêu phút (0 nếu thông thoáng). */
+  /** Ước tính (không phải số đo thật) chậm hơn thường lệ bao nhiêu phút; 0 nếu thông thoáng. */
   delayMinutes: number;
   incidentCount: number;
 };
@@ -23,9 +23,9 @@ const weatherByKind: Record<WeatherKind, { label: string; icon: IconName }> = {
 };
 
 const trafficLabels: Record<TrafficLevel, string> = {
-  smooth: 'Giao thông thông thoáng',
-  moderate: 'Giao thông vừa phải',
-  heavy: 'Giao thông đông đúc',
+  smooth: 'Ước tính: Giao thông thông thoáng',
+  moderate: 'Ước tính: Giao thông vừa phải',
+  heavy: 'Ước tính: Giao thông đông đúc',
 };
 
 /** Giờ cao điểm: 7–9h và 16:30–19h. */
@@ -53,7 +53,8 @@ export function sampleWeather(now: Date): Pick<AreaInsight, 'temperatureC' | 'we
 
 /**
  * Tổng hợp "Khu vực này" từ số sự cố đang báo trong khung nhìn và giờ trong ngày.
- * Thời tiết là dữ liệu minh họa; giao thông suy ra từ sự cố thật + giờ cao điểm.
+ * Thời tiết là dữ liệu minh họa; mức giao thông chỉ là ước tính suy ra từ giờ cao điểm và số báo cáo
+ * cộng đồng, không phải dữ liệu giao thông thời gian thực.
  */
 export function computeAreaInsight(incidentCount: number, now = new Date()): AreaInsight {
   const rush = isRushHour(now);
