@@ -20,8 +20,8 @@ export function OptimizationSummary({ optimization }: { optimization: RouteOptim
         <p>Thứ tự bạn nhập không đi được; đã tìm thứ tự hợp lệ ({formatCost(optimizedCost, objective)}).</p>
       ) : saving > 0 ? (
         <p>
-          Tiết kiệm <b className="text-emerald-700 dark:text-emerald-300">{saving}%</b> so với thứ tự bạn nhập:{' '}
-          {formatCost(originalCost!, objective)} → {formatCost(optimizedCost, objective)}.
+          Tiết kiệm <b className="text-emerald-700 dark:text-emerald-300">{saving}%</b> so với thứ tự bạn
+          nhập: {formatCost(originalCost!, objective)} → {formatCost(optimizedCost, objective)}.
         </p>
       ) : (
         <p>Thứ tự bạn nhập đã là tốt nhất ({formatCost(optimizedCost, objective)}).</p>

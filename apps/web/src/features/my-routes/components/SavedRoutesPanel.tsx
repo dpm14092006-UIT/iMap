@@ -15,7 +15,9 @@ export function SavedRoutesPanel({ routes, onClose, onOpen, onDelete }: SavedRou
       <div className="mb-4 flex items-center justify-between rounded-xl bg-brand-50/80 dark:bg-indigo-400/10 px-3 py-3">
         <div>
           <p className="text-[12px] font-bold text-ink dark:text-slate-100">Hành trình của bạn</p>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Được lưu an toàn trên trình duyệt này</p>
+          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            Được lưu an toàn trên trình duyệt này
+          </p>
         </div>
         <span className="grid h-9 w-9 place-items-center rounded-xl bg-white dark:bg-slate-800/60 text-brand-600 dark:text-indigo-300 shadow-sm">
           <Icon name="route" size={17} />

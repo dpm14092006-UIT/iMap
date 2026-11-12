@@ -227,7 +227,10 @@ export function PlaceAssistantPanel({
       <form onSubmit={handleSubmit} className="space-y-3">
         {inputMode === 'voice' ? (
           <>
-            <p role="status" className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-2 text-[11px] leading-5 text-slate-600 dark:text-slate-300">
+            <p
+              role="status"
+              className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-2 text-[11px] leading-5 text-slate-600 dark:text-slate-300"
+            >
               {aiConfigured === true
                 ? 'Đã cấu hình AI hiểu nhu cầu. Nếu dịch vụ lỗi, trợ lý sẽ thông báo khi dùng từ khóa.'
                 : aiConfigured === false
@@ -348,7 +351,9 @@ export function PlaceAssistantPanel({
           </>
         ) : (
           <fieldset disabled={loading}>
-            <legend className="mb-2 text-[11px] font-semibold text-slate-700 dark:text-slate-200">Bạn muốn tìm gì?</legend>
+            <legend className="mb-2 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+              Bạn muốn tìm gì?
+            </legend>
             <div className="grid grid-cols-2 gap-2">
               {stopCategories.map((value) => (
                 <button
@@ -440,7 +445,9 @@ export function PlaceAssistantPanel({
                 </label>
               </div>
             )}
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">Bộ lọc chọn tay được ưu tiên hơn câu nhập.</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Bộ lọc chọn tay được ưu tiên hơn câu nhập.
+            </p>
           </div>
         </details>
         <button
@@ -479,7 +486,10 @@ export function PlaceAssistantPanel({
         </button>
       )}
       {error && (
-        <p role="alert" className="mt-3 rounded-xl bg-amber-50 dark:bg-amber-400/10 p-3 text-[11px] text-amber-900 dark:text-amber-100">
+        <p
+          role="alert"
+          className="mt-3 rounded-xl bg-amber-50 dark:bg-amber-400/10 p-3 text-[11px] text-amber-900 dark:text-amber-100"
+        >
           {error}
         </p>
       )}
@@ -508,7 +518,9 @@ export function PlaceAssistantPanel({
               </div>
             </div>
           ) : result.status === 'needs_location' || result.status === 'needs_route' ? (
-            <p className="rounded-xl bg-amber-50 dark:bg-amber-400/10 p-3 text-[11px] text-amber-900 dark:text-amber-100">{result.message}</p>
+            <p className="rounded-xl bg-amber-50 dark:bg-amber-400/10 p-3 text-[11px] text-amber-900 dark:text-amber-100">
+              {result.message}
+            </p>
           ) : result.mode === 'nearby' ? (
             <>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -521,7 +533,10 @@ export function PlaceAssistantPanel({
                 </p>
               )}
               {result.places.map(({ place, distanceMeters }) => (
-                <article key={place.id} className="rounded-xl border border-slate-200 dark:border-white/10 p-3">
+                <article
+                  key={place.id}
+                  className="rounded-xl border border-slate-200 dark:border-white/10 p-3"
+                >
                   <h3 className="text-[12px] font-bold text-ink dark:text-slate-100">{place.name}</h3>
                   <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{place.address}</p>
                   <p className="mt-2 text-[11px] text-slate-700 dark:text-slate-200">
@@ -573,9 +588,15 @@ export function PlaceAssistantPanel({
                   key={candidate.place.id}
                   className="rounded-xl border border-brand-100 dark:border-indigo-300/20 bg-brand-50/40 dark:bg-indigo-400/10 p-3"
                 >
-                  <h3 className="text-[12px] font-bold text-ink dark:text-slate-100">{candidate.place.name}</h3>
-                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{candidate.place.address}</p>
-                  <p className="mt-2 text-[11px] leading-5 text-slate-700 dark:text-slate-200">{candidate.reason}</p>
+                  <h3 className="text-[12px] font-bold text-ink dark:text-slate-100">
+                    {candidate.place.name}
+                  </h3>
+                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    {candidate.place.address}
+                  </p>
+                  <p className="mt-2 text-[11px] leading-5 text-slate-700 dark:text-slate-200">
+                    {candidate.reason}
+                  </p>
                   <div className="mt-2 flex items-center justify-between">
                     <a
                       href={candidate.place.osmUrl}

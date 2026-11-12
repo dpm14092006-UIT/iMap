@@ -267,7 +267,9 @@ export function TrafficReportPanel({
       </div>
 
       <div className="mb-3 flex items-center justify-between gap-2">
-        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Mức độ sự cố · chọn thủ công</span>
+        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+          Mức độ sự cố · chọn thủ công
+        </span>
         <div className="flex gap-1">
           {severityOptions.map((item) => (
             <button
@@ -284,7 +286,9 @@ export function TrafficReportPanel({
         </div>
       </div>
       <div className="mb-3">
-        <div className="mb-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300">Áp dụng cho loại xe</div>
+        <div className="mb-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+          Áp dụng cho loại xe
+        </div>
         <div
           className="grid grid-cols-3 gap-1 rounded-lg bg-slate-100 dark:bg-slate-700/50 p-1"
           role="group"
@@ -323,7 +327,8 @@ export function TrafficReportPanel({
       <div className="mb-3 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/60 p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-            Ảnh hiện trường <span className="font-normal text-slate-400 dark:text-slate-500">(không bắt buộc)</span>
+            Ảnh hiện trường{' '}
+            <span className="font-normal text-slate-400 dark:text-slate-500">(không bắt buộc)</span>
           </span>
           <span className="text-[11px] text-slate-400 dark:text-slate-500">Tối đa 5 MB</span>
         </div>
@@ -368,7 +373,9 @@ export function TrafficReportPanel({
               alt="Xem trước ảnh hiện trường"
               className="h-16 w-20 rounded-md object-cover"
             />
-            <span className="min-w-0 flex-1 truncate text-[11px] text-slate-600 dark:text-slate-300">{photo.name}</span>
+            <span className="min-w-0 flex-1 truncate text-[11px] text-slate-600 dark:text-slate-300">
+              {photo.name}
+            </span>
             <button
               type="button"
               aria-label="Xóa ảnh đã chọn"
@@ -431,9 +438,14 @@ export function TrafficReportPanel({
               </p>
             )}
             {imageAnalysis?.task === 'incident' && (
-              <div className="mt-3 rounded-lg border border-brand-100 dark:border-indigo-300/20 bg-brand-50/70 dark:bg-indigo-400/10 p-3" role="status">
+              <div
+                className="mt-3 rounded-lg border border-brand-100 dark:border-indigo-300/20 bg-brand-50/70 dark:bg-indigo-400/10 p-3"
+                role="status"
+              >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-bold text-brand-800 dark:text-indigo-300">Gợi ý sự cố</span>
+                  <span className="text-[11px] font-bold text-brand-800 dark:text-indigo-300">
+                    Gợi ý sự cố
+                  </span>
                   <span className="rounded-full bg-white dark:bg-slate-800/60 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
                     Tin cậy:{' '}
                     {imageAnalysis.confidence === 'high'
@@ -443,7 +455,9 @@ export function TrafficReportPanel({
                         : 'thấp'}
                   </span>
                 </div>
-                <p className="mt-1.5 text-[11px] leading-4 text-slate-700 dark:text-slate-200">{imageAnalysis.summary}</p>
+                <p className="mt-1.5 text-[11px] leading-4 text-slate-700 dark:text-slate-200">
+                  {imageAnalysis.summary}
+                </p>
                 {imageAnalysis.evidence.length > 0 && (
                   <p className="mt-1 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
                     Quan sát: {imageAnalysis.evidence.join(' · ')}
@@ -468,9 +482,14 @@ export function TrafficReportPanel({
               </div>
             )}
             {imageAnalysis?.task === 'traffic_sign' && (
-              <div className="mt-3 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 p-3" role="status">
+              <div
+                className="mt-3 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 p-3"
+                role="status"
+              >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-bold text-slate-800 dark:text-slate-100">Nhận diện biển báo</span>
+                  <span className="text-[11px] font-bold text-slate-800 dark:text-slate-100">
+                    Nhận diện biển báo
+                  </span>
                   <span className="rounded-full bg-white dark:bg-slate-800/60 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
                     Tin cậy:{' '}
                     {imageAnalysis.confidence === 'high'
@@ -528,7 +547,10 @@ export function TrafficReportPanel({
         </p>
       )}
       {(actionError || error) && (
-        <p className="mt-2 rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-[11px] leading-4 text-red-700 dark:text-red-300" role="alert">
+        <p
+          className="mt-2 rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-[11px] leading-4 text-red-700 dark:text-red-300"
+          role="alert"
+        >
           {actionError || error}
         </p>
       )}
@@ -595,7 +617,9 @@ export function TrafficReportPanel({
                     </a>
                   )}
                   {incident.imagePath && !photoUrls[incident.id] && (
-                    <p className="mt-1.5 pl-4 text-[11px] text-slate-500 dark:text-slate-400">Có ảnh minh chứng</p>
+                    <p className="mt-1.5 pl-4 text-[11px] text-slate-500 dark:text-slate-400">
+                      Có ảnh minh chứng
+                    </p>
                   )}
                   {isAuthenticated && (
                     <div className="mt-2 flex gap-2 pl-4">

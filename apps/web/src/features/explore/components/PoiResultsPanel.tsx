@@ -110,7 +110,10 @@ export function PoiResultsPanel({
       </div>
       {status === 'loading' && pois.length === 0 && <Skeleton />}
       {status === 'error' && (
-        <div role="alert" className="rounded-2xl bg-amber-50 dark:bg-amber-400/10 px-3 py-3 text-xs text-amber-900 dark:text-amber-100">
+        <div
+          role="alert"
+          className="rounded-2xl bg-amber-50 dark:bg-amber-400/10 px-3 py-3 text-xs text-amber-900 dark:text-amber-100"
+        >
           <p>{search.error}</p>
           <button
             type="button"

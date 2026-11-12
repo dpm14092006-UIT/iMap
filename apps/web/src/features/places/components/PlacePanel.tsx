@@ -34,7 +34,9 @@ export function PlacePanel({ place, poi, onClose, onDirections }: PlacePanelProp
           <Icon name="globe" size={13} />
           {place.category}
         </span>
-        <h3 className="relative mt-4 text-[20px] font-bold tracking-tight text-ink dark:text-slate-100">{place.name}</h3>
+        <h3 className="relative mt-4 text-[20px] font-bold tracking-tight text-ink dark:text-slate-100">
+          {place.name}
+        </h3>
         <p className="relative mt-1 flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300">
           <Icon name="pin" size={14} />
           {place.address}
@@ -53,7 +55,9 @@ export function PlacePanel({ place, poi, onClose, onDirections }: PlacePanelProp
         </div>
       )}
       <div className="mt-4 rounded-xl border border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-slate-800/60 px-3 py-3">
-        <p className="text-[11px] font-bold uppercase tracking-[.08em] text-slate-500 dark:text-slate-400">Tọa độ</p>
+        <p className="text-[11px] font-bold uppercase tracking-[.08em] text-slate-500 dark:text-slate-400">
+          Tọa độ
+        </p>
         <p className="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-300">
           {formatCoordinates(place)}
           <br />

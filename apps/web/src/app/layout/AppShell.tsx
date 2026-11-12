@@ -1,7 +1,19 @@
-import { createContext, useContext, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 
 /** `inset`: phần bản đồ bị bảng che (px, từ mép trái / mép dưới khung); null khi đang kéo hoặc không có bảng. */
-export type SheetState = { height: string | null; isFull: boolean; inset: { left: number; bottom: number } | null };
+export type SheetState = {
+  height: string | null;
+  isFull: boolean;
+  inset: { left: number; bottom: number } | null;
+};
 type ShellContextValue = { setSheet: (state: SheetState) => void };
 
 const ShellContext = createContext<ShellContextValue>({ setSheet: () => undefined });

@@ -77,7 +77,9 @@ export function SheetPanel({
         left: element.offsetLeft + element.offsetWidth,
         bottom: parent.clientHeight - element.offsetTop,
       };
-      setInset((current) => (current && current.left === next.left && current.bottom === next.bottom ? current : next));
+      setInset((current) =>
+        current && current.left === next.left && current.bottom === next.bottom ? current : next,
+      );
     };
     measure();
     const observer = new ResizeObserver(measure);
