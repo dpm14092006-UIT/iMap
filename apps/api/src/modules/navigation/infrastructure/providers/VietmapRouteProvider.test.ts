@@ -160,7 +160,7 @@ describe('VietmapRouteProvider congestion', () => {
         history_speed: [{ value: 30, first: 0, last: 1 }],
       }),
     );
-    expect(params.get('annotations')).toBe('congestion,congestion_distance');
+    expect(params.get('annotations')).toBe('congestion,congestion_distance,toll');
     expect(result.congestion).toEqual({
       segments: [
         { level: 'low', from: 0, to: 1 },
@@ -170,6 +170,18 @@ describe('VietmapRouteProvider congestion', () => {
       heavyMeters: 300, // chỉ cộng đoạn severe/heavy hợp lệ; low không tính
     });
     expect(JSON.stringify(result)).not.toContain('history_speed');
+  });
+
+  it.each([
+    ['null (không có annotation toll)', null, undefined],
+    ['0 (không thu phí)', 0, 0],
+    ['44000', 44000, 44000],
+  ])('đọc toll_cost %s', async (_name, tollCost, expected) => {
+    const { result } = await run({
+      ...vietmapResponse,
+      paths: [{ ...vietmapResponse.paths[0]!, toll_cost: tollCost }],
+    });
+    expect(result.tollCostVnd).toBe(expected);
   });
 
   it('không gửi annotations khi có hơn 2 điểm và bỏ qua congestion', async () => {

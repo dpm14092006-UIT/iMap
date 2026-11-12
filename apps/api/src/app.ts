@@ -17,6 +17,8 @@ import { getRequestId } from './shared/http/request-context.js';
 export function createApp(container = createContainer()) {
   const app = express();
   app.disable('x-powered-by');
+  // Sau reverse proxy (Vercel...) cần tin proxy để `req.ip` là IP máy khách thật cho rate limit.
+  if (env.TRUST_PROXY_HOPS > 0) app.set('trust proxy', env.TRUST_PROXY_HOPS);
   app.use((_req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -64,11 +66,22 @@ export function createApp(container = createContainer()) {
     }),
   );
   app.use('/api/traffic-reports', createTrafficRouter(container.trafficController));
-  app.use('/api/places', createPlacesRouter(container.placeSearchController, container.poiSearchController));
+  app.use(
+    '/api/places',
+    createPlacesRouter(container.placeSearchController, container.poiSearchController, {
+      places: container.rateLimits.places,
+      poi: container.rateLimits.poi,
+    }),
+  );
   app.use('/api/route-stops', createRouteStopsRouter(container.findRouteStops, container.explorePlaces));
   app.use('/api/voice', createVoiceRouter());
   app.use('/api/routes/optimize', createOptimizationRouter(container.optimizationController));
-  app.use('/api/routes', createRoutesRouter(container.routeController, container.pathfindingController));
+  app.use(
+    '/api/routes',
+    createRoutesRouter(container.routeController, container.pathfindingController, {
+      calculate: container.rateLimits.routes,
+    }),
+  );
   app.get('/api/my-routes', notImplemented('Supabase saved routes'));
   app.use((req, res) =>
     res.status(404).json({

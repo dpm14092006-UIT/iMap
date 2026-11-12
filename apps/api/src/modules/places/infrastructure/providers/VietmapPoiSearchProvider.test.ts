@@ -45,11 +45,11 @@ describe('VietmapPoiSearchProvider', () => {
     expect(new URL(fetcher.mock.calls[0]![0]).searchParams.has('cats')).toBe(false);
   });
 
-  it('thử Search v4 khi autocomplete rỗng', async () => {
+  it('không gọi Search v4 khi autocomplete rỗng (tránh giao dịch tính phí thứ hai)', async () => {
     const fetcher = mock([], [{ ref_id: 'b', name: 'Quán B', address: 'Q1' }]);
-    expect(await provider().search(request)).toHaveLength(1);
-    expect(fetcher).toHaveBeenCalledTimes(2);
-    expect(new URL(fetcher.mock.calls[1]![0]).pathname).toBe('/api/search/v4');
+    expect(await provider().search(request)).toEqual([]);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(new URL(fetcher.mock.calls[0]![0]).pathname).toBe('/api/autocomplete/v4');
   });
 
   it('lấy toạ độ bằng Place v4 theo refid', async () => {

@@ -4,6 +4,11 @@ import { computeAreaInsight, isRushHour } from './areaInsight';
 const at = (hour: number, minute = 0) => new Date(2026, 0, 10, hour, minute);
 
 describe('computeAreaInsight', () => {
+  it('gắn nhãn giao thông là ước tính', () => {
+    expect(computeAreaInsight(0, at(11)).trafficLabel).toBe('Ước tính: Giao thông thông thoáng');
+    expect(computeAreaInsight(6, at(11)).trafficLabel).toMatch(/^Ước tính: /);
+  });
+
   it('ngoài giờ cao điểm và không có sự cố thì thông thoáng', () => {
     const insight = computeAreaInsight(0, at(11));
     expect(insight.trafficLevel).toBe('smooth');

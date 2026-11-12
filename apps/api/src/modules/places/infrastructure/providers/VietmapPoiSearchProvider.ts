@@ -24,7 +24,7 @@ const placeSchema = z.object({
   display: z.string().optional(),
 });
 
-/** Tìm POI bằng VietMap Autocomplete v4 (thử Search v4 khi rỗng); toạ độ lấy bằng Place v4. */
+/** Tìm POI bằng VietMap Autocomplete v4 (không dự phòng Search v4); toạ độ lấy bằng Place v4. */
 export class VietmapPoiSearchProvider implements PoiSearchProvider {
   constructor(private readonly apiKey?: string) {}
 
@@ -44,8 +44,8 @@ export class VietmapPoiSearchProvider implements PoiSearchProvider {
       if (!rows.success) throw invalidPlaceResponse();
       return rows.data;
     };
-    let rows = parse(await requestVietmapPlaces(this.apiKey, 'autocomplete', params));
-    if (!rows.length) rows = parse(await requestVietmapPlaces(this.apiKey, 'search', params));
+    // Chỉ Autocomplete: không dự phòng Search v4 để mỗi điểm mẫu chỉ tốn một giao dịch tính phí.
+    const rows = parse(await requestVietmapPlaces(this.apiKey, 'autocomplete', params));
     return rows.map((row) => ({
       id: row.ref_id,
       name: row.name || row.display || row.address || '',

@@ -7,6 +7,9 @@ const METERS_PER_DEGREE = (Math.PI / 180) * EARTH_RADIUS_M;
 /** Tốc độ ước tính khi đi vòng ra địa điểm rồi quay lại. */
 const DETOUR_SPEED_KMH = 25;
 
+/** Mỗi điểm mẫu là một lượt Autocomplete tính phí nên giữ trần thấp. */
+export const MAX_ALONG_ROUTE_SAMPLES = 8;
+
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
 export function haversineMeters(a: LatLng, b: LatLng): number {
@@ -52,7 +55,11 @@ export function pointAtDistance(path: readonly LatLngTuple[], distanceM: number)
  * Lấy mẫu điểm dọc tuyến: khoảng cách ≈ max(1,6 × bán kính, chiều dài / 10), tối đa `maxSamples`
  * điểm, luôn có hai đầu; các điểm cách đều nhau nên hai điểm kề nhau không xa hơn khoảng cách đó.
  */
-export function sampleAlongPath(rawPath: readonly LatLngTuple[], radiusM: number, maxSamples = 12): LatLng[] {
+export function sampleAlongPath(
+  rawPath: readonly LatLngTuple[],
+  radiusM: number,
+  maxSamples = MAX_ALONG_ROUTE_SAMPLES,
+): LatLng[] {
   const path = dedupeConsecutive(rawPath);
   if (path.length === 0) return [];
   const total = pathLengthMeters(path);

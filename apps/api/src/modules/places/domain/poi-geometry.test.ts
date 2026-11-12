@@ -15,14 +15,14 @@ const straight: LatLngTuple[] = [
 ];
 
 describe('sampleAlongPath', () => {
-  it('lấy hai đầu, tuyến rất dài vẫn không quá 12 điểm', () => {
+  it('lấy hai đầu, tuyến rất dài vẫn không quá 8 điểm', () => {
     const long: LatLngTuple[] = [
       [10.0, 106.0],
       [11.0, 106.0],
     ];
     const samples = sampleAlongPath(long, 500);
-    expect(samples).toHaveLength(11);
-    expect(samples.length).toBeLessThanOrEqual(12);
+    expect(samples).toHaveLength(8); // sẽ là 11 nếu không có trần
+    expect(samples.length).toBeLessThanOrEqual(8);
     expect(samples[0]).toEqual({ lat: 10, lng: 106 });
     expect(samples.at(-1)!.lat).toBeCloseTo(11, 6);
   });

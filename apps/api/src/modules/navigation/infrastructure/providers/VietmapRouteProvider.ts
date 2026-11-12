@@ -11,7 +11,8 @@ const vietmapResponseSchema = z.object({
       z.object({
         distance: z.number().finite().nonnegative(),
         time: z.number().finite().nonnegative(),
-        toll_cost: z.number().finite().nonnegative().optional(),
+        // null khi không yêu cầu annotation `toll`.
+        toll_cost: z.number().finite().nonnegative().nullish(),
         // Với points_encoded=false, VietMap Route v4 trả GeoJSON LineString: coordinates là [lng, lat].
         points: z.object({
           type: z.literal('LineString'),
@@ -105,7 +106,9 @@ export class VietmapRouteProvider implements RouteProvider {
     url.searchParams.set('vehicle', input.vehicle);
     url.searchParams.set('alternative', String(input.alternatives ?? false));
     // Tài liệu VietMap: annotations tính theo từng chặng nên chỉ tin cậy khi đúng 2 điểm.
-    if (input.points.length === 2) url.searchParams.set('annotations', 'congestion,congestion_distance');
+    if (input.points.length === 2) {
+      url.searchParams.set('annotations', 'congestion,congestion_distance,toll');
+    }
     if (input.avoid?.length) url.searchParams.set('avoid', [...new Set(input.avoid)].join(','));
 
     let response: Response;
@@ -215,7 +218,7 @@ export class VietmapRouteProvider implements RouteProvider {
             ...(instruction.sign === undefined ? {} : { sign: instruction.sign }),
             ...(instruction.heading === undefined ? {} : { heading: instruction.heading }),
           })),
-        ...(path.toll_cost === undefined ? {} : { tollCostVnd: path.toll_cost }),
+        ...(path.toll_cost == null ? {} : { tollCostVnd: path.toll_cost }),
         ...(congestion ? { congestion } : {}),
       };
     };

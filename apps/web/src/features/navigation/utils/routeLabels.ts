@@ -3,12 +3,12 @@ import type { RouteVariant } from '@routetwin/shared';
 type RouteLike = { durationMin: number; distanceKm: number; variant?: RouteVariant };
 
 export const variantLabels: Record<Exclude<RouteVariant, 'default'>, string> = {
+  alternative: 'Tuyến khác',
   'avoid-toll': 'Tránh trạm thu phí',
-  'avoid-motorway': 'Tránh cao tốc',
   'avoid-ferry': 'Tránh phà',
 };
 
-/** Nhãn của một phương án: Nhanh nhất / Ngắn nhất / lý do tồn tại (tránh trạm thu phí, cao tốc, phà). */
+/** Nhãn của một phương án: Nhanh nhất / Ngắn nhất / lý do tồn tại (tránh trạm thu phí, phà; hoặc "Tuyến khác"). */
 export function routeLabels(route: RouteLike, routes: RouteLike[]): string[] {
   const labels: string[] = [];
   const fastest = Math.min(...routes.map((item) => item.durationMin));
@@ -21,7 +21,10 @@ export function routeLabels(route: RouteLike, routes: RouteLike[]): string[] {
   ) {
     labels.push('Ngắn nhất');
   }
-  if (route.variant && route.variant !== 'default') labels.push(variantLabels[route.variant]);
+  // "Tuyến khác" chỉ là nhãn dự phòng: bỏ khi phương án đã có nhãn Nhanh nhất/Ngắn nhất.
+  if (route.variant && route.variant !== 'default' && !(route.variant === 'alternative' && labels.length)) {
+    labels.push(variantLabels[route.variant]);
+  }
   return labels;
 }
 
