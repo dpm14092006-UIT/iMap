@@ -27,9 +27,15 @@ export function AlgorithmComparison({ comparison, canRun }: AlgorithmComparisonP
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className="text-[12px] font-bold text-ink dark:text-slate-100">So sánh thuật toán</p>
-          <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">Dijkstra & A* trên đồ thị OSM trung tâm TP.HCM</p>
+          <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+            Dijkstra & A* trên đồ thị OSM trung tâm TP.HCM
+          </p>
         </div>
-        <div className="flex rounded-lg bg-white dark:bg-slate-800/60 p-0.5 shadow-sm" role="group" aria-label="Tiêu chí tối ưu">
+        <div
+          className="flex rounded-lg bg-white dark:bg-slate-800/60 p-0.5 shadow-sm"
+          role="group"
+          aria-label="Tiêu chí tối ưu"
+        >
           {objectives.map((item) => (
             <button
               key={item.id}

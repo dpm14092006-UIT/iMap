@@ -27,6 +27,8 @@ import { PoiSearchController } from './modules/places/presentation/PoiSearchCont
 import { VietmapRouteProvider } from './modules/navigation/infrastructure/providers/VietmapRouteProvider.js';
 import { CalculateRouteUseCase } from './modules/navigation/application/use-cases/CalculateRouteUseCase.js';
 import { RouteController } from './modules/navigation/presentation/RouteController.js';
+import { RerouteUseCase } from './modules/navigation/application/use-cases/RerouteUseCase.js';
+import { RerouteController } from './modules/navigation/presentation/RerouteController.js';
 import { OsmFileGraphSource } from './modules/navigation/infrastructure/osm/OsmFileGraphSource.js';
 import { DijkstraSolver } from './modules/navigation/domain/algorithms/DijkstraSolver.js';
 import { AStarSolver } from './modules/navigation/domain/algorithms/AStarSolver.js';
@@ -75,6 +77,8 @@ export function createContainer() {
     }),
   );
   const routeController = new RouteController(new CalculateRouteUseCase(routeProvider));
+  // Dynamic Rerouting: dùng tuyến thay thế của VietMap / điểm vòng để tránh sự cố.
+  const rerouteController = new RerouteController(new RerouteUseCase(routeProvider));
   const stopPlaces = new OverpassStopPlaceProvider(env.OVERPASS_API_URL);
   const stopParser = new AiStopIntentParser({
     provider: env.STOP_AI_PROVIDER,
@@ -105,6 +109,7 @@ export function createContainer() {
     placeSearchController,
     poiSearchController,
     routeController,
+    rerouteController,
     findRouteStops,
     explorePlaces,
     pathfindingController,

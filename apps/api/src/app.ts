@@ -87,9 +87,12 @@ export function createApp(container = createContainer()) {
   );
   app.use(
     '/api/routes',
-    createRoutesRouter(container.routeController, container.pathfindingController, {
-      calculate: container.rateLimits.routes,
-    }),
+    createRoutesRouter(
+      container.routeController,
+      container.pathfindingController,
+      container.rerouteController,
+      { calculate: container.rateLimits.routes },
+    ),
   );
   app.get('/api/my-routes', notImplemented('Supabase saved routes'));
   app.use((req, res) =>
