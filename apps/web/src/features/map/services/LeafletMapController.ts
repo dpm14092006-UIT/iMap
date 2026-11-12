@@ -2,7 +2,11 @@ import * as L from 'leaflet';
 import { iconSvg } from '../../../shared/components/Icon';
 import { poiMetaFor } from '../../explore/data/poiCatalog';
 import type { Poi } from '../../explore/types';
-import { formatDistanceKm, formatDurationCompact, formatDurationMinutes } from '../../navigation/utils/format';
+import {
+  formatDistanceKm,
+  formatDurationCompact,
+  formatDurationMinutes,
+} from '../../navigation/utils/format';
 import { minutesSlowerThanFastest, routeLabels } from '../../navigation/utils/routeLabels';
 import type { LatLng, Place } from '../../places/types';
 import type { TrafficFeature, TrafficMapLayer, TrafficSeverity } from '../layers/trafficMapLayer';
@@ -651,7 +655,9 @@ export class LeafletMapController {
     const { clientWidth, clientHeight } = container;
     const wide = clientWidth >= 768;
     const header = container.parentElement?.querySelector('header');
-    const headerBottom = header ? header.getBoundingClientRect().bottom - container.getBoundingClientRect().top : 0;
+    const headerBottom = header
+      ? header.getBoundingClientRect().bottom - container.getBoundingClientRect().top
+      : 0;
     const top = Math.max(wide ? 100 : 64, Math.round(headerBottom) + 12);
     let left: number;
     let right: number;

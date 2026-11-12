@@ -82,7 +82,10 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
     return (
       <>
         {heading}
-        <p className="rounded-2xl bg-slate-50 dark:bg-slate-800/60 p-5 text-sm text-slate-600 dark:text-slate-300" role="status">
+        <p
+          className="rounded-2xl bg-slate-50 dark:bg-slate-800/60 p-5 text-sm text-slate-600 dark:text-slate-300"
+          role="status"
+        >
           Đang kiểm tra phiên đăng nhập…
         </p>
       </>
@@ -157,7 +160,10 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
           </div>
           <form onSubmit={(event) => void submit(event)} aria-busy={busy} className="space-y-4">
             <div>
-              <label htmlFor={`${id}-email`} className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <label
+                htmlFor={`${id}-email`}
+                className="text-xs font-semibold text-slate-600 dark:text-slate-300"
+              >
                 Email
               </label>
               <input
@@ -177,7 +183,10 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
               />
             </div>
             <div>
-              <label htmlFor={`${id}-password`} className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <label
+                htmlFor={`${id}-password`}
+                className="text-xs font-semibold text-slate-600 dark:text-slate-300"
+              >
                 Mật khẩu
               </label>
               <div className="relative mt-2">
@@ -213,7 +222,10 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
               )}
             </div>
             {error && (
-              <p className="rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm leading-5 text-red-700 dark:text-red-300" role="alert">
+              <p
+                className="rounded-xl bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm leading-5 text-red-700 dark:text-red-300"
+                role="alert"
+              >
                 {error}
               </p>
             )}
@@ -236,7 +248,10 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
         </>
       )}
       {user && error && (
-        <p className="mt-4 rounded-xl bg-red-50 dark:bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300" role="alert">
+        <p
+          className="mt-4 rounded-xl bg-red-50 dark:bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300"
+          role="alert"
+        >
           {error}
         </p>
       )}

@@ -20,7 +20,8 @@ function distanceToPolyline(point: Flat, line: Flat[]): number {
     const dx = b.x - a.x;
     const dy = b.y - a.y;
     const lengthSq = dx * dx + dy * dy;
-    const t = lengthSq === 0 ? 0 : Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSq));
+    const t =
+      lengthSq === 0 ? 0 : Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSq));
     best = Math.min(best, Math.hypot(point.x - (a.x + t * dx), point.y - (a.y + t * dy)));
   }
   return line.length === 1 ? Math.hypot(point.x - line[0]!.x, point.y - line[0]!.y) : best;
@@ -43,7 +44,9 @@ export function pickRouteLabelPoints(paths: Coordinate[][]): Coordinate[] {
   const ys = all.map((p) => p.y);
   // Khoảng cách tối thiểu giữa hai nhãn ~ bề rộng một nhãn trên màn hình (~20% cạnh dài của vùng tuyến).
   const separation =
-    all.length === 0 ? 0 : 0.2 * Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+    all.length === 0
+      ? 0
+      : 0.2 * Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
 
   return paths.map((path, index) => {
     const line = lines[index]!;

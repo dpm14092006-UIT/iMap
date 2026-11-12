@@ -13,7 +13,9 @@ export function AssistantAccessPanel({ loading, onClose }: { loading: boolean; o
           <div className="mb-4 grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 dark:bg-indigo-400/10 text-brand-600 dark:text-indigo-300">
             <Icon name="sparkles" size={23} />
           </div>
-          <h2 className="text-lg font-bold tracking-tight text-ink dark:text-slate-100">Đăng nhập để dùng trợ lý AI</h2>
+          <h2 className="text-lg font-bold tracking-tight text-ink dark:text-slate-100">
+            Đăng nhập để dùng trợ lý AI
+          </h2>
           <p className="mt-2 text-xs leading-6 text-slate-500 dark:text-slate-400">
             Tạo tài khoản và đăng nhập để mở các tính năng dành cho thành viên.
           </p>
