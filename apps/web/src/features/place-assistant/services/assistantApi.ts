@@ -3,7 +3,7 @@ import type { HttpClient } from '../../../shared/api/HttpClient';
 import { httpClient } from '../../../shared/api/HttpClient';
 
 /** Client cho các endpoint dành cho thành viên: tìm điểm dừng bằng AI và nhận dạng giọng nói. */
-export class AssistantApiClient {
+class AssistantApiClient {
   constructor(private readonly http: HttpClient) {}
 
   explorePlaces(request: ExplorePlacesRequest, signal: AbortSignal, accessToken: string) {

@@ -4,7 +4,7 @@ import type { LatLng } from '../../features/places/types';
 const METERS_PER_DEGREE = 111_320;
 
 /** Khoảng cách xấp xỉ (mét) giữa hai điểm, đủ chính xác ở quy mô thành phố. */
-export function approxDistanceMeters(a: LatLng, b: LatLng): number {
+function approxDistanceMeters(a: LatLng, b: LatLng): number {
   const east = (b.lng - a.lng) * METERS_PER_DEGREE * Math.cos((((a.lat + b.lat) / 2) * Math.PI) / 180);
   const north = (b.lat - a.lat) * METERS_PER_DEGREE;
   return Math.hypot(east, north);

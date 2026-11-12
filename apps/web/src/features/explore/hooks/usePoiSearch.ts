@@ -8,7 +8,7 @@ import type { Poi, PoiProvider, PoiSearchTerm, PoiSort } from '../types';
 
 export type PoiMode = 'nearby' | 'alongRoute';
 export type PoiRequest = { mode: PoiMode; term: PoiSearchTerm };
-export type PoiSearchStatus = 'idle' | 'loading' | 'ready' | 'error';
+type PoiSearchStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 /** Làm tròn tọa độ tâm để kéo bản đồ nhẹ không làm tải lại kết quả. */
 const CENTER_STEP = 0.005;

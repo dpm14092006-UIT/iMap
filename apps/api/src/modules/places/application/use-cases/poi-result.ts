@@ -1,5 +1,6 @@
 import type { PoiResult } from '@routetwin/shared';
-import { haversineMeters, normalizeText } from '../../domain/poi-geometry.js';
+import { haversineMeters } from '../../../../shared/geo/haversine.js';
+import { normalizeText } from '../../domain/poi-geometry.js';
 
 /** Gộp các điểm cùng tên cách nhau < 30 m (giữ điểm đứng trước; đầu vào đã xếp theo độ ưu tiên). */
 export function dedupeByCoordinates(results: PoiResult[]): PoiResult[] {

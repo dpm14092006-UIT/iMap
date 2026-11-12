@@ -64,7 +64,7 @@ function closestPointOnLeg(points: Coordinate[], point: LatLng) {
 }
 
 /** Khoảng cách từ sự cố tới tuyến, dùng cùng hành lang cho cảnh báo và tô màu. */
-export function distanceToRouteMeters(route: RoutePlan, point: LatLng): number {
+function distanceToRouteMeters(route: RoutePlan, point: LatLng): number {
   let closestDistance = Number.POSITIVE_INFINITY;
   for (const leg of route.legs) {
     const closest = closestPointOnLeg(leg.points, point);

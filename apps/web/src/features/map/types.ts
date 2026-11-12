@@ -11,7 +11,7 @@ export type RouteObjective = 'time' | 'distance';
 export type Coordinate = [number, number];
 
 /** Một chặng đường giữa hai điểm, đã đổi sang đơn vị hiển thị (km, phút). */
-export type RouteLeg = {
+type RouteLeg = {
   nodes: string[];
   points: Coordinate[];
   distanceKm: number;

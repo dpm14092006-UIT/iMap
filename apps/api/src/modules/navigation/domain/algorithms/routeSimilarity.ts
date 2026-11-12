@@ -1,5 +1,5 @@
 import type { RoutePathResult } from '@routetwin/shared';
-import { haversineMeters } from './haversine.js';
+import { haversineMeters } from '../../../../shared/geo/haversine.js';
 
 const SAMPLE_COUNT = 40;
 const NEAR_METERS = 60;
@@ -25,7 +25,8 @@ function distanceToSegmentMeters(point: Coordinate, a: Coordinate, b: Coordinate
   const dx = e.x - s.x;
   const dy = e.y - s.y;
   const lengthSquared = dx * dx + dy * dy;
-  const t = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - s.x) * dx + (p.y - s.y) * dy) / lengthSquared));
+  const t =
+    lengthSquared === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - s.x) * dx + (p.y - s.y) * dy) / lengthSquared));
   return Math.hypot(p.x - (s.x + t * dx), p.y - (s.y + t * dy));
 }
 
@@ -34,7 +35,10 @@ function isNearPolyline(point: Coordinate, line: Coordinate[]): boolean {
     const a = line[i]!;
     const b = line[i + 1]!;
     // Loại nhanh các đoạn quá xa trước khi tính chính xác.
-    if (haversineMeters(toPoint(point), toPoint(a)) > 5_000 && haversineMeters(toPoint(point), toPoint(b)) > 5_000) {
+    if (
+      haversineMeters(toPoint(point), toPoint(a)) > 5_000 &&
+      haversineMeters(toPoint(point), toPoint(b)) > 5_000
+    ) {
       continue;
     }
     if (distanceToSegmentMeters(point, a, b) <= NEAR_METERS) return true;
@@ -54,8 +58,11 @@ function overlapRatio(a: Coordinate[], b: Coordinate[]): number {
  * và ≥90% điểm mẫu của tuyến này nằm sát tuyến kia (xét cả hai chiều).
  */
 export function areNearDuplicateRoutes(a: RoutePathResult, b: RoutePathResult): boolean {
-  const within = (x: number, y: number, tolerance: number) => Math.abs(x - y) <= tolerance * Math.max(x, y, 1);
+  const within = (x: number, y: number, tolerance: number) =>
+    Math.abs(x - y) <= tolerance * Math.max(x, y, 1);
   if (!within(a.distanceMeters, b.distanceMeters, 0.01)) return false;
   if (!within(a.durationSeconds, b.durationSeconds, 0.02)) return false;
-  return overlapRatio(a.coordinates, b.coordinates) >= 0.9 && overlapRatio(b.coordinates, a.coordinates) >= 0.9;
+  return (
+    overlapRatio(a.coordinates, b.coordinates) >= 0.9 && overlapRatio(b.coordinates, a.coordinates) >= 0.9
+  );
 }

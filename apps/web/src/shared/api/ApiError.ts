@@ -5,6 +5,8 @@ export class ApiError extends Error {
     /** Mã HTTP; 0 nếu yêu cầu chưa tới được máy chủ (mất mạng, quá thời gian chờ). */
     public readonly status: number,
     public readonly code?: string,
+    /** Số giây chờ trước khi thử lại, lấy từ header Retry-After của phản hồi 429. */
+    public readonly retryAfterSeconds?: number,
   ) {
     super(message);
     this.name = 'ApiError';

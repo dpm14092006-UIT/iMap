@@ -48,7 +48,13 @@ export function createApp(container = createContainer()) {
       origin: env.CORS_ORIGIN.split(',').map((origin) => origin.trim()),
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Authorization', 'Content-Type', 'X-Request-Id'],
-      exposedHeaders: ['X-Request-Id', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'],
+      exposedHeaders: [
+        'X-Request-Id',
+        'RateLimit-Limit',
+        'RateLimit-Remaining',
+        'RateLimit-Reset',
+        'Retry-After',
+      ],
     }),
   );
   app.use(express.json({ limit: '32kb' }));

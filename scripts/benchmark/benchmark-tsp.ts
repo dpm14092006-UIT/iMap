@@ -10,7 +10,7 @@
  */
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { haversineMeters } from '../../apps/api/src/modules/navigation/domain/algorithms/haversine.js';
+import { haversineMeters } from '../../apps/api/src/shared/geo/haversine.js';
 import { ExactTourStrategy } from '../../apps/api/src/modules/optimization/domain/strategies/ExactTourStrategy.js';
 import { NearestNeighborStrategy } from '../../apps/api/src/modules/optimization/domain/strategies/NearestNeighborStrategy.js';
 import type { OptimizationStrategy } from '../../apps/api/src/modules/optimization/domain/strategies/OptimizationStrategy.js';

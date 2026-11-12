@@ -62,7 +62,7 @@ export function splitRouteByCongestion(
 }
 
 /** Chiều dài (mét) theo từng mức, tính từ hình học tuyến. */
-export function congestionDistanceByLevel(
+function congestionDistanceByLevel(
   points: Coordinate[],
   segments: RouteCongestion['segments'],
 ): Record<CongestionLevel, number> {

@@ -1,6 +1,7 @@
 {
   "name": "@routetwin/shared",
   "private": true,
+  "sideEffects": false,
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",

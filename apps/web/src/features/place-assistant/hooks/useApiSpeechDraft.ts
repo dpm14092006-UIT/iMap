@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { assistantApi } from '../services/assistantApi';
 import { recordingToWav } from '../services/voiceAudio';
 export function useApiSpeechDraft(onDraft: (text: string) => void, accessToken: string) {
@@ -14,13 +14,13 @@ export function useApiSpeechDraft(onDraft: (text: string) => void, accessToken: 
   const generation = useRef(0),
     request = useRef<AbortController | null>(null),
     busy = useRef(false);
-  const release = () => {
+  const release = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
     stream.current?.getTracks().forEach((track) => track.stop());
     stream.current = null;
-  };
-  const cancel = () => {
+  }, []);
+  const cancel = useCallback(() => {
     generation.current++;
     request.current?.abort();
     request.current = null;
@@ -35,7 +35,7 @@ export function useApiSpeechDraft(onDraft: (text: string) => void, accessToken: 
     busy.current = false;
     setListening(false);
     setProcessing(false);
-  };
+  }, [release]);
   useEffect(() => {
     setAvailable(false);
     const controller = new AbortController();
@@ -51,7 +51,7 @@ export function useApiSpeechDraft(onDraft: (text: string) => void, accessToken: 
       controller.abort();
       cancel();
     };
-  }, [accessToken]);
+  }, [accessToken, cancel]);
   const start = async () => {
     if (!available || busy.current) return;
     busy.current = true;

@@ -57,7 +57,7 @@ const outputSchema = z.object({
 export type VoiceConfig = { enabled: boolean; accountId?: string; token?: string };
 
 /** Nhận dạng giọng nói bằng Cloudflare Workers AI (Whisper). Nhà cung cấp và model cố định, không có fallback trả phí. */
-export class CloudflareWhisperTranscriber {
+class CloudflareWhisperTranscriber {
   constructor(
     private readonly config: VoiceConfig,
     private readonly fetcher: typeof fetch = fetch,

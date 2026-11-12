@@ -1,4 +1,4 @@
-import { haversineMeters } from './haversine.js';
+import { haversineMeters } from '../../../../shared/geo/haversine.js';
 import { largestStronglyConnectedComponent } from './stronglyConnected.js';
 
 export type Vehicle = 'car' | 'motorcycle';

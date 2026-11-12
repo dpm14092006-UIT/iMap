@@ -4,7 +4,7 @@ import { httpClient } from '../../../shared/api/HttpClient';
 import type { LatLng, Place, PlaceSearchSuggestion } from '../types';
 
 /** Client gọi module `places` của backend (VietMap). */
-export class PlaceApiClient {
+class PlaceApiClient {
   constructor(private readonly http: HttpClient) {}
 
   /** Gợi ý địa điểm theo từ khóa, ưu tiên khu vực quanh `focus`. */

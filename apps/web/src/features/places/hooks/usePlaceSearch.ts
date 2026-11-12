@@ -26,6 +26,7 @@ export function usePlaceSearch(
   const [results, setResults] = useState<PlaceSearchSuggestion[]>([]);
   const [status, setStatus] = useState<PlaceSearchStatus>('idle');
   const trimmed = query.trim();
+  const { lat: focusLat, lng: focusLng } = focus;
   const requestKey = `${trimmed}|${focus.lat}|${focus.lng}|${kind}`;
   const [completedQuery, setCompletedQuery] = useState('');
   const [error, setError] = useState('');
@@ -43,7 +44,12 @@ export function usePlaceSearch(
       setError('');
       setStatus('loading');
       try {
-        const found = await placeApi.suggest(trimmed, focus, controller.signal, kind);
+        const found = await placeApi.suggest(
+          trimmed,
+          { lat: focusLat, lng: focusLng },
+          controller.signal,
+          kind,
+        );
         if (controller.signal.aborted) return;
         setResults(found);
         setCompletedQuery(requestKey);
@@ -63,7 +69,7 @@ export function usePlaceSearch(
       controller.abort();
     };
     // Phụ thuộc vào lat/lng thay vì object focus để không gọi lại khi object được tạo mới.
-  }, [trimmed, focus.lat, focus.lng, enabled, requestKey, kind]);
+  }, [trimmed, focusLat, focusLng, enabled, requestKey, kind]);
 
   return {
     results: completedQuery === requestKey ? results : [],

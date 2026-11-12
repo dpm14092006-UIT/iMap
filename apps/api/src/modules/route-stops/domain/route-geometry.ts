@@ -1,13 +1,10 @@
+import { EARTH_RADIUS_METERS, haversineMeters } from '../../../shared/geo/haversine.js';
 import type { StopBounds } from '../application/ports/StopPlaceProvider.js';
 type Coordinate = [number, number]; // [longitude, latitude]
-const EARTH_RADIUS = 6371000;
+const EARTH_RADIUS = EARTH_RADIUS_METERS;
 const radians = (value: number) => (value * Math.PI) / 180;
 export function distanceMeters(a: Coordinate, b: Coordinate): number {
-  const dLat = radians(b[1] - a[1]);
-  const dLon = radians(b[0] - a[0]);
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.cos(radians(a[1])) * Math.cos(radians(b[1])) * Math.sin(dLon / 2) ** 2;
-  return 2 * EARTH_RADIUS * Math.asin(Math.min(1, Math.sqrt(h)));
+  return haversineMeters({ lat: a[1], lng: a[0] }, { lat: b[1], lng: b[0] });
 }
 /** Local equirectangular projection. Used only to shortlist urban POIs, never as driving distance. */
 export function projectOnRoute(point: Coordinate, coordinates: Coordinate[]) {

@@ -8,7 +8,7 @@ import { getBearerToken } from './request-context.js';
  * Xác minh phiên đăng nhập Supabase của từng yêu cầu (không tin token do client tự khai).
  * Từ chối khách chưa đăng nhập, phiên hết hạn và tài khoản ẩn danh; thành công thì gắn `request.auth`.
  */
-export class SessionAuthenticator {
+class SessionAuthenticator {
   constructor(private readonly clients = new SupabaseClientFactory()) {}
 
   readonly handler: RequestHandler = async (request, _response, next) => {

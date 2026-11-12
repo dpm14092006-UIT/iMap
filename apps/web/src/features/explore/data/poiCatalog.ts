@@ -1,3 +1,4 @@
+import { foldVietnamese } from '../../../shared/text/foldVietnamese';
 import type { IconName } from '../../../shared/components/Icon';
 import type { PoiCategory, PoiSearchTerm } from '../types';
 
@@ -49,7 +50,7 @@ export const poiCatalog: Record<PoiCategory, PoiCategoryMeta> = {
 };
 
 /** Địa điểm tìm bằng từ khóa tự do (không thuộc danh mục nào). */
-export const genericPoiMeta: Pick<PoiCategoryMeta, 'label' | 'icon' | 'color'> = {
+const genericPoiMeta: Pick<PoiCategoryMeta, 'label' | 'icon' | 'color'> = {
   label: 'Địa điểm',
   icon: 'pin',
   color: '#475569',
@@ -75,15 +76,7 @@ export function poiMetaFor(category: PoiCategory | null) {
   return category ? poiCatalog[category] : genericPoiMeta;
 }
 
-function stripDiacritics(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/đ/g, 'd')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
-}
+const stripDiacritics = (value: string) => foldVietnamese(value).replace(/\s+/g, ' ');
 
 /** Khớp nguyên cụm với tên hoặc cách gọi khác của danh mục ("xăng", "ca phe"); còn lại là từ khóa tự do. */
 export function findPoiCategory(text: string): PoiCategory | null {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AStarSolver } from './AStarSolver.js';
 import { DijkstraSolver } from './DijkstraSolver.js';
-import { haversineMeters } from './haversine.js';
+import { haversineMeters } from '../../../../shared/geo/haversine.js';
 import { RoadGraph, type Vehicle } from './RoadGraph.js';
 
 const both: Vehicle[] = ['car', 'motorcycle'];

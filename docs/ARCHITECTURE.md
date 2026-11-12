@@ -22,7 +22,7 @@ flowchart TB
 
 ## Patterns có chủ đích
 
-- **Repository**: `TrafficReportRepository` → `SupabaseTrafficReportRepository` trong composition production; `InMemoryTrafficReportRepository` chỉ là local/test adapter.
+- **Repository**: `TrafficReportRepository` → `SupabaseTrafficReportRepository` trong composition production.
 - **Adapter**: `PlaceSearchProvider` → `PhotonPlaceSearchProvider`; `RouteProvider` → `VietmapRouteProvider`; `TrafficReportRepository` → `SupabaseTrafficReportRepository`; `TrafficImageAnalyzer` → `GeminiTrafficImageAnalyzer`.
 - **Strategy**: `OptimizationStrategy` để thay `ExactTourStrategy` (Held–Karp) / `TwoOptStrategy` (NN + 2-opt); `ShortestPathSolver` để thay Dijkstra/A*.
 - **Dependency Injection bằng constructor**: `new CreateTrafficReportUseCase(repo)`; wiring tại `composition-root.ts`.

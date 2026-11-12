@@ -40,4 +40,38 @@ describe('HttpClient', () => {
     const error = await client.get('/x', { signal: controller.signal }).catch((cause: unknown) => cause);
     expect((error as Error).name).toBe('AbortError');
   });
+
+  it('429: đọc Retry-After và báo thời gian chờ bằng tiếng Việt', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          Response.json(
+            { error: { code: 'RATE_LIMITED', message: 'Bạn gửi quá nhiều yêu cầu.' } },
+            { status: 429, headers: { 'Retry-After': '12' } },
+          ),
+        ),
+    );
+    const error = (await client.get('/x').catch((cause: unknown) => cause)) as ApiError;
+    expect(error).toMatchObject({
+      status: 429,
+      code: 'RATE_LIMITED',
+      retryAfterSeconds: 12,
+      message: 'Bạn thao tác quá nhanh, thử lại sau 12 giây.',
+    });
+  });
+
+  it('429 không có Retry-After giữ thông điệp của máy chủ', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          Response.json({ error: { code: 'RATE_LIMITED', message: 'Chậm lại' } }, { status: 429 }),
+        ),
+    );
+    const error = (await client.get('/x').catch((cause: unknown) => cause)) as ApiError;
+    expect(error).toMatchObject({ status: 429, message: 'Chậm lại', retryAfterSeconds: undefined });
+  });
 });

@@ -1,5 +1,5 @@
 import { GraphSearchSolver } from './GraphSearchSolver.js';
-import { haversineMeters } from './haversine.js';
+import { haversineMeters } from '../../../../shared/geo/haversine.js';
 import type { RoadGraph } from './RoadGraph.js';
 import type { SearchOptions } from './ShortestPathSolver.js';
 

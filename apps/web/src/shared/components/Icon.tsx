@@ -28,17 +28,11 @@ export type IconName =
   | 'pin'
   | 'camera'
   | 'trash'
-  | 'heart'
-  | 'more'
   | 'send'
   | 'route'
   | 'refresh'
-  | 'parking'
   | 'cafe'
-  | 'shop'
-  | 'hospital'
   | 'close-circle'
-  | 'star'
   | 'fuel'
   | 'ev'
   | 'hotel'
@@ -55,8 +49,6 @@ export type IconName =
   | 'sun'
   | 'cloud'
   | 'rain'
-  | 'wifi'
-  | 'snowflake'
   | 'info'
   | 'chevron-left'
   | 'chevron-right'
@@ -109,20 +101,13 @@ const shapes: Record<IconName, string> = {
   camera:
     '<path d="M4 7h3l1.3-2h7.4L17 7h3a1.5 1.5 0 0 1 1.5 1.5v10A1.5 1.5 0 0 1 20 20H4a1.5 1.5 0 0 1-1.5-1.5v-10A1.5 1.5 0 0 1 4 7Z" /><circle cx="12" cy="13" r="3.4" />',
   trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />',
-  heart:
-    '<path d="M20.8 8.8c0 4.1-8.8 10.4-8.8 10.4S3.2 12.9 3.2 8.8a4.7 4.7 0 0 1 8.8-2.3 4.7 4.7 0 0 1 8.8 2.3Z" />',
-  more: '<circle cx="5" cy="12" r=".8" /><circle cx="12" cy="12" r=".8" /><circle cx="19" cy="12" r=".8" />',
   send: '<path d="m22 2-7 20-4-9-9-4 20-7Z" /><path d="M22 2 11 13" />',
   route:
     '<circle cx="6" cy="18" r="2" /><circle cx="18" cy="6" r="2" /><path d="M8 18h4a3 3 0 0 0 3-3V9a3 3 0 0 1 3-3" />',
   refresh:
     '<path d="M20 7v5h-5M4 17v-5h5" /><path d="M5.5 9a7 7 0 0 1 12-2L20 9M4 15l2.5 2a7 7 0 0 0 12-2" />',
-  parking: '<circle cx="12" cy="12" r="9" /><path d="M10 17V7h3.5a3 3 0 0 1 0 6H10" />',
   cafe: '<path d="M4 9h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9ZM17 10h1.5a2.5 2.5 0 0 1 0 5H17M7 4v2M11 4v2M15 4v2" />',
-  shop: '<path d="M4 9h16l-1.2-5H5.2L4 9ZM5 9v11h14V9M9 20v-6h6v6" />',
-  hospital: '<path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M3 21h18M12 7v8M8 11h8" />',
   'close-circle': '<circle cx="12" cy="12" r="9" /><path d="m9 9 6 6m0-6-6 6" />',
-  star: '<path d="m12 3.2 2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.3 9.6l6-.9L12 3.2Z" />',
   fuel: '<path d="M5 20V5a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v15M4 20h11M5 10h9M14 8h2.5a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 0 3 0V8l-2.5-2.5" />',
   ev: '<path d="M13 2 5 13h6l-1 9 8-11h-6l1-9Z" />',
   hotel: '<path d="M3 20V6M3 16h18v4M21 16v-3a3 3 0 0 0-3-3h-7v6" /><circle cx="7" cy="12" r="1.8" />',
@@ -141,9 +126,6 @@ const shapes: Record<IconName, string> = {
   sun: '<circle cx="12" cy="12" r="4" /><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" />',
   cloud: '<path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 10.5a3.8 3.8 0 0 1-.5 7.5H7Z" />',
   rain: '<path d="M7 15a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 7.5a3.8 3.8 0 0 1-.5 7.5H7ZM8 18l-1 2.5M12 18l-1 2.5M16 18l-1 2.5" />',
-  wifi: '<path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.6 16a5 5 0 0 1 6.8 0M12 19.5h.01" />',
-  snowflake:
-    '<path d="M12 2.5v19M3.8 7.2l16.4 9.6M3.8 16.8l16.4-9.6M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5" />',
   info: '<circle cx="12" cy="12" r="9" /><path d="M12 11v5.5M12 7.8h.01" />',
   'chevron-left': '<path d="m15 6-6 6 6 6" />',
   'chevron-right': '<path d="m9 6 6 6-6 6" />',

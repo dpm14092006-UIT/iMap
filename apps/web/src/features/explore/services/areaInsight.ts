@@ -1,7 +1,7 @@
 import type { IconName } from '../../../shared/components/Icon';
 
 export type TrafficLevel = 'smooth' | 'moderate' | 'heavy';
-export type WeatherKind = 'sunny' | 'cloudy' | 'rain' | 'night';
+type WeatherKind = 'sunny' | 'cloudy' | 'rain' | 'night';
 
 export type AreaInsight = {
   temperatureC: number;
@@ -35,7 +35,7 @@ export function isRushHour(now: Date): boolean {
 }
 
 /** Thời tiết minh họa theo giờ trong ngày, nhiệt độ 26–33°C (nóng nhất khoảng 14h). */
-export function sampleWeather(now: Date): Pick<AreaInsight, 'temperatureC' | 'weather'> {
+function sampleWeather(now: Date): Pick<AreaInsight, 'temperatureC' | 'weather'> {
   const hour = now.getHours() + now.getMinutes() / 60;
   const temperatureC = Math.round(29.5 + 3.5 * Math.cos(((hour - 14) / 24) * 2 * Math.PI));
   const weather: WeatherKind =

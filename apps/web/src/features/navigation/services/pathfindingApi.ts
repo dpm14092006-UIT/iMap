@@ -3,7 +3,7 @@ import type { HttpClient } from '../../../shared/api/HttpClient';
 import { httpClient } from '../../../shared/api/HttpClient';
 
 /** Client cho thuật toán tìm đường tự cài đặt (Dijkstra / A*) trên đồ thị OSM của backend. */
-export class PathfindingApiClient {
+class PathfindingApiClient {
   constructor(private readonly http: HttpClient) {}
 
   solve(request: PathfindingRequest): Promise<PathfindingResult> {

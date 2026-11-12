@@ -1,5 +1,6 @@
 import type { StopCategory } from '@routetwin/shared';
 import { stopIntentSchema } from '@routetwin/shared';
+import { stripDiacritics } from '../../../../shared/text/strip-diacritics.js';
 import type { StopIntentParser } from '../../application/ports/StopIntentParser.js';
 const categoryPatterns: [StopCategory, RegExp][] = [
   ['fuel', /\b(xang|tram nhien lieu|fuel|petrol|gas station|gasoline|low on gas|out of gas|need gas)\b/],
@@ -17,13 +18,7 @@ const categoryPatterns: [StopCategory, RegExp][] = [
   ['train_station', /\b(ga tau|ga xe lua|train stations?|railway stations?)\b/],
   ['rest_area', /\b(tram nghi|tram dung chan|rest areas?|rest stops?)\b/],
 ];
-export const normalizeQuery = (query: string) =>
-  query
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase();
+const normalizeQuery = (query: string) => stripDiacritics(query).toLowerCase();
 const isNegated = (text: string) =>
   /\b(khong(?! qua| vuot)|tru|ngoai tru|dung tim|not(?! more than)|except|don.t)\b/.test(text);
 const categoriesIn = (text: string) =>

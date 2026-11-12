@@ -4,7 +4,7 @@ import { SupabaseUserFeatureQuota, type QuotaFeature } from '../supabase/Supabas
 import type { AuthenticatedRequest } from './authenticated-request.js';
 
 /** Trừ một lượt trong hạn mức theo phút của người dùng cho một tính năng tốn phí; hết lượt thì trả 429. */
-export class FeatureQuotaGuard {
+class FeatureQuotaGuard {
   constructor(
     private readonly feature: QuotaFeature,
     private readonly quota = new SupabaseUserFeatureQuota(),

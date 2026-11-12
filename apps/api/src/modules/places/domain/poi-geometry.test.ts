@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   detourMinutes,
-  haversineMeters,
   pathLengthMeters,
   projectOnPath,
   sampleAlongPath,
   type LatLngTuple,
 } from './poi-geometry.js';
+import { haversineMeters } from '../../../shared/geo/haversine.js';
 
 /** ~11,1 km theo hướng bắc: 0,1 độ vĩ. */
 const straight: LatLngTuple[] = [
