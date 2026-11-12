@@ -1,30 +1,23 @@
 /** Hình học thuần cho tìm địa điểm: toạ độ [vĩ độ, kinh độ], đơn vị mét. Không phụ thuộc framework. */
+import { EARTH_RADIUS_METERS, haversineMeters } from '../../../shared/geo/haversine.js';
+import { stripDiacritics } from '../../../shared/text/strip-diacritics.js';
+
 export type LatLngTuple = readonly [number, number];
 export type LatLng = { lat: number; lng: number };
 
-const EARTH_RADIUS_M = 6_371_008.8;
-const METERS_PER_DEGREE = (Math.PI / 180) * EARTH_RADIUS_M;
+const METERS_PER_DEGREE = (Math.PI / 180) * EARTH_RADIUS_METERS;
 /** Tốc độ ước tính khi đi vòng ra địa điểm rồi quay lại. */
 const DETOUR_SPEED_KMH = 25;
 
 /** Mỗi điểm mẫu là một lượt Autocomplete tính phí nên giữ trần thấp. */
-export const MAX_ALONG_ROUTE_SAMPLES = 8;
+const MAX_ALONG_ROUTE_SAMPLES = 8;
 
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
-
-export function haversineMeters(a: LatLng, b: LatLng): number {
-  const dLat = toRadians(b.lat - a.lat);
-  const dLng = toRadians(b.lng - a.lng);
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRadians(a.lat)) * Math.cos(toRadians(b.lat)) * Math.sin(dLng / 2) ** 2;
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(h)));
-}
 
 const point = ([lat, lng]: LatLngTuple): LatLng => ({ lat, lng });
 
 /** Bỏ các điểm liên tiếp trùng nhau để không sinh đoạn dài 0. */
-export function dedupeConsecutive(path: readonly LatLngTuple[]): LatLngTuple[] {
+function dedupeConsecutive(path: readonly LatLngTuple[]): LatLngTuple[] {
   return path.filter((p, i) => i === 0 || p[0] !== path[i - 1]![0] || p[1] !== path[i - 1]![1]);
 }
 
@@ -35,7 +28,7 @@ export function pathLengthMeters(path: readonly LatLngTuple[]): number {
 }
 
 /** Điểm nằm cách đầu tuyến `distanceM` mét (kẹp trong [0, tổng chiều dài]). */
-export function pointAtDistance(path: readonly LatLngTuple[], distanceM: number): LatLng {
+function pointAtDistance(path: readonly LatLngTuple[], distanceM: number): LatLng {
   if (path.length === 0) throw new RangeError('Tuyến rỗng');
   let remaining = Math.max(0, distanceM);
   for (let i = 1; i < path.length; i++) {
@@ -104,10 +97,7 @@ export function detourMinutes(distanceFromRouteM: number): number {
 
 /** Chuẩn hóa để so trùng tên/địa chỉ: bỏ dấu, chữ thường, bỏ ký tự thừa. */
 export function normalizeText(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[đĐ]/g, 'd')
+  return stripDiacritics(value)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();

@@ -1,13 +1,8 @@
-const COMBINING_MARKS = /[̀-ͯ]/g;
+import { stripDiacritics } from '../../../shared/text/strip-diacritics.js';
 
 /** Chuẩn hóa NFC, chữ thường, gộp khoảng trắng; vẫn giữ dấu tiếng Việt. */
 export function foldCase(value: string): string {
   return value.normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();
-}
-
-/** Bỏ dấu (kể cả đ → d) trên chuỗi đã foldCase. */
-export function stripDiacritics(value: string): string {
-  return value.normalize('NFD').replace(COMBINING_MARKS, '').replace(/đ/g, 'd').normalize('NFC');
 }
 
 const words = (value: string) => value.split(/[^\p{L}\p{N}]+/u).filter(Boolean);

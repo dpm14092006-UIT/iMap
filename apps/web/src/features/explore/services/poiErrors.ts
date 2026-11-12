@@ -15,6 +15,7 @@ export function poiErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     const byCode = error.code ? messages[error.code] : undefined;
     if (byCode) return byCode;
+    if (error.status === 429) return error.message;
     if (!error.isServerError) return error.message;
   }
   return 'Không tải được danh sách địa điểm. Hãy thử lại.';

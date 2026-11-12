@@ -60,7 +60,7 @@ const congestionAnnotationsSchema = z.object({
 const KNOWN_LEVELS = new Set<string>(['low', 'moderate', 'heavy', 'severe']);
 
 /** Đổi annotations của VietMap sang dạng gọn; trả undefined khi thiếu hoặc sai cấu trúc. */
-export function parseCongestion(annotations: unknown, coordinateCount: number): RouteCongestion | undefined {
+function parseCongestion(annotations: unknown, coordinateCount: number): RouteCongestion | undefined {
   const parsed = congestionAnnotationsSchema.safeParse(annotations);
   if (!parsed.success) return undefined;
   const { congestion, congestion_distance: distances } = parsed.data;

@@ -13,6 +13,15 @@ export type RequestOptions = Omit<RequestInit, 'body' | 'method'> & {
   accessToken?: string;
 };
 
+/** Retry-After là số giây hoặc ngày giờ HTTP; trả về số giây (làm tròn lên, tối thiểu 1) hoặc undefined. */
+function parseRetryAfterSeconds(header: string | null): number | undefined {
+  if (!header) return undefined;
+  const seconds = Number(header);
+  if (Number.isFinite(seconds) && seconds >= 0) return Math.max(1, Math.ceil(seconds));
+  const date = Date.parse(header);
+  return Number.isNaN(date) ? undefined : Math.max(1, Math.ceil((date - Date.now()) / 1000));
+}
+
 /**
  * Lớp duy nhất của web nói chuyện HTTP với backend.
  * Mọi API client (places, traffic, routes…) nhận một HttpClient qua constructor,
@@ -89,6 +98,14 @@ export class HttpClient {
         typeof json === 'object' && json !== null && 'error' in json
           ? (json as { error: { message?: string; code?: string } }).error
           : {};
+      if (response.status === 429) {
+        const retryAfter = parseRetryAfterSeconds(response.headers.get('Retry-After'));
+        const message =
+          retryAfter === undefined
+            ? (apiError.message ?? 'Bạn thao tác quá nhanh, hãy thử lại sau ít giây.')
+            : `Bạn thao tác quá nhanh, thử lại sau ${retryAfter} giây.`;
+        throw new ApiError(message, 429, apiError.code, retryAfter);
+      }
       throw new ApiError(apiError.message ?? `Lỗi API (${response.status})`, response.status, apiError.code);
     }
     if (typeof json !== 'object' || json === null || !('data' in json)) {

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { stopCategoryLabels, type StopCategory, type StopPlace } from '@routetwin/shared';
 import { AppError } from '../../../../shared/errors/AppError.js';
 import type { StopBounds, StopPlaceProvider } from '../../application/ports/StopPlaceProvider.js';
-export const categoryTags: Record<StopCategory, { key: string; value: string }> = {
+const categoryTags: Record<StopCategory, { key: string; value: string }> = {
   fuel: { key: 'amenity', value: 'fuel' },
   cafe: { key: 'amenity', value: 'cafe' },
   restaurant: { key: 'amenity', value: 'restaurant' },

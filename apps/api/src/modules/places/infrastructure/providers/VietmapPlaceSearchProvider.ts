@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { PlaceSuggestion } from '@routetwin/shared';
+import { stripDiacritics } from '../../../../shared/text/strip-diacritics.js';
 import type { GeoFocus, PlaceSearchProvider } from '../../application/ports/PlaceSearchProvider.js';
 import {
   invalidPlaceResponse,
@@ -21,10 +22,7 @@ const pointSchema = z.object({
   display: z.string().optional(),
 });
 function normalized(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[đĐ]/g, 'd')
+  return stripDiacritics(value)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .replace(/\b(dct|dt|ql|tl)(\d+)/g, '$1 $2')

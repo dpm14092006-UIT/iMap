@@ -5,7 +5,7 @@ import { popularPlaces } from '../../places/data/popularPlaces';
 import type { RouteObjective, RoutePlan, TransportMode } from '../../map/types';
 import type { LatLng, Place } from '../../places/types';
 import { PlaceCombobox } from '../../places/components/PlaceCombobox';
-import { algorithmOptions, MAX_EXACT_STOPS, MAX_STOPS, type AlgorithmChoice } from '../utils/algorithms';
+import { algorithmOptions, MAX_STOPS, type AlgorithmChoice } from '../utils/algorithms';
 import { OptimizationSummary } from './OptimizationSummary';
 
 type MultiStopPanelProps = {
@@ -57,8 +57,8 @@ export function MultiStopPanel({
   const [isLoading, setIsLoading] = useState(false);
   const [objective, setObjective] = useState<RouteObjective>('time');
   const [algorithm, setAlgorithm] = useState<AlgorithmChoice>('auto');
-  // Held–Karp chỉ hỗ trợ tối đa MAX_EXACT_STOPS điểm ghé.
-  const exactTooMany = algorithm === 'exact' && stops.length > MAX_EXACT_STOPS;
+  // Held–Karp chỉ hỗ trợ tối đa MAX_STOPS điểm ghé.
+  const exactTooMany = algorithm === 'exact' && stops.length > MAX_STOPS;
   useEffect(() => {
     if (isActive && plan) onShowPlan(plan);
   }, [isActive, plan, onShowPlan]);
@@ -256,8 +256,12 @@ export function MultiStopPanel({
                 {String(index + 1).padStart(2, '0')}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[12px] font-semibold text-ink dark:text-slate-100">{place.name}</span>
-                <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">{place.address}</span>
+                <span className="block truncate text-[12px] font-semibold text-ink dark:text-slate-100">
+                  {place.name}
+                </span>
+                <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">
+                  {place.address}
+                </span>
               </span>
               <button
                 type="button"
@@ -311,7 +315,7 @@ export function MultiStopPanel({
           className="mt-3 rounded-xl border border-amber-200 dark:border-amber-300/20 bg-amber-50 dark:bg-amber-400/10 px-3 py-2.5 text-[11px] leading-5 text-amber-900 dark:text-amber-100"
           role="alert"
         >
-          Thuật toán chính xác chỉ hỗ trợ tối đa {MAX_EXACT_STOPS} điểm ghé. Hãy chọn "Tự động" hoặc "Nhanh".
+          Thuật toán chính xác chỉ hỗ trợ tối đa {MAX_STOPS} điểm ghé. Hãy chọn "Tự động" hoặc "Nhanh".
         </p>
       )}
       {error && (
@@ -323,10 +327,15 @@ export function MultiStopPanel({
         </p>
       )}
       {plan && (
-        <div className="mt-3 rounded-xl border border-brand-100 dark:border-indigo-300/20 bg-brand-50/70 dark:bg-indigo-400/10 px-3 py-3" role="status">
+        <div
+          className="mt-3 rounded-xl border border-brand-100 dark:border-indigo-300/20 bg-brand-50/70 dark:bg-indigo-400/10 px-3 py-3"
+          role="status"
+        >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-bold text-brand-800 dark:text-indigo-300">Đã sắp xếp hành trình</p>
+              <p className="text-[11px] font-bold text-brand-800 dark:text-indigo-300">
+                Đã sắp xếp hành trình
+              </p>
               <p className="mt-1 text-[11px] text-brand-800/80 dark:text-indigo-300/80">
                 {plan.distanceKm.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} km ·{' '}
                 {Math.round(plan.durationMin)} phút

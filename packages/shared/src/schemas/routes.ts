@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_OPTIMIZE_POINTS } from '../constants.js';
 export const geoPointSchema = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
@@ -58,7 +59,6 @@ export type RouteResult = RoutePathResult & {
  * - auto:      exact khi trong giới hạn của Held–Karp, ngược lại heuristic
  */
 export const tourAlgorithms = ['auto', 'exact', 'heuristic'] as const;
-export const MAX_OPTIMIZE_POINTS = 16;
 
 /** Fixed departure, up to fifteen stops; departure is repeated only in the optimized closed tour. */
 export const optimizeRouteRequestSchema = z

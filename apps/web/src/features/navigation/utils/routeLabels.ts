@@ -2,7 +2,7 @@ import type { RouteVariant } from '@routetwin/shared';
 
 type RouteLike = { durationMin: number; distanceKm: number; variant?: RouteVariant };
 
-export const variantLabels: Record<Exclude<RouteVariant, 'default'>, string> = {
+const variantLabels: Record<Exclude<RouteVariant, 'default'>, string> = {
   alternative: 'Tuyến khác',
   'avoid-toll': 'Tránh trạm thu phí',
   'avoid-ferry': 'Tránh phà',

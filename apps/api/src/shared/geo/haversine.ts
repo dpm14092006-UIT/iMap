@@ -1,5 +1,5 @@
 /** Bán kính trung bình Trái Đất (mét). */
-const EARTH_RADIUS_METERS = 6_371_008.8;
+export const EARTH_RADIUS_METERS = 6_371_008.8;
 
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 

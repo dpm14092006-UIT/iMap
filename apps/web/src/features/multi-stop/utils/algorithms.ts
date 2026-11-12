@@ -5,8 +5,6 @@ export type AlgorithmChoice = OptimizeRouteRequest['algorithm'];
 
 /** Số điểm ghé tối đa (không tính điểm xuất phát). */
 export const MAX_STOPS = MAX_OPTIMIZE_POINTS - 1;
-/** Held–Karp chạy nhanh (≈ 30 ms) cho toàn bộ giới hạn điểm ghé của app. */
-export const MAX_EXACT_STOPS = MAX_STOPS;
 
 export const algorithmOptions: { id: AlgorithmChoice; label: string }[] = [
   { id: 'auto', label: 'Tự động' },

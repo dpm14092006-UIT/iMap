@@ -1,40 +1,8 @@
 import { z } from 'zod';
+import { stopCategories, type StopCategory } from '../constants.js';
 import { geoPointSchema, type RouteResult } from './routes.js';
 
-export const stopCategories = [
-  'fuel',
-  'cafe',
-  'restaurant',
-  'pharmacy',
-  'atm',
-  'toilets',
-  'school',
-  'hospital',
-  'parking',
-  'park',
-  'library',
-  'bus_stop',
-  'train_station',
-  'rest_area',
-] as const;
 export const stopCategorySchema = z.enum(stopCategories);
-export type StopCategory = z.infer<typeof stopCategorySchema>;
-export const stopCategoryLabels: Record<StopCategory, string> = {
-  fuel: 'Trạm xăng',
-  cafe: 'Cà phê',
-  restaurant: 'Quán ăn',
-  pharmacy: 'Nhà thuốc',
-  atm: 'ATM',
-  toilets: 'Nhà vệ sinh',
-  school: 'Trường học',
-  hospital: 'Bệnh viện',
-  parking: 'Bãi đỗ xe',
-  park: 'Công viên',
-  library: 'Thư viện',
-  bus_stop: 'Trạm xe buýt',
-  train_station: 'Ga tàu',
-  rest_area: 'Trạm nghỉ',
-};
 export const stopIntentSchema = z.object({
   category: z.enum([...stopCategories, 'unknown']),
   maxExtraDistanceMeters: z.number().int().min(0).max(10000).nullable(),

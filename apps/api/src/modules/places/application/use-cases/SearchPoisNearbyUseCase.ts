@@ -1,5 +1,5 @@
 import type { NearbyPoiRequest, PoiResult } from '@routetwin/shared';
-import { haversineMeters } from '../../domain/poi-geometry.js';
+import { haversineMeters } from '../../../../shared/geo/haversine.js';
 import { PoiLookup } from '../services/PoiLookup.js';
 import type { PoiSearchProvider } from '../ports/PoiSearchProvider.js';
 import { dedupeByCoordinates } from './poi-result.js';

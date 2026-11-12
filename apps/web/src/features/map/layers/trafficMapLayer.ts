@@ -12,10 +12,10 @@ import type { Feature, FeatureCollection, Point } from 'geojson';
  */
 
 export type TrafficSeverity = 'low' | 'medium' | 'high';
-export type TrafficVehicleScope = 'car' | 'motorcycle' | 'both';
+type TrafficVehicleScope = 'car' | 'motorcycle' | 'both';
 
 /** Thuộc tính của một sự cố hiển thị trên bản đồ. */
-export type TrafficFeatureProperties = {
+type TrafficFeatureProperties = {
   id: string;
   /** Loại sự cố: traffic_jam, accident, construction, flood, road_closure, obstacle. */
   incidentType: string;

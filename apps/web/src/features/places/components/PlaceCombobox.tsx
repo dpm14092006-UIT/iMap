@@ -1,25 +1,16 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type Ref } from 'react';
 import { Icon, type IconName } from '../../../shared/components/Icon';
 import { MIN_QUERY_LENGTH, usePlaceSearch } from '../hooks/usePlaceSearch';
+import { foldVietnamese } from '../../../shared/text/foldVietnamese';
 import { placeApi } from '../api/placeApi';
 import type { LatLng, Place, PlaceSearchSuggestion } from '../types';
-
-/** Bỏ dấu tiếng Việt và chữ hoa để so khớp "ben thanh" với "Bến Thành". */
-function normalize(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase()
-    .trim();
-}
 
 /** Hai địa điểm coi là trùng nếu cùng tên và cách nhau rất gần (~400 m). */
 function isSamePlace(a: PlaceSearchSuggestion, b: PlaceSearchSuggestion) {
   return (
     a.id === b.id ||
-    (normalize(a.name) === normalize(b.name) && normalize(a.address) === normalize(b.address))
+    (foldVietnamese(a.name) === foldVietnamese(b.name) &&
+      foldVietnamese(a.address) === foldVietnamese(b.address))
   );
 }
 
@@ -80,10 +71,10 @@ export function PlaceCombobox({
 
   // Gộp địa điểm có sẵn (ưu tiên) với kết quả từ API, bỏ trùng và giới hạn số lượng.
   const matches = useMemo(() => {
-    const query = normalize(value);
+    const query = foldVietnamese(value);
     if (query.length < MIN_QUERY_LENGTH) return [];
     const local = (searchKind === 'street' ? [] : places).filter((place) =>
-      normalize(`${place.name} ${place.address} ${place.category}`).includes(query),
+      foldVietnamese(`${place.name} ${place.address} ${place.category}`).includes(query),
     );
     const remainingLocal = local.filter(
       (place) => !remotePlaces.some((candidate) => isSamePlace(place, candidate)),
@@ -238,9 +229,15 @@ export function PlaceCombobox({
                     <span className="block truncate text-[13px] font-semibold text-ink dark:text-white">
                       {place.name}
                     </span>
-                    <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">{place.address}</span>
+                    <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">
+                      {place.address}
+                    </span>
                   </span>
-                  <Icon name="arrow-up-right" size={15} className="shrink-0 text-slate-400 dark:text-slate-500" />
+                  <Icon
+                    name="arrow-up-right"
+                    size={15}
+                    className="shrink-0 text-slate-400 dark:text-slate-500"
+                  />
                 </button>
               ))}
             </div>

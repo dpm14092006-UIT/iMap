@@ -22,7 +22,7 @@ const consoleLogger: RouteLogger = {
   warn: (message, fields) => console.warn(JSON.stringify({ message, ...fields })),
 };
 
-export const MAX_ROUTE_OPTIONS = 4;
+const MAX_ROUTE_OPTIONS = 4;
 
 export class CalculateRouteUseCase {
   constructor(

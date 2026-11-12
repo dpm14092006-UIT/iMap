@@ -13,10 +13,10 @@ RouteTwin_OOP_Starter/
 │   │   │   ├── multi-stop/              Lập kế hoạch nhiều điểm
 │   │   │   ├── my-routes/               UI lưu localStorage; chưa có API
 │   │   │   └── traffic/                 Báo cáo, ảnh, gợi ý Gemini, xác nhận
-│   │   └── shared/                      API client và UI dùng chung
+│   │   └── shared/                      API client, UI, geo và chuẩn hóa text dùng chung
 │   └── api/src/
 │       ├── config/                      Đọc và kiểm tra biến môi trường
-│       ├── shared/                      HTTP, lỗi và Supabase client
+│       ├── shared/                      HTTP, lỗi, Supabase client, haversine và bỏ dấu tiếng Việt
 │       ├── modules/
 │       │   ├── places/                  Photon provider và tìm kiếm
 │       │   ├── navigation/              VietMap route, graph, Dijkstra
@@ -26,7 +26,7 @@ RouteTwin_OOP_Starter/
 │       ├── composition-root.ts           Dependency injection
 │       ├── app.ts                        Express middleware/routes
 │       └── main.ts                       Entry point
-├── packages/shared/src/                  DTO, Zod schemas, types
+├── packages/shared/src/                  DTO, Zod schemas, types; `constants.ts` là hằng số thuần (web import mà không kéo zod)
 ├── supabase/
 │   ├── migrations/                       PostGIS, Auth/RLS, ảnh, xác nhận
 │   └── ops/                              SQL vận hành hạn báo cáo

@@ -1,4 +1,4 @@
-import { haversineMeters } from '../../domain/algorithms/haversine.js';
+import { haversineMeters } from '../../../../shared/geo/haversine.js';
 import { RoadGraph, type Vehicle } from '../../domain/algorithms/RoadGraph.js';
 import { allowedVehicles, speedKmh, travelDirection } from './osmRoadRules.js';
 import type { OsmExtract, OsmWay } from './osmTypes.js';
