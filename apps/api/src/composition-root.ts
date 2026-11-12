@@ -91,6 +91,7 @@ export function createContainer() {
     poi: perMinuteRateLimit(env.RATE_LIMIT_POI_PER_MIN),
     routes: perMinuteRateLimit(env.RATE_LIMIT_ROUTES_PER_MIN),
     places: perMinuteRateLimit(env.RATE_LIMIT_PLACES_PER_MIN),
+    optimize: perMinuteRateLimit(env.RATE_LIMIT_OPTIMIZE_PER_MIN),
   };
   return {
     rateLimits,

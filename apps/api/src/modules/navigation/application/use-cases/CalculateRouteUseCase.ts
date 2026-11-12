@@ -6,12 +6,14 @@ type AvoidOption = NonNullable<RouteRequest['avoid']>[number];
 
 /**
  * Các biến thể tính thêm khi cần nhiều phương án: VietMap thường chỉ trả 1 tuyến cho ô tô.
- * `avoid-toll` chỉ được giữ khi mọi tuyến trả về có toll_cost = 0; `motorway` không kiểm chứng được
- * từ dữ liệu trả về nên luôn là `alternative`.
+ * - `ferry`: giá trị avoid duy nhất có trong tài liệu Route v4.
+ * - `toll`: chưa có trong tài liệu nhưng đã kiểm chứng thực tế (12/11/2026: tuyến trả về có toll_cost = 0).
+ *   Vẫn kiểm lại từng phản hồi: chỉ gắn `avoid-toll` khi mọi tuyến có toll_cost = 0, ngược lại là `alternative`.
+ *   Nếu VietMap từ chối giá trị này, lời gọi phụ thất bại và chỉ mất phương án đó (lời gọi chính không ảnh hưởng).
+ * Không dùng `motorway`: không có trong tài liệu và không kiểm chứng được từ dữ liệu trả về.
  */
 const FAN_OUT: { avoid: AvoidOption; variant: RouteVariant }[] = [
   { avoid: 'toll', variant: 'avoid-toll' },
-  { avoid: 'motorway', variant: 'alternative' },
   { avoid: 'ferry', variant: 'avoid-ferry' },
 ];
 
