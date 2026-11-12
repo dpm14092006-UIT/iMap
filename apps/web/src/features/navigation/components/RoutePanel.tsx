@@ -45,7 +45,8 @@ export function RoutePanel({
   isNavigating,
   onClose,
 }: RoutePanelProps) {
-  const { origin, destination, vehicle, route, isLoading, error } = directions;
+  const { origin, destination, vehicle, objective, avoidFerry, route, routeOptions, isLoading, error } =
+    directions;
   const canCalculate =
     Boolean(origin && destination) &&
     directions.waypoints.every((item) => item.place) &&
@@ -163,6 +164,52 @@ export function RoutePanel({
           Đi theo thứ tự trên. Muốn tự sắp xếp tốt nhất, dùng Nhiều điểm.
         </p>
       )}
+
+      <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+        <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+          Tùy chọn tuyến
+        </div>
+        <div
+          className="grid grid-cols-2 gap-1 rounded-lg bg-slate-200/70 p-1"
+          role="group"
+          aria-label="Tiêu chí tìm tuyến"
+        >
+          {(
+            [
+              ['time', 'Nhanh nhất'],
+              ['distance', 'Ngắn nhất'],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={objective === id}
+              onClick={() => directions.setObjective(id)}
+              className={`rounded-md px-2 py-1.5 text-[10px] font-semibold transition ${objective === id ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-600 hover:text-ink'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            aria-pressed={avoidFerry}
+            onClick={() => directions.setAvoidFerry(!avoidFerry)}
+            className={`rounded-full border px-2.5 py-1.5 text-[10px] font-semibold transition ${avoidFerry ? 'border-brand-300 bg-brand-50 text-brand-700' : 'border-slate-200 bg-white text-slate-600 hover:border-brand-200'}`}
+          >
+            {avoidFerry ? '✓ ' : ''}Tránh phà
+          </button>
+          <button
+            type="button"
+            disabled
+            title="VietMap hiện chưa hỗ trợ loại trừ cao tốc trong API tuyến đang dùng."
+            className="cursor-not-allowed rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1.5 text-[10px] font-medium text-slate-400"
+          >
+            Tránh cao tốc · chưa hỗ trợ
+          </button>
+        </div>
+      </div>
       {/* Cách chọn điểm khác: GPS hoặc click trên bản đồ. */}
       <div className="mt-3 flex flex-wrap gap-1.5 pl-5">
         <QuickAction
@@ -213,6 +260,10 @@ export function RoutePanel({
         </p>
       )}
 
+      {routeOptions.length > 0 && route && (
+        <RouteOptionsList routes={routeOptions} selectedId={route.id} onSelect={directions.chooseRoute} />
+      )}
+
       {route && (
         <RouteResultCard
           route={route}
@@ -237,10 +288,87 @@ export function RoutePanel({
       {!route && (
         <div className="route-note mt-4 flex items-start gap-2 border-t border-slate-100 pt-3 text-[10px] leading-[1.6] text-slate-500">
           <Icon name="compass" size={14} className="mt-0.5 shrink-0 text-slate-400" />
-          <p>Tuyến VietMap theo phương tiện đã chọn. Thời gian là ước tính.</p>
+          <p>Tuyến VietMap theo phương tiện và tùy chọn đã chọn. Thời gian là ước tính.</p>
         </div>
       )}
     </FloatingPanel>
+  );
+}
+
+function RouteOptionsList({
+  routes,
+  selectedId,
+  onSelect,
+}: {
+  routes: NonNullable<DirectionsController['route']>[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+}) {
+  const fastestDuration = Math.min(...routes.map((item) => item.durationMin));
+  const shortestDistance = Math.min(...routes.map((item) => item.distanceKm));
+  const primaryRoute = routes[0];
+
+  return (
+    <section className="mt-4" aria-label="Các tuyến đường thay thế">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="text-[11px] font-bold text-ink">Các tuyến có thể đi</h3>
+        <span className="text-[9px] text-slate-400">{routes.length} phương án từ VietMap</span>
+      </div>
+      <div className="space-y-1.5">
+        {routes.map((item) => {
+          const deltaMinutes = Math.round(item.durationMin - (primaryRoute?.durationMin ?? fastestDuration));
+          const isFastest = item.durationMin === fastestDuration;
+          const isPrimary = item.id === primaryRoute?.id;
+          const timeLabel = isPrimary
+            ? isFastest
+              ? 'Nhanh nhất'
+              : 'Tuyến đề xuất'
+            : Math.abs(deltaMinutes) <= 1
+              ? 'Cùng thời gian'
+              : deltaMinutes < 0
+                ? `Nhanh hơn ${Math.abs(deltaMinutes)} phút`
+                : `Chậm hơn ${deltaMinutes} phút`;
+          const isShortest = item.distanceKm === shortestDistance;
+          const selected = item.id === selectedId;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onSelect(item.id)}
+              className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${selected ? 'border-brand-300 bg-brand-50/70 ring-2 ring-brand-100' : 'border-slate-200 bg-white hover:border-brand-200'}`}
+            >
+              <span
+                className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-bold ${selected ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'}`}
+              >
+                {routes.indexOf(item) + 1}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] font-bold text-ink">{Math.round(item.durationMin)} phút</span>
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[8px] font-semibold ${isFastest ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}
+                  >
+                    {timeLabel}
+                  </span>
+                  {!isPrimary && isFastest && (
+                    <span className="text-[8px] font-semibold text-emerald-700">Nhanh nhất</span>
+                  )}
+                  {isShortest && <span className="text-[8px] font-semibold text-brand-700">Ngắn nhất</span>}
+                </span>
+                <span className="mt-0.5 block text-[9px] text-slate-500">
+                  {item.distanceKm.toFixed(1)} km
+                  {item.tollCostVnd !== undefined
+                    ? ` · phí ${new Intl.NumberFormat('vi-VN').format(item.tollCostVnd)} ₫`
+                    : ''}
+                </span>
+              </span>
+              {selected && <span className="text-[9px] font-bold text-brand-700">Đang chọn</span>}
+            </button>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

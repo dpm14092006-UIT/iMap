@@ -8,6 +8,7 @@ import type { AlgorithmOverlay, DraftStops, MapLayer, RoutePlan } from '../types
 type MapViewProps = {
   layer: MapLayer;
   route: RoutePlan | null;
+  routeOptions: RoutePlan[];
   /** Điểm đi/đến đã chọn nhưng chưa có tuyến. */
   draftStops: DraftStops;
   /** Dữ liệu sự cố theo hợp đồng chung với N2. */
@@ -28,6 +29,7 @@ type MapViewProps = {
 export function MapView({
   layer,
   route,
+  routeOptions,
   draftStops,
   trafficLayer,
   currentLocation,
@@ -66,6 +68,7 @@ export function MapView({
     controllerRef.current?.update({
       layer,
       route,
+      routeOptions,
       draftStops,
       trafficLayer,
       currentLocation,
@@ -78,6 +81,7 @@ export function MapView({
     controllerRef,
     layer,
     route,
+    routeOptions,
     draftStops,
     trafficLayer,
     currentLocation,

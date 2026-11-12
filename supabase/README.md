@@ -8,7 +8,7 @@ supabase link --project-ref <project-ref>
 supabase db push --linked
 ```
 
-Lệnh cuối áp dụng lần lượt `migrations/0001_initial.sql` đến `migrations/0005_backend_hardening.sql`. Migration thứ hai thiết lập Auth/RLS, RPC PostGIS, báo cáo cộng đồng và private Storage bucket; migration thứ ba gỡ metadata/quota AI cũ và gắn ảnh minh chứng vào traffic reports; migration thứ tư tổng hợp các xác nhận gần đây mà vẫn giữ từng báo cáo gốc; migration thứ năm thêm quota dùng chung giữa các API instances cho phân tích ảnh, điểm dừng và voice, đồng thời tuần tự hóa giới hạn tạo báo cáo theo tài khoản. Có thể chạy SQL thủ công theo đúng thứ tự trong Dashboard, nhưng cần đánh dấu migration đã áp dụng trước khi quay lại dùng CLI.
+Lệnh cuối áp dụng lần lượt `migrations/0001_initial.sql` đến migration mới nhất. Migration thứ hai thiết lập Auth/RLS, RPC PostGIS, báo cáo cộng đồng và private Storage bucket; migration thứ ba gỡ metadata/quota AI cũ và gắn ảnh minh chứng vào traffic reports; migration thứ tư tổng hợp các xác nhận gần đây mà vẫn giữ từng báo cáo gốc; migration thứ năm thêm quota dùng chung giữa các API instances; migration thứ sáu thêm phạm vi báo cáo theo ô tô/xe máy và phát phạm vi này qua Realtime. Có thể chạy SQL thủ công theo đúng thứ tự trong Dashboard, nhưng cần đánh dấu migration đã áp dụng trước khi quay lại dùng CLI.
 
 Sau đó bật `pg_cron` trong Dashboard và chạy `ops/traffic-expiry-cron.sql` một lần. `GET /api/traffic-reports` vẫn ẩn ngay các báo cáo quá hạn nếu Cron chưa bật; Cron cập nhật trạng thái DB và phát Realtime event đúng lúc.
 
@@ -36,6 +36,8 @@ Migration `0005` giới hạn Gemini traffic-image analysis ở 10 lượt/tài 
 | `0005_backend_hardening.sql` | Có (11/11/2026, do chủ dự án chạy) | Bắt buộc cho API: nếu thiếu, `consume_user_feature_quota` không tồn tại và tìm điểm dừng/voice trả 503 `FEATURE_QUOTA_UNAVAILABLE`. |
 
 Dự án Supabase mới phải chạy đủ `0001 → 0005` theo thứ tự. Migration `0005` xóa rồi tạo lại `create_traffic_report`, nên nên chạy lúc ít người dùng.
+
+Migration `0006_vehicle_specific_traffic_routes.sql` bổ sung `vehicle_scope` mặc định `both` để giữ các báo cáo cũ tương thích. Cần áp dụng migration này trước khi triển khai API mới; nếu chưa chạy, RPC tạo báo cáo chưa nhận tham số `p_vehicle_scope`.
 
 Lưu ý: `0003` giữ hành vi có sẵn là xóa bảng metadata/quota AI cũ; không xóa file ảnh trong Storage.
 

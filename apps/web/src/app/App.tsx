@@ -23,7 +23,11 @@ import { popularPlaces } from '../features/places/data/popularPlaces';
 import { basicPlaceFromPoint, placeFromPoint } from '../features/places/services/placeFromPoint';
 import type { LatLng, Place } from '../features/places/types';
 import { vietnamBounds } from '../features/traffic/api/trafficApi';
-import type { IncidentKind, IncidentSeverity } from '../features/traffic/components/TrafficReportPanel';
+import type {
+  IncidentKind,
+  IncidentSeverity,
+  TrafficVehicleScope,
+} from '../features/traffic/components/TrafficReportPanel';
 import { useTrafficReports, type RealtimeTrafficReport } from '../features/traffic/hooks/useTrafficReports';
 import {
   incidentLabels,
@@ -203,9 +207,6 @@ export function App() {
     activePanel === 'traffic' || Boolean(navigationRoute ?? activeRoute),
     onRealtimeTrafficReport,
   );
-  const incidents = useMemo(() => toIncidents(reports), [reports]);
-  const trafficLayer = useMemo(() => toReportsMapLayer(reports), [reports]);
-
   const directions = useDirections({
     routeApi,
     activeRoute,
@@ -213,6 +214,17 @@ export function App() {
     initialOrigin: null,
     initialDestination: null,
   });
+  const reportVehicle = navigationRoute?.vehicle ?? activeRoute?.vehicle ?? directions.vehicle;
+  const visibleReports = useMemo(
+    () => reports.filter((report) => report.vehicleScope === 'both' || report.vehicleScope === reportVehicle),
+    [reports, reportVehicle],
+  );
+  const incidents = useMemo(() => toIncidents(visibleReports), [visibleReports]);
+  const trafficLayer = useMemo(() => toReportsMapLayer(visibleReports), [visibleReports]);
+  const routeOptionsForMap = useMemo(
+    () => (activePanel === 'directions' && directions.route ? directions.routeOptions : []),
+    [activePanel, directions.route, directions.routeOptions],
+  );
 
   // So sánh Dijkstra / A* cho cùng điểm đi, điểm đến và loại xe của panel chỉ đường.
   const comparison = useAlgorithmComparison({
@@ -451,6 +463,7 @@ export function App() {
   const reportIncident = async (
     type: IncidentKind,
     severity: IncidentSeverity,
+    vehicleScope: TrafficVehicleScope,
     point: LatLng,
     note: string,
     photo: File | null,
@@ -459,13 +472,24 @@ export function App() {
       setAuthOpen(true);
       throw new Error('Đăng nhập để gửi báo cáo.');
     }
-    await createTrafficReport(
-      { incidentType: type, severity, lat: point.lat, lng: point.lng, ...(note ? { note } : {}) },
+    const report = await createTrafficReport(
+      {
+        incidentType: type,
+        severity,
+        vehicleScope,
+        lat: point.lat,
+        lng: point.lng,
+        ...(note ? { note } : {}),
+      },
       photo ?? undefined,
     );
     setSelectedMapPoint(null);
     mapController.current?.flyTo(point, 15);
-    showToast('Đã đồng bộ báo cáo giao thông');
+    showToast(
+      report.vehicleScope === vehicleScope
+        ? 'Đã đồng bộ báo cáo giao thông'
+        : 'Đã gửi báo cáo; Supabase chưa cập nhật phân luồng, cảnh báo tạm áp dụng cho cả ô tô và xe máy.',
+    );
   };
 
   const verifyIncident = async (id: string, state: 'clear' | 'still_active') => {
@@ -529,6 +553,7 @@ export function App() {
         layer={layer}
         onMapClick={(point) => void handleMapClick(point)}
         route={activeRoute}
+        routeOptions={routeOptionsForMap}
         trafficLayer={trafficLayer}
       />
 
@@ -719,6 +744,7 @@ export function App() {
             selectedPoint={selectedMapPoint}
             isAuthenticated={isAuthenticated}
             accessToken={accessToken}
+            defaultVehicle={reportVehicle}
             loading={trafficLoading}
             error={trafficError}
             onClose={closePanel}

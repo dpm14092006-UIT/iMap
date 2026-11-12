@@ -11,6 +11,7 @@ const vietmapResponseSchema = z.object({
       z.object({
         distance: z.number().finite().nonnegative(),
         time: z.number().finite().nonnegative(),
+        toll_cost: z.number().finite().nonnegative().optional(),
         // Với points_encoded=false, VietMap Route v4 trả GeoJSON LineString: coordinates là [lng, lat].
         points: z.object({
           type: z.literal('LineString'),
@@ -54,7 +55,8 @@ export class VietmapRouteProvider implements RouteProvider {
     input.points.forEach(({ lat, lng }) => url.searchParams.append('point', `${lat},${lng}`));
     url.searchParams.set('points_encoded', 'false');
     url.searchParams.set('vehicle', input.vehicle);
-    url.searchParams.set('alternative', String(input.objective === 'distance'));
+    url.searchParams.set('alternative', String(input.alternatives ?? false));
+    if (input.avoid?.includes('ferry')) url.searchParams.set('avoid', 'ferry');
 
     let response: Response;
     try {
@@ -130,10 +132,11 @@ export class VietmapRouteProvider implements RouteProvider {
       throw new AppError(502, 'ROUTE_PROVIDER_ERROR', detail || 'VietMap không tính được tuyến.');
     }
 
-    const path = [...parsed.data.paths].sort((a, b) =>
+    const paths = [...parsed.data.paths].sort((a, b) =>
       input.objective === 'distance' ? a.distance - b.distance : a.time - b.time,
-    )[0]!;
-    if (path.points.coordinates.length < 2) {
+    );
+    const usablePaths = paths.filter((path) => path.points.coordinates.length >= 2);
+    if (!usablePaths.length) {
       throw new AppError(
         502,
         'ROUTE_PROVIDER_INVALID_RESPONSE',
@@ -141,8 +144,8 @@ export class VietmapRouteProvider implements RouteProvider {
       );
     }
 
-    return {
-      source: 'vietmap',
+    const toRoutePath = (path: (typeof usablePaths)[number]) => ({
+      source: 'vietmap' as const,
       distanceMeters: path.distance,
       durationSeconds: Math.round(path.time / 1000),
       // Đã đúng thứ tự GeoJSON [lng, lat] của dự án nên giữ nguyên.
@@ -157,6 +160,12 @@ export class VietmapRouteProvider implements RouteProvider {
           ...(instruction.sign === undefined ? {} : { sign: instruction.sign }),
           ...(instruction.heading === undefined ? {} : { heading: instruction.heading }),
         })),
+      ...(path.toll_cost === undefined ? {} : { tollCostVnd: path.toll_cost }),
+    });
+    const [primary, ...alternatives] = usablePaths.map(toRoutePath);
+    return {
+      ...primary!,
+      ...(input.alternatives && alternatives.length ? { alternatives } : {}),
     };
   }
 }

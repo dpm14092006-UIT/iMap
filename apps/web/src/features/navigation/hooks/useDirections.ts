@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import type { RoutePlan, TransportMode } from '../../map/types';
+import type { RouteObjective, RoutePlan, TransportMode } from '../../map/types';
 import type { Place } from '../../places/types';
 import type { RouteApiClient } from '../services/RouteApiClient';
 
@@ -19,6 +19,8 @@ type RouteQuery = {
   destination: Place | null;
   vehicle: TransportMode;
   via?: (Place | null)[];
+  objective?: RouteObjective;
+  avoidFerry?: boolean;
 };
 type Waypoint = { key: string; place: Place | null };
 
@@ -38,6 +40,9 @@ export function useDirections({
   const [destination, setDestinationState] = useState<Place | null>(initialDestination);
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
   const [vehicle, setVehicleState] = useState<TransportMode>('motorcycle');
+  const [objective, setObjectiveState] = useState<RouteObjective>('time');
+  const [avoidFerry, setAvoidFerryState] = useState(false);
+  const [routeOptions, setRouteOptions] = useState<RoutePlan[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   // Đếm số lần gọi API: chỉ nhận kết quả của lần gọi mới nhất, bỏ kết quả về muộn.
@@ -54,7 +59,14 @@ export function useDirections({
       : null;
 
   const calculate = async (
-    query: RouteQuery = { origin, destination, vehicle, via: waypoints.map((item) => item.place) },
+    query: RouteQuery = {
+      origin,
+      destination,
+      vehicle,
+      via: waypoints.map((item) => item.place),
+      objective,
+      avoidFerry,
+    },
   ): Promise<RoutePlan | null> => {
     if (!query.origin || !query.destination) {
       setError('Hãy chọn điểm đi và điểm đến.');
@@ -72,10 +84,13 @@ export function useDirections({
     const requestId = ++latestRequest.current;
     setIsLoading(true);
     setError('');
+    setRouteOptions([]);
     onRouteChange(null);
-    const result = await routeApi.createPlan(
+    const result = await routeApi.createPlans(
       [query.origin, ...((query.via ?? []) as Place[]), query.destination],
       query.vehicle,
+      query.objective ?? objective,
+      query.avoidFerry ?? avoidFerry,
     );
     if (requestId !== latestRequest.current) return null; // đã có yêu cầu mới hơn
     setIsLoading(false);
@@ -84,8 +99,9 @@ export function useDirections({
       setError(result.error);
       return null;
     }
-    onRouteChange(result);
-    return result;
+    setRouteOptions(result.routes);
+    onRouteChange(result.routes[0]!);
+    return result.routes[0]!;
   };
 
   /** Xóa tuyến cũ (nếu có) vì điểm đi/đến vừa thay đổi. */
@@ -93,6 +109,7 @@ export function useDirections({
     latestRequest.current++;
     setIsLoading(false);
     setError('');
+    setRouteOptions([]);
     if (route) onRouteChange(null);
   };
 
@@ -111,7 +128,31 @@ export function useDirections({
     clearRoute();
     setVehicleState(next);
     if (route)
-      void calculate({ origin, destination, vehicle: next, via: waypoints.map((item) => item.place) });
+      void calculate({
+        origin,
+        destination,
+        vehicle: next,
+        via: waypoints.map((item) => item.place),
+        objective,
+        avoidFerry,
+      });
+  };
+
+  const setObjective = (next: RouteObjective) => {
+    if (next === objective) return;
+    clearRoute();
+    setObjectiveState(next);
+  };
+
+  const setAvoidFerry = (next: boolean) => {
+    if (next === avoidFerry) return;
+    clearRoute();
+    setAvoidFerryState(next);
+  };
+
+  const chooseRoute = (id: string) => {
+    const selected = routeOptions.find((item) => item.id === id);
+    if (selected) onRouteChange(selected);
   };
 
   /** Đảo chiều điểm đi ↔ điểm đến; nếu đang có tuyến thì tính lại chiều ngược. */
@@ -127,6 +168,8 @@ export function useDirections({
         destination: origin,
         vehicle,
         via: [...waypoints].reverse().map((item) => item.place),
+        objective,
+        avoidFerry,
       });
   };
 
@@ -136,6 +179,8 @@ export function useDirections({
     setOriginState(query.origin);
     setDestinationState(query.destination);
     setVehicleState(query.vehicle);
+    if (query.objective) setObjectiveState(query.objective);
+    if (query.avoidFerry !== undefined) setAvoidFerryState(query.avoidFerry);
     return calculate(query);
   };
 
@@ -171,12 +216,18 @@ export function useDirections({
     origin,
     destination,
     vehicle,
+    objective,
+    avoidFerry,
     route,
+    routeOptions,
     isLoading,
     error,
     setOrigin,
     setDestination,
     setVehicle,
+    setObjective,
+    setAvoidFerry,
+    chooseRoute,
     swap,
     calculate,
     open,

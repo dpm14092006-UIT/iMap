@@ -7,6 +7,8 @@ export const routeRequestSchema = z.object({
   points: z.array(geoPointSchema).min(2).max(25),
   vehicle: z.enum(['car', 'motorcycle']),
   objective: z.enum(['distance', 'duration']).default('duration'),
+  alternatives: z.boolean().optional(),
+  avoid: z.array(z.enum(['ferry'])).optional(),
 });
 export type RouteRequest = z.infer<typeof routeRequestSchema>;
 export type RouteInstruction = {
@@ -17,12 +19,17 @@ export type RouteInstruction = {
   sign?: number;
   heading?: number;
 };
-export type RouteResult = {
+export type RoutePathResult = {
   source: 'vietmap';
   distanceMeters: number;
   durationSeconds: number;
   coordinates: [number, number][]; // GeoJSON [lng, lat]
   instructions: RouteInstruction[];
+  tollCostVnd?: number;
+};
+export type RouteResult = RoutePathResult & {
+  /** Các tuyến thay thế mà Route v4 trả về khi alternatives=true. */
+  alternatives?: RoutePathResult[];
 };
 
 /**

@@ -7,6 +7,7 @@ type DbTrafficReport = {
   id: string;
   incident_type: TrafficReportDto['incidentType'];
   severity: TrafficReportDto['severity'];
+  vehicle_scope: TrafficReportDto['vehicleScope'];
   lat: number;
   lng: number;
   note: string | null;
@@ -38,19 +39,27 @@ export class SupabaseTrafficReportRepository implements TrafficReportRepository 
   }
 
   async create(input: TrafficReportInput, accessToken: string): Promise<TrafficReportDto> {
-    const { data, error } = await this.clients
-      .create(accessToken)
-      .rpc('create_traffic_report', {
-        p_incident_type: input.incidentType,
-        p_severity: input.severity,
-        p_lat: input.lat,
-        p_lng: input.lng,
-        p_note: input.note ?? null,
-        p_gps_accuracy_m: input.gpsAccuracyM ?? null,
-        p_heading_deg: input.headingDeg ?? null,
-        p_image_path: input.imagePath ?? null,
-      })
+    const client = this.clients.create(accessToken);
+    const legacyParams = {
+      p_incident_type: input.incidentType,
+      p_severity: input.severity,
+      p_lat: input.lat,
+      p_lng: input.lng,
+      p_note: input.note ?? null,
+      p_gps_accuracy_m: input.gpsAccuracyM ?? null,
+      p_heading_deg: input.headingDeg ?? null,
+      p_image_path: input.imagePath ?? null,
+    };
+    let { data, error } = await client
+      .rpc('create_traffic_report', { ...legacyParams, p_vehicle_scope: input.vehicleScope })
       .single();
+
+    // Keep report submission working during a staged deploy where the API is
+    // newer than the database. The returned DTO will be `both`, so the web
+    // client can tell the reporter that vehicle-specific routing is pending.
+    if (error?.code === 'PGRST202') {
+      ({ data, error } = await client.rpc('create_traffic_report', legacyParams).single());
+    }
     if (error) throw this.toAppError(error);
     return this.toDto(data as DbTrafficReport);
   }
@@ -76,6 +85,7 @@ export class SupabaseTrafficReportRepository implements TrafficReportRepository 
       id: row.id,
       incidentType: row.incident_type,
       severity: row.severity,
+      vehicleScope: row.vehicle_scope ?? 'both',
       lat: Number(row.lat),
       lng: Number(row.lng),
       ...(row.note ? { note: row.note } : {}),
