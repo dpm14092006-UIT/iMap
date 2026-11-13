@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { popularPlaces } from '../data/popularPlaces';
 import type { LatLng, Place } from '../types';
 import { PlaceCombobox } from './PlaceCombobox';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type PlaceFieldProps = {
   /** Địa điểm đang được chọn (null khi người dùng đang gõ / chưa chọn). */
@@ -18,6 +19,7 @@ type PlaceFieldProps = {
  * - Khi người dùng gõ chữ thì địa điểm cũ bị bỏ chọn (onChange(null)) cho tới khi chọn gợi ý.
  */
 export function PlaceField({ place, onChange, ariaLabel, placeholder, getFocus }: PlaceFieldProps) {
+  const { t } = useI18n();
   const [text, setText] = useState(place?.name ?? '');
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export function PlaceField({ place, onChange, ariaLabel, placeholder, getFocus }
   return (
     <PlaceCombobox
       getFocus={getFocus}
-      ariaLabel={ariaLabel}
+      ariaLabel={t(ariaLabel)}
       icon={null}
       inputClassName="h-[46px] bg-white dark:bg-slate-800 pl-3"
       onChange={(value) => {
@@ -36,7 +38,7 @@ export function PlaceField({ place, onChange, ariaLabel, placeholder, getFocus }
       }}
       onSelect={onChange}
       places={popularPlaces}
-      placeholder={placeholder}
+      placeholder={t(placeholder)}
       value={text}
     />
   );

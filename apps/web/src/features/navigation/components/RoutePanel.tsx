@@ -7,15 +7,14 @@ import type { RoutePlan } from '../../map/types';
 import { PlaceField } from '../../places/components/PlaceField';
 import type { LatLng } from '../../places/types';
 import { routeTrafficSeverity } from '../../traffic/services/routeTraffic';
-import type { AlgorithmComparisonController } from '../hooks/useAlgorithmComparison';
 import type { DirectionsController } from '../hooks/useDirections';
 import { useModeDurations } from '../hooks/useModeDurations';
-import { AlgorithmComparison } from './AlgorithmComparison';
 import { DepartureSelect } from './DepartureSelect';
 import { minutesSlowerThanFastest, routeLabels } from '../utils/routeLabels';
 import { RouteOptionCard } from './RouteOptionCard';
 import { RouteShareBar } from './RouteShareBar';
 import { TravelModeTabs } from './TravelModeTabs';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 /** Ô nào đang chờ người dùng chọn điểm trên bản đồ. */
 export type PickTarget = 'origin' | 'destination';
@@ -23,8 +22,6 @@ export type PickTarget = 'origin' | 'destination';
 type RoutePanelProps = {
   getSearchFocus?: () => LatLng;
   directions: DirectionsController;
-  /** So sánh Dijkstra / A* trên cùng điểm đi/đến (không cần key VietMap). */
-  comparison: AlgorithmComparisonController;
   /** Sự cố giao thông để tô màu thời gian từng phương án. */
   trafficLayer: TrafficMapLayer;
   pickTarget: PickTarget | null;
@@ -48,7 +45,6 @@ const chipClass = (active: boolean) =>
 export function RoutePanel({
   getSearchFocus,
   directions,
-  comparison,
   trafficLayer,
   pickTarget,
   isLocating,
@@ -61,6 +57,7 @@ export function RoutePanel({
   isNavigating,
   onClose,
 }: RoutePanelProps) {
+  const { t } = useI18n();
   const [optionsOpen, setOptionsOpen] = useState(false);
   const { origin, destination, vehicle, objective, avoidFerry, route, routeOptions, isLoading, error } =
     directions;
@@ -83,7 +80,7 @@ export function RoutePanel({
           className="flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-brand-gradient px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/25 transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-indigo-400/40 active:scale-[.98] disabled:bg-none disabled:bg-emerald-600"
         >
           <Icon name={isNavigating ? 'check' : 'directions'} size={17} />
-          {isNavigating ? 'Đang dẫn đường' : 'Bắt đầu'}
+          {isNavigating ? t('Đang dẫn đường') : t('Bắt đầu')}
         </button>
         <button
           type="button"
@@ -91,11 +88,11 @@ export function RoutePanel({
           className="flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-white/70 px-4 text-sm font-semibold text-ink ring-1 ring-black/10 transition hover:bg-white dark:hover:bg-slate-700/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 active:scale-[.98] dark:bg-white/5 dark:text-slate-100 dark:ring-white/15"
         >
           <Icon name="bookmark" size={16} />
-          Lưu
+          {t('Lưu')}
         </button>
       </div>
       <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-        GPS chỉ bật khi bạn nhấn Bắt đầu. Thời gian là ước tính và có thể đổi theo giao thông.
+        {t('GPS chỉ bật khi bạn nhấn Bắt đầu. Thời gian là ước tính và có thể đổi theo giao thông.')}
       </p>
     </div>
   ) : (
@@ -113,12 +110,18 @@ export function RoutePanel({
       ) : (
         <Icon name="route" size={17} />
       )}
-      {isLoading ? 'Đang lấy tuyến đường…' : 'Tìm đường'}
+      {isLoading ? t('Đang lấy tuyến đường…') : t('Tìm đường')}
     </button>
   );
 
   return (
-    <SheetPanel eyebrow="Lộ trình" title="Chỉ đường" icon="directions" onClose={onClose} footer={footer}>
+    <SheetPanel
+      eyebrow={t('Lộ trình')}
+      title={t('Chỉ đường')}
+      icon="directions"
+      onClose={onClose}
+      footer={footer}
+    >
       <TravelModeTabs vehicle={vehicle} durations={durations} onSelect={directions.setVehicle} />
 
       {/* Khối điểm đi / điểm đến nối bằng đường chấm dọc. */}
@@ -132,8 +135,8 @@ export function RoutePanel({
             />
             <PlaceField
               getFocus={getSearchFocus}
-              ariaLabel="Điểm xuất phát"
-              placeholder="Điểm xuất phát"
+              ariaLabel={t('Điểm xuất phát')}
+              placeholder={t('Điểm xuất phát')}
               place={origin}
               onChange={directions.setOrigin}
             />
@@ -148,8 +151,8 @@ export function RoutePanel({
               </span>
               <PlaceField
                 getFocus={getSearchFocus}
-                ariaLabel={`Điểm dừng ${index + 1}`}
-                placeholder={`Điểm dừng ${index + 1}`}
+                ariaLabel={t('Điểm dừng {number}', { number: index + 1 })}
+                placeholder={t('Điểm dừng {number}', { number: index + 1 })}
                 place={item.place}
                 onChange={(place) => directions.setWaypoint(item.key, place)}
               />
@@ -158,7 +161,7 @@ export function RoutePanel({
                   type="button"
                   disabled={index === 0}
                   onClick={() => directions.moveWaypoint(index, -1)}
-                  aria-label={`Đưa điểm dừng ${index + 1} lên trước`}
+                  aria-label={t('Đưa điểm dừng {number} lên trước', { number: index + 1 })}
                   className="h-7 rounded-full px-2.5 text-ink-soft hover:bg-black/5 disabled:opacity-30 dark:text-slate-300 dark:hover:bg-white/10"
                 >
                   ↑
@@ -167,7 +170,7 @@ export function RoutePanel({
                   type="button"
                   disabled={index === directions.waypoints.length - 1}
                   onClick={() => directions.moveWaypoint(index, 1)}
-                  aria-label={`Đưa điểm dừng ${index + 1} xuống sau`}
+                  aria-label={t('Đưa điểm dừng {number} xuống sau', { number: index + 1 })}
                   className="h-7 rounded-full px-2.5 text-ink-soft hover:bg-black/5 disabled:opacity-30 dark:text-slate-300 dark:hover:bg-white/10"
                 >
                   ↓
@@ -175,10 +178,10 @@ export function RoutePanel({
                 <button
                   type="button"
                   onClick={() => directions.removeWaypoint(item.key)}
-                  aria-label={`Xóa điểm dừng ${index + 1}`}
+                  aria-label={t('Xóa điểm dừng {number}', { number: index + 1 })}
                   className="h-7 rounded-full px-2.5 font-semibold text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-500/10"
                 >
-                  Xóa
+                  {t('Xóa')}
                 </button>
               </div>
             </div>
@@ -191,8 +194,8 @@ export function RoutePanel({
             />
             <PlaceField
               getFocus={getSearchFocus}
-              ariaLabel="Điểm đến"
-              placeholder="Bạn muốn đi đâu?"
+              ariaLabel={t('Điểm đến')}
+              placeholder={t('Bạn muốn đi đâu?')}
               place={destination}
               onChange={directions.setDestination}
             />
@@ -203,8 +206,8 @@ export function RoutePanel({
           disabled={!origin || !destination}
           onClick={directions.swap}
           className="absolute right-2 top-1/2 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full bg-white text-ink-soft shadow-md ring-1 ring-black/10 dark:ring-white/10 transition hover:text-brand-700 dark:hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 active:rotate-180 disabled:opacity-40 dark:bg-slate-800 dark:text-slate-200"
-          aria-label="Đảo chiều điểm đi và điểm đến"
-          title="Đảo chiều"
+          aria-label={t('Đảo chiều điểm đi và điểm đến')}
+          title={t('Đảo chiều')}
         >
           <Icon name="swap" size={17} />
         </button>
@@ -218,21 +221,21 @@ export function RoutePanel({
           className={chipClass(false)}
         >
           <Icon name="plus" size={13} />
-          Thêm điểm dừng
+          {t('Thêm điểm dừng')}
         </button>
         <button
           type="button"
           disabled={!origin && !destination}
           onClick={onAddDestination}
           className={chipClass(false)}
-          title="Lập hành trình nhiều điểm với điểm đi và đến hiện tại"
+          title={t('Lập hành trình nhiều điểm với điểm đi và đến hiện tại')}
         >
           <Icon name="multi-stop" size={13} />
-          Thêm điểm đến
+          {t('Thêm điểm đến')}
         </button>
         <button type="button" disabled={isLocating} onClick={onUseMyLocation} className={chipClass(false)}>
           <Icon name="current-location" size={13} />
-          {isLocating ? 'Đang định vị…' : 'Vị trí của tôi'}
+          {isLocating ? t('Đang định vị…') : t('Vị trí của tôi')}
         </button>
         <button
           type="button"
@@ -241,7 +244,7 @@ export function RoutePanel({
           className={chipClass(pickTarget === 'origin')}
         >
           <Icon name="pin" size={13} />
-          Chọn điểm đi
+          {t('Chọn điểm đi')}
         </button>
         <button
           type="button"
@@ -250,12 +253,12 @@ export function RoutePanel({
           className={chipClass(pickTarget === 'destination')}
         >
           <Icon name="pin" size={13} />
-          Chọn điểm đến
+          {t('Chọn điểm đến')}
         </button>
       </div>
       {directions.waypoints.length > 0 && (
         <p className="mt-1.5 pl-1 text-xs text-ink-soft dark:text-slate-400">
-          Đi theo thứ tự trên. Muốn tự sắp xếp tốt nhất, dùng Nhiều điểm.
+          {t('Đi theo thứ tự trên. Muốn tự sắp xếp tốt nhất, dùng Nhiều điểm.')}
         </p>
       )}
 
@@ -264,7 +267,7 @@ export function RoutePanel({
         <Popover
           open={optionsOpen}
           onClose={() => setOptionsOpen(false)}
-          label="Tùy chọn tuyến"
+          label={t('Tùy chọn tuyến')}
           panelClassName="right-0 top-full mt-1.5 w-64"
           className="shrink-0"
           trigger={
@@ -276,15 +279,16 @@ export function RoutePanel({
               className={chipClass(optionCount > 0)}
             >
               <Icon name="filter" size={13} />
-              Tùy chọn{optionCount > 0 ? ` (${optionCount})` : ''}
+              {t('Tùy chọn')}
+              {optionCount > 0 ? ` (${optionCount})` : ''}
             </button>
           }
         >
-          <p className="mb-1.5 text-xs font-bold text-ink dark:text-white">Ưu tiên tuyến</p>
+          <p className="mb-1.5 text-xs font-bold text-ink dark:text-white">{t('Ưu tiên tuyến')}</p>
           <div
             className="grid grid-cols-2 gap-1 rounded-2xl bg-black/[.05] p-1 dark:bg-white/10"
             role="radiogroup"
-            aria-label="Tiêu chí tìm tuyến"
+            aria-label={t('Tiêu chí tìm tuyến')}
           >
             {(
               [
@@ -300,7 +304,7 @@ export function RoutePanel({
                 onClick={() => directions.setObjective(id)}
                 className={`rounded-xl px-2 py-2 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 ${objective === id ? 'bg-white text-brand-700 shadow-sm dark:bg-slate-700 dark:text-brand-200' : 'text-ink-soft dark:text-slate-300'}`}
               >
-                {label}
+                {t(label)}
               </button>
             ))}
           </div>
@@ -311,7 +315,7 @@ export function RoutePanel({
             onClick={() => directions.setAvoidFerry(!avoidFerry)}
             className="mt-2 flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-xs font-medium text-ink hover:bg-black/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 dark:text-slate-100 dark:hover:bg-white/10"
           >
-            Tránh phà
+            {t('Tránh phà')}
             <span
               className={`relative h-5 w-9 rounded-full transition ${avoidFerry ? 'bg-brand-gradient' : 'bg-slate-300 dark:bg-slate-600'}`}
               aria-hidden="true"
@@ -323,9 +327,9 @@ export function RoutePanel({
           </button>
           <p
             className="mt-1 px-2 text-[11px] text-ink-soft dark:text-slate-400"
-            title="VietMap hiện chưa hỗ trợ loại trừ cao tốc trong API tuyến đang dùng."
+            title={t('VietMap hiện chưa hỗ trợ loại trừ cao tốc trong API tuyến đang dùng.')}
           >
-            Tránh cao tốc: chưa hỗ trợ
+            {t('Tránh cao tốc: chưa hỗ trợ')}
           </p>
         </Popover>
       </div>
@@ -341,15 +345,17 @@ export function RoutePanel({
           className="mt-3 rounded-2xl bg-amber-50 dark:bg-amber-400/10 px-3 py-2.5 text-xs leading-5 text-amber-900 dark:text-amber-100 ring-1 ring-amber-200"
           role="alert"
         >
-          {error}
+          {t(error)}
         </p>
       )}
 
       {routeOptions.length > 0 && route && (
-        <section className="mt-4" aria-label="Các tuyến có thể đi">
+        <section className="mt-4" aria-label={t('Các tuyến có thể đi')}>
           <div className="mb-2 flex items-center justify-between gap-2">
-            <h3 className="text-sm font-bold text-ink dark:text-white">Các tuyến có thể đi</h3>
-            <span className="text-xs text-ink-soft dark:text-slate-400">{routeOptions.length} phương án</span>
+            <h3 className="text-sm font-bold text-ink dark:text-white">{t('Các tuyến có thể đi')}</h3>
+            <span className="text-xs text-ink-soft dark:text-slate-400">
+              {t('{count} phương án', { count: routeOptions.length })}
+            </span>
           </div>
           <ul className="space-y-2.5" aria-live="polite">
             {routeOptions.map((item) => (
@@ -369,27 +375,10 @@ export function RoutePanel({
         </section>
       )}
 
-      {directions.waypoints.length === 0 && (
-        <details className="group mt-4 rounded-2xl bg-black/[.04] px-3 py-2 dark:bg-white/5">
-          <summary className="cursor-pointer list-none text-xs font-semibold text-ink-soft focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 dark:text-slate-300">
-            <span className="inline-flex items-center gap-1.5">
-              <Icon name="chevron-right" size={13} className="transition group-open:rotate-90" />
-              Nâng cao: so sánh Dijkstra / A*
-            </span>
-          </summary>
-          <div className="pt-2">
-            <AlgorithmComparison
-              comparison={comparison}
-              canRun={Boolean(origin && destination) && origin?.id !== destination?.id}
-            />
-          </div>
-        </details>
-      )}
-
       {!route && (
         <p className="mt-4 flex items-start gap-2 text-xs leading-5 text-ink-soft dark:text-slate-400">
           <Icon name="info" size={14} className="mt-0.5 shrink-0" />
-          Tuyến VietMap theo phương tiện và tùy chọn đã chọn. Thời gian là ước tính.
+          {t('Tuyến VietMap theo phương tiện và tùy chọn đã chọn. Thời gian là ước tính.')}
         </p>
       )}
     </SheetPanel>

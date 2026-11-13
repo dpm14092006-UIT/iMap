@@ -4,6 +4,7 @@ import { MIN_QUERY_LENGTH, usePlaceSearch } from '../hooks/usePlaceSearch';
 import { foldVietnamese } from '../../../shared/text/foldVietnamese';
 import { placeApi } from '../api/placeApi';
 import type { LatLng, Place, PlaceSearchSuggestion } from '../types';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 /** Hai địa điểm coi là trùng nếu cùng tên và cách nhau rất gần (~400 m). */
 function isSamePlace(a: PlaceSearchSuggestion, b: PlaceSearchSuggestion) {
@@ -64,6 +65,7 @@ export function PlaceCombobox({
   inputRef,
   action = null,
 }: PlaceComboboxProps) {
+  const { t } = useI18n();
   const listId = useId();
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -124,7 +126,7 @@ export function PlaceCombobox({
       setOpen(false);
     } catch (cause) {
       if (!controller.signal.aborted)
-        setSelectionError(cause instanceof Error ? cause.message : 'Không lấy được tọa độ địa điểm.');
+        setSelectionError(t(cause instanceof Error ? cause.message : 'Không lấy được tọa độ địa điểm.'));
     } finally {
       if (!controller.signal.aborted) setResolving(false);
     }
@@ -165,10 +167,10 @@ export function PlaceCombobox({
   /** Thông báo khi danh sách trống, tùy theo trạng thái gọi API. */
   const emptyMessage =
     status === 'loading'
-      ? 'Đang tìm địa điểm…'
+      ? t('Đang tìm địa điểm…')
       : status === 'error'
-        ? searchError || 'Không kết nối được dịch vụ tìm kiếm. Thử lại hoặc chọn trên bản đồ.'
-        : 'Chưa tìm thấy địa chỉ phù hợp. Thử thêm phường, tỉnh/thành hoặc chọn điểm trên bản đồ.';
+        ? t(searchError || 'Không kết nối được dịch vụ tìm kiếm. Thử lại hoặc chọn trên bản đồ.')
+        : t('Chưa tìm thấy địa chỉ phù hợp. Thử thêm phường, tỉnh/thành hoặc chọn điểm trên bản đồ.');
 
   return (
     <div
@@ -186,7 +188,7 @@ export function PlaceCombobox({
       )}
       <input
         ref={inputRef}
-        aria-label={ariaLabel}
+        aria-label={t(ariaLabel)}
         aria-autocomplete="list"
         aria-controls={listId}
         aria-expanded={showList && matches.length + offset > 0}
@@ -208,7 +210,7 @@ export function PlaceCombobox({
           setOpen(true);
         }}
         onKeyDown={handleKeyDown}
-        placeholder={placeholder}
+        placeholder={t(placeholder)}
         role="combobox"
         value={value}
       />
@@ -222,7 +224,7 @@ export function PlaceCombobox({
           <div
             className="mb-1 flex gap-1 border-b border-slate-100 dark:border-white/10 p-1"
             role="group"
-            aria-label="Loại tìm kiếm"
+            aria-label={t('Loại tìm kiếm')}
           >
             {(['all', 'street'] as const).map((kind) => (
               <button
@@ -238,12 +240,12 @@ export function PlaceCombobox({
                 }}
                 className={`rounded-lg px-3 py-1.5 text-[11px] ${searchKind === kind ? 'bg-brand-50 font-semibold text-brand-700 dark:bg-brand-500/20 dark:text-brand-200' : 'text-slate-500 dark:text-slate-400'}`}
               >
-                {kind === 'all' ? 'Tất cả' : 'Tên đường'}
+                {t(kind === 'all' ? 'Tất cả' : 'Tên đường')}
               </button>
             ))}
           </div>
           {matches.length + offset > 0 && (
-            <div id={listId} role="listbox" aria-label="Gợi ý địa điểm">
+            <div id={listId} role="listbox" aria-label={t('Gợi ý địa điểm')}>
               {action && (
                 <button
                   id={`${listId}-0`}
@@ -259,7 +261,7 @@ export function PlaceCombobox({
                     <Icon name={action.icon} size={17} />
                   </span>
                   <span className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-snug text-brand-700 dark:text-brand-200">
-                    {action.label}
+                    {t(action.label)}
                   </span>
                   <Icon name="search" size={15} className="shrink-0 text-slate-400 dark:text-slate-500" />
                 </button>
@@ -316,7 +318,7 @@ export function PlaceCombobox({
               }}
               className="px-3 pb-3 text-left text-[11px] font-semibold text-brand-700 dark:text-indigo-300"
             >
-              Tìm tên đường, bỏ số nhà
+              {t('Tìm tên đường, bỏ số nhà')}
             </button>
           )}
           {status === 'error' && matches.length > 0 && (
@@ -329,12 +331,12 @@ export function PlaceCombobox({
             className="border-t border-slate-100 dark:border-white/10 px-3 py-2 text-[11px] font-medium text-slate-400 dark:text-slate-500"
           >
             {resolving
-              ? 'Đang lấy tọa độ địa điểm…'
+              ? t('Đang lấy tọa độ địa điểm…')
               : status === 'loading'
-                ? 'Đang tìm thêm…'
+                ? t('Đang tìm thêm…')
                 : status === 'ready' || remotePlaces.some((place) => place.source === 'vietmap')
-                  ? 'VietMap · ưu tiên gần khu vực tìm kiếm'
-                  : 'Địa điểm gợi ý có sẵn'}
+                  ? t('VietMap · ưu tiên gần khu vực tìm kiếm')
+                  : t('Địa điểm gợi ý có sẵn')}
           </div>
         </div>
       )}

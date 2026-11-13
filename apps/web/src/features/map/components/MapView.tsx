@@ -4,7 +4,8 @@ import type { Poi } from '../../explore/types';
 import type { LatLng } from '../../places/types';
 import type { TrafficMapLayer } from '../layers/trafficMapLayer';
 import { LeafletMapController } from '../services/LeafletMapController';
-import type { AlgorithmOverlay, DraftStops, MapLayer, MapOverlays, RoutePlan } from '../types';
+import type { DraftStops, MapLayer, MapOverlays, RoutePlan } from '../types';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type MapViewProps = {
   layer: MapLayer;
@@ -19,8 +20,6 @@ type MapViewProps = {
   isNavigating: boolean;
   /** Đang ở chế độ chọn điểm trên bản đồ (đổi con trỏ). */
   isPicking: boolean;
-  /** Tuyến Dijkstra/A* để so sánh (null nếu chưa chạy). */
-  algorithmOverlay: AlgorithmOverlay | null;
   overlays: MapOverlays;
   /** Địa điểm đang hiển thị từ chức năng khám phá / tìm dọc tuyến. */
   pois: Poi[];
@@ -43,7 +42,6 @@ export function MapView({
   headingDegrees,
   isNavigating,
   isPicking,
-  algorithmOverlay,
   overlays,
   pois,
   highlightedPoiId,
@@ -53,6 +51,7 @@ export function MapView({
   onSelectRoute,
   onPoiClick,
 }: MapViewProps) {
+  const { language, t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   // Giữ handler mới nhất trong ref để không phải tạo lại bản đồ khi callback đổi.
   const handlersRef = useRef({ onMapClick, onBoundsChange, onSelectRoute, onPoiClick });
@@ -80,6 +79,7 @@ export function MapView({
   // Vẽ lại khi dữ liệu thay đổi.
   useEffect(() => {
     controllerRef.current?.update({
+      language,
       layer,
       route,
       routeOptions,
@@ -89,13 +89,13 @@ export function MapView({
       headingDegrees,
       isNavigating,
       isPicking,
-      algorithmOverlay,
       overlays,
       pois,
       highlightedPoiId,
     });
   }, [
     controllerRef,
+    language,
     layer,
     route,
     routeOptions,
@@ -105,7 +105,6 @@ export function MapView({
     headingDegrees,
     isNavigating,
     isPicking,
-    algorithmOverlay,
     overlays,
     pois,
     highlightedPoiId,
@@ -116,7 +115,7 @@ export function MapView({
       ref={containerRef}
       className="routetwin-leaflet absolute inset-0 z-0"
       role="region"
-      aria-label="Bản đồ tương tác Việt Nam"
+      aria-label={t('Bản đồ tương tác Việt Nam')}
     />
   );
 }

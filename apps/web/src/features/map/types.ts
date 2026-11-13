@@ -56,16 +56,5 @@ export type DraftStops = {
   focus?: Place | null;
 };
 
-/** Khung hình chữ nhật theo tọa độ (vùng dữ liệu của đồ thị OSM). */
-export type Bounds = { south: number; west: number; north: number; east: number };
-
-/** Tuyến do thuật toán tự cài đặt tìm được, vẽ chồng lên bản đồ để so sánh. */
-export type AlgorithmOverlay = {
-  /** Đổi giá trị này khi có kết quả mới để bản đồ tự zoom vừa tuyến. */
-  key: string;
-  paths: { algorithm: 'dijkstra' | 'astar'; points: Coordinate[] }[];
-  coverage: Bounds | null;
-};
-
 /** Công tắc các lớp phủ trên bản đồ. */
 export type MapOverlays = { traffic: boolean; incidents: boolean; terrain: boolean };

@@ -12,10 +12,6 @@ export const incidentLabels: Record<IncidentKind, string> = {
   obstacle: 'Vật cản',
 };
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-}
-
 /** Đổi báo cáo từ API sang dữ liệu hiển thị của panel giao thông. */
 export function toIncidents(reports: TrafficReportDto[]): DemoIncident[] {
   return reports.map((report) => ({
@@ -24,7 +20,7 @@ export function toIncidents(reports: TrafficReportDto[]): DemoIncident[] {
     severity: report.severity,
     vehicleScope: report.vehicleScope,
     description: report.note || incidentLabels[report.incidentType],
-    time: formatTime(report.createdAt),
+    time: report.createdAt,
     lat: report.lat,
     lng: report.lng,
     communityReportCount: report.communityReportCount ?? 1,

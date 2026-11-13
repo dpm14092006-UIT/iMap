@@ -11,6 +11,7 @@ import {
 } from '../../traffic/services/routeCongestion';
 import { formatDistanceKm, formatDurationMinutes } from '../utils/format';
 import { InstructionList } from './InstructionList';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type RouteOptionCardProps = {
   route: RoutePlan;
@@ -65,6 +66,7 @@ export function RouteOptionCard({
   onSelect,
   onPreview,
 }: RouteOptionCardProps) {
+  const { t, language } = useI18n();
   const [showSteps, setShowSteps] = useState(false);
   const congestionTone = routeCongestionTone(route);
   const tone = congestionTone ? congestionTones[congestionTone] : tones[severity ?? 'none'];
@@ -73,7 +75,7 @@ export function RouteOptionCard({
   const street = mainStreet(route);
   const instructions = route.legs.flatMap((leg) => leg.instructions ?? []);
   const toll = route.tollCostVnd;
-  const delta = deltaMinutes >= 1 ? `+${deltaMinutes} phút` : null;
+  const delta = deltaMinutes >= 1 ? t('+{minutes} phút', { minutes: deltaMinutes }) : null;
 
   return (
     <li
@@ -91,10 +93,10 @@ export function RouteOptionCard({
       >
         <span className="flex items-baseline justify-between gap-2">
           <span className={`text-lg font-extrabold tracking-tight ${tone.text}`}>
-            {formatDurationMinutes(route.durationMin)}
+            {formatDurationMinutes(route.durationMin, language)}
           </span>
           <span className="text-sm font-semibold text-ink dark:text-slate-100">
-            {formatDistanceKm(route.distanceKm)}
+            {formatDistanceKm(route.distanceKm, language)}
           </span>
         </span>
         <span
@@ -110,11 +112,14 @@ export function RouteOptionCard({
           <span
             className="mt-1.5 flex h-1.5 overflow-hidden rounded-full bg-black/10 dark:bg-white/15"
             role="img"
-            aria-label={`Mức giao thông trên tuyến: ${shares
-              .map(
-                ({ level, share }) => `${Math.round(share * 100)}% ${CONGESTION_LABELS[level].toLowerCase()}`,
-              )
-              .join(', ')}`}
+            aria-label={t('Mức giao thông trên tuyến: {levels}', {
+              levels: shares
+                .map(
+                  ({ level, share }) =>
+                    `${Math.round(share * 100)}% ${t(CONGESTION_LABELS[level]).toLowerCase()}`,
+                )
+                .join(', '),
+            })}
           >
             {shares.map(({ level, share }) => (
               <span
@@ -131,39 +136,43 @@ export function RouteOptionCard({
               key={label}
               className="rounded-full bg-brand-gradient px-2 py-0.5 text-[11px] font-bold text-white"
             >
-              {label}
+              {t(label)}
             </span>
           ))}
           {delta && <span className="text-xs font-medium text-ink-soft dark:text-slate-300">{delta}</span>}
         </span>
         {street && (
-          <span className="mt-1 block truncate text-xs text-ink-soft dark:text-slate-300">qua {street}</span>
+          <span className="mt-1 block truncate text-xs text-ink-soft dark:text-slate-300">
+            {t('qua {street}', { street })}
+          </span>
         )}
         {heavyMeters >= 100 && (
           <span className="mt-1 flex items-center gap-1.5 text-xs font-medium text-red-700 dark:text-red-300">
             <Icon name="traffic" size={13} />
-            Kẹt xe {formatCongestionLength(heavyMeters)}
+            {t('Kẹt xe {length}', { length: formatCongestionLength(heavyMeters) })}
           </span>
         )}
         {severity && (
           <span className="mt-1 flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-300">
             <Icon name="traffic" size={13} />
-            Có sự cố giao thông trên tuyến
+            {t('Có sự cố giao thông trên tuyến')}
           </span>
         )}
         {toll !== undefined && toll > 0 && (
           <span className="mt-1 flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-300">
             <Icon name="warning" size={13} />
-            Có thu phí ~{new Intl.NumberFormat('vi-VN').format(toll)} ₫
+            {t('Có thu phí ~{amount} ₫', {
+              amount: new Intl.NumberFormat(language === 'en' ? 'en-US' : 'vi-VN').format(toll),
+            })}
           </span>
         )}
         {toll === 0 && (
-          <span className="mt-1 block text-xs text-ink-soft dark:text-slate-400">Không thu phí</span>
+          <span className="mt-1 block text-xs text-ink-soft dark:text-slate-400">{t('Không thu phí')}</span>
         )}
         {hasFerry(route) && (
           <span className="mt-1 flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-300">
             <Icon name="warning" size={13} />
-            Có đoạn đi phà
+            {t('Có đoạn đi phà')}
           </span>
         )}
       </button>
@@ -175,7 +184,7 @@ export function RouteOptionCard({
             onClick={() => setShowSteps((current) => !current)}
             className="inline-flex h-8 items-center gap-1 rounded-full px-3 text-xs font-semibold text-brand-700 ring-1 ring-brand-200 transition hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 dark:text-brand-200 dark:ring-brand-400/40 dark:hover:bg-brand-500/20"
           >
-            Chi tiết
+            {t('Chi tiết')}
             <Icon name="chevron-down" size={13} className={showSteps ? 'rotate-180' : ''} />
           </button>
         )}
@@ -185,7 +194,7 @@ export function RouteOptionCard({
           className="inline-flex h-8 items-center gap-1 rounded-full px-3 text-xs font-semibold text-ink-soft ring-1 ring-black/10 transition hover:bg-black/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 dark:text-slate-200 dark:ring-white/15 dark:hover:bg-white/10"
         >
           <Icon name="compass" size={13} />
-          Xem trước
+          {t('Xem trước')}
         </button>
       </div>
       {showSteps && (

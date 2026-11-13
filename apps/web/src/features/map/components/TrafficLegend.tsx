@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMediaQuery } from '../../../shared/hooks/useMediaQuery';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type TrafficLegendProps = {
   onHide: () => void;
@@ -14,6 +15,7 @@ const levels = [
 
 /** Chú giải giao thông dạng viên thuốc: 4 vạch màu + công tắc tắt lớp; điện thoại thu thành nút nhỏ. */
 export function TrafficLegend({ onHide }: TrafficLegendProps) {
+  const { t } = useI18n();
   const isMobile = useMediaQuery('(max-width: 767px)');
   const [expanded, setExpanded] = useState(false);
   if (isMobile && !expanded) {
@@ -21,8 +23,8 @@ export function TrafficLegend({ onHide }: TrafficLegendProps) {
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        aria-label="Hiện chú giải giao thông"
-        title="Chú giải giao thông"
+        aria-label={t('Hiện chú giải giao thông')}
+        title={t('Chú giải giao thông')}
         className="grid h-11 w-11 place-items-center rounded-full bg-white/90 shadow-glass ring-1 ring-black/5 backdrop-blur-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:bg-slate-900/85 dark:shadow-glass-dark dark:ring-white/10 dark:focus-visible:ring-indigo-400/40"
       >
         <span className="flex flex-col gap-[3px]" aria-hidden="true">
@@ -37,24 +39,24 @@ export function TrafficLegend({ onHide }: TrafficLegendProps) {
     <div
       className="flex items-center gap-2.5 rounded-full bg-white/90 py-1.5 pl-3.5 pr-2 text-[11px] font-semibold text-ink-soft shadow-glass dark:shadow-glass-dark ring-1 ring-black/5 backdrop-blur-xl dark:bg-slate-900/85 dark:text-slate-300 dark:ring-white/10"
       role="group"
-      aria-label="Chú giải giao thông"
-      title="Màu tuyến theo dữ liệu giao thông VietMap"
+      aria-label={t('Chú giải giao thông')}
+      title={t('Màu tuyến theo dữ liệu giao thông VietMap')}
     >
-      <span className="sr-only">Màu tuyến theo dữ liệu giao thông VietMap</span>
-      <span>Nhanh</span>
-      <ul className="flex gap-1" aria-label="Mức độ từ nhanh đến chậm">
+      <span className="sr-only">{t('Màu tuyến theo dữ liệu giao thông VietMap')}</span>
+      <span>{t('Nhanh')}</span>
+      <ul className="flex gap-1" aria-label={t('Mức độ từ nhanh đến chậm')}>
         {levels.map((level) => (
-          <li key={level.label} title={level.label} className={`h-2 w-7 rounded-full ${level.color}`}>
-            <span className="sr-only">{level.label}</span>
+          <li key={level.label} title={t(level.label)} className={`h-2 w-7 rounded-full ${level.color}`}>
+            <span className="sr-only">{t(level.label)}</span>
           </li>
         ))}
       </ul>
-      <span>Chậm</span>
+      <span>{t('Chậm')}</span>
       {isMobile && (
         <button
           type="button"
           onClick={() => setExpanded(false)}
-          aria-label="Thu gọn chú giải"
+          aria-label={t('Thu gọn chú giải')}
           className="-my-1.5 grid h-8 w-8 shrink-0 place-items-center rounded-full text-base leading-none text-ink-soft focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:text-slate-300"
         >
           ×
@@ -64,7 +66,7 @@ export function TrafficLegend({ onHide }: TrafficLegendProps) {
         type="button"
         role="switch"
         aria-checked="true"
-        aria-label="Tắt lớp giao thông trực tiếp"
+        aria-label={t('Tắt lớp giao thông trực tiếp')}
         onClick={onHide}
         className="relative h-5 w-9 shrink-0 rounded-full bg-brand-gradient before:absolute before:-inset-x-1 before:-inset-y-2.5 before:content-[''] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40"
       >

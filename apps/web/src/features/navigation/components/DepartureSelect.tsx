@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Popover } from '../../../app/layout/Popover';
 import { Icon } from '../../../shared/components/Icon';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type DepartureMode = 'now' | 'depart' | 'arrive';
 
@@ -15,8 +16,12 @@ const modeLabels: Record<DepartureMode, string> = {
   arrive: 'Đến lúc',
 };
 
-const formatClock = (date: Date) =>
-  date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+const formatClock = (date: Date, language: 'vi' | 'en') =>
+  date.toLocaleTimeString(language === 'en' ? 'en-US' : 'vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
 
 /** Giờ HH:mm hôm nay (hoặc ngày mai nếu đã qua) làm mốc thời gian. */
 function clockToDate(value: string, now: Date): Date {
@@ -29,11 +34,12 @@ function clockToDate(value: string, now: Date): Date {
 
 /** Chọn Đi ngay / Khởi hành lúc / Đến lúc; chỉ là UI, hiển thị giờ đến (hoặc giờ nên đi) dự kiến. */
 export function DepartureSelect({ durationMin }: DepartureSelectProps) {
+  const { t, language } = useI18n();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<DepartureMode>('now');
-  const [time, setTime] = useState(() => formatClock(new Date()));
+  const [time, setTime] = useState(() => formatClock(new Date(), language));
 
-  const label = mode === 'now' ? modeLabels.now : `${modeLabels[mode]} ${time}`;
+  const label = mode === 'now' ? t(modeLabels.now) : `${t(modeLabels[mode])} ${time}`;
   let estimate = '';
   if (durationMin !== null) {
     const now = new Date();
@@ -41,8 +47,8 @@ export function DepartureSelect({ durationMin }: DepartureSelectProps) {
     const ms = durationMin * 60_000;
     estimate =
       mode === 'arrive'
-        ? `Nên khởi hành lúc ${formatClock(new Date(anchor.getTime() - ms))}`
-        : `Dự kiến đến lúc ${formatClock(new Date(anchor.getTime() + ms))}`;
+        ? t('Nên khởi hành lúc {time}', { time: formatClock(new Date(anchor.getTime() - ms), language) })
+        : t('Dự kiến đến lúc {time}', { time: formatClock(new Date(anchor.getTime() + ms), language) });
   }
 
   return (
@@ -50,7 +56,7 @@ export function DepartureSelect({ durationMin }: DepartureSelectProps) {
       <Popover
         open={open}
         onClose={() => setOpen(false)}
-        label="Thời điểm khởi hành"
+        label={t('Thời điểm khởi hành')}
         panelClassName="left-0 top-full mt-1.5 w-60"
         trigger={
           <button
@@ -66,7 +72,7 @@ export function DepartureSelect({ durationMin }: DepartureSelectProps) {
           </button>
         }
       >
-        <div role="radiogroup" aria-label="Thời điểm khởi hành" className="space-y-0.5">
+        <div role="radiogroup" aria-label={t('Thời điểm khởi hành')} className="space-y-0.5">
           {(Object.keys(modeLabels) as DepartureMode[]).map((id) => (
             <button
               key={id}
@@ -76,14 +82,14 @@ export function DepartureSelect({ durationMin }: DepartureSelectProps) {
               onClick={() => setMode(id)}
               className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-medium transition hover:bg-black/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 dark:hover:bg-white/10 ${mode === id ? 'text-brand-700 dark:text-brand-200' : 'text-ink dark:text-slate-200'}`}
             >
-              {modeLabels[id]}
+              {t(modeLabels[id])}
               {mode === id && <Icon name="check" size={14} />}
             </button>
           ))}
         </div>
         {mode !== 'now' && (
           <label className="mt-2 block text-[11px] font-semibold text-ink-soft dark:text-slate-300">
-            Giờ
+            {t('Giờ')}
             <input
               type="time"
               value={time}
@@ -93,7 +99,7 @@ export function DepartureSelect({ durationMin }: DepartureSelectProps) {
           </label>
         )}
         <p className="mt-2 text-[11px] text-ink-soft dark:text-slate-400">
-          Chỉ để ước tính giờ đến, chưa dự báo tắc đường theo giờ.
+          {t('Chỉ để ước tính giờ đến, chưa dự báo tắc đường theo giờ.')}
         </p>
       </Popover>
       {estimate && (

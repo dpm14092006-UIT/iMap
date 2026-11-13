@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { useI18n } from '../../shared/i18n/I18nProvider';
 
 type PopoverProps = {
   open: boolean;
@@ -22,6 +23,7 @@ export function Popover({
   className = '',
   children,
 }: PopoverProps) {
+  const { t } = useI18n();
   const root = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -51,7 +53,7 @@ export function Popover({
       {open && (
         <div
           role="dialog"
-          aria-label={label}
+          aria-label={t(label)}
           className={`absolute z-50 animate-pop rounded-2xl bg-white/95 p-3 shadow-glass ring-1 ring-black/5 backdrop-blur-xl dark:bg-slate-900/95 dark:text-slate-100 dark:shadow-glass-dark dark:ring-white/10 ${panelClassName}`}
         >
           {children}
