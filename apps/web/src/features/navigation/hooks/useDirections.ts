@@ -9,8 +9,6 @@ type UseDirectionsOptions = {
   activeRoute: RoutePlan | null;
   /** Báo cho App vẽ tuyến mới, hoặc xóa tuyến (null). */
   onRouteChange: (route: RoutePlan | null) => void;
-  initialOrigin: Place | null;
-  initialDestination: Place | null;
 };
 
 /** Bộ 3 thông tin đủ để tính một tuyến. */
@@ -29,15 +27,9 @@ type Waypoint = { key: string; place: Place | null };
  * - Đổi điểm đi/đến: xóa tuyến cũ (vì không còn đúng).
  * - Đổi loại xe khi đang có tuyến: tự tính lại tuyến cho xe mới.
  */
-export function useDirections({
-  routeApi,
-  activeRoute,
-  onRouteChange,
-  initialOrigin,
-  initialDestination,
-}: UseDirectionsOptions) {
-  const [origin, setOriginState] = useState<Place | null>(initialOrigin);
-  const [destination, setDestinationState] = useState<Place | null>(initialDestination);
+export function useDirections({ routeApi, activeRoute, onRouteChange }: UseDirectionsOptions) {
+  const [origin, setOriginState] = useState<Place | null>(null);
+  const [destination, setDestinationState] = useState<Place | null>(null);
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
   const [vehicle, setVehicleState] = useState<TransportMode>('motorcycle');
   const [objective, setObjectiveState] = useState<RouteObjective>('time');

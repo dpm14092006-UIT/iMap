@@ -1,6 +1,16 @@
+import { z } from 'zod';
 import { AppError } from '../../../../shared/errors/AppError.js';
 
 export type VietmapPlaceEndpoint = 'autocomplete' | 'search' | 'place' | 'reverse';
+
+/** Phản hồi Place v4 (và từng dòng Reverse v4): toạ độ kèm tên/địa chỉ hiển thị. */
+export const vietmapPointSchema = z.object({
+  lat: z.number().finite().min(-90).max(90),
+  lng: z.number().finite().min(-180).max(180),
+  name: z.string().optional(),
+  address: z.string().optional(),
+  display: z.string().optional(),
+});
 
 export function invalidPlaceResponse() {
   return new AppError(502, 'PLACE_SEARCH_INVALID_RESPONSE', 'VietMap trả về dữ liệu địa điểm không hợp lệ.');
