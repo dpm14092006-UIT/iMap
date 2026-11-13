@@ -38,8 +38,7 @@ export abstract class GraphSearchSolver implements ShortestPathSolver {
       if (closed.has(current)) continue; // bản sao cũ trong heap (lazy deletion)
       closed.add(current);
 
-      if (current === goal)
-        return this.buildResult(start, goal, cameFrom, gScore.get(goal)!, closed.size, options);
+      if (current === goal) return this.buildResult(start, goal, cameFrom, closed.size, options);
 
       const currentCost = gScore.get(current)!;
       for (const edge of graph.neighbors(current, options.vehicle)) {
@@ -61,7 +60,6 @@ export abstract class GraphSearchSolver implements ShortestPathSolver {
     start: string,
     goal: string,
     cameFrom: Map<string, Step>,
-    cost: number,
     visitedNodes: number,
     options: SearchOptions,
   ): PathResult {

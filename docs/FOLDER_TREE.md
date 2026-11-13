@@ -31,7 +31,6 @@ RouteTwin_OOP_Starter/
 │   ├── migrations/                       PostGIS, Auth/RLS, ảnh, xác nhận
 │   └── ops/                              SQL vận hành hạn báo cáo
 ├── docs/                                 Kiến trúc, API, kế hoạch, ownership
-├── tests/e2e/                            Chỗ đặt kiểm thử E2E
 ├── scripts/                              Chỗ đặt script tiện ích
 ├── assets/                               Tài liệu về tài sản có quyền sử dụng
 ├── .github/workflows/                    CI
