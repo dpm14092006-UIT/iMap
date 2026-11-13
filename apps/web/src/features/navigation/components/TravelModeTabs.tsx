@@ -15,7 +15,7 @@ const supported: { id: TransportMode; label: string; icon: IconName }[] = [
 ];
 
 const tabClass = (active: boolean, enabled: boolean) =>
-  `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-2xl px-1 py-2 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 ${active ? 'bg-brand-gradient text-white shadow-md' : enabled ? 'text-ink-soft hover:bg-black/5 dark:text-slate-300 dark:hover:bg-white/10' : 'cursor-not-allowed text-slate-400 dark:text-slate-500'}`;
+  `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-2xl px-1 py-2 text-[11px] max-md:flex-row max-md:justify-center max-md:gap-1.5 max-md:py-2 font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 ${active ? 'bg-brand-gradient text-white shadow-md' : enabled ? 'text-ink-soft hover:bg-black/5 dark:text-slate-300 dark:hover:bg-white/10' : 'cursor-not-allowed text-slate-400 dark:text-slate-500'}`;
 
 /** Thẻ phương tiện kèm thời gian ước tính; chỉ xe máy và ô tô được backend hỗ trợ. */
 export function TravelModeTabs({ vehicle, durations, onSelect }: TravelModeTabsProps) {
@@ -44,9 +44,9 @@ export function TravelModeTabs({ vehicle, durations, onSelect }: TravelModeTabsP
         onClick={() => best && onSelect(best.id)}
         className={tabClass(best !== null && best.id === vehicle, best !== null)}
       >
-        <Icon name="sparkles" size={18} />
+        <Icon name="sparkles" size={16} className="shrink-0" />
         Tốt nhất
-        <span className="font-normal opacity-80">
+        <span className={`font-normal opacity-80 ${bestMinutes === undefined ? 'max-md:hidden' : ''}`}>
           {bestMinutes === undefined ? '—' : formatDurationShort(bestMinutes)}
         </span>
       </button>
@@ -58,9 +58,11 @@ export function TravelModeTabs({ vehicle, durations, onSelect }: TravelModeTabsP
           onClick={() => onSelect(mode.id)}
           className={tabClass(vehicle === mode.id, true)}
         >
-          <Icon name={mode.icon} size={18} />
+          <Icon name={mode.icon} size={16} className="shrink-0" />
           {mode.label}
-          <span className="font-normal opacity-80">
+          <span
+            className={`font-normal opacity-80 ${durations[mode.id] === undefined ? 'max-md:hidden' : ''}`}
+          >
             {durations[mode.id] === undefined ? '—' : formatDurationShort(durations[mode.id]!)}
           </span>
         </button>

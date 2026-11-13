@@ -1,4 +1,7 @@
+import { useEffect, useRef } from 'react';
+import { useShell } from '../../../app/layout/AppShell';
 import { Icon } from '../../../shared/components/Icon';
+import { useMediaQuery } from '../../../shared/hooks/useMediaQuery';
 import type { NavigationMode } from '../domain/position/PositionSource';
 import type { NavigationStatus } from '../hooks/useNavigationSession';
 import { formatDistanceMeters } from '../utils/format';
@@ -19,6 +22,14 @@ type NavigationBannerProps = {
   onStop: () => void;
   /** Chế độ Demo (GPS giả) chỉ có khi mở app với ?demo=1. Không truyền thì banner như cũ. */
   demo?: DemoControls;
+  /** Người dùng đang tự kéo / zoom xem trước, bản đồ không bám vị trí. */
+  followPaused?: boolean;
+  /** Bám lại vị trí hiện tại. */
+  onRecenter?: () => void;
+  /** Zoom vừa toàn tuyến để xem trước hành trình. */
+  onPreviewRoute?: () => void;
+  /** Đang mở bảng khác (vd. Báo cáo) ở đáy màn hình: banner lên đỉnh để không chồng nhau. */
+  atTop?: boolean;
 };
 
 /** Điều khiển chế độ Thật / Demo trên banner. */
@@ -58,15 +69,44 @@ export function NavigationBanner({
   onReport,
   onStop,
   demo,
+  followPaused = false,
+  onRecenter,
+  onPreviewRoute,
+  atTop = false,
 }: NavigationBannerProps) {
-  if (status === 'idle') return null;
+  const isMobile = useMediaQuery('(max-width: 767px)');
+  const { setSheet } = useShell();
+  const root = useRef<HTMLElement>(null);
+  const visible = status !== 'idle';
+  const reportsHeight = visible && isMobile && !atTop;
+
+  // Điện thoại: báo chiều cao banner (như bảng kéo) để nút bản đồ và khung zoom tuyến né lên trên.
+  useEffect(() => {
+    const element = root.current;
+    if (!reportsHeight || !element) return;
+    const measure = () => {
+      const bottom = element.offsetHeight + 12;
+      setSheet({ height: `${bottom}px`, isFull: false, inset: { left: 0, bottom } });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      setSheet({ height: null, isFull: false, inset: null });
+    };
+  }, [reportsHeight, setSheet]);
+
+  if (!visible) return null;
 
   const isGuiding = status === 'navigating' || status === 'locating';
   const instructionText = instruction?.text || 'Tiếp tục theo tuyến đường';
 
   return (
     <section
-      className="absolute left-3 right-3 top-3 z-50 animate-fade-in overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-teal-900 text-white shadow-glass dark:shadow-glass-dark ring-1 ring-white/15 md:right-auto md:w-[420px]"
+      ref={root}
+      data-nav-banner=""
+      className={`absolute left-3 right-3 z-50 animate-fade-in overflow-hidden rounded-3xl ${atTop ? 'top-3' : 'bottom-[calc(12px+env(safe-area-inset-bottom))]'} bg-gradient-to-br from-slate-900 via-indigo-950 to-teal-900 text-white shadow-glass dark:shadow-glass-dark ring-1 ring-white/15 md:right-auto md:w-[420px]`}
       aria-label="Điều hướng chuyến đi"
       aria-live="polite"
     >
@@ -167,6 +207,16 @@ export function NavigationBanner({
             {isRecalculating ? 'Đang tính lại…' : offRoute ? 'Tính lại tuyến' : 'Thử lại GPS'}
           </button>
         )}
+        {isGuiding && (followPaused ? onRecenter : onPreviewRoute) && (
+          <button
+            type="button"
+            onClick={followPaused ? onRecenter : onPreviewRoute}
+            className={`flex min-h-10 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-300 ${followPaused ? 'bg-teal-300 text-slate-900 hover:bg-teal-200' : 'bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/20'}`}
+          >
+            <Icon name={followPaused ? 'current-location' : 'route'} size={15} />
+            {followPaused ? 'Về vị trí' : 'Toàn tuyến'}
+          </button>
+        )}
         <button
           type="button"
           onClick={onReport}
@@ -181,7 +231,8 @@ export function NavigationBanner({
           className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-white/10 px-3 text-xs font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-300"
         >
           <Icon name="close" size={14} />
-          {status === 'arrived' ? 'Đóng chuyến đi' : 'Kết thúc chuyến đi'}
+          {status === 'arrived' ? 'Đóng' : 'Kết thúc'}
+          <span className="max-md:hidden">chuyến đi</span>
         </button>
       </div>
     </section>

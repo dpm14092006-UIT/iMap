@@ -4,8 +4,6 @@ import { Icon } from '../../../shared/components/Icon';
 import type { MapLayer, MapOverlays } from '../types';
 
 type LayerSwitcherProps = {
-  /** Bảng chức năng đang mở: trên điện thoại nút thu nhỏ lại. */
-  compact?: boolean;
   layer: MapLayer;
   overlays: MapOverlays;
   onLayerChange: (layer: MapLayer) => void;
@@ -45,13 +43,7 @@ function LayerThumb({ kind, className = '' }: { kind: 'street' | 'satellite'; cl
 }
 
 /** Nút thẻ ảnh "Lớp" ở góc dưới trái; mở popover chọn nền bản đồ và các lớp phủ. */
-export function LayerSwitcher({
-  compact = false,
-  layer,
-  overlays,
-  onLayerChange,
-  onOverlaysChange,
-}: LayerSwitcherProps) {
+export function LayerSwitcher({ layer, overlays, onLayerChange, onOverlaysChange }: LayerSwitcherProps) {
   const [open, setOpen] = useState(false);
   const titleId = useId();
   const base = layer === 'satellite' ? 'satellite' : 'street';
@@ -70,11 +62,11 @@ export function LayerSwitcher({
           aria-label="Lớp bản đồ"
           aria-expanded={open}
           aria-haspopup="dialog"
-          className={`group relative block h-16 w-16 ${compact ? 'max-md:h-11 max-md:w-11' : ''} overflow-hidden rounded-2xl shadow-glass dark:shadow-glass-dark ring-2 ring-white transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-indigo-400/40 active:scale-95 dark:ring-slate-700`}
+          className={`group relative block h-16 w-16 max-md:h-11 max-md:w-11 overflow-hidden rounded-2xl shadow-glass dark:shadow-glass-dark ring-2 ring-white transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-indigo-400/40 active:scale-95 dark:ring-slate-700`}
         >
           <LayerThumb kind={next} className="h-full w-full transition group-hover:scale-110" />
           <span
-            className={`absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-gradient-to-t from-slate-950/70 to-transparent pb-1 pt-4 text-[11px] font-bold text-white ${compact ? 'max-md:pb-0.5 max-md:pt-3 max-md:text-[10px]' : ''}`}
+            className={`absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-gradient-to-t from-slate-950/70 to-transparent pb-1 pt-4 text-[11px] font-bold text-white max-md:pb-0.5 max-md:pt-3 max-md:text-[10px]`}
           >
             <Icon name="layers" size={12} />
             Lớp

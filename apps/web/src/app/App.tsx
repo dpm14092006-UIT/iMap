@@ -184,7 +184,12 @@ export function App() {
   const savedRoutes = useSavedRoutes();
   const { updateAvailable, reloadForUpdate } = useAppUpdate();
 
-  const [activePanel, setActivePanel] = useState<FeatureKey | null>('directions');
+  const [activePanel, setActivePanel] = useState<FeatureKey | null>(() =>
+    // Điện thoại mở vào bản đồ trống cho thoáng (trừ link chia sẻ tuyến); desktop/tablet mở sẵn chỉ đường.
+    window.matchMedia('(max-width: 767px)').matches && !parseRouteShareLink(window.location.search)
+      ? null
+      : 'directions',
+  );
   const [hasOpenedMulti, setHasOpenedMulti] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [selectedMapPoint, setSelectedMapPoint] = useState<LatLng | null>(null);
@@ -255,12 +260,34 @@ export function App() {
     if (navigationRoute && !isNavigationIdle && activeRoute?.id !== navigationRoute.id) stopNavigation();
   }, [activeRoute?.id, navigationRoute, isNavigationIdle, stopNavigation]);
 
-  // Bản đồ bám theo vị trí GPS trong lúc dẫn đường.
+  // Bản đồ bám theo vị trí GPS trong lúc dẫn đường; người dùng tự kéo / zoom thì tạm ngừng bám
+  // để xem trước hành trình, bấm "Về vị trí" để bám lại.
+  const [followPaused, setFollowPaused] = useState(false);
   useEffect(() => {
-    if (navigationLocation && (navigationStatus === 'navigating' || navigationStatus === 'arrived')) {
+    if (isNavigationIdle) {
+      setFollowPaused(false);
+      return;
+    }
+    return mapController.current?.onUserGesture(() => setFollowPaused(true));
+  }, [isNavigationIdle]);
+  useEffect(() => {
+    if (
+      !followPaused &&
+      navigationLocation &&
+      (navigationStatus === 'navigating' || navigationStatus === 'arrived')
+    ) {
       mapController.current?.followLocation(navigationLocation);
     }
-  }, [navigationLocation, navigationStatus]);
+  }, [navigationLocation, navigationStatus, followPaused]);
+  const recenterNavigation = useCallback(() => {
+    setFollowPaused(false);
+    if (navigationLocation) mapController.current?.followLocation(navigationLocation);
+  }, [navigationLocation]);
+  const previewNavigationRoute = useCallback(() => {
+    if (!navigationRoute) return;
+    setFollowPaused(true);
+    mapController.current?.fitRoute(navigationRoute);
+  }, [navigationRoute]);
 
   // --- Giao thông (N2): báo cáo lấy từ API; bản đồ nhận qua hợp đồng TrafficMapLayer. ---
   const {
@@ -932,15 +959,11 @@ export function App() {
       bottomLeft={
         <>
           {overlays.traffic && (
-            <div className="max-md:order-first max-md:basis-full md:mx-auto md:order-2">
-              <TrafficLegend
-                docked={panelOpen}
-                onHide={() => setOverlays((current) => ({ ...current, traffic: false }))}
-              />
+            <div className="md:order-2 md:mx-auto">
+              <TrafficLegend onHide={() => setOverlays((current) => ({ ...current, traffic: false }))} />
             </div>
           )}
           <LayerSwitcher
-            compact={panelOpen}
             layer={layer}
             overlays={overlays}
             onLayerChange={setLayer}
@@ -955,10 +978,20 @@ export function App() {
       }
       bottomRight={
         <MapControls
-          onShowVietnam={() => mapController.current?.showVietnam()}
-          onLocate={() => void locateOnMap()}
-          onZoomIn={() => mapController.current?.zoomIn()}
-          onZoomOut={() => mapController.current?.zoomOut()}
+          showZoom={!isNavigationIdle}
+          onShowVietnam={() => {
+            if (!isNavigationIdle) setFollowPaused(true);
+            mapController.current?.showVietnam();
+          }}
+          onLocate={() => (isNavigationIdle ? void locateOnMap() : recenterNavigation())}
+          onZoomIn={() => {
+            if (!isNavigationIdle) setFollowPaused(true);
+            mapController.current?.zoomIn();
+          }}
+          onZoomOut={() => {
+            if (!isNavigationIdle) setFollowPaused(true);
+            mapController.current?.zoomOut();
+          }}
         />
       }
     >
@@ -1001,6 +1034,10 @@ export function App() {
           else showToast('Đang chờ GPS để gắn báo cáo vào vị trí hiện tại.');
         }}
         onStop={stopNavigation}
+        followPaused={followPaused}
+        atTop={activePanel !== null}
+        onRecenter={recenterNavigation}
+        onPreviewRoute={previewNavigationRoute}
         demo={
           demoEnabled
             ? {

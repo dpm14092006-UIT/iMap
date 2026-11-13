@@ -46,11 +46,11 @@ export function CategoryChips({ active, onSelect }: CategoryChipsProps) {
       <div
         ref={scroller}
         onScroll={measure}
-        className="no-scrollbar flex gap-2 overflow-x-auto py-1 pr-1"
+        className="no-scrollbar flex gap-2 overflow-x-auto py-1 pr-1 max-md:pr-6 max-md:[mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)]"
         role="group"
         aria-label="Khám phá quanh đây"
       >
-        <PoiTermInput label="Tìm quanh đây" placeholder="Tìm quanh đây…" onSubmit={onSelect} />
+        <PoiTermInput label="Tìm quanh đây" placeholder="Quanh đây…" onSubmit={onSelect} />
         {poiCategoryOrder.map((category) => {
           const meta = poiCatalog[category];
           const selected = active === category;
