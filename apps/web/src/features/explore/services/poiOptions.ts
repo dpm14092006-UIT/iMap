@@ -23,10 +23,10 @@ export function radiusForZoom(zoom: number): number {
 }
 
 /** 500 -> "500 m", 1500 -> "1,5 km". */
-export function formatRadius(radiusM: number): string {
+export function formatRadius(radiusM: number, language: 'vi' | 'en' = 'vi'): string {
   return radiusM < 1000
     ? `${radiusM} m`
-    : `${(radiusM / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} km`;
+    : `${(radiusM / 1000).toLocaleString(language === 'en' ? 'en-US' : 'vi-VN', { maximumFractionDigits: 1 })} km`;
 }
 
 function referenceDistance(poi: Poi, mode: 'nearby' | 'alongRoute'): number {

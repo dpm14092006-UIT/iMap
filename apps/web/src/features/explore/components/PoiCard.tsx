@@ -2,6 +2,7 @@ import { Icon } from '../../../shared/components/Icon';
 import { formatDistanceMeters } from '../../navigation/utils/format';
 import { poiMetaFor } from '../data/poiCatalog';
 import type { Poi } from '../types';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type PoiCardProps = {
   poi: Poi;
@@ -44,15 +45,22 @@ export function PoiCard({
   onAddStop,
   onHover,
 }: PoiCardProps) {
+  const { language, t } = useI18n();
   const meta = poiMetaFor(poi.category);
   const facts =
     mode === 'alongRoute'
       ? [
-          `Cách tuyến ${formatDistanceMeters(poi.distanceFromRouteM)}`,
-          poi.detourMin > 0 ? `+${poi.detourMin} phút đi vòng` : 'Ngay trên đường đi',
-          `Km ${(poi.positionAlongRouteM / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} trên tuyến`,
+          t('Cách tuyến {distance}', { distance: formatDistanceMeters(poi.distanceFromRouteM, language) }),
+          poi.detourMin > 0
+            ? t('+{minutes} phút đi vòng', { minutes: poi.detourMin })
+            : t('Ngay trên đường đi'),
+          t('Km {distance} trên tuyến', {
+            distance: (poi.positionAlongRouteM / 1000).toLocaleString(language === 'en' ? 'en-US' : 'vi-VN', {
+              maximumFractionDigits: 1,
+            }),
+          }),
         ]
-      : [`Cách ${formatDistanceMeters(poi.distanceFromCenterM ?? 0)}`];
+      : [t('Cách {distance}', { distance: formatDistanceMeters(poi.distanceFromCenterM ?? 0, language) })];
   const actionClass =
     'inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 active:scale-95';
 
@@ -74,7 +82,7 @@ export function PoiCard({
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-bold text-ink dark:text-white">{poi.name}</span>
           <span className="mt-0.5 block text-xs font-semibold" style={{ color: meta.color }}>
-            {meta.label}
+            {t(meta.label)}
           </span>
           {poi.address && (
             <span className="mt-0.5 line-clamp-2 block text-xs text-ink-soft dark:text-slate-300">
@@ -100,7 +108,7 @@ export function PoiCard({
           className={`${actionClass} bg-brand-gradient text-white shadow-sm`}
         >
           <Icon name="directions" size={14} />
-          Chỉ đường
+          {t('Chỉ đường')}
         </button>
         <button
           type="button"
@@ -109,7 +117,7 @@ export function PoiCard({
           className={`${actionClass} ring-1 ${saved ? 'bg-brand-50 text-brand-700 ring-brand-300 dark:ring-indigo-300/40 dark:bg-brand-500/20 dark:text-brand-200' : 'text-ink-soft ring-black/10 hover:bg-black/5 dark:text-slate-200 dark:ring-white/15 dark:hover:bg-white/10'}`}
         >
           <Icon name="bookmark" size={14} className={saved ? 'fill-current' : ''} />
-          {saved ? 'Đã lưu' : 'Lưu'}
+          {saved ? t('Đã lưu') : t('Lưu')}
         </button>
         {canAddStop && (
           <button
@@ -118,7 +126,7 @@ export function PoiCard({
             className={`${actionClass} text-ink-soft ring-1 ring-black/10 hover:bg-black/5 dark:text-slate-200 dark:ring-white/15 dark:hover:bg-white/10`}
           >
             <Icon name="plus" size={14} />
-            Thêm điểm dừng
+            {t('Thêm điểm dừng')}
           </button>
         )}
       </div>

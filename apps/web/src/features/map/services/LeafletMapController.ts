@@ -1,5 +1,6 @@
 import * as L from 'leaflet';
 import { iconSvg } from '../../../shared/components/Icon';
+import { translate, type Language } from '../../../shared/i18n/I18nProvider';
 import { poiMetaFor } from '../../explore/data/poiCatalog';
 import type { Poi } from '../../explore/types';
 import {
@@ -10,15 +11,7 @@ import {
 import { minutesSlowerThanFastest, routeLabels } from '../../navigation/utils/routeLabels';
 import type { LatLng, Place } from '../../places/types';
 import type { TrafficFeature, TrafficMapLayer, TrafficSeverity } from '../layers/trafficMapLayer';
-import type {
-  AlgorithmOverlay,
-  Bounds,
-  Coordinate,
-  DraftStops,
-  MapLayer,
-  MapOverlays,
-  RoutePlan,
-} from '../types';
+import type { Coordinate, DraftStops, MapLayer, MapOverlays, RoutePlan } from '../types';
 import {
   CONGESTION_COLORS,
   CONGESTION_LABELS,
@@ -37,9 +30,6 @@ const COLORS = {
   routeFrom: [0x43, 0x38, 0xca],
   routeTo: [0x0d, 0x94, 0x88],
   alternative: '#a5b4fc',
-  dijkstra: '#8b5cf6',
-  astar: '#f97316',
-  coverage: '#64748b',
 };
 /** Mức sự cố → màu giao thông (cùng bảng màu với chú giải: vàng / đỏ / đỏ sẫm). */
 const SEVERITY_COLORS: Record<TrafficSeverity, string> = {
@@ -68,6 +58,7 @@ export type MapControllerHandlers = {
 
 /** Toàn bộ dữ liệu cần vẽ trên bản đồ, được MapView truyền vào mỗi khi thay đổi. */
 export type MapControllerData = {
+  language: Language;
   layer: MapLayer;
   route: RoutePlan | null;
   routeOptions: RoutePlan[];
@@ -77,8 +68,6 @@ export type MapControllerData = {
   headingDegrees: number | null;
   isNavigating: boolean;
   isPicking: boolean;
-  /** Tuyến Dijkstra/A* và khung vùng dữ liệu (null nếu chưa chạy thuật toán). */
-  algorithmOverlay: AlgorithmOverlay | null;
   overlays: MapOverlays;
   pois: Poi[];
   highlightedPoiId: string | null;
@@ -89,12 +78,12 @@ export type MapControllerData = {
  * React chỉ gọi các method public; mọi chi tiết Leaflet nằm trong class này.
  */
 export class LeafletMapController {
+  private language: Language = 'vi';
   private readonly map: L.Map;
   private readonly streets: L.TileLayer;
   private readonly imagery: L.TileLayer;
   private readonly terrain: L.TileLayer;
   // Mỗi loại dữ liệu một layer group riêng để xóa/vẽ lại độc lập.
-  private readonly algorithmLayer = L.layerGroup();
   private readonly routeLayer = L.layerGroup();
   private readonly labelLayer = L.layerGroup();
   private readonly routeTrafficLayer = L.layerGroup();
@@ -120,7 +109,6 @@ export class LeafletMapController {
   private lastDraftStopsKey = '';
   private focusMarker: L.Marker | null = null;
   private lastFocusKey = '';
-  private lastOverlayKey: string | null = null;
   private lastTrafficMapLayer: TrafficMapLayer | null = null;
 
   constructor(
@@ -153,7 +141,6 @@ export class LeafletMapController {
     });
     this.streets.addTo(this.map);
     this.trafficHaloLayer.addTo(this.map); // quầng giao thông nằm dưới tuyến
-    this.algorithmLayer.addTo(this.map); // nằm dưới tuyến VietMap và marker
     this.routeLayer.addTo(this.map);
     this.labelLayer.addTo(this.map);
     this.mobileQuery.addEventListener('change', this.onMobileChange);
@@ -171,6 +158,8 @@ export class LeafletMapController {
 
   /** Vẽ lại bản đồ theo dữ liệu mới nhất. */
   update(data: MapControllerData) {
+    const languageChanged = data.language !== this.language;
+    this.language = data.language;
     this.applyBase(data.layer, data.overlays.terrain);
     this.setOverlayVisibility(data.overlays);
     this.setPicking(data.isPicking);
@@ -203,8 +192,10 @@ export class LeafletMapController {
     this.lastRouteNavigationState = data.isNavigating;
     this.lastCongestionVisible = data.overlays.traffic;
 
-    if (data.algorithmOverlay?.key !== this.lastOverlayKey) this.drawAlgorithmOverlay(data.algorithmOverlay);
-    if (data.trafficLayer !== this.lastTrafficMapLayer) this.drawTraffic(data.trafficLayer);
+    if (languageChanged && !routeChanged && this.lastLabels)
+      this.drawRouteLabels(this.lastLabels.routes, this.lastLabels.selected);
+    if (data.trafficLayer !== this.lastTrafficMapLayer || languageChanged)
+      this.drawTraffic(data.trafficLayer);
     if (routeChanged || data.trafficLayer !== this.lastTrafficMapLayer)
       this.drawRouteTraffic(data.route, data.trafficLayer);
     this.lastTrafficMapLayer = data.trafficLayer;
@@ -218,13 +209,6 @@ export class LeafletMapController {
     }
     this.lastRouteId = routeId;
     this.lastRouteOptionsKey = routeOptionsKey;
-
-    const overlay = data.algorithmOverlay;
-    if (overlay && overlay.key !== this.lastOverlayKey) {
-      const coordinates = overlay.paths.flatMap((path) => path.points);
-      if (coordinates.length) this.fit(coordinates);
-    }
-    this.lastOverlayKey = overlay?.key ?? null;
   }
 
   /**
@@ -465,22 +449,25 @@ export class LeafletMapController {
     all.forEach((route, index) => {
       if (paths[index]!.length < 2) return;
       const isSelected = route.id === selected.id;
-      const text = `${formatDurationMinutes(route.durationMin)} · ${formatDistanceKm(route.distanceKm)}`;
-      const labels = routeLabels(route, all);
+      const text = `${formatDurationMinutes(route.durationMin, this.language)} · ${formatDistanceKm(route.distanceKm, this.language)}`;
+      const labels = routeLabels(route, all).map((label) => translate(this.language, label));
       const delta = minutesSlowerThanFastest(route, all);
-      const hint = [...labels, ...(delta >= 1 ? [`+${delta} phút`] : [])].join(' · ');
+      const hint = [
+        ...labels,
+        ...(delta >= 1 ? [translate(this.language, '+{minutes} phút', { minutes: delta })] : []),
+      ].join(' · ');
       const title = hint ? `${text} (${hint})` : text;
       const worst = worstCongestionLevel(route.congestion);
       const worstColor = worst ? CONGESTION_COLORS[worst] : null;
       const dot = worstColor
-        ? `<i class="routetwin-route-dot" style="background:${worstColor}" title="${CONGESTION_LABELS[worst!]}" aria-hidden="true"></i>`
+        ? `<i class='routetwin-route-dot' style='background:${worstColor}' title='${translate(this.language, CONGESTION_LABELS[worst!])}' aria-hidden='true'></i>`
         : '';
       const body = compact
-        ? `${dot}<span>${formatDurationCompact(route.durationMin)}</span>`
+        ? `${dot}<span>${formatDurationCompact(route.durationMin, this.language)}</span>`
         : `${iconSvg(route.vehicle === 'car' ? 'car' : 'motorcycle', 14)}${dot}<span>${text}</span>${hint ? `<small>${hint}</small>` : ''}`;
       const icon = L.divIcon({
         className: 'routetwin-route-label-wrap',
-        html: `<button type="button" class="routetwin-route-label${compact ? ' is-compact' : ''}${isSelected ? ' is-selected' : ''}" aria-label="Chọn tuyến ${title}" title="${title}">${body}</button>`,
+        html: `<button type='button' class='routetwin-route-label${compact ? ' is-compact' : ''}${isSelected ? ' is-selected' : ''}' aria-label='${translate(this.language, 'Chọn tuyến {route}', { route: title })}' title='${title}'>${body}</button>`,
         iconSize: [0, 0],
       });
       const [lat, lng] = points[index]!;
@@ -587,41 +574,6 @@ export class LeafletMapController {
     });
   }
 
-  /**
-   * Vẽ kết quả thuật toán: Dijkstra nét liền tím (dày, bên dưới), A* nét đứt cam (bên trên).
-   * Hai tuyến thường trùng nhau vì cùng chi phí tối ưu, nên vẫn thấy được cả hai màu.
-   */
-  private drawAlgorithmOverlay(overlay: AlgorithmOverlay | null) {
-    this.algorithmLayer.clearLayers();
-    if (!overlay) return;
-    if (overlay.coverage) this.drawCoverage(overlay.coverage);
-    for (const path of overlay.paths) {
-      if (path.points.length < 2) continue;
-      const style: L.PolylineOptions =
-        path.algorithm === 'dijkstra'
-          ? { color: COLORS.dijkstra, weight: 8, opacity: 0.55 }
-          : { color: COLORS.astar, weight: 4, opacity: 0.95, dashArray: '8 7' };
-      L.polyline(path.points, { ...style, ...ROUND, interactive: false }).addTo(this.algorithmLayer);
-    }
-  }
-
-  /** Khung nét đứt cho biết vùng có dữ liệu đồ thị OSM. */
-  private drawCoverage({ south, west, north, east }: Bounds) {
-    L.rectangle(
-      [
-        [south, west],
-        [north, east],
-      ],
-      {
-        color: COLORS.coverage,
-        weight: 1.5,
-        dashArray: '6 6',
-        fill: false,
-        interactive: false,
-      },
-    ).addTo(this.algorithmLayer);
-  }
-
   /** Vẽ sự cố giao thông theo hợp đồng TrafficMapLayer (bỏ qua sự cố đã thông thoáng). */
   private drawTraffic(layer: TrafficMapLayer) {
     this.trafficLayer.clearLayers();
@@ -652,15 +604,22 @@ export class LeafletMapController {
   private trafficPopup({ properties }: TrafficFeature): HTMLElement {
     const content = document.createElement('div');
     const formatTime = (iso: string) =>
-      new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      new Date(iso).toLocaleTimeString(this.language === 'en' ? 'en-US' : 'vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
     const reportCount = properties.communityReportCount ?? 1;
     const reporterCount = properties.communityReporterCount ?? 0;
     const freshness = properties.communityUpdatedAt
-      ? ` · cập nhật ${formatTime(properties.communityUpdatedAt)}`
-      : ' · chưa có xác nhận mới';
+      ? ` · ${translate(this.language, 'cập nhật')} ${formatTime(properties.communityUpdatedAt)}`
+      : ` · ${translate(this.language, 'chưa có xác nhận mới')}`;
     const detail = this.textElement(
       'p',
-      `${reportCount} báo cáo / 75 m trong 30 phút từ ${reporterCount} người${freshness}`,
+      translate(this.language, '{count} báo cáo trong 30 phút / 75 m từ {reporters} người{freshness}', {
+        count: reportCount,
+        reporters: reporterCount,
+        freshness,
+      }),
     );
     detail.className = 'mb-0 mt-1 text-xs text-slate-500 dark:text-slate-400';
     content.append(this.textElement('strong', properties.title), detail);

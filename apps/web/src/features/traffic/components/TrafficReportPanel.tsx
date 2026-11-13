@@ -8,6 +8,7 @@ import { SheetPanel } from '../../../app/layout/SheetPanel';
 import { Icon } from '../../../shared/components/Icon';
 import { trafficApi, trafficPhotos } from '../api/trafficApi';
 import { incidentLabels } from '../services/trafficPresentation';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 export type IncidentKind =
   'traffic_jam' | 'accident' | 'construction' | 'flood' | 'road_closure' | 'obstacle';
@@ -133,6 +134,7 @@ export function TrafficReportPanel({
   onReport,
   onClearance,
 }: TrafficReportPanelProps) {
+  const { language, t } = useI18n();
   const [type, setType] = useState<IncidentKind>('traffic_jam');
   const [severity, setSeverity] = useState<IncidentSeverity>('medium');
   const [vehicleScope, setVehicleScope] = useState<TrafficVehicleScope>(defaultVehicle);
@@ -145,8 +147,8 @@ export function TrafficReportPanel({
   const [analysisTask, setAnalysisTask] = useState<TrafficImageAnalysisTask | null>(null);
   const [busy, setBusy] = useState(false);
   const [busyReportId, setBusyReportId] = useState('');
-  const [actionMessage, setActionMessage] = useState('');
-  const [actionError, setActionError] = useState('');
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => setVehicleScope(defaultVehicle), [defaultVehicle]);
 
@@ -207,8 +209,8 @@ export function TrafficReportPanel({
 
   const selectPhoto = (file: File | undefined) => {
     if (!file) return;
-    setActionMessage('');
-    setActionError('');
+    setActionMessage(null);
+    setActionError(null);
     setImageAnalysis(null);
     if (!PHOTO_TYPES.split(',').includes(file.type)) {
       setActionError('Ảnh phải có định dạng JPG, PNG hoặc WebP.');
@@ -229,8 +231,8 @@ export function TrafficReportPanel({
       return;
     }
     setAnalysisTask(task);
-    setActionError('');
-    setActionMessage('');
+    setActionError(null);
+    setActionMessage(null);
     try {
       setImageAnalysis(await trafficApi.analyzeImage(photo, task, accessToken));
     } catch (cause) {
@@ -251,8 +253,8 @@ export function TrafficReportPanel({
   const submit = async () => {
     if (!selectedPoint || !isAuthenticated) return;
     setBusy(true);
-    setActionError('');
-    setActionMessage('');
+    setActionError(null);
+    setActionMessage(null);
     try {
       await onReport(type, severity, vehicleScope, selectedPoint, note.trim(), photo);
       setNote('');
@@ -268,8 +270,8 @@ export function TrafficReportPanel({
 
   const verify = async (id: string, state: 'clear' | 'still_active') => {
     setBusyReportId(id);
-    setActionError('');
-    setActionMessage('');
+    setActionError(null);
+    setActionMessage(null);
     try {
       await onClearance(id, state);
       setActionMessage(
@@ -283,22 +285,22 @@ export function TrafficReportPanel({
   };
 
   return (
-    <SheetPanel eyebrow="CỘNG ĐỒNG" title="Tình hình giao thông" icon="traffic" onClose={onClose}>
+    <SheetPanel eyebrow={t('CỘNG ĐỒNG')} title={t('Tình hình giao thông')} icon="traffic" onClose={onClose}>
       <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5">
         <span className="flex items-center gap-2 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
-          Cảnh báo cộng đồng
+          {t('Cảnh báo cộng đồng')}
         </span>
-        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Tự hết hạn</span>
+        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{t('Tự hết hạn')}</span>
       </div>
 
       <div className="mb-4">
         <div className="mb-2 flex items-end justify-between gap-2">
-          <h3 className="text-[12px] font-bold text-ink dark:text-slate-100">Báo cáo sự cố</h3>
+          <h3 className="text-[12px] font-bold text-ink dark:text-slate-100">{t('Báo cáo sự cố')}</h3>
           <span className="text-right text-[11px] text-slate-400 dark:text-slate-500">
             {selectedPoint
               ? `${selectedPoint.lat.toFixed(5)}, ${selectedPoint.lng.toFixed(5)}`
-              : 'Chạm bản đồ để chọn vị trí'}
+              : t('Chạm bản đồ để chọn vị trí')}
           </span>
         </div>
         <div className="grid grid-cols-3 gap-2">
@@ -311,7 +313,7 @@ export function TrafficReportPanel({
               className={`flex min-h-[60px] flex-col items-center justify-center gap-1.5 rounded-xl border text-[11px] font-semibold transition ${type === item.id ? 'border-brand-200 dark:border-indigo-300/25 bg-brand-50 dark:bg-indigo-400/10 text-brand-700 dark:text-indigo-300' : 'border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20'}`}
             >
               <Icon name={item.icon} size={17} />
-              {item.label}
+              {t(item.label)}
             </button>
           ))}
         </div>
@@ -319,7 +321,7 @@ export function TrafficReportPanel({
 
       <div className="mb-3 flex items-center justify-between gap-2">
         <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-          Mức độ sự cố · chọn thủ công
+          {t('Mức độ sự cố · chọn thủ công')}
         </span>
         <div className="flex gap-1">
           {severityOptions.map((item) => (
@@ -331,19 +333,19 @@ export function TrafficReportPanel({
               className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-semibold transition ${severity === item.id ? 'bg-slate-100 dark:bg-slate-700/50 text-ink dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'}`}
             >
               <span className={`h-1.5 w-1.5 rounded-full ${item.color}`} />
-              {item.label}
+              {t(item.label)}
             </button>
           ))}
         </div>
       </div>
       <div className="mb-3">
         <div className="mb-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-          Áp dụng cho loại xe
+          {t('Áp dụng cho loại xe')}
         </div>
         <div
           className="grid grid-cols-3 gap-1 rounded-lg bg-slate-100 dark:bg-slate-700/50 p-1"
           role="group"
-          aria-label="Loại xe áp dụng báo cáo"
+          aria-label={t('Loại xe áp dụng báo cáo')}
         >
           {(['motorcycle', 'car', 'both'] as const).map((scope) => (
             <button
@@ -353,33 +355,34 @@ export function TrafficReportPanel({
               onClick={() => setVehicleScope(scope)}
               className={`rounded-md px-1.5 py-1.5 text-[11px] font-semibold transition ${vehicleScope === scope ? 'bg-white dark:bg-slate-800/60 text-brand-700 dark:text-indigo-300 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-ink dark:hover:text-slate-100'}`}
             >
-              {vehicleScopeLabels[scope]}
+              {t(vehicleScopeLabels[scope])}
             </button>
           ))}
         </div>
       </div>
       <label className="mb-3 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-        Ghi chú ngắn <span className="font-normal text-slate-400 dark:text-slate-500">(không bắt buộc)</span>
+        {t('Ghi chú ngắn')}{' '}
+        <span className="font-normal text-slate-400 dark:text-slate-500">({t('không bắt buộc')})</span>
         <textarea
           maxLength={300}
           value={note}
           onChange={(event) => setNote(event.target.value)}
           rows={2}
-          placeholder="Ví dụ: ngập sâu gần giao lộ…"
+          placeholder={t('Ví dụ: ngập sâu gần giao lộ…')}
           className="mt-1.5 w-full resize-none rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 px-3 py-2 text-[11px] font-normal text-ink dark:text-slate-100 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-brand-400 dark:focus:border-indigo-400 focus:ring-4 focus:ring-brand-50 dark:focus:ring-indigo-400/20"
         />
       </label>
       <div className="mb-3 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/60 p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-            Ảnh hiện trường{' '}
-            <span className="font-normal text-slate-400 dark:text-slate-500">(không bắt buộc)</span>
+            {t('Ảnh hiện trường')}{' '}
+            <span className="font-normal text-slate-400 dark:text-slate-500">({t('không bắt buộc')})</span>
           </span>
-          <span className="text-[11px] text-slate-400 dark:text-slate-500">Tối đa 5 MB</span>
+          <span className="text-[11px] text-slate-400 dark:text-slate-500">{t('Tối đa 5 MB')}</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <PhotoPicker
-            label="Chụp ảnh"
+            label={t('Chụp ảnh')}
             icon="camera"
             capture
             disabled={Boolean(analysisTask) || busy}
@@ -387,7 +390,7 @@ export function TrafficReportPanel({
             className="bg-brand-50 text-brand-700 hover:bg-brand-100 focus-within:ring-brand-100 dark:bg-indigo-400/10 dark:text-indigo-300 dark:hover:bg-indigo-400/20 dark:focus-within:ring-indigo-400/25"
           />
           <PhotoPicker
-            label="Chọn ảnh"
+            label={t('Chọn ảnh')}
             icon="upload"
             disabled={Boolean(analysisTask) || busy}
             onPick={selectPhoto}
@@ -395,13 +398,15 @@ export function TrafficReportPanel({
           />
         </div>
         <p className="mt-2 text-[11px] leading-4 text-slate-400 dark:text-slate-500">
-          Trên điện thoại, nút Chụp ảnh sẽ mở camera. Ảnh chỉ được lưu cùng báo cáo khi bạn bấm Gửi báo cáo.
+          {t(
+            'Trên điện thoại, nút Chụp ảnh sẽ mở camera. Ảnh chỉ được lưu cùng báo cáo khi bạn bấm Gửi báo cáo.',
+          )}
         </p>
         {photo && photoPreview && (
           <div className="mt-3 flex items-center gap-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 p-2">
             <img
               src={photoPreview}
-              alt="Xem trước ảnh hiện trường"
+              alt={t('Xem trước ảnh hiện trường')}
               className="h-16 w-20 rounded-md object-cover"
             />
             <span className="min-w-0 flex-1 truncate text-[11px] text-slate-600 dark:text-slate-300">
@@ -409,7 +414,7 @@ export function TrafficReportPanel({
             </span>
             <button
               type="button"
-              aria-label="Xóa ảnh đã chọn"
+              aria-label={t('Xóa ảnh đã chọn')}
               disabled={busy || Boolean(analysisTask)}
               onClick={() => {
                 setPhoto(null);
@@ -424,7 +429,8 @@ export function TrafficReportPanel({
         {photo && (
           <div className="mt-3 border-t border-slate-100 dark:border-white/10 pt-3">
             <p className="mb-2 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-              Hỗ trợ từ AI <span className="font-normal text-slate-400 dark:text-slate-500">(tùy chọn)</span>
+              {t('Hỗ trợ từ AI')}{' '}
+              <span className="font-normal text-slate-400 dark:text-slate-500">({t('tùy chọn')})</span>
             </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <button
@@ -434,7 +440,7 @@ export function TrafficReportPanel({
                 onClick={() => void analyzePhoto('incident')}
                 className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-brand-200 dark:border-indigo-300/25 bg-brand-50 dark:bg-indigo-400/10 px-2 text-[11px] font-semibold text-brand-700 dark:text-indigo-300 hover:bg-brand-100 dark:hover:bg-indigo-400/20 disabled:opacity-50"
               >
-                {analysisTask === 'incident' ? 'Đang phân tích…' : 'Gợi ý loại sự cố'}
+                {analysisTask === 'incident' ? t('Đang phân tích…') : t('Gợi ý loại sự cố')}
               </button>
               <button
                 type="button"
@@ -443,25 +449,25 @@ export function TrafficReportPanel({
                 onClick={() => void analyzePhoto('traffic_sign')}
                 className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/60 px-2 text-[11px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50"
               >
-                {analysisTask === 'traffic_sign' ? 'Đang nhận diện…' : 'Nhận diện biển báo'}
+                {analysisTask === 'traffic_sign' ? t('Đang nhận diện…') : t('Nhận diện biển báo')}
               </button>
             </div>
             {aiStatus === 'ready' ? (
               <p className="mt-2 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
-                Ảnh chỉ được gửi đến Google Gemini khi bạn bấm một nút trên. Với gói miễn phí, Google có thể
-                dùng nội dung để cải thiện dịch vụ và người đánh giá có thể xem. Tránh ảnh có khuôn mặt hoặc
-                biển số.
+                {t(
+                  'Ảnh chỉ được gửi đến Google Gemini khi bạn bấm một nút trên. Với gói miễn phí, Google có thể dùng nội dung để cải thiện dịch vụ và người đánh giá có thể xem. Tránh ảnh có khuôn mặt hoặc biển số.',
+                )}
               </p>
             ) : (
               <p className="mt-2 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
                 {aiStatus === 'checking'
-                  ? 'Đang kiểm tra cấu hình Gemini…'
-                  : 'AI ảnh chưa bật trên backend. Cần GEMINI_TRAFFIC_AI_ENABLED=true và GEMINI_API_KEY.'}
+                  ? t('Đang kiểm tra cấu hình Gemini…')
+                  : t('AI ảnh chưa bật trên backend. Cần GEMINI_TRAFFIC_AI_ENABLED=true và GEMINI_API_KEY.')}
               </p>
             )}
             {analysisTask && (
               <p className="mt-2 text-[11px] text-brand-700 dark:text-indigo-300" role="status">
-                Đang phân tích ảnh…
+                {t('Đang phân tích ảnh…')}
               </p>
             )}
             {imageAnalysis?.task === 'incident' && (
@@ -471,10 +477,12 @@ export function TrafficReportPanel({
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[11px] font-bold text-brand-800 dark:text-indigo-300">
-                    Gợi ý sự cố
+                    {t('Gợi ý sự cố')}
                   </span>
                   <span className="rounded-full bg-white dark:bg-slate-800/60 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                    Tin cậy: {confidenceLabels[imageAnalysis.confidence]}
+                    {t('Tin cậy: {confidence}', {
+                      confidence: t(confidenceLabels[imageAnalysis.confidence]),
+                    })}
                   </span>
                 </div>
                 <p className="mt-1.5 text-[11px] leading-4 text-slate-700 dark:text-slate-200">
@@ -482,16 +490,16 @@ export function TrafficReportPanel({
                 </p>
                 {imageAnalysis.evidence.length > 0 && (
                   <p className="mt-1 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
-                    Quan sát: {imageAnalysis.evidence.join(' · ')}
+                    {t('Quan sát: {details}', { details: imageAnalysis.evidence.join(' · ') })}
                   </p>
                 )}
                 {!imageAnalysis.trafficRelated && (
                   <p className="mt-1 text-[11px] font-medium text-amber-700 dark:text-amber-200">
-                    Ảnh chưa đủ căn cứ để xác định sự cố giao thông.
+                    {t('Ảnh chưa đủ căn cứ để xác định sự cố giao thông.')}
                   </p>
                 )}
                 <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  AI chỉ gợi ý loại sự cố và ghi chú. Mức độ do bạn tự chọn.
+                  {t('AI chỉ gợi ý loại sự cố và ghi chú. Mức độ do bạn tự chọn.')}
                 </p>
                 <button
                   type="button"
@@ -499,7 +507,7 @@ export function TrafficReportPanel({
                   onClick={applyIncidentSuggestion}
                   className="mt-2 min-h-8 rounded-lg bg-white dark:bg-slate-800/60 px-3 text-[11px] font-semibold text-brand-700 dark:text-indigo-300 ring-1 ring-brand-200 dark:ring-indigo-300/30 hover:bg-brand-100 dark:hover:bg-indigo-400/20 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Dùng gợi ý để điền form
+                  {t('Dùng gợi ý để điền form')}
                 </button>
               </div>
             )}
@@ -510,23 +518,28 @@ export function TrafficReportPanel({
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[11px] font-bold text-slate-800 dark:text-slate-100">
-                    Nhận diện biển báo
+                    {t('Nhận diện biển báo')}
                   </span>
                   <span className="rounded-full bg-white dark:bg-slate-800/60 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                    Tin cậy: {confidenceLabels[imageAnalysis.confidence]}
+                    {t('Tin cậy: {confidence}', {
+                      confidence: t(confidenceLabels[imageAnalysis.confidence]),
+                    })}
                   </span>
                 </div>
                 <p className="mt-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-                  {imageAnalysis.trafficSign ? imageAnalysis.label : 'Chưa nhận diện được biển báo rõ ràng'}
+                  {imageAnalysis.trafficSign
+                    ? imageAnalysis.label
+                    : t('Chưa nhận diện được biển báo rõ ràng')}
                 </p>
                 {imageAnalysis.visibleText && (
                   <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                    Chữ/số nhìn thấy: {imageAnalysis.visibleText}
+                    {t('Chữ/số nhìn thấy: {text}', { text: imageAnalysis.visibleText })}
                   </p>
                 )}
                 <p className="mt-1 text-[11px] leading-4 text-amber-700 dark:text-amber-200">
-                  Chỉ là gợi ý hình ảnh; hiệu lực còn phụ thuộc chiều đường và biển phụ. Không tự thay đổi
-                  tuyến đường.
+                  {t(
+                    'Chỉ là gợi ý hình ảnh; hiệu lực còn phụ thuộc chiều đường và biển phụ. Không tự thay đổi tuyến đường.',
+                  )}
                 </p>
               </div>
             )}
@@ -541,7 +554,7 @@ export function TrafficReportPanel({
           className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 text-xs font-bold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
         >
           <Icon name="send" size={16} />
-          {busy ? 'Đang gửi…' : 'Gửi báo cáo'}
+          {busy ? t('Đang gửi…') : t('Gửi báo cáo')}
         </button>
       ) : (
         <button
@@ -550,17 +563,17 @@ export function TrafficReportPanel({
           className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 text-xs font-bold text-white transition hover:bg-brand-700"
         >
           <Icon name="pin" size={16} />
-          Đăng nhập để gửi báo cáo
+          {t('Đăng nhập để gửi báo cáo')}
         </button>
       )}
       {!selectedPoint && (
         <p className="mt-2 text-center text-[11px] text-slate-500 dark:text-slate-400">
-          Chọn đúng vị trí trên bản đồ trước khi gửi.
+          {t('Chọn đúng vị trí trên bản đồ trước khi gửi.')}
         </p>
       )}
       {actionMessage && (
         <p className="mt-2 text-[11px] font-medium text-emerald-700 dark:text-emerald-300" role="status">
-          {actionMessage}
+          {t(actionMessage)}
         </p>
       )}
       {(actionError || error) && (
@@ -568,20 +581,20 @@ export function TrafficReportPanel({
           className="mt-2 rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-[11px] leading-4 text-red-700 dark:text-red-300"
           role="alert"
         >
-          {actionError || error}
+          {t(actionError || error)}
         </p>
       )}
 
       <div className="mt-5 border-t border-slate-100 dark:border-white/10 pt-4">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-[12px] font-bold text-ink dark:text-slate-100">Báo cáo gần đây</h3>
+          <h3 className="text-[12px] font-bold text-ink dark:text-slate-100">{t('Báo cáo gần đây')}</h3>
           <span className="rounded-full bg-slate-100 dark:bg-slate-700/50 px-2 py-1 text-[11px] font-bold text-slate-600 dark:text-slate-300">
             {incidents.length}
           </span>
         </div>
         {loading && (
           <p className="mb-2 text-[11px] text-slate-500 dark:text-slate-400" role="status">
-            Đang đồng bộ báo cáo…
+            {t('Đang đồng bộ báo cáo…')}
           </p>
         )}
         {incidents.length ? (
@@ -597,35 +610,43 @@ export function TrafficReportPanel({
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[11px] font-semibold text-ink dark:text-slate-100">
-                        {selectedType?.label ?? 'Sự cố'} · {incident.description}
+                        {t(selectedType?.label ?? 'Sự cố')} · {t(incident.description)}
                       </span>
                       <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">
-                        {incident.time} ·{' '}
+                        {new Date(incident.time).toLocaleTimeString(language === 'en' ? 'en-US' : 'vi-VN', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}{' '}
+                        ·{' '}
                         {incident.vehicleScope === 'both'
-                          ? 'Ô tô + xe máy'
-                          : vehicleScopeLabels[incident.vehicleScope]}{' '}
+                          ? t('Ô tô + xe máy')
+                          : t(vehicleScopeLabels[incident.vehicleScope])}{' '}
                         · {incident.lat.toFixed(4)}, {incident.lng.toFixed(4)}
                       </span>
                     </span>
                   </div>
                   <p className="mt-1 pl-4 text-[11px] font-medium text-brand-700 dark:text-indigo-300">
-                    {incident.communityReportCount ?? 1} báo cáo trong 30 phút / 75 m ·{' '}
-                    {incident.communityReporterCount ?? 0} người gửi riêng biệt
+                    {t('{count} báo cáo trong 30 phút / 75 m · {reporters} người gửi riêng biệt', {
+                      count: incident.communityReportCount ?? 1,
+                      reporters: incident.communityReporterCount ?? 0,
+                    })}
                     {incident.communityUpdatedAt
-                      ? ` · cập nhật ${new Date(incident.communityUpdatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`
-                      : ' · chưa có xác nhận mới'}
+                      ? ` · ${t('cập nhật')} ${new Date(incident.communityUpdatedAt).toLocaleTimeString(language === 'en' ? 'en-US' : 'vi-VN', { hour: '2-digit', minute: '2-digit' })}`
+                      : ` · ${t('chưa có xác nhận mới')}`}
                   </p>
                   {incident.imagePath && photoUrls[incident.id] && (
                     <a
                       href={photoUrls[incident.id]}
                       target="_blank"
                       rel="noreferrer"
-                      aria-label="Mở ảnh minh chứng"
+                      aria-label={t('Mở ảnh minh chứng')}
                       className="mt-2 block overflow-hidden rounded-lg"
                     >
                       <img
                         src={photoUrls[incident.id]}
-                        alt={`Ảnh minh chứng: ${selectedType?.label ?? 'sự cố giao thông'}`}
+                        alt={t('Ảnh minh chứng: {incident}', {
+                          incident: t(selectedType?.label ?? 'sự cố giao thông'),
+                        })}
                         loading="lazy"
                         className="max-h-36 w-full rounded-lg object-cover"
                       />
@@ -633,7 +654,7 @@ export function TrafficReportPanel({
                   )}
                   {incident.imagePath && !photoUrls[incident.id] && (
                     <p className="mt-1.5 pl-4 text-[11px] text-slate-500 dark:text-slate-400">
-                      Có ảnh minh chứng
+                      {t('Có ảnh minh chứng')}
                     </p>
                   )}
                   {isAuthenticated && (
@@ -644,7 +665,7 @@ export function TrafficReportPanel({
                         onClick={() => void verify(incident.id, 'clear')}
                         className="rounded-full bg-white dark:bg-slate-800/60 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-100 dark:ring-emerald-400/20 hover:bg-emerald-50 dark:hover:bg-emerald-400/15 disabled:opacity-50"
                       >
-                        Đã thông
+                        {t('Đã thông')}
                       </button>
                       <button
                         type="button"
@@ -652,7 +673,7 @@ export function TrafficReportPanel({
                         onClick={() => void verify(incident.id, 'still_active')}
                         className="rounded-full bg-white dark:bg-slate-800/60 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-white/10 hover:bg-slate-100 dark:hover:bg-white/10 disabled:opacity-50"
                       >
-                        Vẫn còn
+                        {t('Vẫn còn')}
                       </button>
                     </div>
                   )}
@@ -662,12 +683,14 @@ export function TrafficReportPanel({
           </ul>
         ) : !loading && !error ? (
           <p className="rounded-xl bg-slate-50 dark:bg-slate-800/60 px-3 py-4 text-center text-[11px] leading-5 text-slate-500 dark:text-slate-400">
-            Chưa có báo cáo trong khu vực này. Hãy chọn vị trí và gửi cập nhật đầu tiên.
+            {t('Chưa có báo cáo trong khu vực này. Hãy chọn vị trí và gửi cập nhật đầu tiên.')}
           </p>
         ) : null}
       </div>
       <p className="mt-4 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
-        Báo cáo được đồng bộ qua Supabase và tự ẩn khi hết hạn. Hãy tự xác minh tình hình trước khi di chuyển.
+        {t(
+          'Báo cáo được đồng bộ qua Supabase và tự ẩn khi hết hạn. Hãy tự xác minh tình hình trước khi di chuyển.',
+        )}
       </p>
     </SheetPanel>
   );

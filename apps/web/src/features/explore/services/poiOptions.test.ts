@@ -46,4 +46,8 @@ describe('formatRadius', () => {
     expect(formatRadius(1500)).toBe('1,5 km');
     expect(formatRadius(5000)).toBe('5 km');
   });
+
+  it('uses the decimal separator for the selected language', () => {
+    expect(formatRadius(1500, 'en')).toBe('1.5 km');
+  });
 });

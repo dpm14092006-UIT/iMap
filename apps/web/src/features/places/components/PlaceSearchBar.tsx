@@ -2,6 +2,7 @@ import { useState, type Ref } from 'react';
 import { popularPlaces } from '../data/popularPlaces';
 import type { LatLng, Place } from '../types';
 import { PlaceCombobox, type ComboboxAction } from './PlaceCombobox';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type PlaceSearchBarProps = {
   getFocus?: () => LatLng;
@@ -16,6 +17,7 @@ const isApple = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navig
 
 /** Command search ở thanh trên: chọn địa điểm để xem chi tiết trên bản đồ. */
 export function PlaceSearchBar({ onSelect, getFocus, inputRef, buildAction }: PlaceSearchBarProps) {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
 
@@ -23,7 +25,7 @@ export function PlaceSearchBar({ onSelect, getFocus, inputRef, buildAction }: Pl
     <div onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} className="relative">
       <PlaceCombobox
         getFocus={getFocus}
-        ariaLabel="Tìm địa điểm trên bản đồ"
+        ariaLabel={t('Tìm địa điểm trên bản đồ')}
         className="w-full"
         icon="search"
         {...(inputRef ? { inputRef } : {})}
@@ -36,7 +38,7 @@ export function PlaceSearchBar({ onSelect, getFocus, inputRef, buildAction }: Pl
         }}
         places={popularPlaces}
         action={buildAction?.(query) ?? null}
-        placeholder="Tìm địa điểm, đường hoặc địa chỉ"
+        placeholder={t('Tìm địa điểm, đường hoặc địa chỉ')}
         value={query}
       />
       {!focused && !query && (

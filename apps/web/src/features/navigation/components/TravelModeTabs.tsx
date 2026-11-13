@@ -2,6 +2,7 @@ import { Icon, type IconName } from '../../../shared/components/Icon';
 import type { TransportMode } from '../../map/types';
 import type { ModeDurations } from '../hooks/useModeDurations';
 import { formatDurationShort } from '../utils/format';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type TravelModeTabsProps = {
   vehicle: TransportMode;
@@ -19,6 +20,7 @@ const tabClass = (active: boolean, enabled: boolean) =>
 
 /** Thẻ phương tiện kèm thời gian ước tính; chỉ xe máy và ô tô được backend hỗ trợ. */
 export function TravelModeTabs({ vehicle, durations, onSelect }: TravelModeTabsProps) {
+  const { language, t } = useI18n();
   const known = supported.filter((mode) => durations[mode.id] !== undefined);
   const best =
     known.length === supported.length
@@ -30,7 +32,7 @@ export function TravelModeTabs({ vehicle, durations, onSelect }: TravelModeTabsP
     <div
       className="flex gap-1 rounded-3xl bg-black/[.04] p-1 dark:bg-white/5"
       role="group"
-      aria-label="Phương tiện"
+      aria-label={t('Phương tiện')}
     >
       <button
         type="button"
@@ -38,16 +40,16 @@ export function TravelModeTabs({ vehicle, durations, onSelect }: TravelModeTabsP
         aria-pressed={best !== null && best.id === vehicle}
         title={
           best
-            ? `Chọn phương tiện nhanh nhất: ${best.label}`
-            : 'Tính tuyến cho cả xe máy và ô tô để biết phương tiện nhanh nhất'
+            ? t('Chọn phương tiện nhanh nhất: {vehicle}', { vehicle: t(best.label) })
+            : t('Tính tuyến cho cả xe máy và ô tô để biết phương tiện nhanh nhất')
         }
         onClick={() => best && onSelect(best.id)}
         className={tabClass(best !== null && best.id === vehicle, best !== null)}
       >
         <Icon name="sparkles" size={16} className="shrink-0" />
-        Tốt nhất
+        {t('Tốt nhất')}
         <span className={`font-normal opacity-80 ${bestMinutes === undefined ? 'max-md:hidden' : ''}`}>
-          {bestMinutes === undefined ? '—' : formatDurationShort(bestMinutes)}
+          {bestMinutes === undefined ? '—' : formatDurationShort(bestMinutes, language)}
         </span>
       </button>
       {supported.map((mode) => (
@@ -59,11 +61,11 @@ export function TravelModeTabs({ vehicle, durations, onSelect }: TravelModeTabsP
           className={tabClass(vehicle === mode.id, true)}
         >
           <Icon name={mode.icon} size={16} className="shrink-0" />
-          {mode.label}
+          {t(mode.label)}
           <span
             className={`font-normal opacity-80 ${durations[mode.id] === undefined ? 'max-md:hidden' : ''}`}
           >
-            {durations[mode.id] === undefined ? '—' : formatDurationShort(durations[mode.id]!)}
+            {durations[mode.id] === undefined ? '—' : formatDurationShort(durations[mode.id]!, language)}
           </span>
         </button>
       ))}

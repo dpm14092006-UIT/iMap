@@ -26,13 +26,11 @@ import type {
   RoutePlan,
   TransportMode,
 } from '../features/map/types';
-import type { AlgorithmChoice } from '../features/multi-stop/utils/algorithms';
 import { useSavedRoutes } from '../features/my-routes/hooks/useSavedRoutes';
 import type { SavedRoute } from '../features/my-routes/types';
 import { NavigationBanner } from '../features/navigation/components/NavigationBanner';
 import type { PickTarget } from '../features/navigation/components/RoutePanel';
 import { TrafficLegend } from '../features/map/components/TrafficLegend';
-import { useAlgorithmComparison } from '../features/navigation/hooks/useAlgorithmComparison';
 import { useDirections } from '../features/navigation/hooks/useDirections';
 import { useNavigationSession } from '../features/navigation/hooks/useNavigationSession';
 import { RouteApiClient, routePlanFromResult } from '../features/navigation/services/RouteApiClient';
@@ -64,6 +62,7 @@ import {
 } from '../features/traffic/services/trafficPresentation';
 import { shouldNotifyTrafficReportOnRoute } from '../features/traffic/services/routeTraffic';
 import { Icon } from '../shared/components/Icon';
+import { useI18n } from '../shared/i18n/I18nProvider';
 import { progressAlongPath } from '../shared/geo/path';
 import { PanelFallback } from './components/PanelFallback';
 import { useAppUpdate } from './hooks/useAppUpdate';
@@ -173,6 +172,7 @@ function errorMessage(error: unknown, fallback: string): string {
  * logic riêng của từng chức năng nằm trong hook/component của feature tương ứng.
  */
 export function App() {
+  const { t, language } = useI18n();
   const routeApi = useMemo(() => new RouteApiClient(), []);
   const mapController = useRef<LeafletMapController | null>(null);
   const getMapCenter = useCallback(() => mapController.current?.getCenter() ?? VIETNAM_CENTER, []);
@@ -237,13 +237,20 @@ export function App() {
         if (oldestId) notifiedRealtimeReports.current.delete(oldestId);
       }
 
-      const severityLabel: Record<IncidentSeverity, string> = { low: 'nhẹ', medium: 'vừa', high: 'nặng' };
-      const incidentLabel = incidentLabels[report.incidentType as IncidentKind] ?? 'Sự cố giao thông';
+      const severityLabel: Record<IncidentSeverity, string> = {
+        low: t('nhẹ'),
+        medium: t('vừa'),
+        high: t('nặng'),
+      };
+      const incidentLabel = t(incidentLabels[report.incidentType as IncidentKind] ?? 'Sự cố giao thông');
       showToast(
-        `Cảnh báo tuyến: ${incidentLabel} mức ${severityLabel[report.severity]}. Đã cập nhật đoạn đường.`,
+        t('Cảnh báo tuyến: {incident} mức {severity}. Đã cập nhật đoạn đường.', {
+          incident: incidentLabel,
+          severity: severityLabel[report.severity],
+        }),
       );
     },
-    [activeRoute, navigationRoute, showToast],
+    [activeRoute, navigationRoute, showToast, t],
   );
   const isNavigationIdle = navigationStatus === 'idle';
   const isNavigating = navigationStatus === 'navigating' || navigationStatus === 'locating';
@@ -314,7 +321,16 @@ export function App() {
     [reports, reportVehicle],
   );
   const incidents = useMemo(() => toIncidents(visibleReports), [visibleReports]);
-  const reportsLayer = useMemo(() => toReportsMapLayer(visibleReports), [visibleReports]);
+  const reportsLayer = useMemo(() => {
+    const layer = toReportsMapLayer(visibleReports);
+    return {
+      ...layer,
+      features: layer.features.map((feature) => ({
+        ...feature,
+        properties: { ...feature.properties, title: t(feature.properties.title) },
+      })),
+    };
+  }, [visibleReports, t]);
   // Chế độ Demo (?demo=1): sự cố giả chỉ nằm trên máy này, vẽ chung với sự cố thật để thấy tuyến mới né chỗ nào.
   const demoEnabled = useMemo(() => isDemoModeEnabled(), []);
   const [demoIncidents, setDemoIncidents] = useState<RouteIncident[]>([]);
@@ -336,10 +352,13 @@ export function App() {
                   lat: incident.lat,
                   lng: incident.lng,
                 })),
-              ).features,
+              ).features.map((feature) => ({
+                ...feature,
+                properties: { ...feature.properties, title: t(feature.properties.title) },
+              })),
             ],
           },
-    [reportsLayer, demoIncidents],
+    [reportsLayer, demoIncidents, t],
   );
   // Sự cố cần tránh khi dẫn đường: đang hoạt động, mức độ từ "Vừa" trở lên (gồm cả sự cố giả của demo).
   const routeIncidents = useMemo<RouteIncident[]>(
@@ -358,13 +377,6 @@ export function App() {
     () => (activePanel === 'directions' && directions.route ? directions.routeOptions : []),
     [activePanel, directions.route, directions.routeOptions],
   );
-
-  // So sánh Dijkstra / A* cho cùng điểm đi, điểm đến và loại xe của panel chỉ đường.
-  const comparison = useAlgorithmComparison({
-    origin: directions.origin,
-    destination: directions.destination,
-    vehicle: directions.vehicle,
-  });
 
   // Marker A/B cho điểm đã chọn nhưng chưa tính tuyến (chỉ khi panel chỉ đường đang mở).
   const draftStops = useMemo<DraftStops>(
@@ -469,9 +481,9 @@ export function App() {
     try {
       const fix = await locate();
       mapController.current?.flyTo(fix.point, 16);
-      showToast(`Đã định vị · sai số khoảng ${fix.accuracyMeters} m`);
+      showToast(t('Đã định vị · sai số khoảng {meters} m', { meters: fix.accuracyMeters }));
     } catch (error) {
-      showToast(errorMessage(error, 'Không lấy được vị trí.'));
+      showToast(t(errorMessage(error, 'Không lấy được vị trí.')));
     }
   };
 
@@ -483,7 +495,7 @@ export function App() {
       directions.setOrigin(await placeFromPoint(fix.point, 'gps'));
       mapController.current?.flyTo(fix.point, 15);
     } catch (error) {
-      showToast(errorMessage(error, 'Không lấy được vị trí.'));
+      showToast(t(errorMessage(error, 'Không lấy được vị trí.')));
     } finally {
       setIsLocating(false);
     }
@@ -529,7 +541,7 @@ export function App() {
         );
         strategy = result.strategy;
       } catch (error) {
-        if (!automatic || reason) showToast(errorMessage(error, 'Không tính lại được tuyến.'));
+        if (!automatic || reason) showToast(t(errorMessage(error, 'Không tính lại được tuyến.')));
         return;
       } finally {
         setIsRecalculatingNavigation(false);
@@ -538,7 +550,7 @@ export function App() {
       setActiveRoute(plan);
       updateNavigationRoute(plan);
       if (reason || !automatic || strategy !== 'direct') {
-        showToast(`${reason ? `${reason} · ` : ''}${rerouteStrategyLabels[strategy]}`);
+        showToast(`${reason ? `${reason} · ` : ''}${t(rerouteStrategyLabels[strategy])}`);
       }
     },
     [
@@ -549,6 +561,7 @@ export function App() {
       isRecalculatingNavigation,
       routeIncidents,
       showToast,
+      t,
     ],
   );
 
@@ -605,12 +618,12 @@ export function App() {
   // --- Tuyến đã lưu ---
   const savePlan = (plan: RoutePlan) => {
     savedRoutes.save(plan);
-    showToast('Đã lưu hành trình trên thiết bị này');
+    showToast(t('Đã lưu hành trình trên thiết bị này'));
   };
 
   const deleteSavedRoute = (id: string) => {
     savedRoutes.remove(id);
-    showToast('Đã xóa hành trình đã lưu');
+    showToast(t('Đã xóa hành trình đã lưu'));
   };
 
   const openSavedRoute = async (saved: SavedRoute) => {
@@ -621,7 +634,7 @@ export function App() {
           ? [saved.origin, saved.destination]
           : [];
     if (stops.length < 2) {
-      showToast('Không thể mở lại hành trình này.');
+      showToast(t('Không thể mở lại hành trình này.'));
       return;
     }
 
@@ -633,7 +646,7 @@ export function App() {
         destination: stops[stops.length - 1]!,
         vehicle: saved.vehicle,
       });
-      if (result) showToast('Đã tính lại tuyến đã lưu bằng VietMap');
+      if (result) showToast(t('Đã tính lại tuyến đã lưu bằng VietMap'));
       return;
     }
 
@@ -641,12 +654,12 @@ export function App() {
     setActiveRoute(null);
     const result = await routeApi.createPlan(stops, saved.vehicle, saved.plan?.objective ?? 'time');
     if ('error' in result) {
-      showToast(result.error);
+      showToast(t(result.error));
       return;
     }
     setActiveRoute(result);
     openPanel(null);
-    showToast('Đã tính lại hành trình đã lưu bằng VietMap');
+    showToast(t('Đã tính lại hành trình đã lưu bằng VietMap'));
   };
 
   // --- Hành trình nhiều điểm ---
@@ -656,7 +669,6 @@ export function App() {
     vehicle: TransportMode,
     objective: RouteObjective,
     returnToStart: boolean,
-    algorithm: AlgorithmChoice,
   ): Promise<RoutePlan | { error: string }> => {
     const requestId = ++multiPlanGeneration.current;
     setActiveRoute(null);
@@ -665,13 +677,13 @@ export function App() {
       vehicle,
       objective,
       returnToStart,
-      algorithm,
+      'auto',
     );
-    if (requestId !== multiPlanGeneration.current) return { error: 'Đã hủy hành trình cũ.' };
+    if (requestId !== multiPlanGeneration.current) return { error: t('Đã hủy hành trình cũ.') };
     if ('error' in result) return result;
     setActiveRoute(result);
     setSelectedPlace(null);
-    showToast('Đã tối ưu thứ tự ghé theo đường đi VietMap');
+    showToast(t('Đã tối ưu thứ tự ghé theo đường đi VietMap'));
     return result;
   };
 
@@ -695,7 +707,7 @@ export function App() {
     note: string,
     photo: File | null,
   ) => {
-    requireSignIn('Đăng nhập để gửi báo cáo.');
+    requireSignIn(t('Đăng nhập để gửi báo cáo.'));
     const report = await createTrafficReport(
       {
         incidentType: type,
@@ -711,20 +723,20 @@ export function App() {
     mapController.current?.flyTo(point, 15);
     showToast(
       report.vehicleScope === vehicleScope
-        ? 'Đã đồng bộ báo cáo giao thông'
-        : 'Đã gửi báo cáo; Supabase chưa cập nhật phân luồng, cảnh báo tạm áp dụng cho cả ô tô và xe máy.',
+        ? t('Đã đồng bộ báo cáo giao thông')
+        : t('Đã gửi báo cáo; Supabase chưa cập nhật phân luồng, cảnh báo tạm áp dụng cho cả ô tô và xe máy.'),
     );
   };
 
   const verifyIncident = async (id: string, state: 'clear' | 'still_active') => {
-    requireSignIn('Đăng nhập để xác minh báo cáo.');
+    requireSignIn(t('Đăng nhập để xác minh báo cáo.'));
     await updateClearance(id, state);
   };
 
   // --- Trợ lý địa điểm (N2): thêm/bỏ điểm ghé vào tuyến đang hiển thị ---
   const addAssistantStop = (candidate: RouteStopCandidate, expectedRouteId: string) => {
     if (!activeRoute || activeRoute.id !== expectedRouteId || activeRoute.stops.length !== 2) {
-      showToast('Tuyến đã thay đổi. Hãy tìm lại điểm dừng.');
+      showToast(t('Tuyến đã thay đổi. Hãy tìm lại điểm dừng.'));
       return;
     }
     const stop = placeFromStop(candidate.place);
@@ -735,7 +747,7 @@ export function App() {
         activeRoute.vehicle,
       ),
     );
-    showToast(`Đã thêm điểm ghé: ${stop.name}`);
+    showToast(t('Đã thêm điểm ghé: {name}', { name: stop.name }));
   };
 
   const removeAssistantStop = async () => {
@@ -746,7 +758,7 @@ export function App() {
       activeRoute.vehicle,
     );
     if ('error' in result) {
-      showToast(result.error);
+      showToast(t(result.error));
       return;
     }
     setActiveRoute((current) => (current?.id === originalId ? result : current));
@@ -802,7 +814,7 @@ export function App() {
       anchor = currentLocation ?? DEFAULT_EXPLORE_CENTER;
       zoom = 14;
       mapController.current?.flyTo(anchor, zoom);
-      showToast('Đang khám phá quanh TP.HCM. Hãy phóng to bản đồ tới khu vực bạn muốn.');
+      showToast(t('Đang khám phá quanh TP.HCM. Hãy phóng to bản đồ tới khu vực bạn muốn.'));
     }
     const radiusM = mode === 'alongRoute' ? ALONG_ROUTE_RADIUS_M : radiusForZoom(zoom);
     poi.open({ mode, term }, anchor, radiusM);
@@ -848,12 +860,12 @@ export function App() {
       objective: directions.objective,
       avoidFerry: directions.avoidFerry,
     });
-    if (result) showToast(`Đã thêm điểm dừng: ${item.name}`);
+    if (result) showToast(t('Đã thêm điểm dừng: {name}', { name: item.name }));
   };
 
   const toggleSavedPoi = (item: Poi) => {
     poi.toggleSaved(item.id);
-    showToast(poi.savedIds.has(item.id) ? 'Đã bỏ lưu địa điểm' : `Đã lưu ${item.name}`);
+    showToast(poi.savedIds.has(item.id) ? t('Đã bỏ lưu địa điểm') : t('Đã lưu {name}', { name: item.name }));
   };
 
   /** "+ Thêm điểm đến": chuyển sang luồng nhiều điểm, mang theo điểm đi và các điểm đã chọn. */
@@ -914,7 +926,7 @@ export function App() {
   const openTrafficPanel = () => selectFeature('traffic');
 
   const routeSummary = activeRoute
-    ? `${formatDistanceKm(activeRoute.distanceKm)} · ${formatDurationMinutes(activeRoute.durationMin)}`
+    ? `${formatDistanceKm(activeRoute.distanceKm, language)} · ${formatDurationMinutes(activeRoute.durationMin, language)}`
     : '';
   const showRouteSummary = Boolean(activeRoute) && isNavigationIdle && activePanel !== 'directions';
   const canUseAssistant = !authLoading && isAuthenticated;
@@ -933,9 +945,6 @@ export function App() {
           controllerRef={mapController}
           onBoundsChange={setTrafficBounds}
           currentLocation={mapLocation}
-          algorithmOverlay={
-            activePanel === 'directions' && directions.waypoints.length === 0 ? comparison.overlay : null
-          }
           draftStops={draftStops}
           headingDegrees={navigationHeadingDegrees}
           isPicking={pickTarget !== null}
@@ -975,9 +984,14 @@ export function App() {
               const term = termFromText(text);
               if (!term) return null;
               const mode = alongRouteMode ? 'alongRoute' : 'nearby';
-              const what = term.category ? poiCatalog[term.category].label.toLowerCase() : `“${term.query}”`;
+              const what = term.category
+                ? t(poiCatalog[term.category].label).toLowerCase()
+                : `“${term.query}”`;
               return {
-                label: `Tìm ${what} ${alongRouteMode ? 'dọc tuyến' : 'quanh đây'}`,
+                label: t('Tìm {what} {where}', {
+                  what,
+                  where: t(alongRouteMode ? 'dọc tuyến' : 'quanh đây'),
+                }),
                 icon: term.category ? poiCatalog[term.category].icon : 'search',
                 preferred: Boolean(term.category),
                 onRun: () => startPoiSearch(mode, term),
@@ -985,7 +999,7 @@ export function App() {
             }}
             updateAvailable={updateAvailable}
             onUpdate={reloadForUpdate}
-            onInfo={() => showToast('Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.')}
+            onInfo={() => showToast(t('Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.'))}
             userEmail={user?.email ?? null}
             strip={
               alongRouteMode ? (
@@ -1055,7 +1069,7 @@ export function App() {
           <Icon name="route" size={14} className="text-brand-600 dark:text-indigo-300" />
           {routeSummary}
           <span className="rounded-full bg-amber-100 dark:bg-amber-400/15 px-2 py-0.5 text-[11px] text-amber-800 dark:text-amber-200">
-            Ước tính
+            {t('Ước tính')}
           </span>
         </div>
       )}
@@ -1078,7 +1092,7 @@ export function App() {
           setSelectedMapPoint(point);
           openPanel('traffic');
           if (point) focusAfterPanel(point, 16);
-          else showToast('Đang chờ GPS để gắn báo cáo vào vị trí hiện tại.');
+          else showToast(t('Đang chờ GPS để gắn báo cáo vào vị trí hiện tại.'));
         }}
         onStop={stopNavigation}
         followPaused={followPaused}
@@ -1106,20 +1120,22 @@ export function App() {
           role="status"
         >
           <Icon name="pin" size={15} className="text-teal-300" />
-          Chạm vào bản đồ để chọn {pickTarget === 'origin' ? 'điểm đi' : 'điểm đến'}
+          {t('Chạm vào bản đồ để chọn {target}', {
+            target: t(pickTarget === 'origin' ? 'điểm đi' : 'điểm đến'),
+          })}
           <button
             type="button"
             onClick={() => setPickTarget(null)}
             className="rounded-full bg-white/15 px-3 py-1 text-xs hover:bg-white/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-300"
           >
-            Hủy
+            {t('Hủy')}
           </button>
         </div>
       )}
 
       {activePanel === 'assistant' &&
         (canUseAssistant && user && accessToken ? (
-          <Suspense fallback={<PanelFallback label="Đang mở trợ lý…" />}>
+          <Suspense fallback={<PanelFallback label={t('Đang mở trợ lý…')} />}>
             <PlaceAssistantPanel
               key={user.id}
               accessToken={accessToken}
@@ -1138,10 +1154,9 @@ export function App() {
         ))}
 
       {activePanel === 'directions' && (
-        <Suspense fallback={<PanelFallback label="Đang mở chỉ đường…" />}>
+        <Suspense fallback={<PanelFallback label={t('Đang mở chỉ đường…')} />}>
           <RoutePanel
             getSearchFocus={getMapCenter}
-            comparison={comparison}
             directions={directions}
             trafficLayer={trafficLayer}
             isLocating={isLocating}
@@ -1204,7 +1219,7 @@ export function App() {
       )}
 
       {activePanel === 'traffic' && (
-        <Suspense fallback={<PanelFallback label="Đang mở giao thông…" />}>
+        <Suspense fallback={<PanelFallback label={t('Đang mở giao thông…')} />}>
           <TrafficReportPanel
             incidents={incidents}
             selectedPoint={selectedMapPoint}
@@ -1222,7 +1237,7 @@ export function App() {
       )}
 
       {activePanel === 'saved' && (
-        <Suspense fallback={<PanelFallback label="Đang mở tuyến đã lưu…" />}>
+        <Suspense fallback={<PanelFallback label={t('Đang mở tuyến đã lưu…')} />}>
           <SavedRoutesPanel
             routes={savedRoutes.routes}
             onClose={closePanel}
@@ -1233,7 +1248,7 @@ export function App() {
       )}
 
       {authOpen && (
-        <Suspense fallback={<PanelFallback label="Đang mở tài khoản…" />}>
+        <Suspense fallback={<PanelFallback label={t('Đang mở tài khoản…')} />}>
           <AuthPanel onClose={() => setAuthOpen(false)} />
         </Suspense>
       )}

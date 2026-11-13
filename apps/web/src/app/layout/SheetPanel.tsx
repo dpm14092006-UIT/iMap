@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, typ
 import { Icon, type IconName } from '../../shared/components/Icon';
 import { useMediaQuery } from '../../shared/hooks/useMediaQuery';
 import { useShell } from './AppShell';
+import { useI18n } from '../../shared/i18n/I18nProvider';
 
 type Snap = 'peek' | 'half' | 'full';
 const SNAP_ORDER: Snap[] = ['peek', 'half', 'full'];
@@ -47,6 +48,7 @@ export function SheetPanel({
   hidden = false,
   children,
 }: SheetPanelProps) {
+  const { t } = useI18n();
   const isMobile = useMediaQuery('(max-width: 767px)');
   const { setSheet } = useShell();
   const root = useRef<HTMLElement>(null);
@@ -159,7 +161,7 @@ export function SheetPanel({
   return (
     <section
       ref={root}
-      aria-label={title}
+      aria-label={t(title)}
       style={isMobile ? { height: reportedHeight ?? undefined } : undefined}
       hidden={hidden}
       className={`${hidden ? 'hidden' : 'flex'} absolute z-30 flex-col overflow-hidden bg-white/90 shadow-glass ring-1 ring-black/5 backdrop-blur-xl dark:bg-slate-900/95 dark:text-slate-100 dark:shadow-glass-dark dark:ring-white/10 max-md:inset-x-0 max-md:bottom-[var(--tab-h)] max-md:animate-sheet-up max-md:rounded-t-3xl ${dragHeight === null ? 'max-md:transition-[height] max-md:duration-200' : ''} md:bottom-3 md:left-[80px] md:top-[72px] md:w-[360px] md:animate-sheet-in md:rounded-3xl lg:left-[88px] lg:w-[400px]`}
@@ -181,7 +183,7 @@ export function SheetPanel({
             <button
               type="button"
               onClick={onBack}
-              aria-label="Quay lại"
+              aria-label={t('Quay lại')}
               className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl text-ink-soft transition hover:bg-black/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white dark:focus-visible:ring-brand-500/40"
             >
               <Icon name="arrow-left" size={19} />
@@ -193,16 +195,16 @@ export function SheetPanel({
           <div className="min-w-0 flex-1">
             {eyebrow && (
               <p className="truncate text-[11px] font-bold uppercase tracking-[.08em] text-brand-600 dark:text-brand-300">
-                {eyebrow}
+                {t(eyebrow)}
               </p>
             )}
             <h2 className="truncate text-base font-bold leading-tight tracking-tight text-ink dark:text-slate-100">
-              {title}
+              {t(title)}
             </h2>
           </div>
           <button
             type="button"
-            aria-label="Đóng bảng"
+            aria-label={t('Đóng bảng')}
             onClick={onClose}
             className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl text-ink-soft transition hover:bg-black/5 hover:text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white dark:focus-visible:ring-brand-500/40"
           >

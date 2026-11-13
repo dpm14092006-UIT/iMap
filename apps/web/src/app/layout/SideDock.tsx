@@ -1,6 +1,7 @@
 import { Icon, type IconName } from '../../shared/components/Icon';
 import type { FeatureKey } from '../../features/map/types';
 import { BrandMark } from './BrandMark';
+import { useI18n } from '../../shared/i18n/I18nProvider';
 
 const items: { key: Exclude<FeatureKey, 'place' | 'poi'>; label: string; icon: IconName }[] = [
   { key: 'directions', label: 'Chỉ đường', icon: 'directions' },
@@ -19,8 +20,9 @@ type SideDockProps = {
 
 /** Dock dọc bên trái (desktop/tablet) và thanh tab đáy (mobile) cho các chức năng chính. */
 export function SideDock({ isAuthenticated, active, incidentCount, onSelect }: SideDockProps) {
+  const { t } = useI18n();
   const itemLabel = (key: FeatureKey, label: string) =>
-    key === 'assistant' && !isAuthenticated ? 'Trợ lý địa điểm, yêu cầu đăng nhập' : label;
+    key === 'assistant' && !isAuthenticated ? t('Trợ lý địa điểm, yêu cầu đăng nhập') : t(label);
   const badge = (key: FeatureKey) =>
     key === 'traffic' && incidentCount > 0 ? (
       <span className="absolute right-1.5 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-orange-500 px-1 text-[11px] font-bold leading-none text-white ring-2 ring-white dark:ring-slate-900">
@@ -32,7 +34,7 @@ export function SideDock({ isAuthenticated, active, incidentCount, onSelect }: S
     <>
       <nav
         className="absolute bottom-3 left-3 top-3 z-30 hidden w-14 flex-col items-center gap-1 rounded-3xl bg-white/85 py-3 shadow-glass ring-1 ring-black/5 backdrop-blur-xl md:flex lg:w-16 dark:bg-slate-900/90 dark:shadow-glass-dark dark:ring-white/10"
-        aria-label="Công cụ bản đồ"
+        aria-label={t('Công cụ bản đồ')}
       >
         <BrandMark className="mb-3" />
         {items.map((item) => {
@@ -44,11 +46,11 @@ export function SideDock({ isAuthenticated, active, incidentCount, onSelect }: S
               onClick={() => onSelect(item.key)}
               aria-label={itemLabel(item.key, item.label)}
               aria-pressed={selected}
-              title={item.label}
+              title={t(item.label)}
               className={`relative flex w-11 flex-col items-center gap-0.5 rounded-2xl py-2 text-[11px] font-semibold leading-tight transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 active:scale-95 lg:w-14 dark:focus-visible:ring-brand-500/40 ${selected ? 'bg-brand-gradient text-white shadow-md shadow-indigo-900/25' : 'text-ink-soft hover:bg-brand-50 hover:text-brand-700 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-slate-100'}`}
             >
               <Icon name={item.icon} size={21} />
-              <span className="hidden lg:block">{item.label}</span>
+              <span className="hidden lg:block">{t(item.label)}</span>
               {badge(item.key)}
             </button>
           );
@@ -57,7 +59,7 @@ export function SideDock({ isAuthenticated, active, incidentCount, onSelect }: S
 
       <nav
         className="absolute inset-x-0 bottom-0 z-30 grid h-[var(--tab-h)] grid-cols-5 border-t border-black/5 bg-white/90 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_30px_rgba(30,27,75,.12)] backdrop-blur-xl md:hidden dark:border-white/10 dark:bg-slate-900/95 dark:shadow-glass-dark"
-        aria-label="Công cụ bản đồ (thanh tab)"
+        aria-label={t('Công cụ bản đồ (thanh tab)')}
       >
         {items.map((item) => {
           const selected = active === item.key;
@@ -77,7 +79,7 @@ export function SideDock({ isAuthenticated, active, incidentCount, onSelect }: S
                 />
               )}
               <Icon name={item.icon} size={22} />
-              {item.label}
+              {t(item.label)}
               {badge(item.key)}
             </button>
           );

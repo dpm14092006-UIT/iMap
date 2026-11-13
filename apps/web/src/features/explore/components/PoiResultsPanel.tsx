@@ -7,6 +7,7 @@ import { formatRadius } from '../services/poiOptions';
 import type { Poi, PoiSearchTerm } from '../types';
 import { PoiCard } from './PoiCard';
 import { PoiFilters } from './PoiFilters';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type PoiResultsPanelProps = {
   term: PoiSearchTerm;
@@ -56,12 +57,14 @@ export function PoiResultsPanel({
   onBack,
   onClose,
 }: PoiResultsPanelProps) {
+  const { language, t } = useI18n();
   const meta = poiMetaFor(term.category ?? null);
   const { status, pois } = search;
   const label = termLabel(term);
-  const quoted = term.query ? label : `“${label}”`;
-  const title = `${label} ${mode === 'alongRoute' ? 'dọc tuyến' : 'quanh đây'}`;
-  const where = mode === 'alongRoute' ? 'quanh tuyến' : 'quanh đây';
+  const localizedLabel = t(label);
+  const quoted = term.query ? label : `“${localizedLabel}”`;
+  const title = `${localizedLabel} ${t(mode === 'alongRoute' ? 'dọc tuyến' : 'quanh đây')}`;
+  const where = t(mode === 'alongRoute' ? 'quanh tuyến' : 'quanh đây');
 
   // Mũi tên ↑ ↓ di chuyển giữa các thẻ kết quả.
   const onListKeyDown = (event: KeyboardEvent<HTMLUListElement>) => {
@@ -75,7 +78,7 @@ export function PoiResultsPanel({
 
   return (
     <SheetPanel
-      eyebrow="Khám phá"
+      eyebrow={t('Khám phá')}
       title={title}
       icon={meta.icon}
       onClose={onClose}
@@ -90,10 +93,10 @@ export function PoiResultsPanel({
                 onChange={(event) => search.setFollowMap(event.target.checked)}
                 className="h-4 w-4 accent-brand-600 dark:accent-indigo-400"
               />
-              Cập nhật kết quả khi di chuyển bản đồ
+              {t('Cập nhật kết quả khi di chuyển bản đồ')}
             </label>
           )}
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">Nguồn: VietMap</p>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">{t('Nguồn: VietMap')}</p>
         </div>
       }
     >
@@ -106,7 +109,11 @@ export function PoiResultsPanel({
       />
 
       <div role="status" aria-live="polite" className="sr-only">
-        {status === 'ready' ? `${pois.length} kết quả` : status === 'loading' ? 'Đang tìm…' : ''}
+        {status === 'ready'
+          ? t('{count} kết quả', { count: pois.length })
+          : status === 'loading'
+            ? t('Đang tìm…')
+            : ''}
       </div>
       {status === 'loading' && pois.length === 0 && <Skeleton />}
       {status === 'error' && (
@@ -114,29 +121,33 @@ export function PoiResultsPanel({
           role="alert"
           className="rounded-2xl bg-amber-50 dark:bg-amber-400/10 px-3 py-3 text-xs text-amber-900 dark:text-amber-100"
         >
-          <p>{search.error}</p>
+          <p>{t(search.error ?? '')}</p>
           <button
             type="button"
             onClick={search.retry}
             className="mt-2 inline-flex h-8 items-center rounded-full bg-amber-100 dark:bg-amber-400/15 px-3 font-semibold text-amber-900 dark:text-amber-100 hover:bg-amber-200 dark:hover:bg-amber-400/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300"
           >
-            Thử lại
+            {t('Thử lại')}
           </button>
         </div>
       )}
       {status === 'idle' && mode === 'alongRoute' && (
         <p className="rounded-2xl bg-black/[.04] px-3 py-4 text-center text-xs text-ink-soft dark:bg-white/5 dark:text-slate-300">
-          Chưa có tuyến để tìm dọc đường. Hãy tính tuyến ở bảng Chỉ đường.
+          {t('Chưa có tuyến để tìm dọc đường. Hãy tính tuyến ở bảng Chỉ đường.')}
         </p>
       )}
       {status === 'ready' && pois.length === 0 && (
         <div className="rounded-2xl bg-black/[.04] px-3 py-6 text-center dark:bg-white/5">
           <Icon name="search" size={22} className="mx-auto text-slate-400 dark:text-slate-500" />
           <p className="mt-2 text-sm font-semibold text-ink dark:text-white">
-            Không thấy {quoted} trong {formatRadius(search.radiusM)} {where}
+            {t('Không thấy {term} trong {radius} {where}', {
+              term: quoted,
+              radius: formatRadius(search.radiusM, language),
+              where,
+            })}
           </p>
           <p className="mt-1 text-xs text-ink-soft dark:text-slate-300">
-            Thử mở rộng bán kính hoặc đổi từ khóa.
+            {t('Thử mở rộng bán kính hoặc đổi từ khóa.')}
           </p>
         </div>
       )}

@@ -5,8 +5,9 @@ import { popularPlaces } from '../../places/data/popularPlaces';
 import type { RouteObjective, RoutePlan, TransportMode } from '../../map/types';
 import type { LatLng, Place } from '../../places/types';
 import { PlaceCombobox } from '../../places/components/PlaceCombobox';
-import { algorithmOptions, MAX_STOPS, type AlgorithmChoice } from '../utils/algorithms';
+import { MAX_STOPS } from '../utils/algorithms';
 import { OptimizationSummary } from './OptimizationSummary';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type MultiStopPanelProps = {
   isActive: boolean;
@@ -22,12 +23,13 @@ type MultiStopPanelProps = {
     mode: TransportMode,
     objective: RouteObjective,
     returnToStart: boolean,
-    algorithm: AlgorithmChoice,
   ) => Promise<RoutePlan | { error: string }>;
   onSave?: (plan: RoutePlan) => void;
   /** Điểm đi và các điểm cần ghé điền sẵn (App đổi `key` để áp dụng lại). */
   initialStops?: { start: Place | null; stops: Place[] };
 };
+
+type LocalizedMessage = { source: string; values?: Record<string, string | number> };
 
 /** Hai điểm coi là trùng nhau khi tọa độ lệch dưới ~0,1 m. */
 function isSamePoint(a: LatLng, b: LatLng) {
@@ -46,6 +48,7 @@ export function MultiStopPanel({
   onReset,
   initialStops,
 }: MultiStopPanelProps) {
+  const { language, t } = useI18n();
   const [stops, setStops] = useState<Place[]>(initialStops?.stops ?? []);
   const [start, setStart] = useState<Place | null>(initialStops?.start ?? null);
   const [startText, setStartText] = useState(initialStops?.start?.name ?? '');
@@ -53,23 +56,20 @@ export function MultiStopPanel({
   const [mode, setMode] = useState<TransportMode>('motorcycle');
   const [returnToStart, setReturnToStart] = useState(false);
   const [plan, setPlan] = useState<RoutePlan | null>(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<LocalizedMessage | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [objective, setObjective] = useState<RouteObjective>('time');
-  const [algorithm, setAlgorithm] = useState<AlgorithmChoice>('auto');
-  // Held–Karp chỉ hỗ trợ tối đa MAX_STOPS điểm ghé.
-  const exactTooMany = algorithm === 'exact' && stops.length > MAX_STOPS;
   useEffect(() => {
     if (isActive && plan) onShowPlan(plan);
   }, [isActive, plan, onShowPlan]);
 
   const addStop = (place: Place) => {
     if (stops.length >= MAX_STOPS) {
-      setError(`Tối đa ${MAX_STOPS} điểm cần ghé.`);
+      setError({ source: 'Tối đa {count} điểm cần ghé.', values: { count: MAX_STOPS } });
       return;
     }
     if ([...(start ? [start] : []), ...stops].some((item) => isSamePoint(item, place))) {
-      setError('Điểm này đã có trong hành trình.');
+      setError({ source: 'Điểm này đã có trong hành trình.' });
       return;
     }
     setStops((current) =>
@@ -77,18 +77,18 @@ export function MultiStopPanel({
     );
     setQuery('');
     setPlan(null);
-    setError('');
+    setError(null);
   };
 
   const selectStart = (place: Place) => {
     if (stops.some((stop) => isSamePoint(stop, place))) {
-      setError('Điểm xuất phát trùng một điểm cần ghé.');
+      setError({ source: 'Điểm xuất phát trùng một điểm cần ghé.' });
       return;
     }
     setStart(place);
     setStartText(place.name);
     setPlan(null);
-    setError('');
+    setError(null);
   };
 
   const reset = () => {
@@ -98,28 +98,28 @@ export function MultiStopPanel({
     setStops([]);
     setQuery('');
     setPlan(null);
-    setError('');
+    setError(null);
   };
 
   /** Gửi các điểm lên API tối ưu; thứ tự trả về được ghi lại vào danh sách điểm cần ghé. */
   const optimize = async () => {
     if (!start) {
-      setError('Hãy chọn điểm xuất phát từ gợi ý.');
+      setError({ source: 'Hãy chọn điểm xuất phát từ gợi ý.' });
       return;
     }
     setIsLoading(true);
-    setError('');
+    setError(null);
     try {
-      const result = await onPlanRoute(start, stops, mode, objective, returnToStart, algorithm);
+      const result = await onPlanRoute(start, stops, mode, objective, returnToStart);
       if ('error' in result) {
-        setError(result.error);
+        setError({ source: result.error });
         setPlan(null);
       } else {
         setPlan(result);
         setStops(result.stops.slice(1, returnToStart ? -1 : undefined));
       }
     } catch {
-      setError('Không tính được hành trình. Hãy thử lại.');
+      setError({ source: 'Không tính được hành trình. Hãy thử lại.' });
     } finally {
       setIsLoading(false);
     }
@@ -127,15 +127,16 @@ export function MultiStopPanel({
 
   return (
     <SheetPanel
-      eyebrow="LẬP KẾ HOẠCH"
-      title="Hành trình nhiều điểm"
+      eyebrow={t('LẬP KẾ HOẠCH')}
+      title={t('Hành trình nhiều điểm')}
       icon="multi-stop"
       onClose={onClose}
       hidden={!isActive}
     >
       <p className="mb-4 text-[12px] leading-5 text-slate-500 dark:text-slate-400">
-        Chọn các điểm cần ghé. Tự sắp xếp thứ tự tốt nhất theo thời gian hoặc quãng đường, giữ cố định điểm
-        xuất phát.
+        {t(
+          'Chọn các điểm cần ghé. Tự sắp xếp thứ tự tốt nhất theo thời gian hoặc quãng đường, giữ cố định điểm xuất phát.',
+        )}
       </p>
       <fieldset disabled={isLoading}>
         {(start || stops.length > 0 || query || startText) && (
@@ -144,15 +145,15 @@ export function MultiStopPanel({
             onClick={reset}
             className="mb-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 underline"
           >
-            Xóa hành trình
+            {t('Xóa hành trình')}
           </button>
         )}
         <div className="mb-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/60 p-3">
           <p className="mb-2 text-[11px] font-bold uppercase tracking-[.09em] text-slate-500 dark:text-slate-400">
-            Điểm xuất phát
+            {t('Điểm xuất phát')}
           </p>
           <PlaceCombobox
-            ariaLabel="Điểm xuất phát hành trình nhiều điểm"
+            ariaLabel={t('Điểm xuất phát hành trình nhiều điểm')}
             className="w-full"
             icon="current-location"
             inputClassName="h-10 bg-white dark:bg-slate-800"
@@ -164,7 +165,7 @@ export function MultiStopPanel({
             }}
             onSelect={selectStart}
             places={popularPlaces}
-            placeholder="Chọn điểm xuất phát"
+            placeholder={t('Chọn điểm xuất phát')}
             value={startText}
           />
         </div>
@@ -172,7 +173,7 @@ export function MultiStopPanel({
         <div className="mb-4 grid grid-cols-2 gap-3">
           <label className="min-w-0">
             <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[.08em] text-slate-500 dark:text-slate-400">
-              Phương tiện
+              {t('Phương tiện')}
             </span>
             <select
               value={mode}
@@ -182,13 +183,13 @@ export function MultiStopPanel({
               }}
               className="h-10 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/60 px-2.5 text-xs font-semibold text-ink dark:text-slate-100 outline-none focus:border-brand-500 dark:focus:border-indigo-400 focus:ring-4 focus:ring-brand-100 dark:focus:ring-indigo-400/25"
             >
-              <option value="motorcycle">Xe máy</option>
-              <option value="car">Ô tô</option>
+              <option value="motorcycle">{t('Xe máy')}</option>
+              <option value="car">{t('Ô tô')}</option>
             </select>
           </label>
           <label className="min-w-0">
             <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[.08em] text-slate-500 dark:text-slate-400">
-              Ưu tiên
+              {t('Ưu tiên')}
             </span>
             <select
               value={objective}
@@ -198,34 +199,12 @@ export function MultiStopPanel({
               }}
               className="h-10 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/60 px-2.5 text-xs font-semibold text-ink dark:text-slate-100 outline-none focus:border-brand-500 dark:focus:border-indigo-400 focus:ring-4 focus:ring-brand-100 dark:focus:ring-indigo-400/25"
             >
-              <option value="time">Thời gian</option>
-              <option value="distance">Quãng đường</option>
+              <option value="time">{t('Thời gian')}</option>
+              <option value="distance">{t('Quãng đường')}</option>
             </select>
           </label>
         </div>
 
-        <label className="mb-3 block">
-          <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[.08em] text-slate-500 dark:text-slate-400">
-            Thuật toán sắp xếp
-          </span>
-          <select
-            value={algorithm}
-            onChange={(event) => {
-              setAlgorithm(event.target.value as AlgorithmChoice);
-              setPlan(null);
-            }}
-            className="h-10 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/60 px-2.5 text-xs font-semibold text-ink dark:text-slate-100 outline-none focus:border-brand-500 dark:focus:border-indigo-400 focus:ring-4 focus:ring-brand-100 dark:focus:ring-indigo-400/25"
-          >
-            {algorithmOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <span className="mt-1 block text-[11px] leading-4 text-slate-500 dark:text-slate-400">
-            Tự động/Chính xác: Held–Karp, luôn ra thứ tự tối ưu. Nhanh: NN + 2-opt, gần đúng để so sánh.
-          </span>
-        </label>
         <label className="mb-4 flex cursor-pointer items-center gap-2 text-[11px] font-medium text-slate-600 dark:text-slate-300">
           <input
             type="checkbox"
@@ -236,15 +215,15 @@ export function MultiStopPanel({
             }}
             className="h-3.5 w-3.5 accent-brand-600 dark:accent-indigo-400"
           />
-          Quay lại điểm xuất phát
+          {t('Quay lại điểm xuất phát')}
         </label>
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-[12px] font-bold text-ink dark:text-slate-100">Điểm cần ghé</p>
+          <p className="text-[12px] font-bold text-ink dark:text-slate-100">{t('Điểm cần ghé')}</p>
           <span className="rounded-full bg-slate-100 dark:bg-slate-700/50 px-2 py-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
             {stops.length}/{MAX_STOPS}
           </span>
         </div>
-        <ol className="mb-3 space-y-1.5" aria-label="Danh sách điểm dừng">
+        <ol className="mb-3 space-y-1.5" aria-label={t('Danh sách điểm dừng')}>
           {stops.map((place, index) => (
             <li
               key={place.id}
@@ -270,7 +249,7 @@ export function MultiStopPanel({
                   setPlan(null);
                 }}
                 className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 dark:text-slate-500 transition hover:bg-red-50 dark:hover:bg-red-500/15 hover:text-red-600 dark:hover:text-red-300"
-                aria-label={`Xóa ${place.name}`}
+                aria-label={t('Xóa {name}', { name: place.name })}
               >
                 <Icon name="close" size={16} />
               </button>
@@ -280,14 +259,14 @@ export function MultiStopPanel({
         <div className="mb-4">
           <PlaceCombobox
             getFocus={getFocus}
-            ariaLabel="Tìm điểm dừng để thêm"
+            ariaLabel={t('Tìm điểm dừng để thêm')}
             className="w-full"
             icon="plus"
             inputClassName="h-[44px] bg-white dark:bg-slate-800"
             onChange={setQuery}
             onSelect={addStop}
             places={popularPlaces.filter((place) => !stops.some((stop) => stop.id === place.id))}
-            placeholder="Thêm điểm dừng"
+            placeholder={t('Thêm điểm dừng')}
             value={query}
           />
         </div>
@@ -295,7 +274,7 @@ export function MultiStopPanel({
           <button
             type="button"
             onClick={() => void optimize()}
-            disabled={isLoading || !start || stops.length < 1 || exactTooMany}
+            disabled={isLoading || !start || stops.length < 1}
             className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 text-xs font-bold text-white shadow-md shadow-brand-600/20 transition hover:bg-brand-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 dark:disabled:text-slate-400 disabled:shadow-none"
           >
             {isLoading ? (
@@ -306,24 +285,16 @@ export function MultiStopPanel({
             ) : (
               <Icon name="route" size={17} />
             )}
-            {isLoading ? 'Đang tối ưu đường đi…' : 'Tối ưu hành trình'}
+            {isLoading ? t('Đang tối ưu đường đi…') : t('Tối ưu hành trình')}
           </button>
         </div>
       </fieldset>
-      {exactTooMany && (
-        <p
-          className="mt-3 rounded-xl border border-amber-200 dark:border-amber-300/20 bg-amber-50 dark:bg-amber-400/10 px-3 py-2.5 text-[11px] leading-5 text-amber-900 dark:text-amber-100"
-          role="alert"
-        >
-          Thuật toán chính xác chỉ hỗ trợ tối đa {MAX_STOPS} điểm ghé. Hãy chọn "Tự động" hoặc "Nhanh".
-        </p>
-      )}
       {error && (
         <p
           className="mt-3 rounded-xl border border-amber-200 dark:border-amber-300/20 bg-amber-50 dark:bg-amber-400/10 px-3 py-2.5 text-[11px] leading-5 text-amber-900 dark:text-amber-100"
           role="alert"
         >
-          {error}
+          {t(error.source, error.values)}
         </p>
       )}
       {plan && (
@@ -334,11 +305,13 @@ export function MultiStopPanel({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[11px] font-bold text-brand-800 dark:text-indigo-300">
-                Đã sắp xếp hành trình
+                {t('Đã sắp xếp hành trình')}
               </p>
               <p className="mt-1 text-[11px] text-brand-800/80 dark:text-indigo-300/80">
-                {plan.distanceKm.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} km ·{' '}
-                {Math.round(plan.durationMin)} phút
+                {plan.distanceKm.toLocaleString(language === 'en' ? 'en-US' : 'vi-VN', {
+                  maximumFractionDigits: 1,
+                })}{' '}
+                km · {t('{minutes} phút', { minutes: Math.round(plan.durationMin) })}
               </p>
             </div>
             <button
@@ -346,7 +319,7 @@ export function MultiStopPanel({
               onClick={() => onSave?.(plan)}
               className="rounded-lg border border-brand-200 dark:border-indigo-300/25 bg-white dark:bg-slate-800/60 px-2.5 py-2 text-[11px] font-semibold text-brand-700 dark:text-indigo-300"
             >
-              Lưu
+              {t('Lưu')}
             </button>
           </div>
           <button
@@ -356,7 +329,7 @@ export function MultiStopPanel({
             className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 text-[11px] font-bold text-white shadow-sm transition hover:bg-brand-700 disabled:bg-emerald-600"
           >
             <Icon name={isNavigating ? 'check' : 'directions'} size={15} />
-            {isNavigating ? 'Đang dẫn đường' : 'Bắt đầu chuyến đi'}
+            {isNavigating ? t('Đang dẫn đường') : t('Bắt đầu chuyến đi')}
           </button>
           {plan.optimization && <OptimizationSummary optimization={plan.optimization} />}
           <ol className="mt-3 space-y-1.5">
@@ -379,8 +352,9 @@ export function MultiStopPanel({
         </div>
       )}
       <div className="mt-4 border-t border-slate-100 dark:border-white/10 pt-3 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
-        Tối ưu theo chi phí đường bộ VietMap, có xét chiều di chuyển. Để đi theo thứ tự tự chọn, dùng mục Chỉ
-        đường.
+        {t(
+          'Tối ưu theo chi phí đường bộ VietMap, có xét chiều di chuyển. Để đi theo thứ tự tự chọn, dùng mục Chỉ đường.',
+        )}
       </div>
     </SheetPanel>
   );

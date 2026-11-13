@@ -4,6 +4,7 @@ import type { ComboboxAction } from '../../features/places/components/PlaceCombo
 import { PlaceSearchBar } from '../../features/places/components/PlaceSearchBar';
 import type { LatLng, Place } from '../../features/places/types';
 import { BrandMark } from './BrandMark';
+import { useI18n } from '../../shared/i18n/I18nProvider';
 
 type TopBarProps = {
   getFocus: () => LatLng;
@@ -33,6 +34,7 @@ export function TopBar({
   userEmail,
 }: TopBarProps) {
   const input = useRef<HTMLInputElement>(null);
+  const { language, setLanguage, t } = useI18n();
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -62,37 +64,50 @@ export function TopBar({
         />
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-2 md:order-last">
+        <label className="sr-only" htmlFor="language-select">
+          {t('Ngôn ngữ')}
+        </label>
+        <select
+          id="language-select"
+          aria-label={t('Ngôn ngữ')}
+          value={language}
+          onChange={(event) => setLanguage(event.target.value === 'en' ? 'en' : 'vi')}
+          className="h-10 rounded-full bg-white/90 px-2.5 text-xs font-semibold text-ink shadow-glass ring-1 ring-black/5 backdrop-blur-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:bg-slate-900/90 dark:text-slate-100 dark:ring-white/10 dark:focus-visible:ring-brand-500/40"
+        >
+          <option value="vi">VI</option>
+          <option value="en">EN</option>
+        </select>
         {updateAvailable && (
           <>
             <span className="sr-only" role="status" aria-live="polite">
-              Có phiên bản iMap mới. Chọn Cập nhật để tải lại trang.
+              {t('Có phiên bản iMap mới. Chọn Cập nhật để tải lại trang.')}
             </span>
             <button
               type="button"
               onClick={onUpdate}
-              aria-label="Có phiên bản mới. Cập nhật iMap"
-              title="Có phiên bản iMap mới"
+              aria-label={t('Có phiên bản mới. Cập nhật iMap')}
+              title={t('Có phiên bản iMap mới')}
               className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-brand-gradient px-3 text-xs font-bold text-white shadow-glass dark:shadow-glass-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-brand-500/50"
             >
               <Icon name="refresh" size={15} />
-              Cập nhật
+              {t('Cập nhật')}
             </button>
           </>
         )}
         <button
           type="button"
           onClick={onInfo}
-          aria-label="Thông tin bản đồ"
+          aria-label={t('Thông tin bản đồ')}
           className={`${roundButton} max-md:hidden`}
         >
           <Icon name="info" size={19} />
         </button>
         <a
           href="/login"
-          aria-label={userEmail ? `Tài khoản ${userEmail}` : 'Đăng nhập tài khoản'}
+          aria-label={userEmail ? `${t('Tài khoản')} ${userEmail}` : t('Đăng nhập tài khoản')}
           className={`${roundButton} text-xs font-bold ${userEmail ? 'bg-brand-gradient text-white' : ''}`}
         >
-          {userEmail ? userEmail.slice(0, 2).toUpperCase() : 'ĐN'}
+          {userEmail ? userEmail.slice(0, 2).toUpperCase() : language === 'en' ? 'SI' : 'ĐN'}
         </a>
       </div>
       <div data-topbar-strip="" className="min-w-0 basis-full md:basis-0 md:flex-1">

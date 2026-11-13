@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from 'react';
 import { Popover } from '../../../app/layout/Popover';
 import { Icon } from '../../../shared/components/Icon';
-import { formatRadius, poiRadiusOptions, poiSortLabels, poiSortsByMode } from '../services/poiOptions';
+import { poiRadiusOptions, poiSortLabels, poiSortsByMode } from '../services/poiOptions';
 import type { PoiSort } from '../types';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type PoiFiltersProps = {
   mode: 'nearby' | 'alongRoute';
@@ -40,8 +41,13 @@ function OptionButton({
 
 /** Thanh lọc chỉ gồm những gì dữ liệu thật hỗ trợ: Sắp xếp (khi có nhiều cách) và Bán kính. */
 export function PoiFilters({ mode, sort, radiusM, onSortChange, onRadiusChange }: PoiFiltersProps) {
+  const { language, t } = useI18n();
   const [openMenu, setOpenMenu] = useState<'sort' | 'radius' | null>(null);
   const sorts = poiSortsByMode[mode];
+  const formatLocalizedRadius = (radius: number) =>
+    radius < 1000
+      ? `${radius} m`
+      : `${(radius / 1000).toLocaleString(language === 'en' ? 'en-US' : 'vi-VN', { maximumFractionDigits: 1 })} km`;
   const menu = (id: 'sort' | 'radius') => ({
     open: openMenu === id,
     onClose: () => setOpenMenu((current) => (current === id ? null : current)),
@@ -60,15 +66,15 @@ export function PoiFilters({ mode, sort, radiusM, onSortChange, onRadiusChange }
   );
 
   return (
-    <div className="mb-3 flex flex-wrap gap-1.5" role="group" aria-label="Bộ lọc">
+    <div className="mb-3 flex flex-wrap gap-1.5" role="group" aria-label={t('Bộ lọc')}>
       {sorts.length > 1 && (
         <Popover
           {...menu('sort')}
-          label="Sắp xếp"
+          label={t('Sắp xếp')}
           panelClassName="left-0 top-full mt-1.5 w-48 !p-1.5"
-          trigger={trigger('sort', `Sắp xếp: ${poiSortLabels[sort]}`)}
+          trigger={trigger('sort', t('Sắp xếp: {sort}', { sort: t(poiSortLabels[sort]) }))}
         >
-          <div role="menu" aria-label="Sắp xếp theo">
+          <div role="menu" aria-label={t('Sắp xếp theo')}>
             {sorts.map((option) => (
               <OptionButton
                 key={option}
@@ -78,7 +84,7 @@ export function PoiFilters({ mode, sort, radiusM, onSortChange, onRadiusChange }
                   setOpenMenu(null);
                 }}
               >
-                {poiSortLabels[option]}
+                {t(poiSortLabels[option])}
               </OptionButton>
             ))}
           </div>
@@ -86,11 +92,11 @@ export function PoiFilters({ mode, sort, radiusM, onSortChange, onRadiusChange }
       )}
       <Popover
         {...menu('radius')}
-        label="Bán kính"
+        label={t('Bán kính')}
         panelClassName="left-0 top-full mt-1.5 w-44 !p-1.5"
-        trigger={trigger('radius', `Bán kính: ${formatRadius(radiusM)}`)}
+        trigger={trigger('radius', t('Bán kính: {radius}', { radius: formatLocalizedRadius(radiusM) }))}
       >
-        <div role="menu" aria-label="Bán kính tìm kiếm">
+        <div role="menu" aria-label={t('Bán kính tìm kiếm')}>
           {poiRadiusOptions.map((option) => (
             <OptionButton
               key={option}
@@ -100,7 +106,7 @@ export function PoiFilters({ mode, sort, radiusM, onSortChange, onRadiusChange }
                 setOpenMenu(null);
               }}
             >
-              {formatRadius(option)}
+              {formatLocalizedRadius(option)}
             </OptionButton>
           ))}
         </div>

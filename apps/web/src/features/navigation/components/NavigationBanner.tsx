@@ -5,7 +5,8 @@ import { useMediaQuery } from '../../../shared/hooks/useMediaQuery';
 import type { NavigationMode } from '../domain/position/PositionSource';
 import type { NavigationStatus } from '../hooks/useNavigationSession';
 import { formatDistanceMeters } from '../utils/format';
-import { maneuverArrow } from '../utils/maneuver';
+import { formatInstructionText, maneuverArrow } from '../utils/maneuver';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type NavigationBannerProps = {
   status: NavigationStatus;
@@ -74,6 +75,7 @@ export function NavigationBanner({
   onPreviewRoute,
   atTop = false,
 }: NavigationBannerProps) {
+  const { language, t } = useI18n();
   const isMobile = useMediaQuery('(max-width: 767px)');
   const { setSheet } = useShell();
   const root = useRef<HTMLElement>(null);
@@ -100,14 +102,16 @@ export function NavigationBanner({
   if (!visible) return null;
 
   const isGuiding = status === 'navigating' || status === 'locating';
-  const instructionText = instruction?.text || 'Tiếp tục theo tuyến đường';
+  const instructionText = instruction
+    ? formatInstructionText(instruction, language)
+    : t('Tiếp tục theo tuyến đường');
 
   return (
     <section
       ref={root}
       data-nav-banner=""
       className={`absolute left-3 right-3 z-50 animate-fade-in overflow-hidden rounded-3xl ${atTop ? 'top-3' : 'bottom-[calc(12px+env(safe-area-inset-bottom))]'} bg-gradient-to-br from-slate-900 via-indigo-950 to-teal-900 text-white shadow-glass dark:shadow-glass-dark ring-1 ring-white/15 md:right-auto md:w-[420px]`}
-      aria-label="Điều hướng chuyến đi"
+      aria-label={t('Điều hướng chuyến đi')}
       aria-live="polite"
     >
       <div
@@ -116,7 +120,7 @@ export function NavigationBanner({
         <span
           className={`h-2 w-2 rounded-full ${offRoute ? 'bg-amber-400' : status === 'arrived' ? 'bg-emerald-400' : 'animate-pulse bg-teal-300'}`}
         />
-        {offRoute ? 'ĐANG LỆCH KHỎI TUYẾN' : statusLabels[status]}
+        {offRoute ? t('ĐANG LỆCH KHỎI TUYẾN') : statusLabels[status] ? t(statusLabels[status]!) : ''}
       </div>
       <div className="flex items-center gap-3 px-4 py-3">
         {isGuiding && (
@@ -129,32 +133,34 @@ export function NavigationBanner({
         <div className="min-w-0 flex-1">
           <p className="text-lg font-extrabold leading-6">
             {offRoute
-              ? 'Bạn đang rời khỏi lộ trình'
+              ? t('Bạn đang rời khỏi lộ trình')
               : status === 'arrived'
-                ? 'Chuyến đi đã hoàn tất'
+                ? t('Chuyến đi đã hoàn tất')
                 : status === 'error'
-                  ? error
+                  ? t(error)
                   : status === 'locating'
-                    ? 'Đang lấy vị trí GPS…'
+                    ? t('Đang lấy vị trí GPS…')
                     : instructionText}
           </p>
           {isGuiding && !offRoute && status === 'navigating' && (
             <p className="mt-1 text-sm font-semibold text-teal-200">
               {distanceToInstructionMeters > 0
-                ? `Trong ${formatDistanceMeters(distanceToInstructionMeters)}`
-                : 'Thực hiện chỉ dẫn tiếp theo'}
+                ? t('Trong {distance}', {
+                    distance: formatDistanceMeters(distanceToInstructionMeters, language),
+                  })
+                : t('Thực hiện chỉ dẫn tiếp theo')}
             </p>
           )}
           {isGuiding && !offRoute && (
             <p className="mt-1 text-xs text-white/70">
-              Còn {formatDistanceMeters(distanceRemainingMeters)} ·{' '}
-              {demo?.mode === 'demo' ? 'GPS giả lập (demo)' : 'GPS trực tiếp'}
+              {t('Còn {distance}', { distance: formatDistanceMeters(distanceRemainingMeters, language) })} ·{' '}
+              {t(demo?.mode === 'demo' ? 'GPS giả lập (demo)' : 'GPS trực tiếp')}
             </p>
           )}
           {error && status !== 'error' && <p className="mt-1 text-xs text-amber-200">{error}</p>}
           {offRoute && (
             <p className="mt-1 text-xs leading-4 text-white/70">
-              Vị trí GPS đang cách xa tuyến. Tính lại từ vị trí hiện tại để tiếp tục.
+              {t('Vị trí GPS đang cách xa tuyến. Tính lại từ vị trí hiện tại để tiếp tục.')}
             </p>
           )}
         </div>
@@ -163,9 +169,13 @@ export function NavigationBanner({
         <div className="space-y-2 border-t border-white/10 bg-black/15 px-4 py-2.5">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[11px] font-bold uppercase tracking-[.08em] text-white/60">
-              Nguồn vị trí
+              {t('Nguồn vị trí')}
             </span>
-            <div className="flex rounded-lg bg-white/10 p-0.5" role="group" aria-label="Chế độ dẫn đường">
+            <div
+              className="flex rounded-lg bg-white/10 p-0.5"
+              role="group"
+              aria-label={t('Chế độ dẫn đường')}
+            >
               {modeOptions.map((option) => (
                 <button
                   key={option.id}
@@ -174,16 +184,19 @@ export function NavigationBanner({
                   onClick={() => demo.onModeChange(option.id)}
                   className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 ${demo.mode === option.id ? 'bg-white text-indigo-700' : 'text-white/70 hover:text-white'}`}
                 >
-                  {option.label}
+                  {t(option.label)}
                 </button>
               ))}
             </div>
           </div>
           {demo.mode === 'demo' && isGuiding && (
             <div className="flex flex-wrap gap-1.5">
-              <DemoButton label={demo.isPaused ? '▶ Tiếp tục' : '⏸ Tạm dừng'} onClick={demo.onTogglePause} />
-              <DemoButton label="↪ Rẽ nhầm" onClick={demo.onWrongTurn} />
-              <DemoButton label="⚠ Sự cố phía trước" onClick={demo.onIncidentAhead} />
+              <DemoButton
+                label={t(demo.isPaused ? '▶ Tiếp tục' : '⏸ Tạm dừng')}
+                onClick={demo.onTogglePause}
+              />
+              <DemoButton label={t('↪ Rẽ nhầm')} onClick={demo.onWrongTurn} />
+              <DemoButton label={t('⚠ Sự cố phía trước')} onClick={demo.onIncidentAhead} />
             </div>
           )}
         </div>
@@ -204,7 +217,7 @@ export function NavigationBanner({
             ) : (
               <Icon name="route" size={14} />
             )}
-            {isRecalculating ? 'Đang tính lại…' : offRoute ? 'Tính lại tuyến' : 'Thử lại GPS'}
+            {t(isRecalculating ? 'Đang tính lại…' : offRoute ? 'Tính lại tuyến' : 'Thử lại GPS')}
           </button>
         )}
         {isGuiding && (followPaused ? onRecenter : onPreviewRoute) && (
@@ -214,7 +227,7 @@ export function NavigationBanner({
             className={`flex min-h-10 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-300 ${followPaused ? 'bg-teal-300 text-slate-900 hover:bg-teal-200' : 'bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/20'}`}
           >
             <Icon name={followPaused ? 'current-location' : 'route'} size={15} />
-            {followPaused ? 'Về vị trí' : 'Toàn tuyến'}
+            {t(followPaused ? 'Về vị trí' : 'Toàn tuyến')}
           </button>
         )}
         <button
@@ -223,7 +236,7 @@ export function NavigationBanner({
           className="flex min-h-10 items-center justify-center gap-1.5 rounded-full bg-amber-400/20 px-3 text-xs font-bold text-amber-100 ring-1 ring-amber-300/40 transition hover:bg-amber-400/30 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300"
         >
           <Icon name="traffic" size={15} />
-          Báo cáo
+          {t('Báo cáo')}
         </button>
         <button
           type="button"
@@ -231,8 +244,8 @@ export function NavigationBanner({
           className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-white/10 px-3 text-xs font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-300"
         >
           <Icon name="close" size={14} />
-          {status === 'arrived' ? 'Đóng' : 'Kết thúc'}
-          <span className="max-md:hidden">chuyến đi</span>
+          {t(status === 'arrived' ? 'Đóng' : 'Kết thúc')}
+          <span className="max-md:hidden">{t('chuyến đi')}</span>
         </button>
       </div>
     </section>
