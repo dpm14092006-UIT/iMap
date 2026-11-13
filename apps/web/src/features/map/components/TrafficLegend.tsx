@@ -3,8 +3,6 @@ import { useMediaQuery } from '../../../shared/hooks/useMediaQuery';
 
 type TrafficLegendProps = {
   onHide: () => void;
-  /** Bảng chức năng đang mở: trên điện thoại thu thành nút nhỏ, bấm để mở chú giải. */
-  docked?: boolean;
 };
 
 const levels = [
@@ -14,18 +12,18 @@ const levels = [
   { label: 'Tắc', color: 'bg-traffic-jam' },
 ];
 
-/** Chú giải giao thông dạng viên thuốc: 4 vạch màu từ nhanh đến chậm + công tắc tắt lớp. */
-export function TrafficLegend({ onHide, docked = false }: TrafficLegendProps) {
+/** Chú giải giao thông dạng viên thuốc: 4 vạch màu + công tắc tắt lớp; điện thoại thu thành nút nhỏ. */
+export function TrafficLegend({ onHide }: TrafficLegendProps) {
   const isMobile = useMediaQuery('(max-width: 767px)');
   const [expanded, setExpanded] = useState(false);
-  if (docked && isMobile && !expanded) {
+  if (isMobile && !expanded) {
     return (
       <button
         type="button"
         onClick={() => setExpanded(true)}
         aria-label="Hiện chú giải giao thông"
         title="Chú giải giao thông"
-        className="grid h-9 w-9 place-items-center rounded-full bg-white/90 shadow-glass ring-1 ring-black/5 backdrop-blur-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:bg-slate-900/85 dark:shadow-glass-dark dark:ring-white/10 dark:focus-visible:ring-indigo-400/40"
+        className="grid h-11 w-11 place-items-center rounded-full bg-white/90 shadow-glass ring-1 ring-black/5 backdrop-blur-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:bg-slate-900/85 dark:shadow-glass-dark dark:ring-white/10 dark:focus-visible:ring-indigo-400/40"
       >
         <span className="flex flex-col gap-[3px]" aria-hidden="true">
           {levels.map((level) => (
@@ -52,7 +50,7 @@ export function TrafficLegend({ onHide, docked = false }: TrafficLegendProps) {
         ))}
       </ul>
       <span>Chậm</span>
-      {docked && isMobile && (
+      {isMobile && (
         <button
           type="button"
           onClick={() => setExpanded(false)}

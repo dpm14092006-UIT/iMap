@@ -268,10 +268,34 @@ export class LeafletMapController {
     this.map.flyTo([point.lat, point.lng], zoom, { duration: 0.55 });
   }
   followLocation(point: LatLng, zoom = 16) {
-    const target = L.latLng(point.lat, point.lng);
+    let target = L.latLng(point.lat, point.lng);
+    // Điện thoại: banner/bảng che đáy màn hình nên đặt vị trí vào giữa phần bản đồ còn thấy.
+    const coveredBottom = this.mobileQuery.matches ? (this.fitInsets?.bottom ?? 0) : 0;
+    if (coveredBottom > 0) {
+      const atZoom = Math.max(this.map.getZoom(), zoom);
+      target = this.map.unproject(this.map.project(target, atZoom).add([0, coveredBottom / 2]), atZoom);
+    }
     if (this.map.getZoom() < zoom) this.map.setView(target, zoom, { animate: true, duration: 0.35 });
     else if (this.map.getCenter().distanceTo(target) > 25)
       this.map.panTo(target, { animate: true, duration: 0.35 });
+  }
+  /**
+   * Gọi `listener` khi người dùng tự kéo / zoom bản đồ (kéo, cuộn chuột, chụm 2 ngón, chạm đúp).
+   * Dùng để tạm ngừng bám vị trí lúc dẫn đường cho người dùng xem trước hành trình.
+   */
+  onUserGesture(listener: () => void): () => void {
+    const container = this.map.getContainer();
+    const onTouch = (event: TouchEvent) => {
+      if (event.touches.length > 1) listener();
+    };
+    this.map.on('dragstart dblclick', listener);
+    container.addEventListener('wheel', listener, { passive: true });
+    container.addEventListener('touchstart', onTouch, { passive: true });
+    return () => {
+      this.map.off('dragstart dblclick', listener);
+      container.removeEventListener('wheel', listener);
+      container.removeEventListener('touchstart', onTouch);
+    };
   }
   getZoom(): number {
     return this.map.getZoom();

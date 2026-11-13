@@ -5,6 +5,8 @@ type MapControlsProps = {
   onZoomOut: () => void;
   onLocate: () => void;
   onShowVietnam: () => void;
+  /** Hiện nút +/- cả trên điện thoại (lúc dẫn đường để dễ xem trước hành trình). */
+  showZoom?: boolean;
 };
 
 type ControlButtonProps = { icon: IconName; label: string; onClick: () => void; className?: string };
@@ -24,7 +26,14 @@ function ControlButton({ icon, label, onClick, className = '' }: ControlButtonPr
 }
 
 /** Cụm điều khiển góc dưới phải: định vị, phóng to/thu nhỏ, xem toàn Việt Nam. */
-export function MapControls({ onZoomIn, onZoomOut, onLocate, onShowVietnam }: MapControlsProps) {
+export function MapControls({
+  onZoomIn,
+  onZoomOut,
+  onLocate,
+  onShowVietnam,
+  showZoom = false,
+}: MapControlsProps) {
+  const zoomClass = showZoom ? '' : 'max-md:hidden';
   return (
     <div
       className="flex flex-col divide-y divide-black/5 overflow-hidden rounded-2xl bg-white/90 shadow-glass dark:shadow-glass-dark ring-1 ring-black/5 backdrop-blur-xl dark:divide-white/10 dark:bg-slate-900/85 dark:ring-white/10"
@@ -33,8 +42,8 @@ export function MapControls({ onZoomIn, onZoomOut, onLocate, onShowVietnam }: Ma
     >
       <ControlButton icon="current-location" label="Định vị vị trí hiện tại" onClick={onLocate} />
       {/* Trên điện thoại đã có thao tác chụm hai ngón nên ẩn nút +/- cho gọn. */}
-      <ControlButton icon="plus" label="Phóng to bản đồ" onClick={onZoomIn} className="max-md:hidden" />
-      <ControlButton icon="minus" label="Thu nhỏ bản đồ" onClick={onZoomOut} className="max-md:hidden" />
+      <ControlButton icon="plus" label="Phóng to bản đồ" onClick={onZoomIn} className={zoomClass} />
+      <ControlButton icon="minus" label="Thu nhỏ bản đồ" onClick={onZoomOut} className={zoomClass} />
       <ControlButton icon="globe" label="Xem toàn Việt Nam" onClick={onShowVietnam} />
     </div>
   );

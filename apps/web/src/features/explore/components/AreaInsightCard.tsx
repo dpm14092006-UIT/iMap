@@ -124,12 +124,13 @@ export function AreaInsightPill({ insight, onOpenTraffic }: AreaInsightCardProps
       type="button"
       onClick={onOpenTraffic}
       aria-label={`Khu vực này: ${insight.temperatureC} độ (thời tiết minh họa), ${insight.trafficLabel} (ước tính từ giờ cao điểm và báo cáo cộng đồng). Mở bảng Giao thông`}
-      className="flex h-11 items-center gap-2 rounded-full bg-white/90 px-3.5 text-xs font-semibold text-ink shadow-glass dark:shadow-glass-dark ring-1 ring-black/5 backdrop-blur-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 dark:bg-slate-900/85 dark:text-slate-100 dark:ring-white/10"
+      className="flex h-11 items-center gap-1.5 whitespace-nowrap rounded-full bg-white/90 px-3 text-xs font-semibold text-ink shadow-glass dark:shadow-glass-dark ring-1 ring-black/5 backdrop-blur-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 dark:bg-slate-900/85 dark:text-slate-100 dark:ring-white/10"
     >
       <Icon name={insight.weatherIcon} size={16} className="text-amber-500" />
       {insight.temperatureC}°C
       <span className={`h-2.5 w-2.5 rounded-full ${levelDot[insight.trafficLevel]}`} aria-hidden="true" />
-      {insight.trafficLabel.replace('Giao thông ', '')}
+      {/* "≈" giữ ý "ước tính" mà vẫn vừa một hàng với nút Lớp và chú giải. */}≈{' '}
+      {insight.trafficLabel.replace('Ước tính: Giao thông ', '').replace(/^./, (c) => c.toUpperCase())}
     </button>
   );
 }

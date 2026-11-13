@@ -16,7 +16,7 @@ export function AlongRouteSearch({ active, onSelect }: AlongRouteSearchProps) {
       role="group"
       aria-label="Tìm dọc tuyến"
     >
-      <PoiTermInput label="Tìm dọc tuyến" placeholder="Tìm dọc tuyến…" onSubmit={onSelect} />
+      <PoiTermInput label="Tìm dọc tuyến" placeholder="Dọc tuyến…" onSubmit={onSelect} />
       {alongRouteCategories.map((category) => {
         const meta = poiCatalog[category];
         const selected = active === category;

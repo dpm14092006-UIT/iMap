@@ -65,6 +65,10 @@ main {
   main {
     --tab-h: calc(64px + env(safe-area-inset-bottom));
   }
+  /* Lúc dẫn đường thanh tab ẩn đi, banner chỉ dẫn nằm sát đáy thay chỗ. */
+  main:has(> [data-nav-banner]) {
+    --tab-h: 0px;
+  }
 }
 
 .routetwin-leaflet {
@@ -81,6 +85,12 @@ main {
 .routetwin-leaflet .leaflet-bottom {
   bottom: var(--shell-bottom, 0px);
   transition: bottom 180ms ease-out;
+}
+/* Điện thoại: bỏ thước tỉ lệ cho góc dưới đỡ chật. */
+@media (max-width: 767px) {
+  .routetwin-leaflet .leaflet-control-scale {
+    display: none;
+  }
 }
 .routetwin-leaflet .leaflet-control-scale-line {
   border-color: #475569;

@@ -74,7 +74,7 @@ export function AppShell({
         {dock}
         {topBar}
         <div
-          className={`pointer-events-none absolute bottom-[calc(var(--shell-bottom)+24px)] right-[76px] ${docked ? 'max-md:bottom-[calc(var(--shell-bottom)+12px)]' : ''} z-20 flex flex-wrap items-end gap-2 transition-[left,bottom] duration-200 max-md:left-3 ${panelOpen ? 'md:left-[452px] lg:left-[500px]' : 'md:left-[80px] lg:left-[88px]'} ${hideOnFullSheet} [&>*]:pointer-events-auto`}
+          className={`pointer-events-none absolute bottom-[calc(var(--shell-bottom)+24px)] right-[76px] max-md:right-[60px] ${docked ? 'max-md:bottom-[calc(var(--shell-bottom)+12px)]' : ''} z-20 flex flex-wrap items-end gap-2 transition-[left,bottom] duration-200 max-md:left-3 ${panelOpen ? 'md:left-[452px] lg:left-[500px]' : 'md:left-[80px] lg:left-[88px]'} ${hideOnFullSheet} [&>*]:pointer-events-auto`}
         >
           {bottomLeft}
         </div>
