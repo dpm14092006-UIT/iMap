@@ -138,7 +138,7 @@ export function AuthPage() {
       <main
         className={`h-dvh overflow-y-auto bg-[#f6f7f9] text-ink dark:bg-slate-950 dark:text-slate-100 max-sm:bg-white dark:max-sm:bg-slate-900`}
       >
-        <div className="mx-auto flex min-h-dvh max-w-[1120px] flex-col px-5 py-6 sm:px-8 sm:py-6">
+        <div className="mx-auto flex min-h-full max-w-[1120px] flex-col px-5 py-5 sm:px-8 sm:py-6">
           <header className="flex items-center justify-between gap-4">
             <a
               href="/"

@@ -115,6 +115,8 @@ export class LeafletMapController {
   private lastRouteNavigationState: boolean | null = null;
   private lastCongestionVisible: boolean | null = null;
   private lastDraftStopsKey = '';
+  private focusMarker: L.Marker | null = null;
+  private lastFocusKey = '';
   private lastOverlayKey: string | null = null;
   private lastTrafficMapLayer: TrafficMapLayer | null = null;
 
@@ -157,6 +159,7 @@ export class LeafletMapController {
     this.poiLayer.addTo(this.map);
     this.locationLayer.addTo(this.map);
     this.map.on('moveend', () => handlers.onBoundsChange?.(this.getBounds()));
+    this.map.on('zoomend', () => this.separateRouteLabels());
     handlers.onBoundsChange?.(this.getBounds());
     this.map.on('click', (event: L.LeafletMouseEvent) =>
       handlers.onMapClick({ lat: event.latlng.lat, lng: event.latlng.lng }),
@@ -193,6 +196,7 @@ export class LeafletMapController {
       } else this.drawDraftStops(data.draftStops);
     }
     this.lastDraftStopsKey = draftStopsKey;
+    this.drawFocus(data.draftStops.focus ?? null);
     this.lastRouteNavigationState = data.isNavigating;
     this.lastCongestionVisible = data.overlays.traffic;
 
@@ -265,16 +269,16 @@ export class LeafletMapController {
     this.map.zoomOut();
   }
   flyTo(point: LatLng, zoom = 15) {
-    this.map.flyTo([point.lat, point.lng], zoom, { duration: 0.55 });
+    this.map.flyTo(this.centerAboveSheet(L.latLng(point.lat, point.lng), zoom), zoom, { duration: 0.55 });
+  }
+  /** Điện thoại: bảng/banner che đáy nên dời tâm xuống để điểm nằm giữa phần bản đồ còn thấy. */
+  private centerAboveSheet(target: L.LatLng, zoom: number): L.LatLng {
+    const covered = this.mobileQuery.matches ? (this.fitInsets?.bottom ?? 0) : 0;
+    if (covered <= 0) return target;
+    return this.map.unproject(this.map.project(target, zoom).add([0, covered / 2]), zoom);
   }
   followLocation(point: LatLng, zoom = 16) {
-    let target = L.latLng(point.lat, point.lng);
-    // Điện thoại: banner/bảng che đáy màn hình nên đặt vị trí vào giữa phần bản đồ còn thấy.
-    const coveredBottom = this.mobileQuery.matches ? (this.fitInsets?.bottom ?? 0) : 0;
-    if (coveredBottom > 0) {
-      const atZoom = Math.max(this.map.getZoom(), zoom);
-      target = this.map.unproject(this.map.project(target, atZoom).add([0, coveredBottom / 2]), atZoom);
-    }
+    const target = this.centerAboveSheet(L.latLng(point.lat, point.lng), Math.max(this.map.getZoom(), zoom));
     if (this.map.getZoom() < zoom) this.map.setView(target, zoom, { animate: true, duration: 0.35 });
     else if (this.map.getCenter().distanceTo(target) > 25)
       this.map.panTo(target, { animate: true, duration: 0.35 });
@@ -299,6 +303,10 @@ export class LeafletMapController {
   }
   getZoom(): number {
     return this.map.getZoom();
+  }
+  /** Zoom vừa các điểm (vd. kết quả tìm quanh đây), chừa chỗ cho bảng đang mở. */
+  fitPoints(points: LatLng[]) {
+    if (points.length) this.fit(points.map((point) => L.latLng(point.lat, point.lng)));
   }
   /** Zoom vừa khít một tuyến (nút "Xem trước"). */
   fitRoute(route: RoutePlan) {
@@ -485,6 +493,32 @@ export class LeafletMapController {
         })
         .addTo(this.labelLayer);
     });
+    this.separateRouteLabels();
+  }
+
+  /**
+   * Nhãn của các tuyến gần nhau (cùng xuất phát, nhập lại đoạn chung) dễ chồng lên nhau ở mức zoom
+   * nhỏ: đo nhãn trên màn hình, nhãn tuyến đang chọn giữ chỗ, các nhãn còn lại dời lên/xuống tới chỗ trống.
+   */
+  private separateRouteLabels() {
+    const labels = [...this.map.getContainer().querySelectorAll<HTMLElement>('.routetwin-route-label')];
+    labels.sort(
+      (a, b) => Number(b.classList.contains('is-selected')) - Number(a.classList.contains('is-selected')),
+    );
+    labels.forEach((label) => label.style.setProperty('--dy', '0px'));
+    const placed: DOMRect[] = [];
+    const overlaps = (a: DOMRect, b: DOMRect, dy: number) =>
+      a.left < b.right + 4 && a.right > b.left - 4 && a.top + dy < b.bottom + 3 && a.bottom + dy > b.top - 3;
+    for (const label of labels) {
+      const rect = label.getBoundingClientRect();
+      const step = rect.height + 6;
+      const dy = [0, 1, -1, 2, -2, 3, -3]
+        .map((n) => n * step)
+        .find((offset) => !placed.some((other) => overlaps(rect, other, offset)));
+      const shift = dy ?? 0;
+      label.style.setProperty('--dy', `${shift}px`);
+      placed.push(new DOMRect(rect.x, rect.y + shift, rect.width, rect.height));
+    }
   }
 
   /** Tô riêng đoạn có sự cố để mức vừa/cao hiện lần lượt vàng/đỏ trên tuyến màu xanh. */
@@ -521,6 +555,29 @@ export class LeafletMapController {
   }
 
   /** Marker A/B cho điểm đi/đến đã chọn nhưng chưa tính tuyến. */
+  /** Ghim giọt nước cho địa điểm đang xem chi tiết; chỉ vẽ lại khi đổi địa điểm. */
+  private drawFocus(place: Place | null) {
+    const key = place ? `${place.lat},${place.lng}` : '';
+    if (key === this.lastFocusKey) return;
+    this.lastFocusKey = key;
+    this.focusMarker?.remove();
+    this.focusMarker = null;
+    if (!place) return;
+    const icon = L.divIcon({
+      className: 'routetwin-focus-marker',
+      html: '<span></span>',
+      iconSize: [30, 40],
+      iconAnchor: [15, 38],
+    });
+    this.focusMarker = L.marker([place.lat, place.lng], { icon, keyboard: false, zIndexOffset: 900 })
+      .bindTooltip(this.textElement('span', place.name), {
+        direction: 'top',
+        offset: [0, -34],
+        className: 'routetwin-tooltip',
+      })
+      .addTo(this.map);
+  }
+
   private drawDraftStops({ origin, destination }: DraftStops) {
     if (origin) this.drawStopMarker(origin, 'A', COLORS.start);
     if (destination) this.drawStopMarker(destination, 'B', COLORS.end);

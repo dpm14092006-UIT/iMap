@@ -373,8 +373,13 @@ export function App() {
     () =>
       activePanel === 'directions'
         ? { origin: directions.origin, destination: directions.destination }
-        : { origin: null, destination: null },
-    [activePanel, directions.origin, directions.destination],
+        : {
+            origin: null,
+            destination: null,
+            // Quán/điểm POI đã có ghim riêng; địa chỉ, địa danh thì cần ghim đánh dấu.
+            focus: activePanel === 'place' && !selectedPoi ? selectedPlace : null,
+          },
+    [activePanel, directions.origin, directions.destination, selectedPlace, selectedPoi],
   );
 
   // Rời panel nhiều điểm thì bỏ kết quả tối ưu còn đang chờ, tránh vẽ đè tuyến của panel khác.
@@ -409,11 +414,26 @@ export function App() {
     if (key === 'traffic') setSelectedMapPoint(null);
   };
 
+  // Bay tới điểm khi bảng vừa mở đã báo chiều cao (handleSheetChange), để điểm không nằm khuất sau
+  // bảng trên điện thoại. Bảng đã mở sẵn (chiều cao không đổi) thì bay luôn; phòng hờ sau 400 ms.
+  const pendingFocus = useRef<{ point: LatLng; zoom: number | undefined } | null>(null);
+  const sheetOpenRef = useRef(false);
+  const flushFocus = useCallback(() => {
+    const pending = pendingFocus.current;
+    pendingFocus.current = null;
+    if (pending) mapController.current?.flyTo(pending.point, pending.zoom);
+  }, []);
+  const focusAfterPanel = (point: LatLng, zoom?: number) => {
+    pendingFocus.current = { point, zoom };
+    if (sheetOpenRef.current) flushFocus();
+    else window.setTimeout(flushFocus, 400);
+  };
+
   const openPlace = (place: Place, poi: Poi | null = null) => {
     setSelectedPlace(place);
     setSelectedPoi(poi);
     openPanel('place');
-    mapController.current?.flyTo(place);
+    focusAfterPanel(place);
   };
 
   /** "Tìm đường đến đây" từ panel chi tiết: điểm đến = địa điểm, điểm đi = GPS nếu đã định vị. */
@@ -751,6 +771,17 @@ export function App() {
     poi.request !== null && (activePanel === 'poi' || (activePanel === 'place' && selectedPoi !== null));
   const visiblePois = poiVisible ? poi.pois : NO_POIS;
 
+  // Có kết quả cho lượt tìm mới (đổi loại / từ khóa) thì thu bản đồ vừa các ghim gần nhất, chừa chỗ
+  // cho bảng kết quả. Kéo bản đồ / đổi bán kính không thu lại để khỏi giật bản đồ của người dùng.
+  const fittedPoiRequest = useRef<unknown>(null);
+  useEffect(() => {
+    const request = poi.request;
+    if (!poiVisible || request?.mode !== 'nearby' || poi.status !== 'ready' || poi.pois.length === 0) return;
+    if (fittedPoiRequest.current === request) return;
+    fittedPoiRequest.current = request;
+    mapController.current?.fitPoints(poi.pois.slice(0, 8));
+  }, [poiVisible, poi.request, poi.status, poi.pois]);
+
   const closePoi = () => {
     poi.close();
     setHighlightedPoiId(null);
@@ -846,20 +877,25 @@ export function App() {
   routeFitActiveRef.current = routeFitActive;
   const lastSheetInset = useRef<SheetState['inset']>(null);
   const sheetFitTimer = useRef<number | undefined>(undefined);
-  const handleSheetChange = useCallback((sheet: SheetState) => {
-    const controller = mapController.current;
-    if (!controller) return;
-    controller.setFitInsets(sheet.inset);
-    const previous = lastSheetInset.current;
-    if (!sheet.inset) return;
-    lastSheetInset.current = sheet.inset;
-    if (previous && previous.left === sheet.inset.left && previous.bottom === sheet.inset.bottom) return;
-    window.clearTimeout(sheetFitTimer.current);
-    // Đợi hết hiệu ứng đổi chiều cao (200ms) rồi mới zoom lại.
-    sheetFitTimer.current = window.setTimeout(() => {
-      if (routeFitActiveRef.current) mapController.current?.refit();
-    }, 260);
-  }, []);
+  const handleSheetChange = useCallback(
+    (sheet: SheetState) => {
+      const controller = mapController.current;
+      if (!controller) return;
+      controller.setFitInsets(sheet.inset);
+      sheetOpenRef.current = sheet.inset !== null;
+      if (sheet.inset) flushFocus();
+      const previous = lastSheetInset.current;
+      if (!sheet.inset) return;
+      lastSheetInset.current = sheet.inset;
+      if (previous && previous.left === sheet.inset.left && previous.bottom === sheet.inset.bottom) return;
+      window.clearTimeout(sheetFitTimer.current);
+      // Đợi hết hiệu ứng đổi chiều cao (200ms) rồi mới zoom lại.
+      sheetFitTimer.current = window.setTimeout(() => {
+        if (routeFitActiveRef.current) mapController.current?.refit();
+      }, 260);
+    },
+    [flushFocus],
+  );
   useEffect(() => () => window.clearTimeout(sheetFitTimer.current), []);
 
   const previewRoute = (route: RoutePlan) => {
@@ -1043,7 +1079,7 @@ export function App() {
           const point = navigationLocation ?? currentLocation;
           setSelectedMapPoint(point);
           openPanel('traffic');
-          if (point) mapController.current?.flyTo(point, 16);
+          if (point) focusAfterPanel(point, 16);
           else showToast('Đang chờ GPS để gắn báo cáo vào vị trí hiện tại.');
         }}
         onStop={stopNavigation}
