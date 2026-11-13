@@ -8,11 +8,13 @@ const SNAP_ORDER: Snap[] = ['peek', 'half', 'full'];
 const PEEK_PX = 96;
 /** Nấc nửa thấp hơn 50% để bản đồ (và tuyến) vẫn nhìn rõ phía trên. */
 const HALF_VH = 40;
-/** Chiều cao CSS của từng nấc; "đầy" là 92dvh tính từ đỉnh màn hình xuống. */
+/** Nấc "đầy" chừa trên cùng một dải bằng ô tìm kiếm (12px lề + 48px ô + 12px) để không đè lên nhau. */
+const FULL_TOP_PX = 72;
+/** Chiều cao CSS của từng nấc. */
 const SNAP_HEIGHT: Record<Snap, string> = {
   peek: `${PEEK_PX}px`,
   half: `${HALF_VH}dvh`,
-  full: 'calc(92dvh - var(--tab-h))',
+  full: `calc(100dvh - var(--tab-h) - ${FULL_TOP_PX}px)`,
 };
 /** Kéo ít hơn ngưỡng này (px) thì coi là chạm, không phải kéo. */
 const TAP_THRESHOLD = 5;
@@ -33,7 +35,7 @@ type SheetPanelProps = {
 
 /**
  * Panel chức năng: desktop/tablet là thẻ kính bên trái, mobile là bottom sheet kéo được
- * với 3 nấc (thu 96px / nửa 40dvh / đầy 92dvh).
+ * với 3 nấc (thu 96px / nửa 40dvh / đầy: sát dưới ô tìm kiếm).
  */
 export function SheetPanel({
   title,
@@ -117,7 +119,7 @@ export function SheetPanel({
       startY: event.clientY,
       startHeight: rect.height,
       minPx: PEEK_PX,
-      snaps: [PEEK_PX, (window.innerHeight * HALF_VH) / 100, window.innerHeight * 0.92 - tabHeight],
+      snaps: [PEEK_PX, (window.innerHeight * HALF_VH) / 100, window.innerHeight - tabHeight - FULL_TOP_PX],
       moved: false,
     };
   };

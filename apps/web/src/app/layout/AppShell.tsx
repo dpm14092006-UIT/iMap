@@ -68,6 +68,7 @@ export function AppShell({
       <main
         id="map"
         style={style}
+        data-sheet={sheet.isFull ? 'full' : undefined}
         className={`${dark ? 'dark' : ''} relative h-[100dvh] min-h-[560px] overflow-hidden bg-[#e8ece7] text-ink dark:bg-[#05070b] dark:text-slate-100`}
       >
         {map}

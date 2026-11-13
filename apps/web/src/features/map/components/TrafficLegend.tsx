@@ -55,7 +55,7 @@ export function TrafficLegend({ onHide }: TrafficLegendProps) {
           type="button"
           onClick={() => setExpanded(false)}
           aria-label="Thu gọn chú giải"
-          className="grid h-5 w-5 shrink-0 place-items-center rounded-full text-base leading-none text-ink-soft focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:text-slate-300"
+          className="-my-1.5 grid h-8 w-8 shrink-0 place-items-center rounded-full text-base leading-none text-ink-soft focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:text-slate-300"
         >
           ×
         </button>
@@ -66,7 +66,7 @@ export function TrafficLegend({ onHide }: TrafficLegendProps) {
         aria-checked="true"
         aria-label="Tắt lớp giao thông trực tiếp"
         onClick={onHide}
-        className="relative h-5 w-9 shrink-0 rounded-full bg-brand-gradient focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40"
+        className="relative h-5 w-9 shrink-0 rounded-full bg-brand-gradient before:absolute before:-inset-x-1 before:-inset-y-2.5 before:content-[''] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40"
       >
         <span className="absolute left-[18px] top-0.5 h-4 w-4 rounded-full bg-white shadow" />
       </button>

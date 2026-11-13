@@ -49,7 +49,12 @@ export type RouteOptimization = {
 };
 
 /** Điểm đi/đến đã chọn nhưng chưa tính tuyến, vẫn hiển thị marker A/B trên bản đồ. */
-export type DraftStops = { origin: Place | null; destination: Place | null };
+export type DraftStops = {
+  origin: Place | null;
+  destination: Place | null;
+  /** Địa điểm đang xem chi tiết (từ ô tìm kiếm / bấm bản đồ), vẽ ghim riêng kể cả khi có tuyến. */
+  focus?: Place | null;
+};
 
 /** Khung hình chữ nhật theo tọa độ (vùng dữ liệu của đồ thị OSM). */
 export type Bounds = { south: number; west: number; north: number; east: number };

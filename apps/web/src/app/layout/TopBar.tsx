@@ -95,7 +95,9 @@ export function TopBar({
           {userEmail ? userEmail.slice(0, 2).toUpperCase() : 'ĐN'}
         </a>
       </div>
-      <div className="min-w-0 basis-full md:basis-0 md:flex-1">{strip}</div>
+      <div data-topbar-strip="" className="min-w-0 basis-full md:basis-0 md:flex-1">
+        {strip}
+      </div>
     </header>
   );
 }

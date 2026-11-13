@@ -30,9 +30,9 @@ export function formatDurationShort(minutes: number): string {
   return `${hours}h${String(rest).padStart(2, '0')}`;
 }
 
-/** 47 -> "47 ph", 125 -> "2g05": nhãn gọn trên bản đồ điện thoại. */
+/** 47 -> "47 ph", 125 -> "2h05": nhãn gọn trên bản đồ điện thoại (cùng kiểu với thẻ phương tiện). */
 export function formatDurationCompact(minutes: number): string {
   const total = Math.max(1, Math.round(minutes));
   if (total < 60) return `${total} ph`;
-  return `${Math.floor(total / 60)}g${String(total % 60).padStart(2, '0')}`;
+  return `${Math.floor(total / 60)}h${String(total % 60).padStart(2, '0')}`;
 }
