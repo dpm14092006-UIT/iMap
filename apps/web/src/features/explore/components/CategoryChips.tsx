@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from '../../../shared/components/Icon';
 import { poiCatalog, poiCategoryOrder } from '../data/poiCatalog';
 import type { PoiCategory, PoiSearchTerm } from '../types';
-import { PoiTermInput } from './PoiTermInput';
 
 type CategoryChipsProps = { active: PoiCategory | null; onSelect: (term: PoiSearchTerm) => void };
 
@@ -50,7 +49,6 @@ export function CategoryChips({ active, onSelect }: CategoryChipsProps) {
         role="group"
         aria-label="Khám phá quanh đây"
       >
-        <PoiTermInput label="Tìm quanh đây" placeholder="Quanh đây…" onSubmit={onSelect} />
         {poiCategoryOrder.map((category) => {
           const meta = poiCatalog[category];
           const selected = active === category;

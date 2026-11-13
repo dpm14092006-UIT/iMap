@@ -4,7 +4,7 @@ import { AssistantAccessPanel } from '../features/auth/components/AssistantAcces
 import { useAuth } from '../features/auth/context/AuthProvider';
 import { AlongRouteSearch } from '../features/explore/components/AlongRouteSearch';
 import { AreaInsightCard, AreaInsightPill } from '../features/explore/components/AreaInsightCard';
-import { poiMetaFor, sameTerm } from '../features/explore/data/poiCatalog';
+import { poiCatalog, poiMetaFor, sameTerm, termFromText } from '../features/explore/data/poiCatalog';
 import { CategoryChips } from '../features/explore/components/CategoryChips';
 import { PoiResultsPanel } from '../features/explore/components/PoiResultsPanel';
 import { usePoiSearch } from '../features/explore/hooks/usePoiSearch';
@@ -936,6 +936,19 @@ export function App() {
           <TopBar
             getFocus={getMapCenter}
             onSelectPlace={openPlace}
+            buildSearchAction={(text) => {
+              // Một ô tìm kiếm cho cả hai việc: dòng đầu tìm theo loại/từ khóa quanh đây hoặc dọc tuyến.
+              const term = termFromText(text);
+              if (!term) return null;
+              const mode = alongRouteMode ? 'alongRoute' : 'nearby';
+              const what = term.category ? poiCatalog[term.category].label.toLowerCase() : `“${term.query}”`;
+              return {
+                label: `Tìm ${what} ${alongRouteMode ? 'dọc tuyến' : 'quanh đây'}`,
+                icon: term.category ? poiCatalog[term.category].icon : 'search',
+                preferred: Boolean(term.category),
+                onRun: () => startPoiSearch(mode, term),
+              };
+            }}
             updateAvailable={updateAvailable}
             onUpdate={reloadForUpdate}
             onInfo={() => showToast('Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.')}

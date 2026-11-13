@@ -14,6 +14,18 @@ function isSamePlace(a: PlaceSearchSuggestion, b: PlaceSearchSuggestion) {
   );
 }
 
+/** Dòng thao tác đứng đầu danh sách gợi ý, vd. "Tìm phở quanh đây". */
+export type ComboboxAction = {
+  label: string;
+  icon: IconName;
+  /**
+   * true: Enter luôn chạy dòng này (từ khóa khớp danh mục). false: chỉ khi không có địa điểm nào
+   * chứa đúng chữ đã gõ (có dấu), vd. "phở" không khớp "Đường Phó Đức Chính".
+   */
+  preferred: boolean;
+  onRun: () => void;
+};
+
 type PlaceComboboxProps = {
   value: string;
   getFocus?: () => LatLng;
@@ -29,6 +41,8 @@ type PlaceComboboxProps = {
   maxSuggestions?: number;
   /** Để nơi dùng focus ô nhập bằng phím tắt. */
   inputRef?: Ref<HTMLInputElement>;
+  /** Dòng thao tác đầu danh sách, dựng từ nội dung đang gõ; null thì không có. */
+  action?: ComboboxAction | null;
 };
 
 /**
@@ -48,6 +62,7 @@ export function PlaceCombobox({
   ariaLabel,
   maxSuggestions = 6,
   inputRef,
+  action = null,
 }: PlaceComboboxProps) {
   const listId = useId();
   const [open, setOpen] = useState(false);
@@ -68,6 +83,17 @@ export function PlaceCombobox({
     status,
     error: searchError,
   } = usePlaceSearch(value, focus, open, searchKind);
+
+  // Dòng thao tác được chọn sẵn (Enter chạy nó) khi từ khóa là danh mục, hoặc không địa điểm nào
+  // chứa đúng chữ đã gõ; ngược lại Enter chọn địa điểm đầu tiên.
+  const offset = action ? 1 : 0;
+  const typed = value.trim().toLocaleLowerCase('vi');
+  const preferAction =
+    action !== null &&
+    (action.preferred || !remotePlaces.some((place) => place.name.toLocaleLowerCase('vi').includes(typed)));
+  useEffect(() => {
+    setActiveIndex(preferAction ? 0 : offset);
+  }, [value, preferAction, offset]);
 
   // Gộp địa điểm có sẵn (ưu tiên) với kết quả từ API, bỏ trùng và giới hạn số lượng.
   const matches = useMemo(() => {
@@ -114,16 +140,26 @@ export function PlaceCombobox({
       if (event.key === 'Enter') event.preventDefault();
       return;
     }
-    if (!showList || matches.length === 0) return;
+    const total = matches.length + offset;
+    if (!showList || total === 0) return;
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       const step = event.key === 'ArrowDown' ? 1 : -1;
-      setActiveIndex((current) => (current + step + matches.length) % matches.length);
+      setActiveIndex((current) => (Math.min(current, total - 1) + step + total) % total);
     }
     if (event.key === 'Enter') {
       event.preventDefault();
-      void choose(matches[Math.min(activeIndex, matches.length - 1)]!);
+      const index = Math.min(activeIndex, total - 1);
+      if (action && index === 0) runAction(action);
+      else void choose(matches[index - offset]!);
     }
+  };
+
+  const runAction = (current: ComboboxAction) => {
+    selectionRef.current?.abort();
+    setResolving(false);
+    setOpen(false);
+    current.onRun();
   };
 
   /** Thông báo khi danh sách trống, tùy theo trạng thái gọi API. */
@@ -153,8 +189,10 @@ export function PlaceCombobox({
         aria-label={ariaLabel}
         aria-autocomplete="list"
         aria-controls={listId}
-        aria-expanded={showList && matches.length > 0}
-        aria-activedescendant={showList && matches[activeIndex] ? `${listId}-${activeIndex}` : undefined}
+        aria-expanded={showList && matches.length + offset > 0}
+        aria-activedescendant={
+          showList && activeIndex < matches.length + offset ? `${listId}-${activeIndex}` : undefined
+        }
         autoComplete="off"
         className={`h-12 w-full rounded-xl border border-slate-200 bg-slate-50/80 text-sm text-slate-800 outline-none transition placeholder:text-slate-500 hover:border-slate-300 dark:hover:border-white/20 focus:border-brand-500 dark:focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-brand-100 dark:border-white/15 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-slate-800 dark:focus:ring-brand-500/30 ${icon ? 'pl-10' : 'pl-3'} pr-3 ${inputClassName}`}
         onChange={(event) => {
@@ -163,7 +201,6 @@ export function PlaceCombobox({
           setSelectionError('');
           if (getFocus) setFocus(getFocus());
           onChange(event.target.value);
-          setActiveIndex(0);
           setOpen(true);
         }}
         onFocus={() => {
@@ -181,7 +218,7 @@ export function PlaceCombobox({
         </p>
       )}
       {showList && (
-        <div className="absolute left-0 right-0 top-[calc(100%+7px)] z-[80] overflow-hidden rounded-2xl border border-slate-100 bg-white p-1.5 shadow-float dark:shadow-float-dark dark:border-white/10 dark:bg-slate-800">
+        <div className="absolute left-0 right-0 top-[calc(100%+7px)] z-[80] max-h-[min(70dvh,560px)] overflow-y-auto overscroll-contain rounded-2xl border border-slate-100 bg-white p-1.5 shadow-float dark:shadow-float-dark dark:border-white/10 dark:bg-slate-800">
           <div
             className="mb-1 flex gap-1 border-b border-slate-100 dark:border-white/10 p-1"
             role="group"
@@ -205,43 +242,67 @@ export function PlaceCombobox({
               </button>
             ))}
           </div>
-          {matches.length > 0 ? (
+          {matches.length + offset > 0 && (
             <div id={listId} role="listbox" aria-label="Gợi ý địa điểm">
-              {matches.map((place, index) => (
+              {action && (
                 <button
-                  key={place.id}
-                  id={`${listId}-${index}`}
+                  id={`${listId}-0`}
                   type="button"
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-slate-50 focus:outline-none dark:hover:bg-white/10 ${index === activeIndex ? 'bg-slate-50 dark:bg-white/10' : ''}`}
-                  onMouseDown={(event) => event.preventDefault()} // giữ focus ở input khi click
-                  onMouseEnter={() => setActiveIndex(index)}
-                  onClick={() => {
-                    void choose(place);
-                  }}
-                  disabled={resolving}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-slate-50 focus:outline-none dark:hover:bg-white/10 ${activeIndex === 0 ? 'bg-slate-50 dark:bg-white/10' : ''}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onMouseEnter={() => setActiveIndex(0)}
+                  onClick={() => runAction(action)}
                   role="option"
-                  aria-selected={index === activeIndex}
+                  aria-selected={activeIndex === 0}
                 >
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/20 dark:text-brand-200">
-                    <Icon name="pin" size={17} />
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-gradient text-white">
+                    <Icon name={action.icon} size={17} />
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-semibold text-ink dark:text-white">
-                      {place.name}
-                    </span>
-                    <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">
-                      {place.address}
-                    </span>
+                  <span className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-snug text-brand-700 dark:text-brand-200">
+                    {action.label}
                   </span>
-                  <Icon
-                    name="arrow-up-right"
-                    size={15}
-                    className="shrink-0 text-slate-400 dark:text-slate-500"
-                  />
+                  <Icon name="search" size={15} className="shrink-0 text-slate-400 dark:text-slate-500" />
                 </button>
-              ))}
+              )}
+              {matches.map((place, placeIndex) => {
+                const index = placeIndex + offset;
+                return (
+                  <button
+                    key={place.id}
+                    id={`${listId}-${index}`}
+                    type="button"
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-slate-50 focus:outline-none dark:hover:bg-white/10 ${index === activeIndex ? 'bg-slate-50 dark:bg-white/10' : ''}`}
+                    onMouseDown={(event) => event.preventDefault()} // giữ focus ở input khi click
+                    onMouseEnter={() => setActiveIndex(index)}
+                    onClick={() => {
+                      void choose(place);
+                    }}
+                    disabled={resolving}
+                    role="option"
+                    aria-selected={index === activeIndex}
+                  >
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/20 dark:text-brand-200">
+                      <Icon name="pin" size={17} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13px] font-semibold text-ink dark:text-white">
+                        {place.name}
+                      </span>
+                      <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">
+                        {place.address}
+                      </span>
+                    </span>
+                    <Icon
+                      name="arrow-up-right"
+                      size={15}
+                      className="shrink-0 text-slate-400 dark:text-slate-500"
+                    />
+                  </button>
+                );
+              })}
             </div>
-          ) : (
+          )}
+          {matches.length === 0 && (
             <p className="px-3 py-3 text-xs leading-5 text-slate-500 dark:text-slate-400">{emptyMessage}</p>
           )}
           {matches.length === 0 && status === 'ready' && /^\d[\dA-Za-z/-]*\s+/.test(value.trim()) && (
