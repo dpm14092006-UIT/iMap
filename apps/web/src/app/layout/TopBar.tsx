@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Icon } from '../../shared/components/Icon';
+import type { ComboboxAction } from '../../features/places/components/PlaceCombobox';
 import { PlaceSearchBar } from '../../features/places/components/PlaceSearchBar';
 import type { LatLng, Place } from '../../features/places/types';
 import { BrandMark } from './BrandMark';
@@ -7,6 +8,8 @@ import { BrandMark } from './BrandMark';
 type TopBarProps = {
   getFocus: () => LatLng;
   onSelectPlace: (place: Place) => void;
+  /** Dòng "Tìm … quanh đây / dọc tuyến" trong gợi ý của ô tìm kiếm. */
+  buildSearchAction?: (query: string) => ComboboxAction | null;
   /** Hàng chip danh mục hoặc thanh "Tìm dọc tuyến". */
   strip: ReactNode;
   updateAvailable: boolean;
@@ -22,6 +25,7 @@ const roundButton =
 export function TopBar({
   getFocus,
   onSelectPlace,
+  buildSearchAction,
   strip,
   updateAvailable,
   onUpdate,
@@ -50,7 +54,12 @@ export function TopBar({
     <header className="pointer-events-none absolute left-3 right-3 top-3 z-40 flex flex-wrap items-center gap-x-3 gap-y-2 md:left-[80px] lg:left-[88px] [&>*]:pointer-events-auto">
       <BrandMark className="md:hidden" />
       <div className="min-w-0 flex-1 md:w-[360px] md:flex-none lg:w-[400px]">
-        <PlaceSearchBar getFocus={getFocus} onSelect={onSelectPlace} inputRef={input} />
+        <PlaceSearchBar
+          getFocus={getFocus}
+          onSelect={onSelectPlace}
+          inputRef={input}
+          {...(buildSearchAction ? { buildAction: buildSearchAction } : {})}
+        />
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-2 md:order-last">
         {updateAvailable && (

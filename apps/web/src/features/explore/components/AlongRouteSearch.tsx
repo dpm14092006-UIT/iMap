@@ -1,14 +1,13 @@
 import { Icon } from '../../../shared/components/Icon';
 import { alongRouteCategories, poiCatalog } from '../data/poiCatalog';
 import type { PoiCategory, PoiSearchTerm } from '../types';
-import { PoiTermInput } from './PoiTermInput';
 
 type AlongRouteSearchProps = {
   active: PoiCategory | null;
   onSelect: (term: PoiSearchTerm) => void;
 };
 
-/** Thanh nổi "Tìm dọc tuyến…" nhận mọi từ khóa, kèm chip Xăng, Sạc EV, Ăn uống, Cà phê, Khách sạn. */
+/** Chip tìm dọc tuyến: Xăng, Sạc EV, Ăn uống, Cà phê, Khách sạn (từ khóa tự do gõ ở ô tìm kiếm chính). */
 export function AlongRouteSearch({ active, onSelect }: AlongRouteSearchProps) {
   return (
     <div
@@ -16,7 +15,6 @@ export function AlongRouteSearch({ active, onSelect }: AlongRouteSearchProps) {
       role="group"
       aria-label="Tìm dọc tuyến"
     >
-      <PoiTermInput label="Tìm dọc tuyến" placeholder="Dọc tuyến…" onSubmit={onSelect} />
       {alongRouteCategories.map((category) => {
         const meta = poiCatalog[category];
         const selected = active === category;

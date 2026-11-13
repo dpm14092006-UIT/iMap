@@ -1,19 +1,21 @@
 import { useState, type Ref } from 'react';
 import { popularPlaces } from '../data/popularPlaces';
 import type { LatLng, Place } from '../types';
-import { PlaceCombobox } from './PlaceCombobox';
+import { PlaceCombobox, type ComboboxAction } from './PlaceCombobox';
 
 type PlaceSearchBarProps = {
   getFocus?: () => LatLng;
   onSelect: (place: Place) => void;
   inputRef?: Ref<HTMLInputElement>;
+  /** Dựng dòng "Tìm … quanh đây / dọc tuyến" từ nội dung đang gõ. */
+  buildAction?: (query: string) => ComboboxAction | null;
 };
 
 /** Hiển thị gợi ý phím tắt trong ô tìm kiếm: "/" ở mọi nơi, ⌘K / Ctrl K cũng được. */
 const isApple = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 
 /** Command search ở thanh trên: chọn địa điểm để xem chi tiết trên bản đồ. */
-export function PlaceSearchBar({ onSelect, getFocus, inputRef }: PlaceSearchBarProps) {
+export function PlaceSearchBar({ onSelect, getFocus, inputRef, buildAction }: PlaceSearchBarProps) {
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
 
@@ -33,6 +35,7 @@ export function PlaceSearchBar({ onSelect, getFocus, inputRef }: PlaceSearchBarP
           onSelect(place);
         }}
         places={popularPlaces}
+        action={buildAction?.(query) ?? null}
         placeholder="Tìm địa điểm, đường hoặc địa chỉ"
         value={query}
       />
