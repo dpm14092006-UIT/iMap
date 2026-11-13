@@ -50,6 +50,9 @@ const SEVERITY_COLORS: Record<TrafficSeverity, string> = {
 const HALO_RADIUS_METERS: Record<TrafficSeverity, number> = { low: 200, medium: 280, high: 360 };
 /** Số đoạn dùng để mô phỏng dải màu gradient dọc theo tuyến (Leaflet không hỗ trợ gradient). */
 const GRADIENT_SEGMENTS = 28;
+/** Nét bo tròn hai đầu và chỗ gấp, dùng cho mọi đường vẽ trên bản đồ. */
+const ROUND = { lineCap: 'round', lineJoin: 'round' } as const;
+const toLatLngs = (points: Coordinate[]) => points.map(([lat, lng]) => L.latLng(lat, lng));
 /** Dưới ngưỡng này (px) là điện thoại: nhãn tuyến rút gọn, chừa chỗ cho bảng kéo ở đáy. */
 const MOBILE_QUERY = '(max-width: 767px)';
 /** Vùng bản đồ bị giao diện nổi che (px, tính từ mép khung bản đồ). */
@@ -86,7 +89,7 @@ export type MapControllerData = {
  * React chỉ gọi các method public; mọi chi tiết Leaflet nằm trong class này.
  */
 export class LeafletMapController {
-  readonly map: L.Map;
+  private readonly map: L.Map;
   private readonly streets: L.TileLayer;
   private readonly imagery: L.TileLayer;
   private readonly terrain: L.TileLayer;
@@ -340,21 +343,13 @@ export class LeafletMapController {
   private drawRoute(route: RoutePlan, isNavigating: boolean, showCongestion = false) {
     const congestion = showCongestion && route.congestion?.segments.length ? route.congestion : null;
     for (const leg of route.legs) {
-      const points = leg.points.map(([lat, lng]) => L.latLng(lat, lng));
+      const points = toLatLngs(leg.points);
       if (points.length < 2) continue;
       if (congestion && route.legs.length === 1) {
         this.drawCongestionLine(leg.points, congestion.segments);
         continue;
       }
-      // Viền trắng dày bên dưới để tuyến nổi trên mọi nền bản đồ.
-      L.polyline(points, {
-        color: '#fff',
-        weight: 10,
-        opacity: 0.94,
-        lineCap: 'round',
-        lineJoin: 'round',
-        interactive: false,
-      }).addTo(this.routeLayer);
+      this.drawWhiteCasing(points, this.routeLayer);
       this.drawGradientLine(points);
     }
     route.stops.forEach((place, index) => {
@@ -366,6 +361,13 @@ export class LeafletMapController {
     });
   }
 
+  /** Viền trắng dày bên dưới để tuyến (hoặc đoạn sự cố) nổi trên mọi nền bản đồ. */
+  private drawWhiteCasing(points: L.LatLngExpression[], layer: L.LayerGroup) {
+    L.polyline(points, { ...ROUND, color: '#fff', weight: 10, opacity: 0.94, interactive: false }).addTo(
+      layer,
+    );
+  }
+
   /**
    * Tuyến chọn kiểu Google Maps: viền tối bên dưới, mỗi đoạn tô theo mức ùn tắc VietMap.
    * Đoạn 'unknown' giữ dải màu thương hiệu của tuyến thường.
@@ -375,14 +377,15 @@ export class LeafletMapController {
     segments: NonNullable<RoutePlan['congestion']>['segments'],
   ) {
     const parts = splitRouteByCongestion(coordinates, segments);
-    const all = coordinates.map(([lat, lng]) => L.latLng(lat, lng));
-    const casing = { lineCap: 'round', lineJoin: 'round', interactive: false } as const;
-    L.polyline(all, { ...casing, color: '#1e293b', weight: 10.5, opacity: 0.92 }).addTo(this.routeLayer);
+    const casing = { ...ROUND, interactive: false } as const;
+    L.polyline(toLatLngs(coordinates), { ...casing, color: '#1e293b', weight: 10.5, opacity: 0.92 }).addTo(
+      this.routeLayer,
+    );
     // Mức nặng vẽ sau cùng để không bị đoạn thoáng liền kề che chỗ nối.
     [...parts]
       .sort((a, b) => CONGESTION_RANK[a.level] - CONGESTION_RANK[b.level])
       .forEach(({ level, points }) => {
-        const latLngs = points.map(([lat, lng]) => L.latLng(lat, lng));
+        const latLngs = toLatLngs(points);
         const color = CONGESTION_COLORS[level];
         if (color) L.polyline(latLngs, { ...casing, color, weight: 6, opacity: 1 }).addTo(this.routeLayer);
         else this.drawGradientLine(latLngs);
@@ -400,11 +403,10 @@ export class LeafletMapController {
         Math.round(start + (COLORS.routeTo[channel]! - start) * ratio),
       );
       L.polyline(points.slice(from, to + 1), {
+        ...ROUND,
         color: `rgb(${color.join(',')})`,
         weight: 5.5,
         opacity: 1,
-        lineCap: 'round',
-        lineJoin: 'round',
         interactive: false,
       }).addTo(this.routeLayer);
     }
@@ -415,24 +417,17 @@ export class LeafletMapController {
     for (const route of routes) {
       if (route.id === selectedId) continue;
       for (const leg of route.legs) {
-        const points = leg.points.map(([lat, lng]) => L.latLng(lat, lng));
+        const points = toLatLngs(leg.points);
         if (points.length < 2) continue;
         // Viền xám đậm giúp nét phụ nổi trên cả nền sáng lẫn nền tối.
         L.polyline(points, {
+          ...ROUND,
           color: '#475569',
           weight: 9,
           opacity: 0.55,
-          lineCap: 'round',
-          lineJoin: 'round',
           interactive: false,
         }).addTo(this.routeLayer);
-        L.polyline(points, {
-          color: COLORS.alternative,
-          weight: 5.5,
-          opacity: 0.95,
-          lineCap: 'round',
-          lineJoin: 'round',
-        })
+        L.polyline(points, { ...ROUND, color: COLORS.alternative, weight: 5.5, opacity: 0.95 })
           .on('click', (event) => {
             L.DomEvent.stopPropagation(event);
             this.handlers.onSelectRoute?.(route.id);
@@ -443,10 +438,13 @@ export class LeafletMapController {
           for (const part of splitRouteByCongestion(leg.points, route.congestion.segments)) {
             const color = CONGESTION_COLORS[part.level];
             if (!color) continue;
-            L.polyline(
-              part.points.map(([lat, lng]) => L.latLng(lat, lng)),
-              { color, weight: 2.5, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false },
-            ).addTo(this.routeLayer);
+            L.polyline(toLatLngs(part.points), {
+              ...ROUND,
+              color,
+              weight: 2.5,
+              opacity: 1,
+              interactive: false,
+            }).addTo(this.routeLayer);
           }
         }
       }
@@ -535,26 +533,17 @@ export class LeafletMapController {
       if (typeof lat !== 'number' || typeof lng !== 'number') continue;
       const section = routeHazardSection(route, { lat, lng });
       if (!section || section.distanceMeters > 180 || section.points.length < 2) continue;
+      this.drawWhiteCasing(section.points, this.routeTrafficLayer);
       L.polyline(section.points, {
-        color: '#fff',
-        weight: 10,
-        opacity: 0.94,
-        lineCap: 'round',
-        lineJoin: 'round',
-        interactive: false,
-      }).addTo(this.routeTrafficLayer);
-      L.polyline(section.points, {
+        ...ROUND,
         color: SEVERITY_COLORS[feature.properties.severity],
         weight: 5.5,
         opacity: 1,
-        lineCap: 'round',
-        lineJoin: 'round',
         interactive: false,
       }).addTo(this.routeTrafficLayer);
     }
   }
 
-  /** Marker A/B cho điểm đi/đến đã chọn nhưng chưa tính tuyến. */
   /** Ghim giọt nước cho địa điểm đang xem chi tiết; chỉ vẽ lại khi đổi địa điểm. */
   private drawFocus(place: Place | null) {
     const key = place ? `${place.lat},${place.lng}` : '';
@@ -578,6 +567,7 @@ export class LeafletMapController {
       .addTo(this.map);
   }
 
+  /** Marker A/B cho điểm đi/đến đã chọn nhưng chưa tính tuyến. */
   private drawDraftStops({ origin, destination }: DraftStops) {
     if (origin) this.drawStopMarker(origin, 'A', COLORS.start);
     if (destination) this.drawStopMarker(destination, 'B', COLORS.end);
@@ -611,9 +601,7 @@ export class LeafletMapController {
         path.algorithm === 'dijkstra'
           ? { color: COLORS.dijkstra, weight: 8, opacity: 0.55 }
           : { color: COLORS.astar, weight: 4, opacity: 0.95, dashArray: '8 7' };
-      L.polyline(path.points, { ...style, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(
-        this.algorithmLayer,
-      );
+      L.polyline(path.points, { ...style, ...ROUND, interactive: false }).addTo(this.algorithmLayer);
     }
   }
 

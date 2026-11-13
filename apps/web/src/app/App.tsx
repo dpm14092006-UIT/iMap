@@ -283,6 +283,10 @@ export function App() {
     setFollowPaused(false);
     if (navigationLocation) mapController.current?.followLocation(navigationLocation);
   }, [navigationLocation]);
+  /** Nút bản đồ (zoom, toàn Việt Nam) lúc dẫn đường cũng là xem trước: thôi bám vị trí. */
+  const pauseFollowIfNavigating = () => {
+    if (!isNavigationIdle) setFollowPaused(true);
+  };
   const previewNavigationRoute = useCallback(() => {
     if (!navigationRoute) return;
     setFollowPaused(true);
@@ -303,13 +307,7 @@ export function App() {
     activePanel === 'traffic' || Boolean(navigationRoute ?? activeRoute),
     onRealtimeTrafficReport,
   );
-  const directions = useDirections({
-    routeApi,
-    activeRoute,
-    onRouteChange: setActiveRoute,
-    initialOrigin: null,
-    initialDestination: null,
-  });
+  const directions = useDirections({ routeApi, activeRoute, onRouteChange: setActiveRoute });
   const reportVehicle = navigationRoute?.vehicle ?? activeRoute?.vehicle ?? directions.vehicle;
   const visibleReports = useMemo(
     () => reports.filter((report) => report.vehicleScope === 'both' || report.vehicleScope === reportVehicle),
@@ -683,6 +681,12 @@ export function App() {
   };
 
   // --- Giao thông (N2): gửi và xác minh báo cáo qua API, yêu cầu đăng nhập ---
+  /** Chưa đăng nhập thì mở bảng đăng nhập và báo lỗi cho panel giao thông hiển thị. */
+  const requireSignIn = (message: string) => {
+    if (accessToken) return;
+    setAuthOpen(true);
+    throw new Error(message);
+  };
   const reportIncident = async (
     type: IncidentKind,
     severity: IncidentSeverity,
@@ -691,10 +695,7 @@ export function App() {
     note: string,
     photo: File | null,
   ) => {
-    if (!accessToken) {
-      setAuthOpen(true);
-      throw new Error('Đăng nhập để gửi báo cáo.');
-    }
+    requireSignIn('Đăng nhập để gửi báo cáo.');
     const report = await createTrafficReport(
       {
         incidentType: type,
@@ -716,10 +717,7 @@ export function App() {
   };
 
   const verifyIncident = async (id: string, state: 'clear' | 'still_active') => {
-    if (!accessToken) {
-      setAuthOpen(true);
-      throw new Error('Đăng nhập để xác minh báo cáo.');
-    }
+    requireSignIn('Đăng nhập để xác minh báo cáo.');
     await updateClearance(id, state);
   };
 
@@ -782,9 +780,13 @@ export function App() {
     mapController.current?.fitPoints(poi.pois.slice(0, 8));
   }, [poiVisible, poi.request, poi.status, poi.pois]);
 
-  const closePoi = () => {
+  /** Bỏ lượt tìm POI hiện tại (ghim và highlight), không đổi panel. */
+  const dismissPoi = () => {
     poi.close();
     setHighlightedPoiId(null);
+  };
+  const closePoi = () => {
+    dismissPoi();
     if (activePanel === 'poi') closePanel();
   };
 
@@ -819,10 +821,13 @@ export function App() {
   };
 
   const directionsToPoi = (item: Poi) => {
-    poi.close();
-    setHighlightedPoiId(null);
+    dismissPoi();
     openDirections(placeFromPoi(item));
   };
+
+  /** Các điểm ghé đã chọn trong panel chỉ đường (bỏ ô còn trống). */
+  const waypointPlaces = () =>
+    directions.waypoints.flatMap((waypoint) => (waypoint.place ? [waypoint.place] : []));
 
   /** Chèn POI làm điểm ghé giữa điểm đi và đến (theo vị trí dọc tuyến), tính lại tuyến rồi về panel chỉ đường. */
   const addPoiStop = async (item: Poi) => {
@@ -830,14 +835,10 @@ export function App() {
     if (!origin || !destination || !route) return;
     const path = route.legs.flatMap((leg) => leg.points);
     const stop = placeFromPoi(item);
-    const via = [
-      ...directions.waypoints.flatMap((waypoint) => (waypoint.place ? [waypoint.place] : [])),
-      stop,
-    ]
+    const via = [...waypointPlaces(), stop]
       .filter((place, index, all) => all.findIndex((other) => other.id === place.id) === index)
       .sort((a, b) => progressAlongPath(path, a) - progressAlongPath(path, b));
-    poi.close();
-    setHighlightedPoiId(null);
+    dismissPoi();
     openPanel('directions');
     const result = await directions.open({
       origin,
@@ -857,10 +858,7 @@ export function App() {
 
   /** "+ Thêm điểm đến": chuyển sang luồng nhiều điểm, mang theo điểm đi và các điểm đã chọn. */
   const continueInMultiStop = () => {
-    const stops = [
-      ...directions.waypoints.flatMap((waypoint) => (waypoint.place ? [waypoint.place] : [])),
-      ...(directions.destination ? [directions.destination] : []),
-    ];
+    const stops = [...waypointPlaces(), ...(directions.destination ? [directions.destination] : [])];
     setMultiSeed((current) => ({
       key: current.key + 1,
       initialStops: { start: directions.origin, stops },
@@ -1029,16 +1027,16 @@ export function App() {
         <MapControls
           showZoom={!isNavigationIdle}
           onShowVietnam={() => {
-            if (!isNavigationIdle) setFollowPaused(true);
+            pauseFollowIfNavigating();
             mapController.current?.showVietnam();
           }}
           onLocate={() => (isNavigationIdle ? void locateOnMap() : recenterNavigation())}
           onZoomIn={() => {
-            if (!isNavigationIdle) setFollowPaused(true);
+            pauseFollowIfNavigating();
             mapController.current?.zoomIn();
           }}
           onZoomOut={() => {
-            if (!isNavigationIdle) setFollowPaused(true);
+            pauseFollowIfNavigating();
             mapController.current?.zoomOut();
           }}
         />
@@ -1196,8 +1194,7 @@ export function App() {
           {...(poi.request.mode === 'alongRoute'
             ? {
                 onBack: () => {
-                  poi.close();
-                  setHighlightedPoiId(null);
+                  dismissPoi();
                   openPanel('directions');
                 },
               }

@@ -5,6 +5,7 @@ import type { GeoFocus, PlaceSearchProvider } from '../../application/ports/Plac
 import {
   invalidPlaceResponse,
   requestVietmapPlaces,
+  vietmapPointSchema,
   type VietmapPlaceEndpoint,
 } from './vietmapPlaceRequest.js';
 
@@ -12,13 +13,6 @@ const suggestionSchema = z.object({
   ref_id: z.string().min(1),
   name: z.string(),
   address: z.string(),
-  display: z.string().optional(),
-});
-const pointSchema = z.object({
-  lat: z.number().finite().min(-90).max(90),
-  lng: z.number().finite().min(-180).max(180),
-  name: z.string().optional(),
-  address: z.string().optional(),
   display: z.string().optional(),
 });
 function normalized(value: string) {
@@ -60,7 +54,7 @@ export class VietmapPlaceSearchProvider implements PlaceSearchProvider {
     };
     const parse = (payload: unknown) => {
       const data = z.array(suggestionSchema).safeParse(payload);
-      if (!data.success) throw this.invalidResponse();
+      if (!data.success) throw invalidPlaceResponse();
       // Do not offer an unrelated house number as if it matched the requested address.
       const house = kind === 'street' ? undefined : query.trim().match(/^(\d[\dA-Za-z/-]*)\s+/)?.[1];
       return data.data.filter(
@@ -83,8 +77,8 @@ export class VietmapPlaceSearchProvider implements PlaceSearchProvider {
   }
 
   async resolve(id: string): Promise<PlaceSuggestion> {
-    const data = pointSchema.safeParse(await this.request('place', { refid: id }));
-    if (!data.success) throw this.invalidResponse();
+    const data = vietmapPointSchema.safeParse(await this.request('place', { refid: id }));
+    if (!data.success) throw invalidPlaceResponse();
     return {
       id,
       name: data.data.name || data.data.address || data.data.display || 'Địa điểm',
@@ -96,14 +90,14 @@ export class VietmapPlaceSearchProvider implements PlaceSearchProvider {
   }
 
   async reverse(point: GeoFocus): Promise<PlaceSuggestion | null> {
-    const data = z.array(pointSchema.extend({ ref_id: z.string() })).safeParse(
+    const data = z.array(vietmapPointSchema.extend({ ref_id: z.string() })).safeParse(
       await this.request('reverse', {
         lat: String(point.lat),
         lng: String(point.lng),
         display_type: '6',
       }),
     );
-    if (!data.success) throw this.invalidResponse();
+    if (!data.success) throw invalidPlaceResponse();
     const item = data.data[0];
     return item
       ? {
@@ -115,10 +109,6 @@ export class VietmapPlaceSearchProvider implements PlaceSearchProvider {
           source: 'vietmap',
         }
       : null;
-  }
-
-  private invalidResponse() {
-    return invalidPlaceResponse();
   }
 
   private request(endpoint: VietmapPlaceEndpoint, params: Record<string, string>): Promise<unknown> {

@@ -48,6 +48,57 @@ const severityOptions: { id: IncidentSeverity; label: string; color: string }[] 
   { id: 'high', label: 'Nặng', color: 'bg-red-500' },
 ];
 
+const confidenceLabels: Record<TrafficImageAnalysisDto['confidence'], string> = {
+  high: 'cao',
+  medium: 'vừa',
+  low: 'thấp',
+};
+
+const vehicleScopeLabels: Record<TrafficVehicleScope, string> = {
+  motorcycle: 'Xe máy',
+  car: 'Ô tô',
+  both: 'Cả hai',
+};
+
+const PHOTO_TYPES = 'image/jpeg,image/png,image/webp';
+
+/** Nút chọn ảnh dạng label bọc input file ẩn; `capture` mở thẳng camera trên điện thoại. */
+function PhotoPicker({
+  label,
+  icon,
+  capture,
+  disabled,
+  className,
+  onPick,
+}: {
+  label: string;
+  icon: 'camera' | 'upload';
+  capture?: boolean;
+  disabled: boolean;
+  className: string;
+  onPick: (file: File | undefined) => void;
+}) {
+  return (
+    <label
+      className={`inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-[11px] font-semibold transition focus-within:ring-4 ${className}`}
+    >
+      <Icon name={icon} size={icon === 'camera' ? 15 : 14} />
+      {label}
+      <input
+        type="file"
+        accept={PHOTO_TYPES}
+        {...(capture ? { capture: 'environment' as const } : {})}
+        disabled={disabled}
+        className="sr-only"
+        onChange={(event) => {
+          onPick(event.target.files?.[0]);
+          event.currentTarget.value = '';
+        }}
+      />
+    </label>
+  );
+}
+
 type TrafficReportPanelProps = {
   incidents: DemoIncident[];
   selectedPoint: { lat: number; lng: number } | null;
@@ -159,7 +210,7 @@ export function TrafficReportPanel({
     setActionMessage('');
     setActionError('');
     setImageAnalysis(null);
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    if (!PHOTO_TYPES.split(',').includes(file.type)) {
       setActionError('Ảnh phải có định dạng JPG, PNG hoặc WebP.');
       return;
     }
@@ -294,13 +345,7 @@ export function TrafficReportPanel({
           role="group"
           aria-label="Loại xe áp dụng báo cáo"
         >
-          {(
-            [
-              ['motorcycle', 'Xe máy'],
-              ['car', 'Ô tô'],
-              ['both', 'Cả hai'],
-            ] as const
-          ).map(([scope, label]) => (
+          {(['motorcycle', 'car', 'both'] as const).map((scope) => (
             <button
               key={scope}
               type="button"
@@ -308,7 +353,7 @@ export function TrafficReportPanel({
               onClick={() => setVehicleScope(scope)}
               className={`rounded-md px-1.5 py-1.5 text-[11px] font-semibold transition ${vehicleScope === scope ? 'bg-white dark:bg-slate-800/60 text-brand-700 dark:text-indigo-300 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-ink dark:hover:text-slate-100'}`}
             >
-              {label}
+              {vehicleScopeLabels[scope]}
             </button>
           ))}
         </div>
@@ -333,35 +378,21 @@ export function TrafficReportPanel({
           <span className="text-[11px] text-slate-400 dark:text-slate-500">Tối đa 5 MB</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          <label className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-brand-50 dark:bg-indigo-400/10 px-3 text-[11px] font-semibold text-brand-700 dark:text-indigo-300 transition hover:bg-brand-100 dark:hover:bg-indigo-400/20 focus-within:ring-4 focus-within:ring-brand-100 dark:focus-within:ring-indigo-400/25">
-            <Icon name="camera" size={15} />
-            Chụp ảnh
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              capture="environment"
-              disabled={Boolean(analysisTask) || busy}
-              className="sr-only"
-              onChange={(event) => {
-                selectPhoto(event.target.files?.[0]);
-                event.currentTarget.value = '';
-              }}
-            />
-          </label>
-          <label className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/50 px-3 text-[11px] font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-200 dark:hover:bg-white/15 focus-within:ring-4 focus-within:ring-slate-200 dark:focus-within:ring-white/10">
-            <Icon name="upload" size={14} />
-            Chọn ảnh
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              disabled={Boolean(analysisTask) || busy}
-              className="sr-only"
-              onChange={(event) => {
-                selectPhoto(event.target.files?.[0]);
-                event.currentTarget.value = '';
-              }}
-            />
-          </label>
+          <PhotoPicker
+            label="Chụp ảnh"
+            icon="camera"
+            capture
+            disabled={Boolean(analysisTask) || busy}
+            onPick={selectPhoto}
+            className="bg-brand-50 text-brand-700 hover:bg-brand-100 focus-within:ring-brand-100 dark:bg-indigo-400/10 dark:text-indigo-300 dark:hover:bg-indigo-400/20 dark:focus-within:ring-indigo-400/25"
+          />
+          <PhotoPicker
+            label="Chọn ảnh"
+            icon="upload"
+            disabled={Boolean(analysisTask) || busy}
+            onPick={selectPhoto}
+            className="bg-slate-100 text-slate-700 hover:bg-slate-200 focus-within:ring-slate-200 dark:bg-slate-700/50 dark:text-slate-200 dark:hover:bg-white/15 dark:focus-within:ring-white/10"
+          />
         </div>
         <p className="mt-2 text-[11px] leading-4 text-slate-400 dark:text-slate-500">
           Trên điện thoại, nút Chụp ảnh sẽ mở camera. Ảnh chỉ được lưu cùng báo cáo khi bạn bấm Gửi báo cáo.
@@ -395,43 +426,39 @@ export function TrafficReportPanel({
             <p className="mb-2 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
               Hỗ trợ từ AI <span className="font-normal text-slate-400 dark:text-slate-500">(tùy chọn)</span>
             </p>
-            <>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <button
-                  type="button"
-                  aria-busy={analysisTask === 'incident'}
-                  disabled={Boolean(analysisTask) || busy || aiStatus !== 'ready'}
-                  onClick={() => void analyzePhoto('incident')}
-                  className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-brand-200 dark:border-indigo-300/25 bg-brand-50 dark:bg-indigo-400/10 px-2 text-[11px] font-semibold text-brand-700 dark:text-indigo-300 hover:bg-brand-100 dark:hover:bg-indigo-400/20 disabled:opacity-50"
-                >
-                  {analysisTask === 'incident' ? 'Đang phân tích…' : 'Gợi ý loại sự cố'}
-                </button>
-                <button
-                  type="button"
-                  aria-busy={analysisTask === 'traffic_sign'}
-                  disabled={Boolean(analysisTask) || busy || aiStatus !== 'ready'}
-                  onClick={() => void analyzePhoto('traffic_sign')}
-                  className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/60 px-2 text-[11px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50"
-                >
-                  {analysisTask === 'traffic_sign' ? 'Đang nhận diện…' : 'Nhận diện biển báo'}
-                </button>
-              </div>
-              {aiStatus === 'ready' ? (
-                <p className="mt-2 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
-                  Ảnh chỉ được gửi đến Google Gemini khi bạn bấm một nút trên. Với gói miễn phí, Google có thể
-                  dùng nội dung để cải thiện dịch vụ và người đánh giá có thể xem. Tránh ảnh có khuôn mặt hoặc
-                  biển số.
-                </p>
-              ) : (
-                <p className="mt-2 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
-                  {aiStatus === 'checking'
-                    ? 'Đang kiểm tra cấu hình Gemini…'
-                    : aiStatus === 'unavailable'
-                      ? 'AI ảnh chưa bật trên backend. Cần GEMINI_TRAFFIC_AI_ENABLED=true và GEMINI_API_KEY.'
-                      : 'Đăng nhập để sử dụng gợi ý AI.'}
-                </p>
-              )}
-            </>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                aria-busy={analysisTask === 'incident'}
+                disabled={Boolean(analysisTask) || busy || aiStatus !== 'ready'}
+                onClick={() => void analyzePhoto('incident')}
+                className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-brand-200 dark:border-indigo-300/25 bg-brand-50 dark:bg-indigo-400/10 px-2 text-[11px] font-semibold text-brand-700 dark:text-indigo-300 hover:bg-brand-100 dark:hover:bg-indigo-400/20 disabled:opacity-50"
+              >
+                {analysisTask === 'incident' ? 'Đang phân tích…' : 'Gợi ý loại sự cố'}
+              </button>
+              <button
+                type="button"
+                aria-busy={analysisTask === 'traffic_sign'}
+                disabled={Boolean(analysisTask) || busy || aiStatus !== 'ready'}
+                onClick={() => void analyzePhoto('traffic_sign')}
+                className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/60 px-2 text-[11px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50"
+              >
+                {analysisTask === 'traffic_sign' ? 'Đang nhận diện…' : 'Nhận diện biển báo'}
+              </button>
+            </div>
+            {aiStatus === 'ready' ? (
+              <p className="mt-2 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+                Ảnh chỉ được gửi đến Google Gemini khi bạn bấm một nút trên. Với gói miễn phí, Google có thể
+                dùng nội dung để cải thiện dịch vụ và người đánh giá có thể xem. Tránh ảnh có khuôn mặt hoặc
+                biển số.
+              </p>
+            ) : (
+              <p className="mt-2 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+                {aiStatus === 'checking'
+                  ? 'Đang kiểm tra cấu hình Gemini…'
+                  : 'AI ảnh chưa bật trên backend. Cần GEMINI_TRAFFIC_AI_ENABLED=true và GEMINI_API_KEY.'}
+              </p>
+            )}
             {analysisTask && (
               <p className="mt-2 text-[11px] text-brand-700 dark:text-indigo-300" role="status">
                 Đang phân tích ảnh…
@@ -447,12 +474,7 @@ export function TrafficReportPanel({
                     Gợi ý sự cố
                   </span>
                   <span className="rounded-full bg-white dark:bg-slate-800/60 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                    Tin cậy:{' '}
-                    {imageAnalysis.confidence === 'high'
-                      ? 'cao'
-                      : imageAnalysis.confidence === 'medium'
-                        ? 'vừa'
-                        : 'thấp'}
+                    Tin cậy: {confidenceLabels[imageAnalysis.confidence]}
                   </span>
                 </div>
                 <p className="mt-1.5 text-[11px] leading-4 text-slate-700 dark:text-slate-200">
@@ -491,12 +513,7 @@ export function TrafficReportPanel({
                     Nhận diện biển báo
                   </span>
                   <span className="rounded-full bg-white dark:bg-slate-800/60 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                    Tin cậy:{' '}
-                    {imageAnalysis.confidence === 'high'
-                      ? 'cao'
-                      : imageAnalysis.confidence === 'medium'
-                        ? 'vừa'
-                        : 'thấp'}
+                    Tin cậy: {confidenceLabels[imageAnalysis.confidence]}
                   </span>
                 </div>
                 <p className="mt-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
@@ -586,9 +603,7 @@ export function TrafficReportPanel({
                         {incident.time} ·{' '}
                         {incident.vehicleScope === 'both'
                           ? 'Ô tô + xe máy'
-                          : incident.vehicleScope === 'car'
-                            ? 'Ô tô'
-                            : 'Xe máy'}{' '}
+                          : vehicleScopeLabels[incident.vehicleScope]}{' '}
                         · {incident.lat.toFixed(4)}, {incident.lng.toFixed(4)}
                       </span>
                     </span>

@@ -5,7 +5,7 @@ import type {
   PoiSearchProvider,
   PoiSearchRequest,
 } from '../../application/ports/PoiSearchProvider.js';
-import { invalidPlaceResponse, requestVietmapPlaces } from './vietmapPlaceRequest.js';
+import { invalidPlaceResponse, requestVietmapPlaces, vietmapPointSchema } from './vietmapPlaceRequest.js';
 
 const candidateSchema = z.object({
   ref_id: z.string().min(1),
@@ -15,13 +15,6 @@ const candidateSchema = z.object({
   /** Km tính từ `focus`. */
   distance: z.number().finite().nonnegative().optional(),
   categories: z.array(z.union([z.string(), z.number()])).optional(),
-});
-const placeSchema = z.object({
-  lat: z.number().finite().min(-90).max(90),
-  lng: z.number().finite().min(-180).max(180),
-  name: z.string().optional(),
-  address: z.string().optional(),
-  display: z.string().optional(),
 });
 
 /** Tìm POI bằng VietMap Autocomplete v4 (không dự phòng Search v4); toạ độ lấy bằng Place v4. */
@@ -56,7 +49,9 @@ export class VietmapPoiSearchProvider implements PoiSearchProvider {
   }
 
   async locate(id: string): Promise<PoiLocation> {
-    const place = placeSchema.safeParse(await requestVietmapPlaces(this.apiKey, 'place', { refid: id }));
+    const place = vietmapPointSchema.safeParse(
+      await requestVietmapPlaces(this.apiKey, 'place', { refid: id }),
+    );
     if (!place.success) throw invalidPlaceResponse();
     const name = place.data.name ?? '';
     // `display` có dạng "Tên, địa chỉ"; giữ phần địa chỉ để không lặp tên trên thẻ.

@@ -30,6 +30,9 @@ const examples = [
   'Find the station',
   'Tôi cần nghỉ một chút',
 ];
+const numberInputClass =
+  'mt-1 w-full rounded-lg border border-slate-200 bg-white text-ink placeholder:text-slate-400 dark:border-white/10 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 p-2';
+
 export function PlaceAssistantPanel({
   accessToken,
   route,
@@ -82,21 +85,28 @@ export function PlaceAssistantPanel({
     if (selectedPoint) setCenter(selectedPoint);
   }, [selectedPoint]);
   useEffect(() => () => requestRef.current?.abort(), []);
+  /** Hủy lượt tìm đang chạy (kết quả về sau bị bỏ qua). */
+  const cancelSearch = () => {
+    requestRef.current?.abort();
+    setLoading(false);
+  };
+  const stopVoice = () => {
+    speech.stop();
+    apiSpeech.cancel();
+  };
   const submit = async (chosenCategory?: StopCategory) => {
     if (inputMode === 'actions' && !chosenCategory && !category) {
       setError('Hãy chọn loại địa điểm bạn muốn tìm.');
       return;
     }
-    const text =
-      (inputMode === 'voice' ? query.trim() : '') ||
-      (chosenCategory || category ? stopCategoryLabels[(chosenCategory ?? category) as StopCategory] : '');
+    const picked = chosenCategory ?? (category || undefined);
+    const text = (inputMode === 'voice' ? query.trim() : '') || (picked ? stopCategoryLabels[picked] : '');
     if (text.length < 2) {
       setError('Hãy nhập nhu cầu hoặc chọn một loại địa điểm.');
       return;
     }
     requestRef.current?.abort();
-    speech.stop();
-    apiSpeech.cancel();
+    stopVoice();
     const controller = new AbortController();
     requestRef.current = controller;
     setLoading(true);
@@ -109,7 +119,7 @@ export function PlaceAssistantPanel({
           context: inputMode === 'voice' ? context : [],
           mode,
           vehicle: route?.vehicle === 'car' ? 'car' : 'motorcycle',
-          ...(chosenCategory || category ? { category: (chosenCategory ?? category) as StopCategory } : {}),
+          ...(picked ? { category: picked } : {}),
           ...(mode === 'nearby'
             ? { center, ...(radius ? { radiusMeters: Math.round(Number(radius) * 1000) } : {}) }
             : {
@@ -160,10 +170,8 @@ export function PlaceAssistantPanel({
             type="button"
             aria-pressed={inputMode === value}
             onClick={() => {
-              requestRef.current?.abort();
-              speech.stop();
-              apiSpeech.cancel();
-              setLoading(false);
+              cancelSearch();
+              stopVoice();
               setInputMode(value);
               setCategory('');
               setResult(null);
@@ -411,7 +419,7 @@ export function PlaceAssistantPanel({
                   max="5"
                   step="0.1"
                   placeholder="Mặc định 2 km"
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white text-ink placeholder:text-slate-400 dark:border-white/10 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 p-2"
+                  className={numberInputClass}
                 />
               </label>
             ) : (
@@ -427,7 +435,7 @@ export function PlaceAssistantPanel({
                     max="10"
                     step="0.1"
                     placeholder="Mặc định 2 km"
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white text-ink placeholder:text-slate-400 dark:border-white/10 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 p-2"
+                    className={numberInputClass}
                   />
                 </label>
                 <label className="text-[11px]">
@@ -440,7 +448,7 @@ export function PlaceAssistantPanel({
                     min="0"
                     max="60"
                     placeholder="Mặc định 15 phút"
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white text-ink placeholder:text-slate-400 dark:border-white/10 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 p-2"
+                    className={numberInputClass}
                   />
                 </label>
               </div>
@@ -460,10 +468,7 @@ export function PlaceAssistantPanel({
         {loading && (
           <button
             type="button"
-            onClick={() => {
-              requestRef.current?.abort();
-              setLoading(false);
-            }}
+            onClick={cancelSearch}
             className="w-full text-[11px] text-slate-500 dark:text-slate-400"
           >
             Hủy tìm kiếm
@@ -474,8 +479,7 @@ export function PlaceAssistantPanel({
         <button
           type="button"
           onClick={() => {
-            requestRef.current?.abort();
-            setLoading(false);
+            cancelSearch();
             setContext([]);
             setResult(null);
             setCategory('');
