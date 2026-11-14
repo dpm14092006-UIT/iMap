@@ -157,7 +157,7 @@ export function NavigationBanner({
               {t(demo?.mode === 'demo' ? 'GPS giả lập (demo)' : 'GPS trực tiếp')}
             </p>
           )}
-          {error && status !== 'error' && <p className="mt-1 text-xs text-amber-200">{error}</p>}
+          {error && status !== 'error' && <p className="mt-1 text-xs text-amber-200">{t(error)}</p>}
           {offRoute && (
             <p className="mt-1 text-xs leading-4 text-white/70">
               {t('Vị trí GPS đang cách xa tuyến. Tính lại từ vị trí hiện tại để tiếp tục.')}

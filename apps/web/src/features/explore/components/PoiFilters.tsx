@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Popover } from '../../../app/layout/Popover';
 import { Icon } from '../../../shared/components/Icon';
-import { poiRadiusOptions, poiSortLabels, poiSortsByMode } from '../services/poiOptions';
+import { formatRadius, poiRadiusOptions, poiSortLabels, poiSortsByMode } from '../services/poiOptions';
 import type { PoiSort } from '../types';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 
@@ -44,10 +44,6 @@ export function PoiFilters({ mode, sort, radiusM, onSortChange, onRadiusChange }
   const { language, t } = useI18n();
   const [openMenu, setOpenMenu] = useState<'sort' | 'radius' | null>(null);
   const sorts = poiSortsByMode[mode];
-  const formatLocalizedRadius = (radius: number) =>
-    radius < 1000
-      ? `${radius} m`
-      : `${(radius / 1000).toLocaleString(language === 'en' ? 'en-US' : 'vi-VN', { maximumFractionDigits: 1 })} km`;
   const menu = (id: 'sort' | 'radius') => ({
     open: openMenu === id,
     onClose: () => setOpenMenu((current) => (current === id ? null : current)),
@@ -94,7 +90,7 @@ export function PoiFilters({ mode, sort, radiusM, onSortChange, onRadiusChange }
         {...menu('radius')}
         label={t('Bán kính')}
         panelClassName="left-0 top-full mt-1.5 w-44 !p-1.5"
-        trigger={trigger('radius', t('Bán kính: {radius}', { radius: formatLocalizedRadius(radiusM) }))}
+        trigger={trigger('radius', t('Bán kính: {radius}', { radius: formatRadius(radiusM, language) }))}
       >
         <div role="menu" aria-label={t('Bán kính tìm kiếm')}>
           {poiRadiusOptions.map((option) => (
@@ -106,7 +102,7 @@ export function PoiFilters({ mode, sort, radiusM, onSortChange, onRadiusChange }
                 setOpenMenu(null);
               }}
             >
-              {formatLocalizedRadius(option)}
+              {formatRadius(option, language)}
             </OptionButton>
           ))}
         </div>

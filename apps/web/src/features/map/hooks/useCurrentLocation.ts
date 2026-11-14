@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { LatLng } from '../../places/types';
 
-export type LocationFix = { point: LatLng; accuracyMeters: number };
+type LocationFix = { point: LatLng; accuracyMeters: number };
 
 /** Đổi mã lỗi Geolocation của trình duyệt sang thông báo tiếng Việt. */
 function geolocationErrorMessage(error: GeolocationPositionError): string {

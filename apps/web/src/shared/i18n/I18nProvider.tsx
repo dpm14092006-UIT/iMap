@@ -5,7 +5,7 @@ export type Language = 'vi' | 'en';
 const STORAGE_KEY = 'imap-language';
 
 /** English translations for user-facing Vietnamese copy. Unlisted strings remain Vietnamese. */
-export const translations: Record<string, string> = {
+const translations: Record<string, string> = {
   'Bản đồ tương tác Việt Nam': 'Interactive map of Vietnam',
   'Chỉ đường': 'Directions',
   'Nhiều điểm': 'Multi-stop',
@@ -132,6 +132,12 @@ export const translations: Record<string, string> = {
   'ĐANG DẪN ĐƯỜNG': 'NAVIGATING',
   'ĐÃ ĐẾN NƠI': 'ARRIVED',
   'MẤT TÍN HIỆU GPS': 'GPS SIGNAL LOST',
+  'Chưa có quyền GPS. Hãy cho phép định vị rồi thử lại.':
+    'GPS permission is unavailable. Allow location access and try again.',
+  'GPS đang bắt tín hiệu. Đang tiếp tục tìm vị trí…':
+    'GPS is acquiring a signal. Still looking for your location…',
+  'Tín hiệu GPS tạm thời không ổn định.': 'The GPS signal is temporarily unstable.',
+  'Thiết bị này không hỗ trợ định vị GPS.': 'This device does not support GPS location.',
   'Tiếp tục theo tuyến đường': 'Continue along the route',
   'Điều hướng chuyến đi': 'Trip navigation',
   'ĐANG LỆCH KHỎI TUYẾN': 'OFF ROUTE',

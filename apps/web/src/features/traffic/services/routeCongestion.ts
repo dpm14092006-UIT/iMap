@@ -117,9 +117,10 @@ export function congestionShares(
     .map((level) => ({ level, share: byLevel[level] / total }));
 }
 
-/** "2,3 km" khi ≥ 1 km, "850 m" khi nhỏ hơn (định dạng số Việt Nam). */
-export function formatCongestionLength(meters: number): string {
+/** Định dạng độ dài kẹt xe theo ngôn ngữ đang chọn. */
+export function formatCongestionLength(meters: number, language: 'vi' | 'en' = 'vi'): string {
+  const locale = language === 'en' ? 'en-US' : 'vi-VN';
   if (meters >= 1000)
-    return `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(meters / 1000)} km`;
-  return `${new Intl.NumberFormat('vi-VN').format(Math.round(meters / 10) * 10)} m`;
+    return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(meters / 1000)} km`;
+  return `${new Intl.NumberFormat(locale).format(Math.round(meters / 10) * 10)} m`;
 }
