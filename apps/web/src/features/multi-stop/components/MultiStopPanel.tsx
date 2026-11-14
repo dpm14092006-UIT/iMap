@@ -25,8 +25,6 @@ type MultiStopPanelProps = {
     returnToStart: boolean,
   ) => Promise<RoutePlan | { error: string }>;
   onSave?: (plan: RoutePlan) => void;
-  /** Điểm đi và các điểm cần ghé điền sẵn (App đổi `key` để áp dụng lại). */
-  initialStops?: { start: Place | null; stops: Place[] };
   /** Nội dung thêm trên nút tối ưu (chế độ thuyết trình ?demo=1: chọn thuật toán Held–Karp / NN + 2-opt). */
   presentationSlot?: ReactNode;
 };
@@ -48,13 +46,12 @@ export function MultiStopPanel({
   onSave,
   getFocus,
   onReset,
-  initialStops,
   presentationSlot,
 }: MultiStopPanelProps) {
   const { language, t } = useI18n();
-  const [stops, setStops] = useState<Place[]>(initialStops?.stops ?? []);
-  const [start, setStart] = useState<Place | null>(initialStops?.start ?? null);
-  const [startText, setStartText] = useState(initialStops?.start?.name ?? '');
+  const [stops, setStops] = useState<Place[]>([]);
+  const [start, setStart] = useState<Place | null>(null);
+  const [startText, setStartText] = useState('');
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<TransportMode>('motorcycle');
   const [returnToStart, setReturnToStart] = useState(false);

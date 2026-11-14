@@ -207,11 +207,6 @@ export function App() {
   const [overlays, setOverlays] = useState<MapOverlays>({ traffic: true, incidents: true, terrain: false });
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
   const [highlightedPoiId, setHighlightedPoiId] = useState<string | null>(null);
-  // Mỗi lần đổi `key`, MultiStopPanel được dựng lại với danh sách điểm điền sẵn.
-  const [multiSeed, setMultiSeed] = useState<{
-    key: number;
-    initialStops?: { start: Place | null; stops: Place[] };
-  }>({ key: 0 });
   const poiProvider = useMemo(() => new ApiPoiProvider(), []);
   const now = useNow(5 * 60_000);
 
@@ -881,17 +876,6 @@ export function App() {
     showToast(poi.savedIds.has(item.id) ? t('Đã bỏ lưu địa điểm') : t('Đã lưu {name}', { name: item.name }));
   };
 
-  /** "+ Thêm điểm đến": chuyển sang luồng nhiều điểm, mang theo điểm đi và các điểm đã chọn. */
-  const continueInMultiStop = () => {
-    const stops = [...waypointPlaces(), ...(directions.destination ? [directions.destination] : [])];
-    setMultiSeed((current) => ({
-      key: current.key + 1,
-      initialStops: { start: directions.origin, stops },
-    }));
-    setSelectedPlace(null);
-    openPanel('multi');
-  };
-
   // Bảng chức năng đổi kích thước (đổi nấc kéo, mở/đóng panel): báo cho bản đồ và zoom lại tuyến
   // vừa phần bản đồ còn nhìn thấy. Chỉ zoom lại khi đã dừng kéo (inset khác null) và đang xem tuyến.
   const routeFitActive =
@@ -1038,12 +1022,14 @@ export function App() {
               <TrafficLegend onHide={() => setOverlays((current) => ({ ...current, traffic: false }))} />
             </div>
           )}
-          <LayerSwitcher
-            layer={layer}
-            overlays={overlays}
-            onLayerChange={setLayer}
-            onOverlaysChange={setOverlays}
-          />
+          {isNavigationIdle && (
+            <LayerSwitcher
+              layer={layer}
+              overlays={overlays}
+              onLayerChange={setLayer}
+              onOverlaysChange={setOverlays}
+            />
+          )}
           {isNavigationIdle && !panelOpen && (
             <div className="md:hidden">
               <AreaInsightPill insight={areaInsight} onOpenTraffic={openTrafficPanel} />
@@ -1052,22 +1038,32 @@ export function App() {
         </>
       }
       bottomRight={
-        <MapControls
-          showZoom={!isNavigationIdle}
-          onShowVietnam={() => {
-            pauseFollowIfNavigating();
-            mapController.current?.showVietnam();
-          }}
-          onLocate={() => (isNavigationIdle ? void locateOnMap() : recenterNavigation())}
-          onZoomIn={() => {
-            pauseFollowIfNavigating();
-            mapController.current?.zoomIn();
-          }}
-          onZoomOut={() => {
-            pauseFollowIfNavigating();
-            mapController.current?.zoomOut();
-          }}
-        />
+        <>
+          {!isNavigationIdle && (
+            <LayerSwitcher
+              layer={layer}
+              overlays={overlays}
+              onLayerChange={setLayer}
+              onOverlaysChange={setOverlays}
+            />
+          )}
+          <MapControls
+            showZoom={!isNavigationIdle}
+            onShowVietnam={() => {
+              pauseFollowIfNavigating();
+              mapController.current?.showVietnam();
+            }}
+            onLocate={() => (isNavigationIdle ? void locateOnMap() : recenterNavigation())}
+            onZoomIn={() => {
+              pauseFollowIfNavigating();
+              mapController.current?.zoomIn();
+            }}
+            onZoomOut={() => {
+              pauseFollowIfNavigating();
+              mapController.current?.zoomOut();
+            }}
+          />
+        </>
       }
     >
       {/* Thẻ "Khu vực này" dưới ô tìm kiếm khi chưa mở panel nào (mobile dùng viên thuốc phía dưới). */}
@@ -1093,6 +1089,7 @@ export function App() {
         instruction={navigation.nextInstruction}
         distanceToInstructionMeters={navigation.distanceToInstructionMeters}
         distanceRemainingMeters={navigation.distanceRemainingMeters}
+        speedKph={navigation.speedKph}
         offRoute={offRoute}
         error={navigation.error}
         canRecalculate={Boolean(navigationRoute && navigationLocation)}
@@ -1182,7 +1179,6 @@ export function App() {
             }}
             onStartNavigation={startNavigation}
             onPreviewRoute={previewRoute}
-            onAddDestination={continueInMultiStop}
             presentationSlot={
               demoEnabled ? (
                 <AlgorithmComparison
@@ -1205,8 +1201,6 @@ export function App() {
       {hasOpenedMulti && (
         <Suspense fallback={null}>
           <MultiStopPanel
-            key={multiSeed.key}
-            {...(multiSeed.initialStops ? { initialStops: multiSeed.initialStops } : {})}
             isActive={activePanel === 'multi'}
             onShowPlan={setActiveRoute}
             onStartNavigation={startNavigation}

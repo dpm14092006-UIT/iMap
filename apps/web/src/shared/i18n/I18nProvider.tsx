@@ -147,6 +147,8 @@ const translations: Record<string, string> = {
   'Thực hiện chỉ dẫn tiếp theo': 'Follow the next instruction',
   'GPS giả lập (demo)': 'Simulated GPS (demo)',
   'GPS trực tiếp': 'Live GPS',
+  'Đang chờ tín hiệu GPS để đo tốc độ': 'Waiting for a GPS signal to measure speed',
+  'Tốc độ GPS hiện tại: {speed} km/h': 'Current GPS speed: {speed} km/h',
   'Vị trí GPS đang cách xa tuyến. Tính lại từ vị trí hiện tại để tiếp tục.':
     'Your GPS location is far from the route. Recalculate from your current position to continue.',
   'Nguồn vị trí': 'Location source',
@@ -346,15 +348,12 @@ const translations: Record<string, string> = {
   'Đang lấy tuyến đường…': 'Getting routes…',
   'Tìm đường': 'Find routes',
   'Lộ trình': 'ROUTE',
-  'Lập hành trình nhiều điểm với điểm đi và đến hiện tại':
-    'Plan a multi-stop trip with the current origin and destination',
-  'Thêm điểm đến': 'Add destination',
   'Đang định vị…': 'Locating…',
   'Vị trí của tôi': 'My location',
   'Chọn điểm đi': 'Choose origin',
   'Chọn điểm đến': 'Choose destination',
-  'Đi theo thứ tự trên. Muốn tự sắp xếp tốt nhất, dùng Nhiều điểm.':
-    'Stops are visited in the order shown. To optimize the order, use Multi-stop.',
+  'Tuyến sẽ đi theo thứ tự bạn đặt. Dùng mũi tên để sắp xếp điểm dừng.':
+    'The route follows your chosen order. Use the arrows to reorder stops.',
   'Tùy chọn tuyến': 'Route options',
   'Tùy chọn': 'Options',
   'Ưu tiên tuyến': 'Route preference',

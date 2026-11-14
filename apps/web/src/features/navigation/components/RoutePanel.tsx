@@ -32,8 +32,6 @@ type RoutePanelProps = {
   onStartNavigation: (route: RoutePlan) => void;
   /** Chọn tuyến rồi zoom bản đồ vừa tuyến đó. */
   onPreviewRoute: (route: RoutePlan) => void;
-  /** "+ Thêm điểm đến": chuyển sang luồng nhiều điểm với điểm đi/đến hiện tại. */
-  onAddDestination: () => void;
   isNavigating: boolean;
   onClose: () => void;
   /** Nội dung thêm ở cuối panel (chế độ thuyết trình ?demo=1: so sánh Dijkstra / A*). */
@@ -43,7 +41,7 @@ type RoutePanelProps = {
 const chipClass = (active: boolean) =>
   `inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ring-1 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 ${active ? 'bg-brand-50 text-brand-700 ring-brand-300 dark:bg-brand-500/20 dark:text-brand-200 dark:ring-brand-400/50' : 'bg-white/70 text-ink ring-black/10 hover:bg-white dark:hover:bg-slate-700/60 dark:bg-white/5 dark:text-slate-100 dark:ring-white/15'}`;
 
-/** Panel chỉ đường A → B. Mọi trạng thái nằm trong hook useDirections, panel chỉ hiển thị. */
+/** Panel Chỉ đường giữ nguyên thứ tự các điểm do người dùng sắp xếp. */
 export function RoutePanel({
   getSearchFocus,
   directions,
@@ -55,7 +53,6 @@ export function RoutePanel({
   onSave,
   onStartNavigation,
   onPreviewRoute,
-  onAddDestination,
   isNavigating,
   onClose,
   presentationSlot,
@@ -165,7 +162,8 @@ export function RoutePanel({
                   disabled={index === 0}
                   onClick={() => directions.moveWaypoint(index, -1)}
                   aria-label={t('Đưa điểm dừng {number} lên trước', { number: index + 1 })}
-                  className="h-7 rounded-full px-2.5 text-ink-soft hover:bg-black/5 disabled:opacity-30 dark:text-slate-300 dark:hover:bg-white/10"
+                  title={t('Đưa điểm dừng {number} lên trước', { number: index + 1 })}
+                  className="grid h-8 w-8 place-items-center rounded-lg bg-slate-100 text-base font-bold text-ink-soft transition hover:bg-brand-100 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:cursor-not-allowed disabled:opacity-30 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-indigo-400/20 dark:hover:text-white dark:focus-visible:ring-indigo-400/40"
                 >
                   ↑
                 </button>
@@ -174,7 +172,8 @@ export function RoutePanel({
                   disabled={index === directions.waypoints.length - 1}
                   onClick={() => directions.moveWaypoint(index, 1)}
                   aria-label={t('Đưa điểm dừng {number} xuống sau', { number: index + 1 })}
-                  className="h-7 rounded-full px-2.5 text-ink-soft hover:bg-black/5 disabled:opacity-30 dark:text-slate-300 dark:hover:bg-white/10"
+                  title={t('Đưa điểm dừng {number} xuống sau', { number: index + 1 })}
+                  className="grid h-8 w-8 place-items-center rounded-lg bg-slate-100 text-base font-bold text-ink-soft transition hover:bg-brand-100 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:cursor-not-allowed disabled:opacity-30 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-indigo-400/20 dark:hover:text-white dark:focus-visible:ring-indigo-400/40"
                 >
                   ↓
                 </button>
@@ -226,16 +225,6 @@ export function RoutePanel({
           <Icon name="plus" size={13} />
           {t('Thêm điểm dừng')}
         </button>
-        <button
-          type="button"
-          disabled={!origin && !destination}
-          onClick={onAddDestination}
-          className={chipClass(false)}
-          title={t('Lập hành trình nhiều điểm với điểm đi và đến hiện tại')}
-        >
-          <Icon name="multi-stop" size={13} />
-          {t('Thêm điểm đến')}
-        </button>
         <button type="button" disabled={isLocating} onClick={onUseMyLocation} className={chipClass(false)}>
           <Icon name="current-location" size={13} />
           {isLocating ? t('Đang định vị…') : t('Vị trí của tôi')}
@@ -260,8 +249,8 @@ export function RoutePanel({
         </button>
       </div>
       {directions.waypoints.length > 0 && (
-        <p className="mt-1.5 pl-1 text-xs text-ink-soft dark:text-slate-400">
-          {t('Đi theo thứ tự trên. Muốn tự sắp xếp tốt nhất, dùng Nhiều điểm.')}
+        <p className="mt-1.5 rounded-xl border border-brand-200/70 bg-brand-50/70 px-3 py-2 text-xs leading-5 text-brand-900 dark:border-indigo-300/20 dark:bg-indigo-400/10 dark:text-indigo-100">
+          {t('Tuyến sẽ đi theo thứ tự bạn đặt. Dùng mũi tên để sắp xếp điểm dừng.')}
         </p>
       )}
 

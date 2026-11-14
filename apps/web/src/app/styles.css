@@ -109,22 +109,23 @@ main {
   filter: saturate(0.92);
 }
 .routetwin-leaflet.map-theme-dark {
-  background: #05070b;
+  background: #101a29;
 }
 .routetwin-leaflet.map-theme-dark .leaflet-tile-pane .leaflet-tile {
-  filter: invert(1) hue-rotate(180deg) brightness(0.72) contrast(1.12) saturate(0.58);
+  /* Darken the basemap gently: full inversion crushes land and fine road details into black. */
+  filter: invert(0.92) hue-rotate(180deg) brightness(1.08) contrast(0.92) saturate(0.68);
 }
 .routetwin-leaflet.map-theme-dark .leaflet-control-attribution {
-  color: #cbd5e1;
-  background: rgb(15 23 42 / 82%);
+  color: #d6e1ef;
+  background: rgb(17 29 46 / 94%);
 }
 .routetwin-leaflet.map-theme-dark .leaflet-control-attribution a {
-  color: #a5b4fc;
+  color: #b8c6ff;
 }
 .routetwin-leaflet.map-theme-dark .leaflet-control-scale-line {
-  border-color: #94a3b8;
-  background: rgb(15 23 42 / 70%);
-  color: #cbd5e1;
+  border-color: #a8bacf;
+  background: rgb(17 29 46 / 90%);
+  color: #d6e1ef;
 }
 .routetwin-tooltip {
   border: 0;
@@ -461,4 +462,54 @@ main {
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* Night palette: blue charcoal surfaces and brighter neutral text keep panels distinct and readable. */
+.dark .text-ink {
+  color: #e8eef6;
+}
+.dark .text-ink-soft {
+  color: #b9c8da;
+}
+.dark [class*='dark:bg-slate-950'] {
+  background-color: #0b1321;
+}
+.dark [class*='dark:bg-slate-900'] {
+  background-color: #132137;
+}
+.dark [class*='dark:bg-slate-800'] {
+  background-color: #1b2b42;
+}
+.dark [class*='dark:bg-slate-700'] {
+  background-color: #293d58;
+}
+.dark [class*='dark:bg-white/5'] {
+  background-color: rgb(31 46 67 / 88%);
+}
+.dark [class*='dark:bg-white/10'] {
+  background-color: rgb(42 61 85 / 92%);
+}
+.dark [class*='dark:text-slate-100'] {
+  color: #f2f6fb;
+}
+.dark [class*='dark:text-slate-200'] {
+  color: #e7eef7;
+}
+.dark [class*='dark:text-slate-300'] {
+  color: #d2deec;
+}
+.dark [class*='dark:text-slate-400'] {
+  color: #bdcadb;
+}
+.dark [class*='dark:text-slate-500'] {
+  color: #9eafc4;
+}
+.dark [class*='dark:border-white/10'] {
+  border-color: rgb(148 168 192 / 24%);
+}
+.dark [class*='dark:border-white/15'] {
+  border-color: rgb(148 168 192 / 32%);
+}
+.dark [class*='dark:ring-white/10'] {
+  --tw-ring-color: rgb(148 168 192 / 24%);
 }
