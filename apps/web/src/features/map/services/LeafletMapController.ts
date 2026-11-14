@@ -82,6 +82,8 @@ export class LeafletMapController {
   private readonly map: L.Map;
   private readonly streets: L.TileLayer;
   private readonly imagery: L.TileLayer;
+  /** Nhãn tên đường / địa điểm phủ lên ảnh vệ tinh (ảnh Esri không có nhãn). */
+  private readonly imageryLabels: L.LayerGroup;
   private readonly terrain: L.TileLayer;
   // Mỗi loại dữ liệu một layer group riêng để xóa/vẽ lại độc lập.
   private readonly routeLayer = L.layerGroup();
@@ -125,7 +127,9 @@ export class LeafletMapController {
     // Dock nằm đè góc trái nên ghi công và thước tỉ lệ đặt ở góc dưới phải.
     this.map.attributionControl.setPosition('bottomright');
     L.control.scale({ imperial: false, position: 'bottomright' }).addTo(this.map);
-    this.streets = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
+    // Tile chuẩn của OpenStreetMap: nhãn chỉ dùng tên địa phương (tiếng Việt).
+    // (tile.openstreetmap.de in thêm tên phiên âm Latin nên mỗi địa danh bị lặp hai lần.)
+    this.streets = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution:
         '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a>',
@@ -137,6 +141,20 @@ export class LeafletMapController {
         attribution: 'Imagery © Esri, Vantor, Earthstar Geographics, and the GIS User Community',
       },
     );
+    // Ảnh vệ tinh không có chữ nên phủ thêm 2 lớp tham chiếu của Esri (nền trong suốt, nhãn tiếng Việt):
+    // đường + tên đường (làm mờ 25% để vẫn thấy mặt đường thật) và tên địa điểm. zIndex > ảnh để nằm trên.
+    const esriReference = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference';
+    this.imageryLabels = L.layerGroup([
+      L.tileLayer(`${esriReference}/World_Transportation/MapServer/tile/{z}/{y}/{x}`, {
+        maxZoom: 19,
+        opacity: 0.75,
+        zIndex: 2,
+      }),
+      L.tileLayer(`${esriReference}/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`, {
+        maxZoom: 19,
+        zIndex: 3,
+      }),
+    ]);
     this.terrain = L.tileLayer('https://tile.opentopomap.org/{z}/{x}/{y}.png', {
       maxZoom: 17,
       attribution:
@@ -225,6 +243,7 @@ export class LeafletMapController {
       if (candidate !== base && this.map.hasLayer(candidate)) this.map.removeLayer(candidate);
     }
     if (!this.map.hasLayer(base)) base.addTo(this.map);
+    this.toggleGroup(this.imageryLabels, layer === 'satellite'); // chế độ "vệ tinh + nhãn" (hybrid)
     this.map.getContainer().classList.toggle('map-theme-dark', layer === 'dark');
   }
 
