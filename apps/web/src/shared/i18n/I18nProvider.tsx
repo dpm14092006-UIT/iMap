@@ -841,21 +841,33 @@ const translations: Record<string, string> = {
   'VietMap trả về tuyến thiếu tọa độ đường đi.': 'The route returned by VietMap is missing path coordinates.',
 };
 
-const translationPatterns = Object.entries(translations).flatMap(([source, translated]) => {
-  const names: string[] = [];
-  const expression = source
-    .split(/(\{[^{}]+\})/g)
-    .map((part) => {
-      const placeholder = /^\{([^{}]+)\}$/.exec(part);
-      if (placeholder) {
-        names.push(placeholder[1]!);
-        return '(.+?)';
-      }
-      return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    })
-    .join('');
-  return names.length ? [{ pattern: new RegExp(`^${expression}$`), translated, names }] : [];
-});
+const translationPatterns = Object.entries(translations)
+  .flatMap(([source, translated]) => {
+    const names: string[] = [];
+    const expression = source
+      .split(/(\{[^{}]+\})/g)
+      .map((part) => {
+        const placeholder = /^\{([^{}]+)\}$/.exec(part);
+        if (placeholder) {
+          names.push(placeholder[1]!);
+          return '(.+?)';
+        }
+        return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      })
+      .join('');
+    return names.length
+      ? [
+          {
+            pattern: new RegExp(`^${expression}$`),
+            translated,
+            names,
+            specificity: source.replace(/\{[^{}]+\}/g, '').length,
+          },
+        ]
+      : [];
+  })
+  // Mẫu có nhiều chữ cố định chạy trước để mẫu rộng không bắt nhầm câu cụ thể.
+  .sort((a, b) => b.specificity - a.specificity || a.names.length - b.names.length);
 
 export function readLanguage(storage?: Pick<Storage, 'getItem'>): Language {
   try {

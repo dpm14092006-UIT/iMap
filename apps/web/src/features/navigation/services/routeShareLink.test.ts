@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Place } from '../../places/types';
-import { buildRouteShareUrl, parseRouteShareLink } from './routeShareLink';
+import { buildRouteShareUrl, parseRouteShareLink, type SharedRoute } from './routeShareLink';
 
 const place = (name: string, lat: number, lng: number): Place => ({
   id: name,
@@ -39,5 +39,37 @@ describe('route share link', () => {
     expect(parseRouteShareLink('?from=abc,106,A&to=11,107,B')).toBeNull();
     expect(parseRouteShareLink('?from=95,106,A&to=11,107,B')).toBeNull();
     expect(parseRouteShareLink('')).toBeNull();
+  });
+});
+
+const routeShareScenarios: SharedRoute[] = Array.from({ length: 100 }, (_, index) => {
+  const names = [
+    'Chợ Bến Thành, Quận 1',
+    'Cà phê & bánh',
+    'Sân bay Tân Sơn Nhất',
+    'Bến xe Miền Đông',
+    'Đại học Quốc gia',
+  ];
+  const latitude = -80 + index * 1.6;
+  const longitude = -170 + index * 3.4;
+  return {
+    origin: place(`${names[index % names.length]} ${index}`, latitude, longitude),
+    destination: place(`${names[(index + 2) % names.length]} #${index}`, latitude + 0.23, longitude + 0.31),
+    vehicle: index % 2 === 0 ? 'car' : 'motorcycle',
+  };
+});
+
+describe('route share round-trip regression matrix', () => {
+  it.each(routeShareScenarios)('round-trips $vehicle routes with unicode names', (route) => {
+    const url = buildRouteShareUrl(route, 'https://imap.example/map?old=1#section');
+    const parsed = parseRouteShareLink(new URL(url).search);
+
+    expect(parsed?.origin.name).toBe(route.origin.name);
+    expect(parsed?.destination.name).toBe(route.destination.name);
+    expect(parsed?.vehicle).toBe(route.vehicle);
+    expect(parsed?.origin.lat).toBe(Number(route.origin.lat.toFixed(6)));
+    expect(parsed?.origin.lng).toBe(Number(route.origin.lng.toFixed(6)));
+    expect(parsed?.destination.lat).toBe(Number(route.destination.lat.toFixed(6)));
+    expect(parsed?.destination.lng).toBe(Number(route.destination.lng.toFixed(6)));
   });
 });

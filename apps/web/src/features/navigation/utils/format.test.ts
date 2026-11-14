@@ -12,3 +12,19 @@ describe('localized route measurements', () => {
     expect(formatDurationMinutes(75, 'en')).toBe('1 hr 15 min');
   });
 });
+
+const distanceScenarios = Array.from({ length: 100 }, (_, index) => ({
+  meters: index < 50 ? 950 + index : 1000 + (index - 50) * 137.25,
+}));
+
+describe('distance formatting regression matrix', () => {
+  it.each(distanceScenarios)('formats distance input $meters m in both locales', ({ meters }) => {
+    const expected = (locale: 'vi-VN' | 'en-US') =>
+      meters < 1000
+        ? `${Math.round(meters)} m`
+        : `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(meters / 1000)} km`;
+
+    expect(formatDistanceMeters(meters, 'vi')).toBe(expected('vi-VN'));
+    expect(formatDistanceMeters(meters, 'en')).toBe(expected('en-US'));
+  });
+});

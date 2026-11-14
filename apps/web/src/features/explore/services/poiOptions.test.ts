@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Poi } from '../types';
-import { formatRadius, radiusForZoom, sortPois } from './poiOptions';
+import { ALONG_ROUTE_RADIUS_M, formatRadius, poiRadiusOptions, radiusForZoom, sortPois } from './poiOptions';
 
 const poi = (id: string, along: number, route: number, detour: number, center?: number): Poi => ({
   id,
@@ -49,5 +49,36 @@ describe('formatRadius', () => {
 
   it('uses the decimal separator for the selected language', () => {
     expect(formatRadius(1500, 'en')).toBe('1.5 km');
+  });
+});
+
+const zoomScenarios = Array.from({ length: 100 }, (_, index) => {
+  const offset = ((index % 50) - 25) * 0.02;
+  const zoom = index < 50 ? 13 + offset : 15 + offset;
+  return { zoom, expected: zoom >= 15 ? 1000 : zoom >= 13 ? 3000 : 5000 };
+});
+
+describe('radius and zoom regression matrix', () => {
+  it('keeps every automatic search radius selectable in the filter', () => {
+    expect(poiRadiusOptions).toContain(ALONG_ROUTE_RADIUS_M);
+    for (const zoom of [12, 14, 15]) expect(poiRadiusOptions).toContain(radiusForZoom(zoom));
+  });
+
+  it.each(zoomScenarios)('selects a nearby radius at zoom $zoom', ({ zoom, expected }) => {
+    expect(radiusForZoom(zoom)).toBe(expected);
+  });
+
+  const radiusScenarios = Array.from({ length: 100 }, (_, index) => ({
+    radius: index < 50 ? 950 + index : 1000 + (index - 50) * 137.25,
+  }));
+
+  it.each(radiusScenarios)('formats radius input $radius m in both locales', ({ radius }) => {
+    const expected = (locale: 'vi-VN' | 'en-US') =>
+      radius < 1000
+        ? `${radius} m`
+        : `${(radius / 1000).toLocaleString(locale, { maximumFractionDigits: 1 })} km`;
+
+    expect(formatRadius(radius, 'vi')).toBe(expected('vi-VN'));
+    expect(formatRadius(radius, 'en')).toBe(expected('en-US'));
   });
 });
