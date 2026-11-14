@@ -99,8 +99,10 @@ describe('congestion helpers', () => {
       worstCongestionLevel({ segments: [{ level: 'unknown', from: 0, to: 1 }], heavyMeters: 0 }),
     ).toBeNull();
   });
-  it('định dạng độ dài kiểu Việt Nam', () => {
+  it('định dạng độ dài theo ngôn ngữ', () => {
     expect(formatCongestionLength(2300)).toBe('2,3 km');
     expect(formatCongestionLength(140)).toBe('140 m');
+    expect(formatCongestionLength(12300, 'en')).toBe('12.3 km');
+    expect(formatCongestionLength(140, 'en')).toBe('140 m');
   });
 });

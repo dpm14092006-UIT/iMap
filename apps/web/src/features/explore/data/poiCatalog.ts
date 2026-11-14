@@ -2,7 +2,7 @@ import { foldVietnamese } from '../../../shared/text/foldVietnamese';
 import type { IconName } from '../../../shared/components/Icon';
 import type { PoiCategory, PoiSearchTerm } from '../types';
 
-export type PoiCategoryMeta = {
+type PoiCategoryMeta = {
   label: string;
   icon: IconName;
   /** Màu nhận diện của chip và marker trên bản đồ. */

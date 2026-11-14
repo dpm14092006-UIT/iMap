@@ -46,9 +46,9 @@ const toLatLngs = (points: Coordinate[]) => points.map(([lat, lng]) => L.latLng(
 /** Dưới ngưỡng này (px) là điện thoại: nhãn tuyến rút gọn, chừa chỗ cho bảng kéo ở đáy. */
 const MOBILE_QUERY = '(max-width: 767px)';
 /** Vùng bản đồ bị giao diện nổi che (px, tính từ mép khung bản đồ). */
-export type FitInsets = { left: number; bottom: number };
+type FitInsets = { left: number; bottom: number };
 
-export type MapControllerHandlers = {
+type MapControllerHandlers = {
   onMapClick: (point: LatLng) => void;
   /** Bấm vào tuyến phụ hoặc nhãn tuyến trên bản đồ. */
   onSelectRoute?: (routeId: string) => void;
@@ -57,7 +57,7 @@ export type MapControllerHandlers = {
 };
 
 /** Toàn bộ dữ liệu cần vẽ trên bản đồ, được MapView truyền vào mỗi khi thay đổi. */
-export type MapControllerData = {
+type MapControllerData = {
   language: Language;
   layer: MapLayer;
   route: RoutePlan | null;

@@ -149,7 +149,7 @@ export function RouteOptionCard({
         {heavyMeters >= 100 && (
           <span className="mt-1 flex items-center gap-1.5 text-xs font-medium text-red-700 dark:text-red-300">
             <Icon name="traffic" size={13} />
-            {t('Kẹt xe {length}', { length: formatCongestionLength(heavyMeters) })}
+            {t('Kẹt xe {length}', { length: formatCongestionLength(heavyMeters, language) })}
           </span>
         )}
         {severity && (

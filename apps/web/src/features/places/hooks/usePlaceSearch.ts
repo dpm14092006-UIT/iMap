@@ -3,7 +3,7 @@ import { placeApi } from '../api/placeApi';
 import type { LatLng, PlaceSearchSuggestion } from '../types';
 
 /** Trạng thái tìm kiếm để UI hiển thị đúng thông báo (đang tìm / không có / lỗi). */
-export type PlaceSearchStatus = 'idle' | 'loading' | 'ready' | 'error';
+type PlaceSearchStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 /** Chờ người dùng ngừng gõ bao lâu (ms) thì mới gọi API. */
 const DEBOUNCE_MS = 300;

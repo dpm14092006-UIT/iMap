@@ -38,6 +38,21 @@ describe('translate', () => {
     );
   });
 
+  it('translates GPS permission and signal errors in English mode', () => {
+    expect(translate('en', 'Chưa có quyền GPS. Hãy cho phép định vị rồi thử lại.')).toBe(
+      'GPS permission is unavailable. Allow location access and try again.',
+    );
+    expect(translate('en', 'GPS đang bắt tín hiệu. Đang tiếp tục tìm vị trí…')).toBe(
+      'GPS is acquiring a signal. Still looking for your location…',
+    );
+    expect(translate('en', 'Tín hiệu GPS tạm thời không ổn định.')).toBe(
+      'The GPS signal is temporarily unstable.',
+    );
+    expect(translate('en', 'Thiết bị này không hỗ trợ định vị GPS.')).toBe(
+      'This device does not support GPS location.',
+    );
+  });
+
   it('preserves unknown text, such as user supplied place names', () => {
     expect(translate('en', 'Bánh mì cô Ba')).toBe('Bánh mì cô Ba');
   });
