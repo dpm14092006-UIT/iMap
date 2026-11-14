@@ -14,9 +14,15 @@ export type SheetState = {
   isFull: boolean;
   inset: { left: number; bottom: number } | null;
 };
-type ShellContextValue = { setSheet: (state: SheetState) => void };
+type ShellContextValue = {
+  setSheet: (state: SheetState) => void;
+  setTopOverlayInset: (inset: number | null) => void;
+};
 
-const ShellContext = createContext<ShellContextValue>({ setSheet: () => undefined });
+const ShellContext = createContext<ShellContextValue>({
+  setSheet: () => undefined,
+  setTopOverlayInset: () => undefined,
+});
 
 /** SheetPanel (mobile) báo chiều cao hiện tại để các nút nổi trên bản đồ tự né lên trên. */
 export function useShell() {
@@ -54,8 +60,12 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const [sheet, setSheet] = useState<SheetState>({ height: null, isFull: false, inset: null });
-  const context = useMemo(() => ({ setSheet }), []);
-  const style = sheet.height ? ({ '--sheet-h': sheet.height } as CSSProperties) : undefined;
+  const [topOverlayInset, setTopOverlayInset] = useState<number | null>(null);
+  const context = useMemo(() => ({ setSheet, setTopOverlayInset }), []);
+  const style = {
+    ...(sheet.height ? { '--sheet-h': sheet.height } : {}),
+    '--sheet-top-inset': topOverlayInset === null ? '72px' : `${topOverlayInset}px`,
+  } as CSSProperties;
   useEffect(() => {
     onSheetChange?.(sheet);
   }, [sheet, onSheetChange]);
