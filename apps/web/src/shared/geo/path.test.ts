@@ -32,3 +32,34 @@ describe('path helpers', () => {
     expect(progressAlongPath(path, { lat: 10.01, lng: 106.01 })).toBeCloseTo(1, 2);
   });
 });
+
+const projectionScenarios = Array.from({ length: 100 }, (_, index) => {
+  const latitude = -70 + index * 1.1;
+  const startLng = -170 + index * 3.1;
+  const endLng = startLng + 0.3 + index * 0.001;
+  return {
+    fraction: index / 99,
+    latitude,
+    startLng,
+    endLng,
+    path: [
+      [latitude, startLng],
+      [latitude, endLng],
+    ] as Coordinate[],
+  };
+});
+
+describe('path projection regression matrix', () => {
+  it.each(projectionScenarios)('projects fraction $fraction on a straight segment', (scenario) => {
+    const point = pointAtFraction(scenario.path, scenario.fraction);
+    const expectedLng = scenario.startLng + (scenario.endLng - scenario.startLng) * scenario.fraction;
+
+    expect(point[0]).toBe(scenario.latitude);
+    expect(point[1]).toBeCloseTo(expectedLng, 10);
+    expect(progressAlongPath(scenario.path, { lat: point[0], lng: point[1] })).toBeCloseTo(
+      scenario.fraction,
+      10,
+    );
+    expect(distanceToPathMeters(scenario.path, { lat: point[0], lng: point[1] })).toBeLessThan(0.01);
+  });
+});

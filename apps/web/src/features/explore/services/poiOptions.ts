@@ -12,7 +12,7 @@ export const poiSortsByMode = {
   alongRoute: ['route', 'distance', 'detour'] as PoiSort[],
 };
 
-export const poiRadiusOptions = [500, 1000, 2000, 5000] as const;
+export const poiRadiusOptions = [500, 1000, 1500, 2000, 3000, 5000] as const;
 export const ALONG_ROUTE_RADIUS_M = 1500;
 
 /** Bán kính tìm quanh đây theo mức zoom: ≥15 là 1 km, 13–14 là 3 km, xa hơn là 5 km. */

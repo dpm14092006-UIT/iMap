@@ -106,3 +106,42 @@ describe('congestion helpers', () => {
     expect(formatCongestionLength(140, 'en')).toBe('140 m');
   });
 });
+
+const congestionScenarios = Array.from({ length: 100 }, (_, scenario) => {
+  const edgeCount = scenario + 2;
+  const points: Coordinate[] = Array.from({ length: edgeCount + 1 }, (_, index) => [
+    10 + scenario * 0.001,
+    106 + index * 0.001,
+  ]);
+  const levels = ['low', 'moderate', 'heavy', 'severe'] as const;
+  const firstFrom = Math.floor(edgeCount * 0.17);
+  const firstTo = Math.max(firstFrom + 1, Math.floor(edgeCount * 0.68));
+  const secondFrom = Math.floor(edgeCount * 0.47);
+  const segments = [
+    { level: levels[scenario % levels.length]!, from: firstFrom, to: firstTo },
+    { level: levels[(scenario + 1) % levels.length]!, from: secondFrom, to: edgeCount },
+  ];
+  return { points, edgeCount, segments };
+});
+
+describe('congestion split regression matrix', () => {
+  it.each(congestionScenarios)(
+    'preserves every edge for $edgeCount edges',
+    ({ points, edgeCount, segments }) => {
+      const expectedLevels = new Array<string>(edgeCount).fill('unknown');
+      for (const { level, from, to } of segments) {
+        for (let edge = from; edge < to; edge++) expectedLevels[edge] = level;
+      }
+
+      const result = splitRouteByCongestion(points, segments);
+      const actualLevels = result.flatMap((part) => Array<string>(part.points.length - 1).fill(part.level));
+      const reconstructed = result.length
+        ? [...result[0]!.points, ...result.slice(1).flatMap((part) => part.points.slice(1))]
+        : [];
+
+      expect(actualLevels).toEqual(expectedLevels);
+      expect(reconstructed).toEqual(points);
+      expect(result.every((part) => part.points.length >= 2)).toBe(true);
+    },
+  );
+});

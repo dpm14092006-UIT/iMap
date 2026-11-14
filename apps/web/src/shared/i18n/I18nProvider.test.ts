@@ -57,3 +57,15 @@ describe('translate', () => {
     expect(translate('en', 'Bánh mì cô Ba')).toBe('Bánh mì cô Ba');
   });
 });
+
+const placeCountScenarios = Array.from({ length: 50 }, (_, index) => [
+  { count: index, language: 'vi' as const },
+  { count: index, language: 'en' as const },
+]).flat();
+
+describe('dynamic place count regression matrix', () => {
+  it.each(placeCountScenarios)('translates count $count in $language mode', ({ count, language }) => {
+    const source = `Tìm thấy ${count} địa điểm`;
+    expect(translate(language, source)).toBe(language === 'en' ? `Found ${count} places` : source);
+  });
+});
