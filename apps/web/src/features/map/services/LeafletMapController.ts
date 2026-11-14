@@ -11,7 +11,7 @@ import {
 import { minutesSlowerThanFastest, routeLabels } from '../../navigation/utils/routeLabels';
 import type { LatLng, Place } from '../../places/types';
 import type { TrafficFeature, TrafficMapLayer, TrafficSeverity } from '../layers/trafficMapLayer';
-import type { Coordinate, DraftStops, MapLayer, MapOverlays, RoutePlan } from '../types';
+import type { AlgorithmOverlay, Coordinate, DraftStops, MapLayer, MapOverlays, RoutePlan } from '../types';
 import {
   CONGESTION_COLORS,
   CONGESTION_LABELS,
@@ -85,6 +85,9 @@ export class LeafletMapController {
   private readonly terrain: L.TileLayer;
   // Mỗi loại dữ liệu một layer group riêng để xóa/vẽ lại độc lập.
   private readonly routeLayer = L.layerGroup();
+  /** Tuyến Dijkstra/A* và khung vùng dữ liệu OSM (chế độ thuyết trình ?demo=1). */
+  private readonly algorithmLayer = L.layerGroup();
+  private lastAlgorithmKey: string | null = null;
   private readonly labelLayer = L.layerGroup();
   private readonly routeTrafficLayer = L.layerGroup();
   private readonly trafficHaloLayer = L.layerGroup();
@@ -141,6 +144,7 @@ export class LeafletMapController {
     });
     this.streets.addTo(this.map);
     this.trafficHaloLayer.addTo(this.map); // quầng giao thông nằm dưới tuyến
+    this.algorithmLayer.addTo(this.map); // tuyến thuật toán nằm dưới tuyến VietMap
     this.routeLayer.addTo(this.map);
     this.labelLayer.addTo(this.map);
     this.mobileQuery.addEventListener('change', this.onMobileChange);
@@ -295,6 +299,38 @@ export class LeafletMapController {
   fitPoints(points: LatLng[]) {
     if (points.length) this.fit(points.map((point) => L.latLng(point.lat, point.lng)));
   }
+  /**
+   * Vẽ kết quả Dijkstra / A*: Dijkstra nét liền tím (dày, bên dưới), A* nét đứt cam (bên trên),
+   * khung nét đứt xám là vùng có dữ liệu đồ thị. Hai tuyến thường trùng nhau vì cùng chi phí tối ưu.
+   * Tự zoom vừa tuyến khi có kết quả mới. null để xóa.
+   */
+  setAlgorithmOverlay(overlay: AlgorithmOverlay | null) {
+    this.algorithmLayer.clearLayers();
+    if (overlay?.coverage) {
+      const { south, west, north, east } = overlay.coverage;
+      L.rectangle(
+        [
+          [south, west],
+          [north, east],
+        ],
+        { color: '#64748b', weight: 1.5, dashArray: '6 6', fill: false, interactive: false },
+      ).addTo(this.algorithmLayer);
+    }
+    for (const path of overlay?.paths ?? []) {
+      if (path.points.length < 2) continue;
+      const style: L.PolylineOptions =
+        path.algorithm === 'dijkstra'
+          ? { color: '#8b5cf6', weight: 8, opacity: 0.55 }
+          : { color: '#f97316', weight: 4, opacity: 0.95, dashArray: '8 7' };
+      L.polyline(path.points, { ...style, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(
+        this.algorithmLayer,
+      );
+    }
+    const points = overlay?.paths.flatMap((path) => path.points) ?? [];
+    if (overlay && overlay.key !== this.lastAlgorithmKey && points.length) this.fit(points);
+    this.lastAlgorithmKey = overlay?.key ?? null;
+  }
+
   /** Zoom vừa khít một tuyến (nút "Xem trước"). */
   fitRoute(route: RoutePlan) {
     this.fit(route.legs.flatMap((leg) => leg.points));
