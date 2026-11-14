@@ -38,6 +38,13 @@ describe('translate', () => {
     );
   });
 
+  it('clearly separates manually ordered route stops from the multi-stop optimizer', () => {
+    expect(translate('en', 'Tuyến sẽ đi theo thứ tự bạn đặt. Dùng mũi tên để sắp xếp điểm dừng.')).toBe(
+      'The route follows your chosen order. Use the arrows to reorder stops.',
+    );
+    expect(translate('en', 'Tối ưu hành trình')).toBe('Optimize trip');
+  });
+
   it('translates GPS permission and signal errors in English mode', () => {
     expect(translate('en', 'Chưa có quyền GPS. Hãy cho phép định vị rồi thử lại.')).toBe(
       'GPS permission is unavailable. Allow location access and try again.',

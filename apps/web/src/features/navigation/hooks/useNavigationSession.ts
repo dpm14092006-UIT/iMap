@@ -10,6 +10,7 @@ import type {
   PositionFix,
   PositionSource,
 } from '../domain/position/PositionSource';
+import { SpeedEstimator } from '../domain/position/SpeedEstimator';
 import { SimulatedGpsSource } from '../domain/position/SimulatedGpsSource';
 import { BrowserGpsSource } from '../services/position/BrowserGpsSource';
 
@@ -19,6 +20,7 @@ export type NavigationSessionState = {
   route: RoutePlan | null;
   location: LatLng | null;
   headingDegrees: number | null;
+  speedKph: number | null;
   nextInstruction: RouteInstruction | null;
   distanceToInstructionMeters: number;
   distanceRemainingMeters: number;
@@ -34,6 +36,7 @@ const idleState: NavigationSessionState = {
   route: null,
   location: null,
   headingDegrees: null,
+  speedKph: null,
   nextInstruction: null,
   distanceToInstructionMeters: 0,
   distanceRemainingMeters: 0,
@@ -89,6 +92,7 @@ export function useNavigationSession() {
   const progressRatioRef = useRef(0);
   const previousLocationRef = useRef<LatLng | null>(null);
   const headingRef = useRef<number | null>(null);
+  const speedEstimatorRef = useRef(new SpeedEstimator());
 
   const stopSource = useCallback(() => {
     sourceRef.current?.stop();
@@ -102,6 +106,7 @@ export function useNavigationSession() {
     progressRatioRef.current = 0;
     previousLocationRef.current = null;
     headingRef.current = null;
+    speedEstimatorRef.current.reset();
     setIsDemoPaused(false);
     setState(idleState);
   }, [stopSource]);
@@ -119,6 +124,7 @@ export function useNavigationSession() {
           ? bearingDegrees(previousLocation, location)
           : null;
       const headingDegrees = fix.headingDegrees ?? derivedHeading ?? headingRef.current;
+      const speedKph = speedEstimatorRef.current.update(fix, sourceRef.current?.mode !== 'demo');
       previousLocationRef.current = location;
       headingRef.current = headingDegrees;
       const guidance = engine.evaluate(location, fix.accuracyMeters, progressRatioRef.current);
@@ -128,6 +134,7 @@ export function useNavigationSession() {
         status: guidance.arrived ? 'arrived' : 'navigating',
         location,
         headingDegrees,
+        speedKph: guidance.arrived ? null : speedKph,
         nextInstruction: guidance.nextInstruction,
         distanceToInstructionMeters: guidance.distanceToInstructionMeters,
         distanceRemainingMeters: guidance.distanceRemainingMeters,
@@ -145,10 +152,12 @@ export function useNavigationSession() {
   const handleError = useCallback(
     (error: PositionError) => {
       const fatal = error.code === 'permission-denied' || error.code === 'unsupported';
+      speedEstimatorRef.current.reset();
       setState((current) => ({
         ...current,
         status: fatal || current.status === 'locating' ? 'error' : 'navigating',
         headingDegrees: error.code === 'unsupported' ? null : current.headingDegrees,
+        speedKph: null,
         error: error.message,
       }));
       if (fatal) stopSource();
@@ -160,10 +169,12 @@ export function useNavigationSession() {
   const attachSource = useCallback(
     (nextMode: NavigationMode, route: RoutePlan, startNear: LatLng | null) => {
       stopSource();
+      speedEstimatorRef.current.reset();
       const source = createPositionSource(nextMode, route, startNear);
       sourceRef.current = source;
       setModeState(nextMode);
       setIsDemoPaused(false);
+      setState((current) => ({ ...current, speedKph: null }));
       source.start(handleFix, handleError);
     },
     [stopSource, handleFix, handleError],
@@ -176,6 +187,7 @@ export function useNavigationSession() {
       progressRatioRef.current = 0;
       previousLocationRef.current = null;
       headingRef.current = initialRouteHeading(route);
+      speedEstimatorRef.current.reset();
       setState({ ...idleState, status: 'locating', route, headingDegrees: headingRef.current });
       attachSource(startMode, route, null);
     },

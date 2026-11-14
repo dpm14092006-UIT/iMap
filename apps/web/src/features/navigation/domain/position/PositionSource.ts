@@ -6,6 +6,10 @@ export type PositionFix = {
   accuracyMeters: number;
   /** Hướng di chuyển (độ, 0 = Bắc) nếu nguồn biết; null để engine tự suy ra từ chuyển động. */
   headingDegrees: number | null;
+  /** Tốc độ GPS cung cấp, tính bằng m/s; null nếu không có số đo. */
+  speedMetersPerSecond: number | null;
+  /** Thời điểm đo GPS, tính bằng mili giây Unix. */
+  timestampMs: number;
 };
 
 export type PositionErrorCode = 'unsupported' | 'permission-denied' | 'timeout' | 'unavailable';

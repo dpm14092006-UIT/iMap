@@ -124,7 +124,14 @@ export class SimulatedGpsSource implements PositionSource {
       this.deviationMeters > 0 && heading !== null
         ? move(onRoute, heading + 90, this.deviationMeters)
         : onRoute;
-    return { ...point, accuracyMeters: this.options.accuracyMeters, headingDegrees: heading };
+    return {
+      ...point,
+      accuracyMeters: this.options.accuracyMeters,
+      headingDegrees: heading,
+      // Demo tua nhanh vị trí nên không giả làm tốc độ xe thật.
+      speedMetersPerSecond: null,
+      timestampMs: Date.now(),
+    };
   }
 
   private emit(): void {

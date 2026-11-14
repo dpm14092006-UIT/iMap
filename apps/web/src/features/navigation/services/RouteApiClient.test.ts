@@ -56,4 +56,56 @@ describe('RouteApiClient alternatives', () => {
       avoid: ['ferry'],
     });
   });
+
+  it('preserves the exact user-selected order for manually planned stop routes', async () => {
+    const orderedStops: Place[] = [
+      stops[0]!,
+      {
+        id: 'first-stop',
+        name: 'Điểm dừng 1',
+        address: '',
+        category: '',
+        lat: 10.02,
+        lng: 106.02,
+        source: 'map',
+      },
+      {
+        id: 'second-stop',
+        name: 'Điểm dừng 2',
+        address: '',
+        category: '',
+        lat: 10.05,
+        lng: 106.05,
+        source: 'map',
+      },
+      stops[1]!,
+    ];
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            source: 'vietmap',
+            distanceMeters: 8000,
+            durationSeconds: 1200,
+            coordinates: [
+              [106, 10],
+              [106.1, 10.1],
+            ],
+            instructions: [],
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+    vi.stubGlobal('fetch', fetcher);
+    const api = new RouteApiClient(new HttpClient({ baseUrl: 'https://api.test', timeoutMs: 1000 }));
+
+    const result = await api.createPlans(orderedStops, 'car', 'time');
+
+    expect('error' in result).toBe(false);
+    if ('error' in result) return;
+    expect(result.routes[0]?.stops.map(({ id }) => id)).toEqual(orderedStops.map(({ id }) => id));
+    const request = JSON.parse(String(fetcher.mock.calls[0]![1]?.body));
+    expect(request.points).toEqual(orderedStops.map(({ lat, lng }) => ({ lat, lng })));
+  });
 });

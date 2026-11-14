@@ -29,6 +29,13 @@ export class BrowserGpsSource implements PositionSource {
           accuracyMeters: position.coords.accuracy,
           headingDegrees:
             typeof heading === 'number' && Number.isFinite(heading) ? (heading + 360) % 360 : null,
+          speedMetersPerSecond:
+            typeof position.coords.speed === 'number' &&
+            Number.isFinite(position.coords.speed) &&
+            position.coords.speed >= 0
+              ? position.coords.speed
+              : null,
+          timestampMs: Number.isFinite(position.timestamp) ? position.timestamp : Date.now(),
         });
       },
       (error) => onError(toPositionError(error)),

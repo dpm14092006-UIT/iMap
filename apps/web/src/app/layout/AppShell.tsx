@@ -79,7 +79,7 @@ export function AppShell({
         id="map"
         style={style}
         data-sheet={sheet.isFull ? 'full' : undefined}
-        className={`${dark ? 'dark' : ''} relative h-[100dvh] min-h-[560px] overflow-hidden bg-[#e8ece7] text-ink dark:bg-[#05070b] dark:text-slate-100`}
+        className={`${dark ? 'dark' : ''} relative h-[100dvh] min-h-[560px] overflow-hidden bg-[#e8ece7] text-ink dark:bg-[#0b1321] dark:text-slate-100`}
       >
         {map}
         {dock}
@@ -90,7 +90,7 @@ export function AppShell({
           {bottomLeft}
         </div>
         <div
-          className={`absolute bottom-[calc(var(--shell-bottom)+56px)] right-3 z-20 transition-[bottom] duration-200 ${docked ? 'max-md:bottom-[calc(var(--shell-bottom)+34px)]' : ''} ${hideOnFullSheet}`}
+          className={`absolute bottom-[calc(var(--shell-bottom)+56px)] right-3 z-20 flex items-end gap-2 transition-[bottom] duration-200 ${docked ? 'max-md:bottom-[calc(var(--shell-bottom)+34px)]' : ''} ${hideOnFullSheet}`}
         >
           {bottomRight}
         </div>
