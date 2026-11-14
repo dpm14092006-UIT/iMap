@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useShell } from '../../../app/layout/AppShell';
 import { Icon } from '../../../shared/components/Icon';
 import { useMediaQuery } from '../../../shared/hooks/useMediaQuery';
@@ -77,7 +77,7 @@ export function NavigationBanner({
 }: NavigationBannerProps) {
   const { language, t } = useI18n();
   const isMobile = useMediaQuery('(max-width: 767px)');
-  const { setSheet } = useShell();
+  const { setSheet, setTopOverlayInset } = useShell();
   const root = useRef<HTMLElement>(null);
   const visible = status !== 'idle';
   const reportsHeight = visible && isMobile && !atTop;
@@ -98,6 +98,22 @@ export function NavigationBanner({
       setSheet({ height: null, isFull: false, inset: null });
     };
   }, [reportsHeight, setSheet]);
+
+  useLayoutEffect(() => {
+    const element = root.current;
+    if (!visible || !atTop || !element) {
+      setTopOverlayInset(null);
+      return;
+    }
+    const measure = () => setTopOverlayInset(element.offsetHeight + 24);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      setTopOverlayInset(null);
+    };
+  }, [visible, atTop, setTopOverlayInset]);
 
   if (!visible) return null;
 

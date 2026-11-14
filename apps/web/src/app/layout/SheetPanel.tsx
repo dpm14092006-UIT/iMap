@@ -9,13 +9,13 @@ const SNAP_ORDER: Snap[] = ['peek', 'half', 'full'];
 const PEEK_PX = 96;
 /** Nấc nửa thấp hơn 50% để bản đồ (và tuyến) vẫn nhìn rõ phía trên. */
 const HALF_VH = 40;
-/** Nấc "đầy" chừa trên cùng một dải bằng ô tìm kiếm (12px lề + 48px ô + 12px) để không đè lên nhau. */
+/** Lề trên mặc định cho nấc đầy; khi banner dẫn đường mở, AppShell thay bằng chiều cao đo được. */
 const FULL_TOP_PX = 72;
 /** Chiều cao CSS của từng nấc. */
 const SNAP_HEIGHT: Record<Snap, string> = {
   peek: `${PEEK_PX}px`,
   half: `${HALF_VH}dvh`,
-  full: `calc(100dvh - var(--tab-h) - ${FULL_TOP_PX}px)`,
+  full: `calc(100dvh - var(--tab-h) - var(--sheet-top-inset, ${FULL_TOP_PX}px))`,
 };
 /** Kéo ít hơn ngưỡng này (px) thì coi là chạm, không phải kéo. */
 const TAP_THRESHOLD = 5;
@@ -36,7 +36,7 @@ type SheetPanelProps = {
 
 /**
  * Panel chức năng: desktop/tablet là thẻ kính bên trái, mobile là bottom sheet kéo được
- * với 3 nấc (thu 96px / nửa 40dvh / đầy: sát dưới ô tìm kiếm).
+ * với 3 nấc (thu 96px / nửa 40dvh / đầy: sát dưới ô tìm kiếm hoặc banner dẫn đường).
  */
 export function SheetPanel({
   title,
@@ -116,12 +116,17 @@ export function SheetPanel({
     if (!isMobile || !root.current || (event.target as HTMLElement).closest('button, a, input')) return;
     const rect = root.current.getBoundingClientRect();
     const tabHeight = window.innerHeight - rect.bottom;
+    const main = root.current.closest('main');
+    const configuredTop = main
+      ? Number.parseFloat(getComputedStyle(main).getPropertyValue('--sheet-top-inset'))
+      : Number.NaN;
+    const fullTop = Number.isFinite(configuredTop) && configuredTop > 0 ? configuredTop : FULL_TOP_PX;
     event.currentTarget.setPointerCapture(event.pointerId);
     drag.current = {
       startY: event.clientY,
       startHeight: rect.height,
       minPx: PEEK_PX,
-      snaps: [PEEK_PX, (window.innerHeight * HALF_VH) / 100, window.innerHeight - tabHeight - FULL_TOP_PX],
+      snaps: [PEEK_PX, (window.innerHeight * HALF_VH) / 100, window.innerHeight - tabHeight - fullTop],
       moved: false,
     };
   };
@@ -164,7 +169,7 @@ export function SheetPanel({
       aria-label={t(title)}
       style={isMobile ? { height: reportedHeight ?? undefined } : undefined}
       hidden={hidden}
-      className={`${hidden ? 'hidden' : 'flex'} absolute z-30 flex-col overflow-hidden bg-white/90 shadow-glass ring-1 ring-black/5 backdrop-blur-xl dark:bg-slate-900/95 dark:text-slate-100 dark:shadow-glass-dark dark:ring-white/10 max-md:inset-x-0 max-md:bottom-[var(--tab-h)] max-md:animate-sheet-up max-md:rounded-t-3xl ${dragHeight === null ? 'max-md:transition-[height] max-md:duration-200' : ''} md:bottom-3 md:left-[80px] md:top-[72px] md:w-[360px] md:animate-sheet-in md:rounded-3xl lg:left-[88px] lg:w-[400px]`}
+      className={`${hidden ? 'hidden' : 'flex'} absolute z-30 flex-col overflow-hidden bg-white/90 shadow-glass ring-1 ring-black/5 backdrop-blur-xl dark:bg-slate-900/95 dark:text-slate-100 dark:shadow-glass-dark dark:ring-white/10 max-md:inset-x-0 max-md:bottom-[var(--tab-h)] max-md:animate-sheet-up max-md:rounded-t-3xl ${dragHeight === null ? 'max-md:transition-[height] max-md:duration-200' : ''} md:bottom-3 md:left-[80px] md:top-[var(--sheet-top-inset)] md:w-[360px] md:animate-sheet-in md:rounded-3xl lg:left-[88px] lg:w-[400px]`}
     >
       <header
         className="shrink-0 touch-none select-none border-b border-black/5 dark:border-white/10 max-md:cursor-grab"
