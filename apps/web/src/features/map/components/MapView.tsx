@@ -4,7 +4,7 @@ import type { Poi } from '../../explore/types';
 import type { LatLng } from '../../places/types';
 import type { TrafficMapLayer } from '../layers/trafficMapLayer';
 import { LeafletMapController } from '../services/LeafletMapController';
-import type { DraftStops, MapLayer, MapOverlays, RoutePlan } from '../types';
+import type { DraftStops, MapLayer, MapOverlays, RoutePlan, AlgorithmOverlay } from '../types';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type MapViewProps = {
@@ -24,6 +24,8 @@ type MapViewProps = {
   /** Địa điểm đang hiển thị từ chức năng khám phá / tìm dọc tuyến. */
   pois: Poi[];
   highlightedPoiId: string | null;
+  /** Tuyến Dijkstra/A* để so sánh — chỉ có ở chế độ thuyết trình (?demo=1). */
+  algorithmOverlay?: AlgorithmOverlay | null;
   controllerRef: MutableRefObject<LeafletMapController | null>;
   onMapClick: (point: LatLng) => void;
   onBoundsChange: (bounds: TrafficReportBounds) => void;
@@ -45,6 +47,7 @@ export function MapView({
   overlays,
   pois,
   highlightedPoiId,
+  algorithmOverlay = null,
   controllerRef,
   onMapClick,
   onBoundsChange,
@@ -109,6 +112,11 @@ export function MapView({
     pois,
     highlightedPoiId,
   ]);
+
+  // Lớp thuật toán vẽ riêng để không phải vẽ lại tuyến/sự cố khi chỉ kết quả so sánh thay đổi.
+  useEffect(() => {
+    controllerRef.current?.setAlgorithmOverlay(algorithmOverlay);
+  }, [controllerRef, algorithmOverlay]);
 
   return (
     <div

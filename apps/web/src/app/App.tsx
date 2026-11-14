@@ -42,6 +42,12 @@ import {
 } from '../features/navigation/domain/IncidentAheadDetector';
 import { RoutePath } from '../features/navigation/domain/RoutePath';
 import { isDemoModeEnabled } from '../features/navigation/utils/demoMode';
+import { AlgorithmComparison } from '../features/navigation/components/AlgorithmComparison';
+import { useAlgorithmComparison } from '../features/navigation/hooks/useAlgorithmComparison';
+import {
+  TourAlgorithmSelect,
+  type TourAlgorithmChoice,
+} from '../features/multi-stop/components/TourAlgorithmSelect';
 import { toTrafficMapLayer } from '../features/map/layers/trafficMapLayer';
 import type { RerouteStrategy } from '@routetwin/shared';
 import { formatDistanceKm, formatDurationMinutes } from '../features/navigation/utils/format';
@@ -333,6 +339,13 @@ export function App() {
   }, [visibleReports, t]);
   // Chế độ Demo (?demo=1): sự cố giả chỉ nằm trên máy này, vẽ chung với sự cố thật để thấy tuyến mới né chỗ nào.
   const demoEnabled = useMemo(() => isDemoModeEnabled(), []);
+  // Chế độ thuyết trình: so sánh Dijkstra / A* (panel Chỉ đường) và chọn thuật toán TSP (panel Nhiều điểm).
+  const algorithmComparison = useAlgorithmComparison({
+    origin: directions.origin,
+    destination: directions.destination,
+    vehicle: directions.vehicle,
+  });
+  const [tourAlgorithm, setTourAlgorithm] = useState<TourAlgorithmChoice>('auto');
   const [demoIncidents, setDemoIncidents] = useState<RouteIncident[]>([]);
   const trafficLayer = useMemo(
     () =>
@@ -677,7 +690,7 @@ export function App() {
       vehicle,
       objective,
       returnToStart,
-      'auto',
+      demoEnabled ? tourAlgorithm : 'auto', // giao diện thường luôn để server tự chọn
     );
     if (requestId !== multiPlanGeneration.current) return { error: t('Đã hủy hành trình cũ.') };
     if ('error' in result) return result;
@@ -953,6 +966,7 @@ export function App() {
           overlays={overlays}
           pois={visiblePois}
           highlightedPoiId={highlightedPoiId}
+          algorithmOverlay={demoEnabled && activePanel === 'directions' ? algorithmComparison.overlay : null}
           onMapClick={(point) => void handleMapClick(point)}
           onSelectRoute={directions.chooseRoute}
           onPoiClick={(id) => {
@@ -1169,6 +1183,18 @@ export function App() {
             onStartNavigation={startNavigation}
             onPreviewRoute={previewRoute}
             onAddDestination={continueInMultiStop}
+            presentationSlot={
+              demoEnabled ? (
+                <AlgorithmComparison
+                  comparison={algorithmComparison}
+                  canRun={Boolean(
+                    directions.origin &&
+                    directions.destination &&
+                    directions.origin.id !== directions.destination.id,
+                  )}
+                />
+              ) : undefined
+            }
             isNavigating={isNavigating}
             onUseMyLocation={() => void setOriginFromGps()}
           />
@@ -1190,6 +1216,15 @@ export function App() {
             onPlanRoute={planMultiStopRoute}
             onReset={resetMultiStopRoute}
             onSave={savePlan}
+            presentationSlot={
+              demoEnabled ? (
+                <TourAlgorithmSelect
+                  value={tourAlgorithm}
+                  onChange={setTourAlgorithm}
+                  lastUsed={activeRoute?.optimization?.algorithm ?? null}
+                />
+              ) : undefined
+            }
           />
         </Suspense>
       )}
