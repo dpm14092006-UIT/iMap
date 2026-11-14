@@ -839,6 +839,34 @@ const translations: Record<string, string> = {
   'VietMap không tìm được tuyến phù hợp giữa các điểm đã chọn.':
     'VietMap could not find a suitable route between the selected places.',
   'VietMap trả về tuyến thiếu tọa độ đường đi.': 'The route returned by VietMap is missing path coordinates.',
+  // --- N1: chế độ thuyết trình (?demo=1) ---
+  'So sánh thuật toán': 'Algorithm comparison',
+  'Chế độ thuyết trình': 'Presentation mode',
+  'Dijkstra & A* trên đồ thị OSM trung tâm TP.HCM': 'Dijkstra & A* on the central Ho Chi Minh City OSM graph',
+  'Tiêu chí tối ưu': 'Optimization goal',
+  'Đang chạy thuật toán…': 'Running algorithms…',
+  'Chạy Dijkstra & A*': 'Run Dijkstra & A*',
+  'Thuật toán': 'Algorithm',
+  'Thời gian*': 'Time*',
+  'Node duyệt': 'Nodes visited',
+  'A* duyệt ít hơn {saving}% số node, cùng chi phí tối ưu.':
+    'A* visited {saving}% fewer nodes for the same optimal cost.',
+  'Điểm được gắn vào đường gần nhất (lệch {from} m / {to} m). *Thời gian ước tính khi đường thông thoáng, chưa tính kẹt xe. Dữ liệu © OpenStreetMap.':
+    'Points are snapped to the nearest road ({from} m / {to} m away). *Free-flow time estimate without congestion. Data © OpenStreetMap.',
+  'Không chạy được thuật toán.': 'Could not run the algorithms.',
+  'Điểm xuất phát nằm ngoài vùng dữ liệu bản đồ của thuật toán (trung tâm TP.HCM).':
+    'The starting point is outside the algorithm map area (central Ho Chi Minh City).',
+  'Điểm đến nằm ngoài vùng dữ liệu bản đồ của thuật toán (trung tâm TP.HCM).':
+    'The destination is outside the algorithm map area (central Ho Chi Minh City).',
+  'Không tìm được đường giữa hai điểm trong vùng dữ liệu.':
+    'No path was found between the two points in the data area.',
+  'Chính xác (Held–Karp)': 'Exact (Held–Karp)',
+  'Nhanh (NN + 2-opt)': 'Fast (NN + 2-opt)',
+  'Thuật toán sắp xếp': 'Ordering algorithm',
+  'Chính xác: Held–Karp luôn ra thứ tự tối ưu. Nhanh: NN + 2-opt, gần đúng — dùng để so sánh.':
+    'Exact: Held–Karp always finds the optimal order. Fast: NN + 2-opt, approximate — for comparison.',
+  'Lần tối ưu vừa rồi: Held–Karp · tối ưu chính xác': 'Last run: Held–Karp · exact optimum',
+  'Lần tối ưu vừa rồi: NN + 2-opt · gần đúng': 'Last run: NN + 2-opt · approximate',
 };
 
 const translationPatterns = Object.entries(translations)

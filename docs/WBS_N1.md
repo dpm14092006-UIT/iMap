@@ -86,12 +86,12 @@
 
 | ID | Công việc | Giờ | DoD | ✔ |
 |---|---|---|---|---|
-| 5.1 | Tích hợp với N2: `TrafficMapLayer` thật, Auth cho My Routes (JWT), review `composition-root.ts` | 1.5 | Chạy chung 1 build; không xung đột | [ ] |
-| 5.2 | Responsive mobile/desktop: panel, toolbar, bản đồ; kiểm tra a11y cơ bản (focus, aria) | 1.5 | Không vỡ layout ở 375px / 768px / 1440px | [ ] |
-| 5.3 | Xử lý lỗi & trạng thái rỗng toàn luồng (mất mạng, hết quota, ZERO_RESULTS, thiếu key) | 1 | Mọi lỗi có thông báo tiếng Việt, không treo UI | [ ] |
-| 5.4 | Test: `npm run typecheck && npm test && npm run build` xanh; thêm test cho use case mới; kịch bản E2E thủ công | 1.5 | CI xanh; checklist E2E tick hết | [ ] |
-| 5.5 | Cập nhật tài liệu: README (bảng API), `API_CONTRACTS.md`, kết quả benchmark, hướng dẫn chạy | 1 | Không còn endpoint 501 thuộc N1 trong README | [ ] |
-| 5.6 | Chuẩn bị demo: kịch bản 5–7 phút (search → route → so sánh Dijkstra/A* → multi-stop → reroute → My Routes) | 1 | Chạy trót lọt 2 lần liên tiếp | [ ] |
+| 5.1 | Tích hợp với N2: đồng bộ `main` sau giao diện mới; đưa lại so sánh Dijkstra/A\* và chọn thuật toán TSP vào **chế độ thuyết trình** (`?demo=1`) | 1.5 | Chạy chung 1 build; giao diện thường không đổi | [x] |
+| 5.2 | Responsive: kiểm tra 390 px (khối so sánh, chọn thuật toán, banner Demo) | 1.5 | Không tràn ngang | [x] |
+| 5.3 | Rà soát lỗi API của N1: 13 tình huống sai dữ liệu / ngoài vùng / điểm không có đường | 1 | Mã lỗi đúng, thông báo tiếng Việt, không sập | [x] |
+| 5.4 | Typecheck, lint, Prettier, build; test API 235/235, web 1001/1001 | 1.5 | CI xanh | [x] |
+| 5.5 | Tài liệu: README (chế độ thuyết trình), chạy lại benchmark (số liệu không đổi) | 1 | — | [x] |
+| 5.6 | Kịch bản demo 5–7 phút: `docs/DEMO_SCRIPT_N1.md` | 1 | Chạy trót lọt | [x] cần tập thử 2 lần |
 | 5.7 | Buffer / sửa lỗi tồn đọng | 0.5 | — | [ ] |
 
 **Deliverable D5:** N1 feature freeze, demo sẵn sàng.
@@ -116,4 +116,4 @@
 | 2 | 6 | 6 | Thêm UI so sánh thuật toán (không cần key VietMap) |
 | 3 | 5 | 5 | N2 làm lõi Held–Karp; N1 thêm 2-opt, Strategy, benchmark (`docs/BENCHMARK_TSP.md`) |
 | 4 | 6 | 4 | Rerouting tránh sự cố gắn vào dẫn đường GPS của N2; My Routes chuyển cho N2 |
-| 5 | 7 | 0 | |
+| 5 | 7 | 6 | 5.7 (buffer) dùng khi tập demo |

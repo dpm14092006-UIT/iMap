@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Popover } from '../../../app/layout/Popover';
 import { SheetPanel } from '../../../app/layout/SheetPanel';
 import { Icon } from '../../../shared/components/Icon';
@@ -36,6 +36,8 @@ type RoutePanelProps = {
   onAddDestination: () => void;
   isNavigating: boolean;
   onClose: () => void;
+  /** Nội dung thêm ở cuối panel (chế độ thuyết trình ?demo=1: so sánh Dijkstra / A*). */
+  presentationSlot?: ReactNode;
 };
 
 const chipClass = (active: boolean) =>
@@ -56,6 +58,7 @@ export function RoutePanel({
   onAddDestination,
   isNavigating,
   onClose,
+  presentationSlot,
 }: RoutePanelProps) {
   const { t } = useI18n();
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -374,6 +377,8 @@ export function RoutePanel({
           </ul>
         </section>
       )}
+
+      {presentationSlot}
 
       {!route && (
         <p className="mt-4 flex items-start gap-2 text-xs leading-5 text-ink-soft dark:text-slate-400">

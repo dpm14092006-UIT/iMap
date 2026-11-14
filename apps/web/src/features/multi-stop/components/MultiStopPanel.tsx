@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { SheetPanel } from '../../../app/layout/SheetPanel';
 import { Icon } from '../../../shared/components/Icon';
 import { popularPlaces } from '../../places/data/popularPlaces';
@@ -27,6 +27,8 @@ type MultiStopPanelProps = {
   onSave?: (plan: RoutePlan) => void;
   /** Điểm đi và các điểm cần ghé điền sẵn (App đổi `key` để áp dụng lại). */
   initialStops?: { start: Place | null; stops: Place[] };
+  /** Nội dung thêm trên nút tối ưu (chế độ thuyết trình ?demo=1: chọn thuật toán Held–Karp / NN + 2-opt). */
+  presentationSlot?: ReactNode;
 };
 
 type LocalizedMessage = { source: string; values?: Record<string, string | number> };
@@ -47,6 +49,7 @@ export function MultiStopPanel({
   getFocus,
   onReset,
   initialStops,
+  presentationSlot,
 }: MultiStopPanelProps) {
   const { language, t } = useI18n();
   const [stops, setStops] = useState<Place[]>(initialStops?.stops ?? []);
@@ -270,6 +273,7 @@ export function MultiStopPanel({
             value={query}
           />
         </div>
+        {presentationSlot}
         <div className="sticky bottom-0 z-20 -mx-5 bg-gradient-to-t from-white dark:from-slate-900 via-white/95 dark:via-slate-900/95 to-transparent px-5 pb-1 pt-3">
           <button
             type="button"

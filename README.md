@@ -113,6 +113,7 @@ Xem [kết quả kiểm tra tìm kiếm](docs/SEARCH_VERIFICATION.md).
 - **Dẫn đường:** bấm "Bắt đầu chuyến đi" sau khi tìm tuyến. App theo dõi vị trí, hiện chỉ dẫn rẽ tiếp theo và quãng đường còn lại.
 - **Tính lại tuyến (N1):** khi lệch tuyến đủ lâu, hoặc có sự cố đang hoạt động (mức Vừa trở lên) nằm trên tuyến trong 1,5 km phía trước, app gọi `POST /api/routes/reroute` từ vị trí hiện tại. Server chọn tuyến tốt nhất không đi qua sự cố → tuyến thay thế của VietMap → đi vòng qua điểm cạnh sự cố; nếu không né được (sự cố nằm trên con đường duy nhất vào/ra điểm) thì báo rõ để người dùng chú ý.
 - **Chế độ Demo (GPS giả):** mở app với `?demo=1` (ví dụ `http://localhost:5173/?demo=1`). Khi bắt đầu chuyến đi, xe tự chạy dọc tuyến; banner dẫn đường có công tắc **Thật / Demo** (đổi được giữa chuyến) và các nút Tạm dừng, Rẽ nhầm, Sự cố phía trước. Sự cố giả chỉ nằm trên máy, không gửi lên hệ thống báo cáo. Link thường không hiện các điều khiển này.
+- **Chế độ thuyết trình (cùng link `?demo=1`):** panel Chỉ đường có khối **So sánh Dijkstra / A\*** (bảng số nút duyệt, thời gian chạy; vẽ hai tuyến và vùng dữ liệu OSM trên bản đồ); panel Nhiều điểm có ô **Thuật toán sắp xếp** (Tự động / Held–Karp / NN + 2-opt). Kịch bản trình bày: `docs/DEMO_SCRIPT_N1.md`.
 - Thiết kế: `useNavigationSession` đọc vị trí qua interface `PositionSource` với hai cài đặt `BrowserGpsSource` (GPS thật) và `SimulatedGpsSource` (GPS giả) — Strategy pattern, engine dẫn đường dùng chung.
 
 ## Thứ tự điểm dừng
