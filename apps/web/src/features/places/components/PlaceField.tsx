@@ -3,6 +3,8 @@ import { popularPlaces } from '../data/popularPlaces';
 import type { LatLng, Place } from '../types';
 import { PlaceCombobox } from './PlaceCombobox';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
+import { useRecentPlaces } from '../context/RecentPlacesProvider';
+import type { RecentPlaceKind } from '../services/recentPlaces';
 
 type PlaceFieldProps = {
   /** Địa điểm đang được chọn (null khi người dùng đang gõ / chưa chọn). */
@@ -11,6 +13,8 @@ type PlaceFieldProps = {
   onChange: (place: Place | null) => void;
   ariaLabel: string;
   placeholder: string;
+  /** Hiện lịch sử 10 điểm đi / điểm đến gần nhất (khi đã đăng nhập). */
+  historyKind?: RecentPlaceKind;
 };
 
 /**
@@ -18,8 +22,17 @@ type PlaceFieldProps = {
  * - Khi `place` đổi từ bên ngoài (click bản đồ, GPS, đảo chiều) thì ô tự hiện tên mới.
  * - Khi người dùng gõ chữ thì địa điểm cũ bị bỏ chọn (onChange(null)) cho tới khi chọn gợi ý.
  */
-export function PlaceField({ place, onChange, ariaLabel, placeholder, getFocus }: PlaceFieldProps) {
+export function PlaceField({
+  place,
+  onChange,
+  ariaLabel,
+  placeholder,
+  getFocus,
+  historyKind,
+}: PlaceFieldProps) {
   const { t } = useI18n();
+  const recent = useRecentPlaces();
+  const recentPlaces = historyKind && recent.enabled ? recent.places[historyKind] : [];
   const [text, setText] = useState(place?.name ?? '');
 
   useEffect(() => {
@@ -40,6 +53,9 @@ export function PlaceField({ place, onChange, ariaLabel, placeholder, getFocus }
       places={popularPlaces}
       placeholder={t(placeholder)}
       value={text}
+      recentPlaces={recentPlaces}
+      recentActive={!text.trim() || Boolean(place && text === place.name)}
+      onRemoveRecent={historyKind ? (item) => recent.remove(historyKind, item) : undefined}
     />
   );
 }

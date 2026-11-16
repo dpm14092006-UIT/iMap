@@ -35,7 +35,9 @@ import { AStarSolver } from './modules/navigation/domain/algorithms/AStarSolver.
 import { FindPathUseCase } from './modules/navigation/application/use-cases/FindPathUseCase.js';
 import { GetRoadGraphInfoUseCase } from './modules/navigation/application/use-cases/GetRoadGraphInfoUseCase.js';
 import { PathfindingController } from './modules/navigation/presentation/PathfindingController.js';
-import { env } from './config/env.js';
+import { env, supabaseSecretKey, webPushConfigured } from './config/env.js';
+import { WebPushTrafficAlertNotifier } from './modules/traffic/infrastructure/notifications/WebPushTrafficAlertNotifier.js';
+import { NoopTrafficAlertNotifier } from './modules/traffic/application/ports/TrafficAlertNotifier.js';
 import { perMinuteRateLimit } from './shared/http/RateLimiter.js';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
@@ -45,8 +47,23 @@ const apiRoot = fileURLToPath(new URL('..', import.meta.url));
 /** Composition root – chỉ nơi này biết class implementation cụ thể. */
 export function createContainer() {
   const trafficRepository = new SupabaseTrafficReportRepository();
+  // Web Push cho xe đang đi trên tuyến có sự cố; chưa cấu hình thì chỉ còn cảnh báo Realtime trong app.
+  const trafficAlertNotifier =
+    webPushConfigured &&
+    env.SUPABASE_URL &&
+    supabaseSecretKey &&
+    env.WEB_PUSH_PUBLIC_KEY &&
+    env.WEB_PUSH_PRIVATE_KEY
+      ? new WebPushTrafficAlertNotifier({
+          supabaseUrl: env.SUPABASE_URL,
+          supabaseSecretKey,
+          publicKey: env.WEB_PUSH_PUBLIC_KEY,
+          privateKey: env.WEB_PUSH_PRIVATE_KEY,
+          subject: env.WEB_PUSH_SUBJECT,
+        })
+      : new NoopTrafficAlertNotifier();
   const trafficController = new TrafficController(
-    new CreateTrafficReportUseCase(trafficRepository),
+    new CreateTrafficReportUseCase(trafficRepository, trafficAlertNotifier),
     new ListTrafficReportsUseCase(trafficRepository),
     new UpdateRoadClearanceUseCase(trafficRepository),
     // Hạn mức theo người dùng (RPC consume_traffic_image_quota, migration 0005: 10 lượt/giờ),

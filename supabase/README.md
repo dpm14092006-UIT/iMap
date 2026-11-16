@@ -42,3 +42,19 @@ Migration `0006_vehicle_specific_traffic_routes.sql` bổ sung `vehicle_scope` m
 Lưu ý: `0003` giữ hành vi có sẵn là xóa bảng metadata/quota AI cũ; không xóa file ảnh trong Storage.
 
 Đã kiểm tra bằng PostgreSQL nhúng (PGlite): chạy mới, chạy lặp từng file, phát lại cả chuỗi trên schema cuối, bảo toàn bản ghi giao thông mẫu, chữ ký RPC và quyền gọi, rollback khi lỗi. Auth/Storage/Realtime/PostGIS được mô phỏng trong kiểm tra này; đây không phải kiểm thử end-to-end trên Supabase thật.
+
+## Migration 0007: lịch sử điểm đi/đến và Web Push cảnh báo trên tuyến
+
+`0007_recent_places_and_route_push.sql` làm 3 việc:
+
+- Sửa số người gửi báo cáo: báo cáo không còn `user_id` vẫn được tính là một người riêng, nên không còn hiện "từ 0 người".
+- Thêm bảng `recent_places` và RPC `record_recent_place`. Mỗi tài khoản giữ 10 điểm đi và 10 điểm đến gần nhất, RLS chỉ cho đọc/xóa dữ liệu của chính mình.
+- Thêm `push_subscriptions`, `route_watches` (tuyến đang đi, hết hạn sau 20 phút nếu không được làm mới) và các RPC `save_push_subscription` / `upsert_route_watch`. Hai RPC `find_route_watchers` và `delete_push_subscription` chỉ cấp cho `service_role`.
+
+Muốn API gửi Web Push thì đặt trong `apps/api/.env`:
+
+- `SUPABASE_SECRET_KEY`: khóa bí mật, chỉ đặt ở API, không bao giờ đặt ở web.
+- `WEB_PUSH_PUBLIC_KEY` / `WEB_PUSH_PRIVATE_KEY`: tạo bằng `npx web-push generate-vapid-keys`.
+- `WEB_PUSH_SUBJECT`: dạng `mailto:` hoặc `https://`.
+
+Thiếu các biến này thì app vẫn cảnh báo khi đang mở (Realtime + banner + âm thanh), chỉ không có thông báo đẩy lúc tắt màn hình. Trên iPhone, Web Push chỉ hoạt động khi web đã được "Thêm vào Màn hình chính" (iOS 16.4+).

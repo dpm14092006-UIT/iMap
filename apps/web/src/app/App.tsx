@@ -66,7 +66,16 @@ import {
   toIncidents,
   toReportsMapLayer,
 } from '../features/traffic/services/trafficPresentation';
-import { shouldNotifyTrafficReportOnRoute } from '../features/traffic/services/routeTraffic';
+import {
+  ROUTE_ALERT_CORRIDOR_METERS,
+  shouldNotifyTrafficReportOnRoute,
+} from '../features/traffic/services/routeTraffic';
+import { useRouteTrafficAlert } from '../features/traffic/hooks/useRouteTrafficAlert';
+import { RouteTrafficAlert } from '../features/traffic/components/RouteTrafficAlert';
+import { usePushNotifications } from '../features/notifications/hooks/usePushNotifications';
+import { useRecentPlaces } from '../features/places/context/RecentPlacesProvider';
+import { useRouteWatch } from '../features/notifications/hooks/useRouteWatch';
+import { PushPermissionCard } from '../features/notifications/components/PushPermissionCard';
 import { Icon } from '../shared/components/Icon';
 import { useI18n } from '../shared/i18n/I18nProvider';
 import { progressAlongPath } from '../shared/geo/path';
@@ -168,6 +177,24 @@ function findPlaceNear(point: LatLng): Place | null {
   );
 }
 
+/** Số liệu cộng đồng đi kèm báo cáo (có trong Web Push, không có trong Realtime). */
+function pickCommunityCounts(report: object) {
+  const value = report as {
+    communityReportCount?: unknown;
+    communityReporterCount?: unknown;
+    communityUpdatedAt?: unknown;
+  };
+  return {
+    ...(typeof value.communityReportCount === 'number'
+      ? { communityReportCount: value.communityReportCount }
+      : {}),
+    ...(typeof value.communityReporterCount === 'number'
+      ? { communityReporterCount: value.communityReporterCount }
+      : {}),
+    ...(typeof value.communityUpdatedAt === 'string' ? { communityUpdatedAt: value.communityUpdatedAt } : {}),
+  };
+}
+
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
@@ -224,6 +251,8 @@ export function App() {
     stop: stopNavigation,
     updateRoute: updateNavigationRoute,
   } = navigation;
+  /** Gán sau khi đã có hình học tuyến đang dẫn; Realtime và Web Push đều đi qua đây. */
+  const routeAlertTriggerRef = useRef<((report: RealtimeTrafficReport) => void) | null>(null);
   const notifiedRealtimeReports = useRef(new Map<string, number>());
   const onRealtimeTrafficReport = useCallback(
     (report: RealtimeTrafficReport) => {
@@ -238,20 +267,10 @@ export function App() {
         if (oldestId) notifiedRealtimeReports.current.delete(oldestId);
       }
 
-      const severityLabel: Record<IncidentSeverity, string> = {
-        low: t('nhẹ'),
-        medium: t('vừa'),
-        high: t('nặng'),
-      };
-      const incidentLabel = t(incidentLabels[report.incidentType as IncidentKind] ?? 'Sự cố giao thông');
-      showToast(
-        t('Cảnh báo tuyến: {incident} mức {severity}. Đã cập nhật đoạn đường.', {
-          incident: incidentLabel,
-          severity: severityLabel[report.severity],
-        }),
-      );
+      // Banner lớn + kêu/rung + hỏi đổi tuyến (xem useRouteTrafficAlert bên dưới).
+      routeAlertTriggerRef.current?.(report);
     },
-    [activeRoute, navigationRoute, showToast, t],
+    [activeRoute, navigationRoute],
   );
   const isNavigationIdle = navigationStatus === 'idle';
   const isNavigating = navigationStatus === 'navigating' || navigationStatus === 'locating';
@@ -595,15 +614,118 @@ export function App() {
       { id: `demo-${Date.now()}`, title: 'Đường đóng (demo)', ...point },
     ]);
   };
+  // --- Lịch sử 10 điểm đi / điểm đến gần nhất (tài khoản đã đăng nhập) ---
+  const recentPlaces = useRecentPlaces();
+  const recordRecentPlace = recentPlaces.record;
+  useEffect(() => {
+    if (!activeRoute || activeRoute.stops.length < 2) return;
+    recordRecentPlace('origin', activeRoute.stops[0]);
+    recordRecentPlace('destination', activeRoute.stops[activeRoute.stops.length - 1]);
+  }, [activeRoute, recordRecentPlace]);
+
+  // --- Cảnh báo sự cố trên tuyến: kêu/rung + banner lớn + hỏi Có/Không đổi sang đường khác ---
+  const push = usePushNotifications(isAuthenticated);
+  const alertRoute = navigationRoute ?? activeRoute;
+  useRouteWatch(push.endpoint, alertRoute, Boolean(navigationRoute) && !isNavigationIdle, navigationLocation);
+  const routeAlert = useRouteTrafficAlert({
+    route: alertRoute,
+    isNavigating: Boolean(navigationRoute) && isNavigating,
+    location: navigationLocation,
+    nextStopIndex,
+    remainingMinutes: navigationRoute
+      ? navigationRoute.durationMin * Math.max(0, 1 - navigation.progressRatio)
+      : (activeRoute?.durationMin ?? null),
+    otherIncidents: routeIncidents,
+    pushActive: Boolean(push.endpoint),
+    onAccept: (plan) => {
+      setActiveRoute(plan);
+      if (navigationRoute) updateNavigationRoute(plan);
+    },
+    notificationText: (incident) => ({
+      title: t('{incident} trên tuyến của bạn', { incident: t(incident.title) }),
+      body: t('Mở để xem đường khác tránh sự cố.'),
+    }),
+  });
+  const triggerRouteAlert = routeAlert.trigger;
+  routeAlertTriggerRef.current = (report) => {
+    // Đang dẫn đường: chỉ báo sự cố còn ở phía trước, kèm khoảng cách dọc tuyến.
+    let distanceAheadMeters: number | null = null;
+    if (navigationPath && navigationRoute && !isNavigationIdle) {
+      const progressMeters = navigation.progressRatio * navigationPath.totalMeters;
+      const match = navigationPath.closest(report, progressMeters - 30);
+      if (!match || match.distance > ROUTE_ALERT_CORRIDOR_METERS) return;
+      distanceAheadMeters = Math.max(0, match.progress - progressMeters);
+      incidentDetector.current.markHandled(report.id);
+    }
+    triggerRouteAlert(
+      {
+        id: report.id,
+        lat: report.lat,
+        lng: report.lng,
+        severity: report.severity,
+        title: incidentLabels[report.incidentType as IncidentKind] ?? 'Sự cố giao thông',
+        // Web Push gửi kèm số liệu cộng đồng; Realtime thì lấy từ danh sách báo cáo khi tải lại.
+        ...pickCommunityCounts(report),
+      },
+      distanceAheadMeters,
+    );
+  };
+  // Service worker chuyển Web Push (và cú bấm vào thông báo) cho app đang mở.
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const onMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string; report?: RealtimeTrafficReport } | null;
+      if (data?.type === 'traffic_alert' && data.report) onRealtimeTrafficReport(data.report);
+    };
+    navigator.serviceWorker.addEventListener('message', onMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage);
+  }, [onRealtimeTrafficReport]);
+  const [pushCardDismissed, setPushCardDismissed] = useState(() => {
+    try {
+      return localStorage.getItem('imap.pushCardDismissed') === '1';
+    } catch {
+      return false;
+    }
+  });
+  const dismissPushCard = () => {
+    setPushCardDismissed(true);
+    try {
+      localStorage.setItem('imap.pushCardDismissed', '1');
+    } catch {
+      // Trình duyệt chặn lưu trữ: chỉ ẩn trong phiên này.
+    }
+  };
+  const showPushCard =
+    Boolean(alertRoute) &&
+    !pushCardDismissed &&
+    !routeAlert.alert &&
+    push.supported &&
+    push.serverEnabled &&
+    push.permission !== 'denied' &&
+    !push.endpoint;
+  const alertedReport = routeAlert.alert
+    ? reports.find((report) => report.id === routeAlert.alert!.incident.id)
+    : null;
+
+  // Sự cố đã biết nằm phía trước (trong 1,5 km) khi dẫn đường: cũng hỏi đổi tuyến thay vì tự đổi.
   useEffect(() => {
     if (navigationStatus !== 'navigating' || !navigationPath || isRecalculatingNavigation) return;
     const progressMeters = navigation.progressRatio * navigationPath.totalMeters;
     const ahead = incidentDetector.current.findAhead(navigationPath, progressMeters, routeIncidents);
     if (!ahead) return;
-    incidentDetector.current.markHandled(ahead.incident.id); // tránh được hay không cũng chỉ xử lý một lần
-    void recalculateNavigation(
-      true,
-      `${ahead.incident.title} phía trước ${Math.round(ahead.distanceAheadMeters)} m`,
+    incidentDetector.current.markHandled(ahead.incident.id); // chỉ xử lý mỗi sự cố một lần
+    const severity =
+      trafficLayer.features.find((feature) => feature.properties.id === ahead.incident.id)?.properties
+        .severity ?? 'high';
+    triggerRouteAlert(
+      {
+        id: ahead.incident.id,
+        lat: ahead.incident.lat,
+        lng: ahead.incident.lng,
+        title: ahead.incident.title,
+        severity,
+      },
+      ahead.distanceAheadMeters,
     );
   }, [
     navigationStatus,
@@ -611,7 +733,8 @@ export function App() {
     navigation.progressRatio,
     routeIncidents,
     isRecalculatingNavigation,
-    recalculateNavigation,
+    trafficLayer,
+    triggerRouteAlert,
   ]);
 
   // Lệch tuyến đủ lâu thì tự tính lại, nhưng không dồn dập hơn AUTO_REROUTE_INTERVAL_MS.
@@ -1291,6 +1414,48 @@ export function App() {
             onDirections={openDirections}
           />
         </Suspense>
+      )}
+
+      {routeAlert.alert && (
+        <RouteTrafficAlert
+          alert={routeAlert.alert}
+          community={{
+            reportCount: Math.max(
+              1,
+              alertedReport?.communityReportCount ?? routeAlert.alert.incident.communityReportCount ?? 1,
+            ),
+            reporterCount: Math.max(
+              1,
+              alertedReport?.communityReporterCount ?? routeAlert.alert.incident.communityReporterCount ?? 1,
+            ),
+            updatedAt:
+              alertedReport?.communityUpdatedAt ??
+              alertedReport?.createdAt ??
+              routeAlert.alert.incident.communityUpdatedAt ??
+              null,
+          }}
+          onAccept={routeAlert.accept}
+          onKeep={routeAlert.keep}
+          onClose={routeAlert.close}
+        />
+      )}
+
+      {showPushCard && (
+        <PushPermissionCard
+          busy={push.busy}
+          error={push.error}
+          isAuthenticated={isAuthenticated}
+          onEnable={() => {
+            void push.enable().then((enabled) => {
+              if (enabled) {
+                setPushCardDismissed(true);
+                showToast(t('Đã bật thông báo cảnh báo giao thông trên tuyến'));
+              }
+            });
+          }}
+          onDismiss={dismissPushCard}
+          onSignIn={() => requireSignIn(t('Đăng nhập để nhận thông báo kẹt xe trên tuyến.'))}
+        />
       )}
 
       {toast && (

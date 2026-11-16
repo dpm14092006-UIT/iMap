@@ -4,6 +4,7 @@ import { App } from './app/App';
 import { scheduledMapLayer } from './features/map/hooks/useTimeBasedMapLayer';
 import { ErrorBoundary } from './app/components/ErrorBoundary';
 import { AuthProvider } from './features/auth/context/AuthProvider';
+import { RecentPlacesProvider } from './features/places/context/RecentPlacesProvider';
 import { I18nProvider, useI18n } from './shared/i18n/I18nProvider';
 import 'leaflet/dist/leaflet.css';
 import './app/styles.css';
@@ -35,7 +36,9 @@ createRoot(document.getElementById('root')!).render(
               <AuthPage />
             </Suspense>
           ) : (
-            <App />
+            <RecentPlacesProvider>
+              <App />
+            </RecentPlacesProvider>
           )}
         </AuthProvider>
       </I18nProvider>

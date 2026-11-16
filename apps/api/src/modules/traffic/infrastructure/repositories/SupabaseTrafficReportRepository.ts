@@ -96,8 +96,9 @@ export class SupabaseTrafficReportRepository implements TrafficReportRepository 
       createdAt: row.created_at,
       expiresAt: row.expires_at,
       version: Number(row.version),
-      communityReportCount: Number(row.community_report_count ?? 1),
-      communityReporterCount: Number(row.community_reporter_count ?? (row.user_id ? 1 : 0)),
+      communityReportCount: Math.max(1, Number(row.community_report_count ?? 1)),
+      // Mỗi báo cáo luôn có ít nhất một người gửi (RPC tạo báo cáo không trả user_id).
+      communityReporterCount: Math.max(1, Number(row.community_reporter_count ?? 1)),
       communityUpdatedAt: row.community_updated_at === undefined ? row.created_at : row.community_updated_at,
     };
   }

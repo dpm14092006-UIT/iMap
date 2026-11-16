@@ -2,7 +2,8 @@ import cors from 'cors';
 import express from 'express';
 import { randomUUID } from 'node:crypto';
 import { createContainer } from './composition-root.js';
-import { env, supabaseConfigured } from './config/env.js';
+import { env, supabaseConfigured, webPushConfigured } from './config/env.js';
+import { createPushRouter } from './modules/traffic/presentation/push.routes.js';
 import { createRoutesRouter } from './modules/navigation/presentation/routes.routes.js';
 import { createOptimizationRouter } from './modules/optimization/presentation/optimization.routes.js';
 import { createPlacesRouter } from './modules/places/presentation/places.routes.js';
@@ -67,11 +68,13 @@ export function createApp(container = createContainer()) {
           supabasePublic: supabaseConfigured,
           routing: env.VIETMAP_API_KEY ? 'vietmap' : 'needs_vietmap_api_key',
           trafficImageAi: env.GEMINI_TRAFFIC_AI_ENABLED && Boolean(env.GEMINI_API_KEY),
+          webPush: webPushConfigured,
         },
       },
     }),
   );
   app.use('/api/traffic-reports', createTrafficRouter(container.trafficController));
+  app.use('/api/push', createPushRouter({ enabled: webPushConfigured, publicKey: env.WEB_PUSH_PUBLIC_KEY }));
   app.use(
     '/api/places',
     createPlacesRouter(container.placeSearchController, container.poiSearchController, {

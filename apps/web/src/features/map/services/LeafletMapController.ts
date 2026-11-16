@@ -693,8 +693,9 @@ export class LeafletMapController {
         hour: '2-digit',
         minute: '2-digit',
       });
-    const reportCount = properties.communityReportCount ?? 1;
-    const reporterCount = properties.communityReporterCount ?? 0;
+    // Có báo cáo thì luôn có ít nhất một người gửi.
+    const reportCount = Math.max(1, properties.communityReportCount ?? 1);
+    const reporterCount = Math.max(1, properties.communityReporterCount ?? 1);
     const freshness = properties.communityUpdatedAt
       ? ` · ${translate(this.language, 'cập nhật')} ${formatTime(properties.communityUpdatedAt)}`
       : ` · ${translate(this.language, 'chưa có xác nhận mới')}`;

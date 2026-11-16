@@ -139,6 +139,7 @@ export function RoutePanel({
               placeholder={t('Điểm xuất phát')}
               place={origin}
               onChange={directions.setOrigin}
+              historyKind="origin"
             />
           </div>
           {directions.waypoints.map((item, index) => (
@@ -200,6 +201,7 @@ export function RoutePanel({
               placeholder={t('Bạn muốn đi đâu?')}
               place={destination}
               onChange={directions.setDestination}
+              historyKind="destination"
             />
           </div>
         </div>

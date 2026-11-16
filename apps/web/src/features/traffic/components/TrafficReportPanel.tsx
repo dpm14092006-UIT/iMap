@@ -627,8 +627,8 @@ export function TrafficReportPanel({
                   </div>
                   <p className="mt-1 pl-4 text-[11px] font-medium text-brand-700 dark:text-indigo-300">
                     {t('{count} báo cáo trong 30 phút / 75 m · {reporters} người gửi riêng biệt', {
-                      count: incident.communityReportCount ?? 1,
-                      reporters: incident.communityReporterCount ?? 0,
+                      count: Math.max(1, incident.communityReportCount ?? 1),
+                      reporters: Math.max(1, incident.communityReporterCount ?? 1),
                     })}
                     {incident.communityUpdatedAt
                       ? ` · ${t('cập nhật')} ${new Date(incident.communityUpdatedAt).toLocaleTimeString(language === 'en' ? 'en-US' : 'vi-VN', { hour: '2-digit', minute: '2-digit' })}`

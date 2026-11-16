@@ -25,6 +25,13 @@ const envSchema = z.object({
   SUPABASE_URL: z.preprocess(emptyToUndefined, z.string().url().optional()),
   SUPABASE_PUBLISHABLE_KEY: optionalValue,
   SUPABASE_ANON_KEY: optionalValue,
+  // Khóa bí mật (service_role) CHỈ dùng phía API để tìm xe đang đi trên tuyến có sự cố và gửi Web Push.
+  SUPABASE_SECRET_KEY: optionalValue,
+  SUPABASE_SERVICE_ROLE_KEY: optionalValue,
+  // Web Push (VAPID): tạo bằng `npx web-push generate-vapid-keys`. Khóa công khai được gửi cho trình duyệt.
+  WEB_PUSH_PUBLIC_KEY: optionalValue,
+  WEB_PUSH_PRIVATE_KEY: optionalValue,
+  WEB_PUSH_SUBJECT: z.preprocess(emptyToUndefined, z.string().trim().default('mailto:admin@example.com')),
   // Giới hạn lượt/phút/IP cho các endpoint gọi VietMap tính phí (bộ đếm trong RAM, theo từng instance).
   RATE_LIMIT_POI_PER_MIN: z.coerce.number().int().positive().default(20),
   RATE_LIMIT_ROUTES_PER_MIN: z.coerce.number().int().positive().default(30),
@@ -38,3 +45,7 @@ const envSchema = z.object({
 export const env = envSchema.parse({ ...process.env, API_PORT: process.env.API_PORT ?? process.env.PORT });
 export const supabaseKey = env.SUPABASE_PUBLISHABLE_KEY ?? env.SUPABASE_ANON_KEY;
 export const supabaseConfigured = Boolean(env.SUPABASE_URL && supabaseKey);
+export const supabaseSecretKey = env.SUPABASE_SECRET_KEY ?? env.SUPABASE_SERVICE_ROLE_KEY;
+export const webPushConfigured = Boolean(
+  env.SUPABASE_URL && supabaseSecretKey && env.WEB_PUSH_PUBLIC_KEY && env.WEB_PUSH_PRIVATE_KEY,
+);

@@ -48,7 +48,7 @@ export class TrafficController {
             ...(report.note ? { note: report.note } : {}),
             hasPhoto: Boolean(report.imagePath),
             communityReportCount: report.communityReportCount ?? 1,
-            communityReporterCount: report.communityReporterCount ?? 0,
+            communityReporterCount: Math.max(1, report.communityReporterCount ?? 1),
             communityUpdatedAt: report.communityUpdatedAt ?? null,
             createdAt: report.createdAt,
             expiresAt: report.expiresAt,

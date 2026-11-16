@@ -838,6 +838,53 @@ const translations: Record<string, string> = {
   'VietMap không tìm được tuyến phù hợp giữa các điểm đã chọn.':
     'VietMap could not find a suitable route between the selected places.',
   'VietMap trả về tuyến thiếu tọa độ đường đi.': 'The route returned by VietMap is missing path coordinates.',
+  // --- Cảnh báo sự cố trên tuyến, Web Push và lịch sử điểm đi/đến ---
+  'Cảnh báo giao thông trên tuyến': 'Traffic alert on your route',
+  '{incident} trên tuyến của bạn': '{incident} on your route',
+  'Mức {severity}': '{severity} severity',
+  'phía trước {distance}': '{distance} ahead',
+  'Đóng cảnh báo': 'Close alert',
+  '{count} báo cáo trong 30 phút / 75 m từ {reporters} người':
+    '{count} reports in 30 min / 75 m from {reporters} people',
+  'Đang tìm đường khác tránh sự cố…': 'Looking for another route around the incident…',
+  'Có đường khác tránh sự cố: {duration} · {distance}':
+    'Alternative route avoiding the incident: {duration} · {distance}',
+  'Thời gian gần bằng tuyến hiện tại (chưa tính thời gian kẹt).':
+    'About the same time as your current route (not counting the delay).',
+  'Nhanh hơn khoảng {minutes} phút so với tuyến hiện tại.':
+    'About {minutes} min faster than your current route.',
+  'Lâu hơn khoảng {minutes} phút nhưng tránh được chỗ sự cố.':
+    'About {minutes} min longer but avoids the incident.',
+  'Đổi sang đường này?': 'Switch to this route?',
+  'Có, đổi tuyến': 'Yes, switch',
+  'Không, giữ tuyến ({seconds}s)': 'No, keep route ({seconds}s)',
+  'Đã đổi sang đường tránh sự cố.': 'Switched to the route that avoids the incident.',
+  'Giữ tuyến hiện tại. Hãy chú ý khi đi qua đoạn này.':
+    'Keeping your current route. Take care through this section.',
+  'Không có đường khác tốt hơn để tránh sự cố. Hãy chú ý khi đi qua đoạn này.':
+    'No better route avoids the incident. Take care through this section.',
+  'Không tìm được đường khác.': 'Could not find another route.',
+  'Sự cố ở sát tuyến nhưng tuyến của bạn không đi qua đúng chỗ đó. Cứ đi tiếp và chú ý quan sát.':
+    'The incident is next to your route but your route does not pass through it. Carry on and stay alert.',
+  'Mở để xem đường khác tránh sự cố.': 'Open to see a route around the incident.',
+  'Bật thông báo giao thông': 'Turn on traffic notifications',
+  'Nhận cảnh báo kẹt xe trên tuyến': 'Get traffic alerts on your route',
+  'Bật thông báo để được báo ngay khi có người báo cáo sự cố trên tuyến của bạn, kể cả khi đã tắt màn hình.':
+    'Turn on notifications to be alerted as soon as someone reports an incident on your route, even with the screen off.',
+  'Đăng nhập rồi bật thông báo để được báo ngay khi có sự cố trên tuyến, kể cả khi đã tắt màn hình.':
+    'Sign in and turn on notifications to be alerted about incidents on your route, even with the screen off.',
+  'Đang bật…': 'Turning on…',
+  'Bật thông báo': 'Turn on notifications',
+  'Để sau': 'Later',
+  'Đã bật thông báo cảnh báo giao thông trên tuyến': 'Route traffic notifications are on',
+  'Đăng nhập để nhận thông báo kẹt xe trên tuyến.': 'Sign in to get traffic notifications on your route.',
+  'Không lưu được đăng ký thông báo. Hãy thử lại sau.':
+    'Could not save the notification subscription. Try again later.',
+  'Không bật được thông báo.': 'Could not turn on notifications.',
+  'Điểm gần đây': 'Recent places',
+  'Gần đây': 'Recent',
+  'Xóa {name} khỏi lịch sử': 'Remove {name} from history',
+  'Xóa khỏi lịch sử': 'Remove from history',
   // --- N1: chế độ thuyết trình (?demo=1) ---
   'So sánh thuật toán': 'Algorithm comparison',
   'Chế độ thuyết trình': 'Presentation mode',
