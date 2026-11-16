@@ -26,6 +26,9 @@ import { SearchPoisNearbyUseCase } from './modules/places/application/use-cases/
 import { PoiSearchController } from './modules/places/presentation/PoiSearchController.js';
 import { VietmapRouteProvider } from './modules/navigation/infrastructure/providers/VietmapRouteProvider.js';
 import { CalculateRouteUseCase } from './modules/navigation/application/use-cases/CalculateRouteUseCase.js';
+import { RouteComparisonController } from './modules/navigation/presentation/RouteComparisonController.js';
+import { SignedRouteComparison } from './modules/navigation/infrastructure/comparison/SignedRouteComparison.js';
+import { GenerativeRoutePreferenceProvider } from './modules/navigation/infrastructure/comparison/GenerativeRoutePreferenceProvider.js';
 import { RouteController } from './modules/navigation/presentation/RouteController.js';
 import { RerouteUseCase } from './modules/navigation/application/use-cases/RerouteUseCase.js';
 import { RerouteController } from './modules/navigation/presentation/RerouteController.js';
@@ -93,7 +96,30 @@ export function createContainer() {
       heuristic: new TwoOptStrategy(),
     }),
   );
-  const routeController = new RouteController(new CalculateRouteUseCase(routeProvider));
+  const signingKey = env.ROUTE_COMPARISON_SECRET ?? env.VIETMAP_API_KEY;
+  const comparisonModel = env.ROUTE_EXPLANATION_MODEL;
+  let preferenceProvider: GenerativeRoutePreferenceProvider | undefined;
+  if (comparisonModel && env.ROUTE_EXPLANATION_PROVIDER === 'ollama') {
+    preferenceProvider = new GenerativeRoutePreferenceProvider({
+      provider: 'ollama',
+      model: comparisonModel,
+      baseUrl: env.OLLAMA_BASE_URL,
+    });
+  } else if (comparisonModel && env.ROUTE_EXPLANATION_PROVIDER === 'gemini' && env.GEMINI_API_KEY) {
+    preferenceProvider = new GenerativeRoutePreferenceProvider({
+      provider: 'gemini',
+      model: comparisonModel,
+      apiKey: env.GEMINI_API_KEY,
+    });
+  }
+  const routeComparisonController = new RouteComparisonController(
+    signingKey ? new SignedRouteComparison(signingKey) : undefined,
+    preferenceProvider,
+  );
+  const routeController = new RouteController(
+    new CalculateRouteUseCase(routeProvider),
+    routeComparisonController,
+  );
   // Dynamic Rerouting: dùng tuyến thay thế của VietMap / điểm vòng để tránh sự cố.
   const rerouteController = new RerouteController(new RerouteUseCase(routeProvider));
   const stopPlaces = new OverpassStopPlaceProvider(env.OVERPASS_API_URL);
@@ -116,6 +142,7 @@ export function createContainer() {
   const rateLimits = {
     poi: perMinuteRateLimit(env.RATE_LIMIT_POI_PER_MIN),
     routes: perMinuteRateLimit(env.RATE_LIMIT_ROUTES_PER_MIN),
+    routeComparison: perMinuteRateLimit(15),
     places: perMinuteRateLimit(env.RATE_LIMIT_PLACES_PER_MIN),
     optimize: perMinuteRateLimit(env.RATE_LIMIT_OPTIMIZE_PER_MIN),
   };
@@ -126,6 +153,7 @@ export function createContainer() {
     placeSearchController,
     poiSearchController,
     routeController,
+    routeComparisonController,
     rerouteController,
     findRouteStops,
     explorePlaces,

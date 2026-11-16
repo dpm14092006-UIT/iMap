@@ -17,6 +17,8 @@ type TopBarProps = {
   onUpdate: () => void;
   onInfo: () => void;
   userEmail: string | null;
+  /** Nút bật/tắt chế độ Demo (GPS giả). Không truyền thì không hiện. */
+  demo?: { enabled: boolean; onToggle: () => void };
 };
 
 const roundButton =
@@ -32,6 +34,7 @@ export function TopBar({
   onUpdate,
   onInfo,
   userEmail,
+  demo,
 }: TopBarProps) {
   const input = useRef<HTMLInputElement>(null);
   const { language, setLanguage, t } = useI18n();
@@ -77,6 +80,29 @@ export function TopBar({
           <option value="vi">VI</option>
           <option value="en">EN</option>
         </select>
+        {demo && (
+          <button
+            type="button"
+            onClick={demo.onToggle}
+            aria-pressed={demo.enabled}
+            title={t(
+              demo.enabled
+                ? 'Đang ở chế độ Demo: xe giả chạy dọc tuyến, vẫn nhận cảnh báo kẹt xe thật. Bấm để tắt.'
+                : 'Bật chế độ Demo: thử tuyến ở nơi khác mà không cần di chuyển.',
+            )}
+            className={`flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-bold shadow-glass ring-1 backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 dark:shadow-glass-dark ${
+              demo.enabled
+                ? 'bg-amber-400 text-amber-950 ring-amber-500/40 focus-visible:ring-amber-200'
+                : 'bg-white/90 text-ink-soft ring-black/5 hover:text-brand-700 focus-visible:ring-brand-200 dark:bg-slate-900/90 dark:text-slate-200 dark:ring-white/10 dark:hover:text-brand-300 dark:focus-visible:ring-brand-500/40'
+            }`}
+          >
+            <span
+              aria-hidden="true"
+              className={`h-2 w-2 rounded-full ${demo.enabled ? 'animate-pulse bg-amber-950' : 'bg-slate-400'}`}
+            />
+            Demo
+          </button>
+        )}
         {updateAvailable && (
           <>
             <span className="sr-only" role="status" aria-live="polite">

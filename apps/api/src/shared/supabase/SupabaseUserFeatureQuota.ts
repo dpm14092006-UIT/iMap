@@ -1,7 +1,7 @@
 import { AppError } from '../errors/AppError.js';
 import { SupabaseClientFactory } from './SupabaseClientFactory.js';
 
-export type QuotaFeature = 'route_stops' | 'voice';
+export type QuotaFeature = 'route_stops' | 'voice' | 'route_explanation';
 
 /** Shared per-user minute quota for authenticated endpoints that call external providers. */
 export class SupabaseUserFeatureQuota {

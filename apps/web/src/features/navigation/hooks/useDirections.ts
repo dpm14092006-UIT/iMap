@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import type { RouteObjective, RoutePlan, TransportMode } from '../../map/types';
 import type { Place } from '../../places/types';
-import type { RouteApiClient } from '../services/RouteApiClient';
+import type { DirectionsComparison, RouteApiClient } from '../services/RouteApiClient';
 
 type UseDirectionsOptions = {
   routeApi: RouteApiClient;
@@ -35,6 +35,7 @@ export function useDirections({ routeApi, activeRoute, onRouteChange }: UseDirec
   const [objective, setObjectiveState] = useState<RouteObjective>('time');
   const [avoidFerry, setAvoidFerryState] = useState(false);
   const [routeOptions, setRouteOptions] = useState<RoutePlan[]>([]);
+  const [comparison, setComparison] = useState<DirectionsComparison>();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   // Đếm số lần gọi API: chỉ nhận kết quả của lần gọi mới nhất, bỏ kết quả về muộn.
@@ -77,6 +78,7 @@ export function useDirections({ routeApi, activeRoute, onRouteChange }: UseDirec
     setIsLoading(true);
     setError('');
     setRouteOptions([]);
+    setComparison(undefined);
     onRouteChange(null);
     const result = await routeApi.createPlans(
       [query.origin, ...((query.via ?? []) as Place[]), query.destination],
@@ -92,6 +94,7 @@ export function useDirections({ routeApi, activeRoute, onRouteChange }: UseDirec
       return null;
     }
     setRouteOptions(result.routes);
+    setComparison(result.comparison);
     onRouteChange(result.routes[0]!);
     return result.routes[0]!;
   };
@@ -102,6 +105,7 @@ export function useDirections({ routeApi, activeRoute, onRouteChange }: UseDirec
     setIsLoading(false);
     setError('');
     setRouteOptions([]);
+    setComparison(undefined);
     if (route) onRouteChange(null);
   };
 
@@ -212,6 +216,8 @@ export function useDirections({ routeApi, activeRoute, onRouteChange }: UseDirec
     avoidFerry,
     route,
     routeOptions,
+    comparison,
+    compare: routeApi.compare,
     isLoading,
     error,
     setOrigin,

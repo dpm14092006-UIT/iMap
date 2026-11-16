@@ -1,6 +1,13 @@
-import type { OptimizeRouteRequest, OptimizeRouteResult, RouteResult } from '@routetwin/shared';
+import type {
+  CompareRoutesRequest,
+  OptimizeRouteRequest,
+  OptimizeRouteResult,
+  RouteComparisonResult,
+  RouteComparisonSnapshot,
+  RouteResult,
+} from '@routetwin/shared';
 import { ApiError } from '../../../shared/api/ApiError';
-import type { HttpClient } from '../../../shared/api/HttpClient';
+import type { HttpClient, RequestOptions } from '../../../shared/api/HttpClient';
 import { httpClient } from '../../../shared/api/HttpClient';
 import type { RouteObjective, RoutePlan, TransportMode } from '../../map/types';
 import type { Place } from '../../places/types';
@@ -18,7 +25,11 @@ type RouteRequestBody = {
   avoid?: 'ferry'[];
 };
 
-export type RoutePlansResult = { routes: RoutePlan[] } | { error: string };
+export type DirectionsComparison = Omit<RouteComparisonSnapshot, 'routes'> & {
+  routes: (RouteComparisonSnapshot['routes'][number] & { planId: string })[];
+};
+
+export type RoutePlansResult = { routes: RoutePlan[]; comparison?: DirectionsComparison } | { error: string };
 
 function requestBody(stops: Place[], vehicle: TransportMode, objective: RouteObjective): RouteRequestBody {
   return {
@@ -47,6 +58,7 @@ function isValidOrder(order: number[], stopCount: number, returnToStart: boolean
 
 /** Client gọi các endpoint tính tuyến của backend (VietMap). */
 export class RouteApiClient {
+  private comparisonSessionId?: string;
   constructor(private readonly http: HttpClient = httpClient) {}
 
   /** Tối ưu thứ tự ghé các điểm (giữ cố định điểm đầu) rồi trả tuyến theo thứ tự mới. */
@@ -116,12 +128,16 @@ export class RouteApiClient {
   ): Promise<RoutePlansResult> {
     if (stops.length < 2) return { error: 'Chọn ít nhất điểm đi và điểm đến.' };
     try {
+      const comparisonSessionId =
+        stops.length === 2 ? (this.comparisonSessionId ??= crypto.randomUUID()) : undefined;
       const data = await this.http.post<RouteResult>('/routes/calculate', {
         ...requestBody(stops, vehicle, objective),
         alternatives: true,
+        ...(comparisonSessionId ? { comparisonSessionId } : {}),
         ...(avoidFerry ? { avoid: ['ferry'] } : {}),
       });
-      const candidates = [data, ...(data.alternatives ?? [])].filter(
+      const allPaths = [data, ...(data.alternatives ?? [])];
+      const candidates = allPaths.filter(
         (path) => Array.isArray(path.coordinates) && path.coordinates.length >= 2,
       );
       if (!candidates.length) return { error: 'Dịch vụ chỉ đường trả về tuyến không hợp lệ.' };
@@ -141,13 +157,38 @@ export class RouteApiClient {
         );
         return next === index;
       });
-      return {
-        routes: unique.map((path) => routePlanFromResult(path, stops, vehicle, objective)),
-      };
+      const routes = unique.map((path) => routePlanFromResult(path, stops, vehicle, objective));
+      const comparison = data.comparison;
+      if (
+        comparisonSessionId &&
+        comparison?.routes.length === allPaths.length &&
+        unique.length === allPaths.length
+      ) {
+        return {
+          routes,
+          comparison: {
+            ...comparison,
+            routes: comparison.routes.map((facts, index) => ({ ...facts, planId: routes[index]!.id })),
+          },
+        };
+      }
+      return { routes };
     } catch (cause) {
       return toError(cause, 'Không kết nối được máy chủ chỉ đường. Hãy thử lại sau ít phút.');
     }
   }
+
+  compare = (
+    snapshot: string,
+    preference: CompareRoutesRequest['preference'],
+    options: RequestOptions,
+  ): Promise<RouteComparisonResult> => {
+    return this.http.post<RouteComparisonResult>(
+      '/routes/compare',
+      { snapshot, sessionId: this.comparisonSessionId, preference },
+      options,
+    );
+  };
 }
 
 /** Đổi kết quả tuyến của API (mét, giây, GeoJSON) sang RoutePlan để vẽ và hiển thị (km, phút, Leaflet). */

@@ -1,6 +1,8 @@
 # Nghiên cứu AI so sánh và giải thích tuyến đường cho iMap
 
-Ngày: 09/11/2026. Phạm vi: nghiên cứu thiết kế, chưa triển khai hoặc kiểm thử model thật.
+Ngày nghiên cứu: 09/11/2026.
+
+**Trạng thái triển khai đợt 1:** Bảng Chỉ đường dùng tập phương án của VietMap và snapshot có chữ ký từ `/api/routes/calculate`. `/api/routes/compare` đọc ưu tiên, tính chênh lệch và xếp hạng trên snapshot. Gemini hoặc Ollama đọc câu tự do khi API được cấu hình và người dùng đăng nhập. Phần diễn giải hiển thị từ dữ kiện có cấu trúc. Xem [API contracts](API_CONTRACTS.md#so-sánh-và-giải-thích-tuyến) để cấu hình và chạy thử. Phần hiện trạng bên dưới ghi nhận phiên bản lúc lập kế hoạch.
 
 ## Đề xuất
 

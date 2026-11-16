@@ -1,6 +1,7 @@
 import { Router, type RequestHandler } from 'express';
 import type { PathfindingController } from './PathfindingController.js';
 import type { RerouteController } from './RerouteController.js';
+import type { RouteComparisonController } from './RouteComparisonController.js';
 import type { RouteController } from './RouteController.js';
 
 const passThrough: RequestHandler = (_req, _res, next) => next();
@@ -10,11 +11,14 @@ export function createRoutesRouter(
   routeController: RouteController,
   pathfindingController: PathfindingController,
   rerouteController: RerouteController,
-  limits: { calculate?: RequestHandler } = {},
+  limits: { calculate?: RequestHandler; compare?: RequestHandler } = {},
+  comparisonController?: RouteComparisonController,
 ): Router {
   const router = Router();
   const limit = limits.calculate ?? passThrough;
   router.post('/calculate', limit, routeController.calculate); // VietMap Route v4
+  if (comparisonController)
+    router.post('/compare', limits.compare ?? passThrough, comparisonController.compare);
   // Tính lại tuyến từ vị trí hiện tại, tránh sự cố; dùng chung hạn mức vì cũng gọi VietMap nhiều lần.
   router.post('/reroute', limit, rerouteController.handle);
   router.post('/algorithm', pathfindingController.solve); // Dijkstra / A* trên đồ thị OSM

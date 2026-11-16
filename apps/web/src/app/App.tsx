@@ -41,7 +41,7 @@ import {
   type RouteIncident,
 } from '../features/navigation/domain/IncidentAheadDetector';
 import { RoutePath } from '../features/navigation/domain/RoutePath';
-import { isDemoModeEnabled } from '../features/navigation/utils/demoMode';
+import { useDemoMode } from '../features/navigation/utils/demoMode';
 import { AlgorithmComparison } from '../features/navigation/components/AlgorithmComparison';
 import { useAlgorithmComparison } from '../features/navigation/hooks/useAlgorithmComparison';
 import {
@@ -351,8 +351,21 @@ export function App() {
       })),
     };
   }, [visibleReports, t]);
-  // Chế độ Demo (?demo=1): sự cố giả chỉ nằm trên máy này, vẽ chung với sự cố thật để thấy tuyến mới né chỗ nào.
-  const demoEnabled = useMemo(() => isDemoModeEnabled(), []);
+  // Chế độ Demo (nút "Demo" trên thanh trên, hoặc ?demo=1): sự cố giả chỉ nằm trên máy này,
+  // vẽ chung với sự cố thật để thấy tuyến mới né chỗ nào.
+  const { enabled: demoEnabled, setEnabled: setDemoEnabled } = useDemoMode();
+  const toggleDemo = () => {
+    const next = !demoEnabled;
+    setDemoEnabled(next);
+    if (!next && navigation.mode === 'demo') navigation.setMode('real');
+    showToast(
+      t(
+        next
+          ? 'Đã bật Demo: chọn tuyến bất kỳ rồi bấm Bắt đầu, xe giả sẽ chạy dọc tuyến và bạn vẫn nhận cảnh báo kẹt xe từ người dùng khác.'
+          : 'Đã tắt Demo: dẫn đường dùng GPS thật.',
+      ),
+    );
+  };
   // Chế độ thuyết trình: so sánh Dijkstra / A* (panel Chỉ đường) và chọn thuật toán TSP (panel Nhiều điểm).
   const algorithmComparison = useAlgorithmComparison({
     origin: directions.origin,
@@ -1122,6 +1135,7 @@ export function App() {
             onUpdate={reloadForUpdate}
             onInfo={() => showToast(t('Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.'))}
             userEmail={user?.email ?? null}
+            demo={{ enabled: demoEnabled, onToggle: toggleDemo }}
             strip={
               alongRouteMode ? (
                 <AlongRouteSearch
