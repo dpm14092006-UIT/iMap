@@ -3,7 +3,7 @@ dist
 coverage
 package-lock.json
 apps/api/data
-docs/voice/benchmark-results.json
+docs/benchmarks/voice-benchmark-results.json
 supabase/.temp
 supabase/config.toml
 *.md

@@ -9,8 +9,8 @@ Tuyến được dựng từ hình học đường và hướng dẫn rẽ trả
 ## Chạy trên Mac (Node >= 20.19)
 
 ```bash
-unzip RouteTwin_OOP_Starter.zip
-cd RouteTwin_OOP_Starter
+git clone https://github.com/dpm14092006-UIT/iMap.git
+cd iMap
 chmod +x run.sh
 ./run.sh
 ```
@@ -23,7 +23,7 @@ npm run dev -w @routetwin/api
 npm run dev -w @routetwin/web
 ```
 
-> Tạo `apps/api/.env` từ `.env.example` và `apps/web/.env` từ `.env.example`. Điền `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY` ở cả hai phía; thêm `VIETMAP_API_KEY` ở API để tính tuyến. Chạy đủ migration `0001`–`0004` trước khi dùng báo cáo. Ảnh báo cáo được tải trực tiếp lên bucket riêng tư theo quyền người dùng. Hỗ trợ Gemini trong biểu mẫu báo cáo là tùy chọn, mặc định tắt; chỉ bật sau khi cấu hình `GEMINI_API_KEY` và `GEMINI_TRAFFIC_AI_ENABLED=true`. **Không commit `.env`**.
+> Tạo `apps/api/.env` từ `.env.example` và `apps/web/.env` từ `.env.example`. Điền `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY` ở cả hai phía; thêm `VIETMAP_API_KEY` ở API để tính tuyến. Chạy đủ migration trong `supabase/migrations/` (`0001`–`0008`) trước khi dùng báo cáo. Ảnh báo cáo được tải trực tiếp lên bucket riêng tư theo quyền người dùng. Hỗ trợ Gemini trong biểu mẫu báo cáo là tùy chọn, mặc định tắt; chỉ bật sau khi cấu hình `GEMINI_API_KEY` và `GEMINI_TRAFFIC_AI_ENABLED=true`. **Không commit `.env`**.
 
 ## Kiểm tra
 
@@ -56,7 +56,7 @@ Backend **feature-first + Clean Architecture**:
 
 Frontend React dùng **function components + hooks**, không gượng ép OOP class cho UI. OOP đặt ở service/domain backend.
 
-Frontend chia theo feature (`map`, `places`, `navigation`, `multi-stop`, `my-routes`, `traffic`, `auth`) để thành phần giao diện và hành vi ở gần nhau. `app/` giữ composition/layout; `shared/` chỉ chứa thành phần dùng chung như icon và API client. Tailwind phụ trách bố cục và trạng thái responsive; CSS riêng giữ phần minh họa bản đồ SVG và quy tắc truy cập toàn cục.
+Frontend chia theo feature (`map`, `places`, `explore`, `navigation`, `multi-stop`, `my-routes`, `traffic`, `notifications`, `place-assistant`, `auth`) để thành phần giao diện và hành vi ở gần nhau. Trong mỗi feature: `components/` (UI), `hooks/`, `api/` (gọi backend), `services/` (logic thuần, adapter trình duyệt), `domain/`, `context/`, `data/`, `utils/` — chỉ tạo thư mục khi có file. Chi tiết: [docs/architecture/FOLDER_TREE.md](docs/architecture/FOLDER_TREE.md). `app/` giữ composition/layout; `shared/` chỉ chứa thành phần dùng chung như icon và API client. Tailwind phụ trách bố cục và trạng thái responsive; CSS riêng giữ phần minh họa bản đồ SVG và quy tắc truy cập toàn cục.
 
 ## API scaffold
 
@@ -86,19 +86,19 @@ Frontend chia theo feature (`map`, `places`, `navigation`, `multi-stop`, `my-rou
 2. **Tọa độ JSON:** `{lat,lng}`; GeoJSON `[lng,lat]`.
 3. **Bản đồ và chỉ đường:** tile nền OpenStreetMap; tuyến ô tô/xe máy từ VietMap Route v4. API key chỉ nằm trong backend.
 4. **Backend giữ khóa bí mật:** khóa VietMap và provider server-side không đi vào `VITE_*`.
-5. **N2 cần cấu hình trước khi chạy thật:** áp dụng migrations `0001_initial.sql`–`0005_backend_hardening.sql`, bật job hết hạn trong `supabase/ops/traffic-expiry-cron.sql`, rồi điền Supabase keys. Ảnh hiện trường là tùy chọn và được gắn trực tiếp vào báo cáo giao thông.
-6. AI ảnh (gợi ý sự cố và đọc biển báo) nằm ngay trong Báo cáo giao thông, không có mục AI Vision riêng; cần bật Gemini riêng. Xem [docs/AI_APPLICATIONS.md](docs/AI_APPLICATIONS.md) về giới hạn và quyền riêng tư.
+5. **N2 cần cấu hình trước khi chạy thật:** áp dụng toàn bộ migrations trong `supabase/migrations/` theo thứ tự số, bật job hết hạn trong `supabase/ops/traffic-expiry-cron.sql`, rồi điền Supabase keys. Ảnh hiện trường là tùy chọn và được gắn trực tiếp vào báo cáo giao thông.
+6. AI ảnh (gợi ý sự cố và đọc biển báo) nằm ngay trong Báo cáo giao thông, không có mục AI Vision riêng; cần bật Gemini riêng. Xem [docs/features/AI_APPLICATIONS.md](docs/features/AI_APPLICATIONS.md) về giới hạn và quyền riêng tư.
 
-Xem `docs/ARCHITECTURE.md`, `docs/OWNERSHIP.md`, `docs/ROADMAP_2_WEEKS.md`.
+Mục lục tài liệu: [docs/README.md](docs/README.md).
 
 ## Trợ lý địa điểm và voice (nhánh dpm)
 
 Tìm nhu cầu chung quanh vị trí hoặc dọc tuyến, hỏi lại khi mơ hồ, thêm/bỏ điểm ghé theo chi phí đường đi thật. Voice trình duyệt và Whisper API là cách điền bản nháp để người dùng kiểm tra trước khi tìm.
 
-- [Thiết kế/API và phạm vi](docs/PLACE_ASSISTANT_TECHNICAL.md)
-- [Thuật toán tìm điểm ghé](docs/ROUTE_STOPS_TECHNICAL.md)
-- [Benchmark Whisper trên 48 audio](docs/VOICE_BENCHMARK.md)
-- [Deploy web + API Vercel, cấu hình voice free quota](docs/DEPLOY_API.md)
+- [Thiết kế/API và phạm vi](docs/features/PLACE_ASSISTANT_TECHNICAL.md)
+- [Thuật toán tìm điểm ghé](docs/features/ROUTE_STOPS_TECHNICAL.md)
+- [Benchmark Whisper trên 48 audio](docs/benchmarks/VOICE_BENCHMARK.md)
+- [Deploy web + API Vercel, cấu hình voice free quota](docs/guides/DEPLOY_API.md)
 
 ## Tìm kiếm toàn Việt Nam
 
@@ -106,19 +106,19 @@ VietMap Search dùng `VIETMAP_API_KEY` ở backend, cùng biến cấu hình v�
 
 Bản đồ khởi đầu ở khung nhìn Việt Nam, có nút quay về toàn quốc. Báo cáo giao thông được truy vấn theo vùng đang xem, giới hạn số lượng theo API; phóng to để xem chi tiết. Đồ thị Dijkstra/A* cài đặt riêng vẫn chỉ phủ trung tâm TP.HCM; tuyến VietMap không dùng đồ thị này.
 
-Xem [kết quả kiểm tra tìm kiếm](docs/SEARCH_VERIFICATION.md).
+Xem [kết quả kiểm tra tìm kiếm](docs/benchmarks/SEARCH_VERIFICATION.md).
 
 ## Dẫn đường, tính lại tuyến và chế độ Demo
 
 - **Dẫn đường:** bấm "Bắt đầu chuyến đi" sau khi tìm tuyến. App theo dõi vị trí, hiện chỉ dẫn rẽ tiếp theo và quãng đường còn lại.
 - **Tính lại tuyến (N1):** khi lệch tuyến đủ lâu, hoặc có sự cố đang hoạt động (mức Vừa trở lên) nằm trên tuyến trong 1,5 km phía trước, app gọi `POST /api/routes/reroute` từ vị trí hiện tại. Server chọn tuyến tốt nhất không đi qua sự cố → tuyến thay thế của VietMap → đi vòng qua điểm cạnh sự cố; nếu không né được (sự cố nằm trên con đường duy nhất vào/ra điểm) thì báo rõ để người dùng chú ý.
 - **Chế độ Demo (GPS giả):** mở app với `?demo=1` (ví dụ `http://localhost:5173/?demo=1`). Khi bắt đầu chuyến đi, xe tự chạy dọc tuyến; banner dẫn đường có công tắc **Thật / Demo** (đổi được giữa chuyến) và các nút Tạm dừng, Rẽ nhầm, Sự cố phía trước. Sự cố giả chỉ nằm trên máy, không gửi lên hệ thống báo cáo. Link thường không hiện các điều khiển này.
-- **Chế độ thuyết trình (cùng link `?demo=1`):** panel Chỉ đường có khối **So sánh Dijkstra / A\*** (bảng số nút duyệt, thời gian chạy; vẽ hai tuyến và vùng dữ liệu OSM trên bản đồ); panel Nhiều điểm có ô **Thuật toán sắp xếp** (Tự động / Held–Karp / NN + 2-opt). Kịch bản trình bày: `docs/DEMO_SCRIPT_N1.md`.
+- **Chế độ thuyết trình (cùng link `?demo=1`):** panel Chỉ đường có khối **So sánh Dijkstra / A\*** (bảng số nút duyệt, thời gian chạy; vẽ hai tuyến và vùng dữ liệu OSM trên bản đồ); panel Nhiều điểm có ô **Thuật toán sắp xếp** (Tự động / Held–Karp / NN + 2-opt). Kịch bản trình bày: `docs/guides/DEMO_SCRIPT_N1.md`.
 - Thiết kế: `useNavigationSession` đọc vị trí qua interface `PositionSource` với hai cài đặt `BrowserGpsSource` (GPS thật) và `SimulatedGpsSource` (GPS giả) — Strategy pattern, engine dẫn đường dùng chung.
 
 ## Thứ tự điểm dừng
 
 - **Chỉ đường:** thêm tối đa 8 điểm dừng giữa điểm xuất phát và điểm đến, đổi thứ tự bằng nút lên/xuống. Route API giữ nguyên thứ tự người dùng chọn.
-- **Nhiều điểm:** điểm xuất phát cố định; tự chọn thứ tự ghé tốt nhất theo ma trận chi phí đường bộ có hướng. Chế độ "Tự động"/"Chính xác" dùng Held–Karp tìm tối ưu chính xác cho tối đa 15 điểm ghé (≈ 20–30 ms); "Nhanh" dùng Nearest Neighbor + 2-opt (gần đúng, trung bình dài hơn tối ưu 1–3,5%, xem `docs/BENCHMARK_TSP.md`). Hỗ trợ đường đi mở hoặc quay về điểm xuất phát; điểm không có đường xe (khu đi bộ, công viên) được báo đích danh. Matrix tính theo loại xe và tiêu chí thời gian/quãng đường. Tuyến cuối lấy hình học đường thật từ Route API, không nối các điểm bằng đường thẳng.
+- **Nhiều điểm:** điểm xuất phát cố định; tự chọn thứ tự ghé tốt nhất theo ma trận chi phí đường bộ có hướng. Chế độ "Tự động"/"Chính xác" dùng Held–Karp tìm tối ưu chính xác cho tối đa 15 điểm ghé (≈ 20–30 ms); "Nhanh" dùng Nearest Neighbor + 2-opt (gần đúng, trung bình dài hơn tối ưu 1–3,5%, xem `docs/benchmarks/BENCHMARK_TSP.md`). Hỗ trợ đường đi mở hoặc quay về điểm xuất phát; điểm không có đường xe (khu đi bộ, công viên) được báo đích danh. Matrix tính theo loại xe và tiêu chí thời gian/quãng đường. Tuyến cuối lấy hình học đường thật từ Route API, không nối các điểm bằng đường thẳng.
 - Matrix dùng `VIETMAP_API_KEY`; key cần quyền Matrix. Không chuyển sang khoảng cách đường thẳng khi dịch vụ lỗi. Ma trận không có đường (null hoặc -1) được coi là không thể đi, không phải chi phí 0. Chi phí Matrix/Route có thể khác do làm tròn hoặc lựa chọn tuyến của provider; không cam kết giao thông tức thời.
 - Đóng bảng nhiều điểm chỉ ẩn bảng; điểm, bộ lọc và kết quả được giữ trong phiên ứng dụng. Mở lại phục hồi tuyến trên bản đồ. Chỉ nút **Xóa hành trình** xóa bản nháp; **Lưu** lưu tuyến vào danh sách đã lưu. Tải lại trang cần mở tuyến đã lưu, không có tự lưu vị trí nhạy cảm vào storage.

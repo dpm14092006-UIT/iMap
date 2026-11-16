@@ -31,7 +31,7 @@
 | 1.3 | Places: debounce + hủy request cũ (`usePlaceSearch`), giới hạn 7 kết quả, trạng thái loading/empty/lỗi, phím ↑ ↓ Enter Esc | 1.5 | Gõ nhanh không gửi request thừa; lỗi hiện thông báo thân thiện | [x] |
 | 1.4 | Chọn điểm bằng **click bản đồ** (`GET /api/places/reverse`) để đặt điểm đi/đến; nút “Vị trí của tôi” làm điểm xuất phát | 1.5 | Click map → điền ô điểm đi/đến; GPS làm origin được | [x] |
 | 1.5 | Vehicle switcher car/motorcycle (`useDirections`): đổi xe tự tính lại tuyến; hiển thị distance/duration + bước rẽ có mũi tên | 1.5 | Đổi xe → tuyến mới; bước rẽ hiển thị đúng đơn vị km/phút | [x] đã test thật: xe máy 5,3 km, ô tô 5,7 km |
-| 1.6 | Hợp đồng `TrafficMapLayer` (GeoJSON) tại `map/layers/trafficMapLayer.ts`, `MapView` vẽ marker từ hợp đồng — **thống nhất với N2** | 1 | Có interface + marker mẫu hiển thị; N2 review | [x] chờ N2 review |
+| 1.6 | Hợp đồng `TrafficMapLayer` (GeoJSON) tại `map/services/trafficMapLayer.ts`, `MapView` vẽ marker từ hợp đồng — **thống nhất với N2** | 1 | Có interface + marker mẫu hiển thị; N2 review | [x] chờ N2 review |
 | 1.7 | Hợp đồng shared (PR chung): `OptimizeRequest/Result`, `SavedRoute` DTO trong `packages/shared` | 0.5 | PR merge sau review N2 | [ ] dời sang ngày 3–4 (làm khi cần dùng) |
 
 **Deliverable D1:** luồng tìm kiếm → chỉ đường 1 xe ổn định, UI không còn hard-code demo.
@@ -47,7 +47,7 @@
 | 2.3 | `DijkstraSolver` dùng **min-heap** (`MinHeap`) thay vòng quét O(V²); chung khung `GraphSearchSolver` với A* | 1 | Test cũ vẫn pass | [x] bỏ phần so với bản O(V²) |
 | 2.4 | `AStarSolver` (heuristic haversine; duration = haversine / tốc độ lớn nhất) | 1.5 | Chi phí **bằng** Dijkstra trên cùng graph; ít node duyệt hơn | [x] 0 cặp lệch, giảm 52–75% node |
 | 2.5 | Snap vào mạng đường chính (SCC lớn nhất), `FindPathUseCase`, `POST /api/routes/algorithm`, `GET /api/routes/algorithm/graph`, UI “So sánh thuật toán” | 1.5 | Trả path, distance, visitedNodes, thời gian chạy; 422 nếu ngoài vùng graph | [x] |
-| 2.6 | Test + benchmark Dijkstra vs A* (`npm run benchmark:pathfinding`) | 0.5 | Bảng kết quả trong `docs/BENCHMARK_PATHFINDING.md`; test chạy trong `npm test` | [x] |
+| 2.6 | Test + benchmark Dijkstra vs A* (`npm run benchmark:pathfinding`) | 0.5 | Bảng kết quả trong `docs/benchmarks/BENCHMARK_PATHFINDING.md`; test chạy trong `npm test` | [x] |
 
 **Deliverable D2:** API thuật toán chạy được; có số liệu so sánh để đưa vào báo cáo.
 
@@ -91,7 +91,7 @@
 | 5.3 | Rà soát lỗi API của N1: 13 tình huống sai dữ liệu / ngoài vùng / điểm không có đường | 1 | Mã lỗi đúng, thông báo tiếng Việt, không sập | [x] |
 | 5.4 | Typecheck, lint, Prettier, build; test API 235/235, web 1001/1001 | 1.5 | CI xanh | [x] |
 | 5.5 | Tài liệu: README (chế độ thuyết trình), chạy lại benchmark (số liệu không đổi) | 1 | — | [x] |
-| 5.6 | Kịch bản demo 5–7 phút: `docs/DEMO_SCRIPT_N1.md` | 1 | Chạy trót lọt | [x] cần tập thử 2 lần |
+| 5.6 | Kịch bản demo 5–7 phút: `docs/guides/DEMO_SCRIPT_N1.md` | 1 | Chạy trót lọt | [x] cần tập thử 2 lần |
 | 5.7 | Buffer / sửa lỗi tồn đọng | 0.5 | — | [ ] |
 
 **Deliverable D5:** N1 feature freeze, demo sẵn sàng.
@@ -114,6 +114,6 @@
 |---|---|---|---|
 | 1 | 7 | 6 | 1.7 dời sang D3–D4 |
 | 2 | 6 | 6 | Thêm UI so sánh thuật toán (không cần key VietMap) |
-| 3 | 5 | 5 | N2 làm lõi Held–Karp; N1 thêm 2-opt, Strategy, benchmark (`docs/BENCHMARK_TSP.md`) |
+| 3 | 5 | 5 | N2 làm lõi Held–Karp; N1 thêm 2-opt, Strategy, benchmark (`docs/benchmarks/BENCHMARK_TSP.md`) |
 | 4 | 6 | 4 | Rerouting tránh sự cố gắn vào dẫn đường GPS của N2; My Routes chuyển cho N2 |
 | 5 | 7 | 6 | 5.7 (buffer) dùng khi tập demo |

@@ -32,4 +32,4 @@ Tài liệu này phản ánh source hiện tại; hạng mục chưa có mã đ�
 - Áp dụng đủ migration `0001`–`0005`, xác minh Auth/RLS, Realtime và Storage trên project thật.
 - Bật `pg_cron` và áp dụng `supabase/ops/traffic-expiry-cron.sql`.
 - Kiểm tra luồng upload/đọc ảnh trên thiết bị di động và quyền truy cập bằng nhiều tài khoản.
-- Chỉ bật Gemini sau khi cấu hình key và rà soát điều khoản/phạm vi người dùng; xem `docs/AI_APPLICATIONS.md`.
+- Chỉ bật Gemini sau khi cấu hình key và rà soát điều khoản/phạm vi người dùng; xem `docs/features/AI_APPLICATIONS.md`.
