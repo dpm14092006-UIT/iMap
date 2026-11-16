@@ -10,7 +10,7 @@ import {
 } from '../../navigation/utils/format';
 import { minutesSlowerThanFastest, routeLabels } from '../../navigation/utils/routeLabels';
 import type { LatLng, Place } from '../../places/types';
-import type { TrafficFeature, TrafficMapLayer, TrafficSeverity } from '../layers/trafficMapLayer';
+import type { TrafficFeature, TrafficMapLayer, TrafficSeverity } from './trafficMapLayer';
 import type { AlgorithmOverlay, Coordinate, DraftStops, MapLayer, MapOverlays, RoutePlan } from '../types';
 
 import {

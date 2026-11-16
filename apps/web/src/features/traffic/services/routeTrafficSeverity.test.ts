@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { toTrafficMapLayer } from '../../map/layers/trafficMapLayer';
+import { toTrafficMapLayer } from '../../map/services/trafficMapLayer';
 import type { RoutePlan } from '../../map/types';
 import { routeTrafficSeverity } from './routeTraffic';
 

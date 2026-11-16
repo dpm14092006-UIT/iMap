@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Icon } from '../../../shared/components/Icon';
-import type { TrafficSeverity } from '../../map/layers/trafficMapLayer';
+import type { TrafficSeverity } from '../../map/services/trafficMapLayer';
 import type { RoutePlan } from '../../map/types';
 import {
   CONGESTION_COLORS,

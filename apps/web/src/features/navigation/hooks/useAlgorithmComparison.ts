@@ -2,7 +2,7 @@ import type { PathfindingResult } from '@routetwin/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AlgorithmOverlay, Bounds, TransportMode } from '../../map/types';
 import type { Place } from '../../places/types';
-import { pathfindingApi } from '../services/pathfindingApi';
+import { pathfindingApi } from '../api/pathfindingApi';
 
 export type AlgorithmObjective = 'distance' | 'duration';
 

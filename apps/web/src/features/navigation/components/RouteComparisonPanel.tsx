@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ApiError } from '../../../shared/api/ApiError';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import { useAuth } from '../../auth/context/AuthProvider';
-import type { DirectionsComparison, RouteApiClient } from '../services/RouteApiClient';
+import type { DirectionsComparison, RouteApiClient } from '../api/RouteApiClient';
 
 const goalLabel: Record<RoutePreferenceGoal, string> = {
   fastest: 'Nhanh nhất',

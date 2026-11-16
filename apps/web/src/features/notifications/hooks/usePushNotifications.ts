@@ -4,7 +4,7 @@ import {
   getPushConfig,
   getServiceWorkerRegistration,
   webPushSupported,
-} from '../services/webPush';
+} from '../api/webPush';
 
 export type PushState = {
   /** Trình duyệt hỗ trợ Web Push (iPhone: chỉ khi đã "Thêm vào Màn hình chính"). */

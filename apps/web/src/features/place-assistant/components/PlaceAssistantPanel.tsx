@@ -9,7 +9,7 @@ import {
 } from '@routetwin/shared';
 import { SheetPanel } from '../../../app/layout/SheetPanel';
 import type { RoutePlan } from '../../map/types';
-import { assistantApi } from '../services/assistantApi';
+import { assistantApi } from '../api/assistantApi';
 import { useApiSpeechDraft } from '../hooks/useApiSpeechDraft';
 import { useSpeechDraft } from '../hooks/useSpeechDraft';
 import { useI18n } from '../../../shared/i18n/I18nProvider';

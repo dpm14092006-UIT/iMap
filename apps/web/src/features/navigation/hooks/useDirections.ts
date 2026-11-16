@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import type { RouteObjective, RoutePlan, TransportMode } from '../../map/types';
 import type { Place } from '../../places/types';
-import type { DirectionsComparison, RouteApiClient } from '../services/RouteApiClient';
+import type { DirectionsComparison, RouteApiClient } from '../api/RouteApiClient';
 
 type UseDirectionsOptions = {
   routeApi: RouteApiClient;

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { assistantApi } from '../services/assistantApi';
+import { assistantApi } from '../api/assistantApi';
 import { recordingToWav } from '../services/voiceAudio';
 export function useApiSpeechDraft(onDraft: (text: string) => void, accessToken: string) {
   const [available, setAvailable] = useState(false),

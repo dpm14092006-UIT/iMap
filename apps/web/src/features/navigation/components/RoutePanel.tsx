@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Popover } from '../../../app/layout/Popover';
 import { SheetPanel } from '../../../app/layout/SheetPanel';
 import { Icon } from '../../../shared/components/Icon';
-import type { TrafficMapLayer } from '../../map/layers/trafficMapLayer';
+import type { TrafficMapLayer } from '../../map/services/trafficMapLayer';
 import type { RoutePlan } from '../../map/types';
 import { PlaceField } from '../../places/components/PlaceField';
 import type { LatLng } from '../../places/types';

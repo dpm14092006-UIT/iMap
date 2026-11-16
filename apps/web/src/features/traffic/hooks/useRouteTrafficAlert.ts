@@ -1,8 +1,8 @@
 import type { RerouteStrategy } from '@routetwin/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RoutePlan } from '../../map/types';
-import { rerouteApi } from '../../navigation/services/RerouteApiClient';
-import { routePlanFromResult } from '../../navigation/services/RouteApiClient';
+import { rerouteApi } from '../../navigation/api/RerouteApiClient';
+import { routePlanFromResult } from '../../navigation/api/RouteApiClient';
 import { basicPlaceFromPoint } from '../../places/services/placeFromPoint';
 import { routeHazardSection } from '../services/routeTraffic';
 import type { LatLng } from '../../places/types';

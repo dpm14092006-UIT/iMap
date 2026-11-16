@@ -9,7 +9,7 @@ import { CategoryChips } from '../features/explore/components/CategoryChips';
 import { PoiResultsPanel } from '../features/explore/components/PoiResultsPanel';
 import { usePoiSearch } from '../features/explore/hooks/usePoiSearch';
 import { computeAreaInsight } from '../features/explore/services/areaInsight';
-import { ApiPoiProvider } from '../features/explore/services/apiPoiProvider';
+import { ApiPoiProvider } from '../features/explore/api/apiPoiProvider';
 import { radiusForZoom, ALONG_ROUTE_RADIUS_M } from '../features/explore/services/poiOptions';
 import type { Poi, PoiSearchTerm } from '../features/explore/types';
 import { LayerSwitcher } from '../features/map/components/LayerSwitcher';
@@ -33,9 +33,9 @@ import type { PickTarget } from '../features/navigation/components/RoutePanel';
 import { TrafficLegend } from '../features/map/components/TrafficLegend';
 import { useDirections } from '../features/navigation/hooks/useDirections';
 import { useNavigationSession } from '../features/navigation/hooks/useNavigationSession';
-import { RouteApiClient, routePlanFromResult } from '../features/navigation/services/RouteApiClient';
+import { RouteApiClient, routePlanFromResult } from '../features/navigation/api/RouteApiClient';
 import { parseRouteShareLink } from '../features/navigation/services/routeShareLink';
-import { rerouteApi } from '../features/navigation/services/RerouteApiClient';
+import { rerouteApi } from '../features/navigation/api/RerouteApiClient';
 import {
   IncidentAheadDetector,
   type RouteIncident,
@@ -48,7 +48,7 @@ import {
   TourAlgorithmSelect,
   type TourAlgorithmChoice,
 } from '../features/multi-stop/components/TourAlgorithmSelect';
-import { toTrafficMapLayer } from '../features/map/layers/trafficMapLayer';
+import { toTrafficMapLayer } from '../features/map/services/trafficMapLayer';
 import type { RerouteStrategy } from '@routetwin/shared';
 import { formatDistanceKm, formatDurationMinutes } from '../features/navigation/utils/format';
 import { popularPlaces } from '../features/places/data/popularPlaces';
