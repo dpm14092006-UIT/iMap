@@ -12,6 +12,7 @@ import { minutesSlowerThanFastest, routeLabels } from '../../navigation/utils/ro
 import type { LatLng, Place } from '../../places/types';
 import type { TrafficFeature, TrafficMapLayer, TrafficSeverity } from '../layers/trafficMapLayer';
 import type { AlgorithmOverlay, Coordinate, DraftStops, MapLayer, MapOverlays, RoutePlan } from '../types';
+
 import {
   CONGESTION_COLORS,
   CONGESTION_LABELS,
@@ -21,6 +22,30 @@ import {
 } from '../../traffic/services/routeCongestion';
 import { routeHazardSection } from '../../traffic/services/routeTraffic';
 import { pickRouteLabelPoints } from './routeLabelPlacement';
+
+/**
+ * Nguồn ô bản đồ nền "Lớp" (nhãn tiếng Việt), chọn theo mức zoom:
+ * - zoom ≤ 10: OSM France HOT — tên địa phương ở mọi mức zoom (Esri ở zoom xa in tên tiếng Anh/không dấu).
+ * - zoom ≥ 11: Esri World Street Map — nhanh, ổn định, tên tiếng Việt có dấu.
+ * Mỗi nguồn có dự phòng khi một ô tải lỗi. Lưu ý Esri dùng thứ tự {y}/{x}.
+ * (tile.openstreetmap.org hay cắt kết nối/chặn lưu lượng dùng chung → bản đồ trống trên điện thoại.)
+ */
+const LOW_ZOOM_MAX = 10;
+const HOT_TILES = 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png';
+const ESRI_STREET_TILES =
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
+const OSM_DE_TILES = 'https://tile.openstreetmap.de/{z}/{x}/{y}.png';
+
+/** Lớp ô bản đồ: ô nào tải lỗi thì tải lại một lần từ `fallbackUrl` (cùng vị trí). */
+function tileLayerWithFallback(url: string, fallbackUrl: string, options: L.TileLayerOptions): L.TileLayer {
+  const layer = L.tileLayer(url, options);
+  layer.on('tileerror', ({ tile, coords }) => {
+    if (tile.dataset.fallback) return;
+    tile.dataset.fallback = '1';
+    tile.src = L.Util.template(fallbackUrl, { ...coords, s: 'a' });
+  });
+  return layer;
+}
 
 /** Khung nhìn khởi đầu toàn Việt Nam, không giới hạn pan/zoom vào một thành phố. */
 const VIETNAM_CENTER: L.LatLngExpression = [16, 108];
@@ -80,7 +105,8 @@ type MapControllerData = {
 export class LeafletMapController {
   private language: Language = 'vi';
   private readonly map: L.Map;
-  private readonly streets: L.TileLayer;
+  /** Bản đồ nền "Lớp": 2 nguồn theo mức zoom (xem LOW_ZOOM_MAX). */
+  private readonly streets: L.LayerGroup;
   private readonly imagery: L.TileLayer;
   /** Nhãn tên đường / địa điểm phủ lên ảnh vệ tinh (ảnh Esri không có nhãn). */
   private readonly imageryLabels: L.LayerGroup;
@@ -127,13 +153,17 @@ export class LeafletMapController {
     // Dock nằm đè góc trái nên ghi công và thước tỉ lệ đặt ở góc dưới phải.
     this.map.attributionControl.setPosition('bottomright');
     L.control.scale({ imperial: false, position: 'bottomright' }).addTo(this.map);
-    // Tile chuẩn của OpenStreetMap: nhãn chỉ dùng tên địa phương (tiếng Việt).
-    // (tile.openstreetmap.de in thêm tên phiên âm Latin nên mỗi địa danh bị lặp hai lần.)
-    this.streets = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution:
-        '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a>',
-    });
+    this.streets = L.layerGroup([
+      tileLayerWithFallback(HOT_TILES, ESRI_STREET_TILES, {
+        maxZoom: LOW_ZOOM_MAX,
+        attribution: '© OpenStreetMap · HOT · OSM France',
+      }),
+      tileLayerWithFallback(ESRI_STREET_TILES, OSM_DE_TILES, {
+        minZoom: LOW_ZOOM_MAX + 1,
+        maxZoom: 19,
+        attribution: 'Tiles © Esri',
+      }),
+    ]);
     this.imagery = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       {
