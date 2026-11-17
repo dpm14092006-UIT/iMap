@@ -8,3 +8,4 @@
 | **Kế hoạch** | [Phân công](planning/OWNERSHIP.md) · [Lộ trình 2 tuần](planning/ROADMAP_2_WEEKS.md) · [WBS N1](planning/WBS_N1.md) · [Backlog](planning/IMPLEMENTATION_BACKLOG.md) |
 | **Nghiên cứu** | [Giải thích tuyến bằng AI](research/AI_ROUTE_EXPLANATION_RESEARCH.md) |
 | **Benchmark** | [Dijkstra vs A*](benchmarks/BENCHMARK_PATHFINDING.md) · [TSP](benchmarks/BENCHMARK_TSP.md) · [Voice/Whisper](benchmarks/VOICE_BENCHMARK.md) · [Kiểm tra tìm kiếm](benchmarks/SEARCH_VERIFICATION.md) |
+| **Review** | [Review web 17/11/2026](reviews/WEB_REVIEW_2026-11-17.md) |
