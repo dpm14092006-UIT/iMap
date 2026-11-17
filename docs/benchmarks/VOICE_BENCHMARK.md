@@ -19,7 +19,7 @@ Chạy ngày 09/11/2026 bằng nhận dạng thực sự, không mock transcript
 | US nhanh 240 wpm | 12 | 9,59% | 12/12 | 12/12 | 0,713s |
 | US + nhiễu trắng 10dB | 12 | 9,59% | 12/12 | 12/12 | 0,738s |
 
-Inference timing đã bao gồm thực thi lazy segment iterator; không gồm tải model, TTS, network, resample hay browser capture. Các lần sau có thể khác theo CPU/voice hệ điều hành. Kết quả raw và transcript từng mẫu: [benchmark-results.json](voice/benchmark-results.json).
+Inference timing đã bao gồm thực thi lazy segment iterator; không gồm tải model, TTS, network, resample hay browser capture. Các lần sau có thể khác theo CPU/voice hệ điều hành. Kết quả raw và transcript từng mẫu: [benchmark-results.json](voice-benchmark-results.json).
 
 Lỗi có ý nghĩa: `at most` → `utmost` (nhanh) / `its most` (nhiễu); `Find a bus stop` → `time to bus stop`. Bổ sung parser nhận giới hạn dạng `1 km extra` và hyphen `1-kilometer extra`; có regression test. Đây là sửa sau benchmark ban đầu; điểm all-slots ở bảng là parser cuối trên chính tập đã xem, **không phải tập held-out**. Cần tập người nói mới để đo khả năng tổng quát. “Find the station” trả unknown, hỏi lại; unknown đúng cũng tính là category đúng.
 

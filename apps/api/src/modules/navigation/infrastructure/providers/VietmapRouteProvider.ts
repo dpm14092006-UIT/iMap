@@ -2,6 +2,7 @@ import type { CongestionLevel, RouteCongestion, RouteRequest, RouteResult } from
 import { z } from 'zod';
 import { AppError } from '../../../../shared/errors/AppError.js';
 import type { AlternativeRouteProvider } from '../../domain/ports/AlternativeRouteProvider.js';
+import { countRouteTurns } from '../../domain/routeComparison.js';
 import type { RouteProvider } from '../../domain/ports/RouteProvider.js';
 
 const vietmapResponseSchema = z.object({
@@ -215,6 +216,7 @@ export class VietmapRouteProvider implements RouteProvider, AlternativeRouteProv
         durationSeconds: Math.round(path.time / 1000),
         // Đã đúng thứ tự GeoJSON [lng, lat] của dự án nên giữ nguyên.
         coordinates: path.points.coordinates,
+        turnCount: countRouteTurns(path.instructions),
         instructions: path.instructions
           .filter((instruction) => instruction.text.trim() || instruction.street_name.trim())
           .map((instruction) => ({

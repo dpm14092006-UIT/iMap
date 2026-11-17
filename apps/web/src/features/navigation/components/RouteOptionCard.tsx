@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Icon } from '../../../shared/components/Icon';
-import type { TrafficSeverity } from '../../map/layers/trafficMapLayer';
+import type { TrafficSeverity } from '../../map/services/trafficMapLayer';
 import type { RoutePlan } from '../../map/types';
 import {
   CONGESTION_COLORS,
@@ -15,6 +15,7 @@ import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type RouteOptionCardProps = {
   route: RoutePlan;
+  comparisonId?: string | undefined;
   /** Nhãn như "Nhanh nhất", "Ngắn nhất", "Tránh trạm thu phí". */
   labels: string[];
   /** Số phút chậm hơn phương án nhanh nhất (0 nếu chính là phương án nhanh nhất). */
@@ -58,6 +59,7 @@ const hasFerry = (route: RoutePlan) =>
 /** Thẻ một phương án tuyến: dải màu trùng đường trên bản đồ, thời gian theo mức tắc, cảnh báo và chi tiết. */
 export function RouteOptionCard({
   route,
+  comparisonId,
   labels,
   deltaMinutes,
   maxDurationMin,
@@ -93,6 +95,9 @@ export function RouteOptionCard({
       >
         <span className="flex items-baseline justify-between gap-2">
           <span className={`text-lg font-extrabold tracking-tight ${tone.text}`}>
+            {comparisonId && (
+              <span className="mr-1.5 text-xs text-slate-600 dark:text-slate-300">{comparisonId}</span>
+            )}
             {formatDurationMinutes(route.durationMin, language)}
           </span>
           <span className="text-sm font-semibold text-ink dark:text-slate-100">

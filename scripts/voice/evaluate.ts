@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { KeywordStopIntentParser } from '../../apps/api/src/modules/route-stops/infrastructure/providers/KeywordStopIntentParser.js';
-const path = process.argv[2] ?? 'docs/voice/benchmark-results.json';
+const path = process.argv[2] ?? 'docs/benchmarks/voice-benchmark-results.json';
 const data = JSON.parse(readFileSync(path, 'utf8'));
 const parser = new KeywordStopIntentParser();
 for (const row of data.rows) {

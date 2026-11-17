@@ -2,7 +2,7 @@
 
 Ngày 09/11/2026. Dùng tab **Trợ lý địa điểm**. Gõ hoặc nói nhu cầu tiếng Anh/Việt; không cần biết tên POI. Đây là tìm loại địa điểm trong dữ liệu OSM, chưa phải tìm mọi thực thể bằng ngôn ngữ tự nhiên.
 
-Toàn bộ trợ lý và voice yêu cầu tài khoản đã đăng nhập. API xác minh Bearer token với Supabase; khách vẫn dùng tìm địa chỉ và chỉ đường. Xem [phân quyền](FEATURE_ACCESS.md).
+Toàn bộ trợ lý và voice yêu cầu tài khoản đã đăng nhập. API xác minh Bearer token với Supabase; khách vẫn dùng tìm địa chỉ và chỉ đường. Xem [phân quyền](../architecture/FEATURE_ACCESS.md).
 
 ## Luồng và trách nhiệm
 
@@ -43,7 +43,7 @@ Response envelope `{ "data": ... }`, discriminated union theo `status`: `clarify
 - `GET /api/voice/config`: trạng thái khả dụng không lộ key. `POST /api/voice/transcribe`: `Content-Type: audio/wav`, body binary ≤500.000 byte; audio 0,2–15 giây, response `{data:{text,provider}}`, text tối đa 300 ký tự. Timeout provider 25 giây, không retry/fallback trả phí. Quota lỗi 429, provider không dùng được 502, chưa cấu hình 503.
 - Micro cần localhost hoặc HTTPS. Có hiển thị nơi gửi audio. Nhận dạng chỉ điền ô chữ; người dùng kiểm tra trước bấm Tìm. Chưa kiểm chứng micro người thật trên từng thiết bị.
 
-Xem [benchmark audio thật](VOICE_BENCHMARK.md), [cấu hình deploy](DEPLOY_API.md).
+Xem [benchmark audio thật](../benchmarks/VOICE_BENCHMARK.md), [cấu hình deploy](../guides/DEPLOY_API.md).
 
 ## Xác minh và giới hạn
 

@@ -30,7 +30,7 @@ def distance(a,b):
   row=nxt
  return row[-1]
 def main():
- p=argparse.ArgumentParser(); p.add_argument('--output',default='docs/voice/benchmark-results.json'); p.add_argument('--cache',default=str(Path.home()/'.cache/imap-voice')); args=p.parse_args()
+ p=argparse.ArgumentParser(); p.add_argument('--output',default='docs/benchmarks/voice-benchmark-results.json'); p.add_argument('--cache',default=str(Path.home()/'.cache/imap-voice')); args=p.parse_args()
  cache=Path(args.cache); audio=cache/'audio'; audio.mkdir(parents=True,exist_ok=True)
  model=WhisperModel('base.en',device='cpu',compute_type='int8',cpu_threads=4,download_root=str(cache/'models'))
  rows=[]; rng=np.random.default_rng(42)

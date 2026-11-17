@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Popover } from '../../../app/layout/Popover';
 import { SheetPanel } from '../../../app/layout/SheetPanel';
 import { Icon } from '../../../shared/components/Icon';
-import type { TrafficMapLayer } from '../../map/layers/trafficMapLayer';
+import type { TrafficMapLayer } from '../../map/services/trafficMapLayer';
 import type { RoutePlan } from '../../map/types';
 import { PlaceField } from '../../places/components/PlaceField';
 import type { LatLng } from '../../places/types';
@@ -11,6 +11,7 @@ import type { DirectionsController } from '../hooks/useDirections';
 import { useModeDurations } from '../hooks/useModeDurations';
 import { DepartureSelect } from './DepartureSelect';
 import { minutesSlowerThanFastest, routeLabels } from '../utils/routeLabels';
+import { RouteComparisonPanel } from './RouteComparisonPanel';
 import { RouteOptionCard } from './RouteOptionCard';
 import { RouteShareBar } from './RouteShareBar';
 import { TravelModeTabs } from './TravelModeTabs';
@@ -351,11 +352,23 @@ export function RoutePanel({
               {t('{count} phương án', { count: routeOptions.length })}
             </span>
           </div>
+          {directions.comparison && (
+            <RouteComparisonPanel
+              key={directions.comparison.token}
+              snapshot={directions.comparison}
+              compare={directions.compare}
+              onChoose={directions.chooseRoute}
+              onRefresh={() => void directions.calculate()}
+              selectedId={route.id}
+              isNavigating={isNavigating}
+            />
+          )}
           <ul className="space-y-2.5" aria-live="polite">
             {routeOptions.map((item) => (
               <RouteOptionCard
                 key={item.id}
                 route={item}
+                comparisonId={directions.comparison?.routes.find(({ planId }) => planId === item.id)?.id}
                 labels={routeLabels(item, routeOptions)}
                 deltaMinutes={minutesSlowerThanFastest(item, routeOptions)}
                 maxDurationMin={maxDuration}

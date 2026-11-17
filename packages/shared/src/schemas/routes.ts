@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { MAX_OPTIMIZE_POINTS } from '../constants.js';
+import { comparisonSessionSchema, type RouteComparisonSnapshot } from './route-comparison.js';
 export const geoPointSchema = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
@@ -9,6 +10,7 @@ export const routeRequestSchema = z.object({
   vehicle: z.enum(['car', 'motorcycle']),
   objective: z.enum(['distance', 'duration']).default('duration'),
   alternatives: z.boolean().optional(),
+  comparisonSessionId: comparisonSessionSchema.optional(),
   avoid: z.array(z.enum(['ferry', 'toll'])).optional(),
 });
 export type RouteRequest = z.infer<typeof routeRequestSchema>;
@@ -43,6 +45,8 @@ export type RoutePathResult = {
   durationSeconds: number;
   coordinates: [number, number][]; // GeoJSON [lng, lat]
   instructions: RouteInstruction[];
+  /** Count from the complete provider instructions. Null when the signs cannot be verified. */
+  turnCount?: number | null;
   tollCostVnd?: number;
   /** Mức giao thông theo đoạn từ VietMap; vắng mặt khi không có dữ liệu (tuyến nhiều điểm, lỗi...). */
   congestion?: RouteCongestion;
@@ -50,6 +54,7 @@ export type RoutePathResult = {
 export type RouteResult = RoutePathResult & {
   /** Các tuyến thay thế mà Route v4 trả về khi alternatives=true. */
   alternatives?: RoutePathResult[];
+  comparison?: RouteComparisonSnapshot;
 };
 
 /**

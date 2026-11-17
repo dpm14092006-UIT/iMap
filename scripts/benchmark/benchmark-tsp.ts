@@ -3,7 +3,7 @@
  *
  * Cách chạy (từ thư mục gốc):
  *   npm run benchmark:tsp               # in kết quả ra màn hình
- *   npm run benchmark:tsp -- --write    # ghi thêm vào docs/BENCHMARK_TSP.md
+ *   npm run benchmark:tsp -- --write    # ghi thêm vào docs/benchmarks/BENCHMARK_TSP.md
  *
  * Dùng ma trận GIẢ LẬP (không gọi VietMap để khỏi tốn hạn mức): điểm ngẫu nhiên trong trung tâm TP.HCM,
  * chi phí = khoảng cách đường chim bay × hệ số đường vòng ngẫu nhiên THEO TỪNG CHIỀU (mô phỏng đường một chiều).
@@ -16,7 +16,7 @@ import { NearestNeighborStrategy } from '../../apps/api/src/modules/optimization
 import type { OptimizationStrategy } from '../../apps/api/src/modules/optimization/domain/strategies/OptimizationStrategy.js';
 import { TwoOptStrategy } from '../../apps/api/src/modules/optimization/domain/strategies/TwoOptStrategy.js';
 
-const REPORT_FILE = resolve('docs/BENCHMARK_TSP.md');
+const REPORT_FILE = resolve('docs/benchmarks/BENCHMARK_TSP.md');
 const INSTANCES = 200;
 
 /** Bộ sinh số ngẫu nhiên có seed để mỗi lần chạy ra cùng bộ dữ liệu. */

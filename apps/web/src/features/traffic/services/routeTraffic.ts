@@ -1,5 +1,5 @@
 import type { RoutePlan, Coordinate } from '../../map/types';
-import type { TrafficMapLayer, TrafficSeverity } from '../../map/layers/trafficMapLayer';
+import type { TrafficMapLayer, TrafficSeverity } from '../../map/services/trafficMapLayer';
 import type { LatLng } from '../../places/types';
 
 type ClosestRoutePoint = {

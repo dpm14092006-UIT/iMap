@@ -3,7 +3,7 @@
  *
  * Cách chạy (từ thư mục gốc):
  *   npm run benchmark:pathfinding                 # in kết quả ra màn hình
- *   npm run benchmark:pathfinding -- --write      # ghi thêm vào docs/BENCHMARK_PATHFINDING.md
+ *   npm run benchmark:pathfinding -- --write      # ghi thêm vào docs/benchmarks/BENCHMARK_PATHFINDING.md
  *   npm run benchmark:pathfinding -- --pairs=300  # số cặp điểm ngẫu nhiên (mặc định 200)
  *
  * Với mỗi cặp điểm, chạy cả hai thuật toán và kiểm tra chi phí BẰNG NHAU (A* phải tối ưu).
@@ -21,7 +21,7 @@ import type { ShortestPathSolver } from '../../apps/api/src/modules/navigation/d
 import { OsmFileGraphSource } from '../../apps/api/src/modules/navigation/infrastructure/osm/OsmFileGraphSource.js';
 
 const GRAPH_FILE = resolve('apps/api/data/osm/hcmc-center.json');
-const REPORT_FILE = resolve('docs/BENCHMARK_PATHFINDING.md');
+const REPORT_FILE = resolve('docs/benchmarks/BENCHMARK_PATHFINDING.md');
 
 type Stats = { runs: number; visited: number; ms: number };
 

@@ -5,3 +5,4 @@ export * from './schemas/places.js';
 export * from './schemas/route-stops.js';
 export * from './schemas/pathfinding.js';
 export * from './schemas/reroute.js';
+export * from './schemas/route-comparison.js';

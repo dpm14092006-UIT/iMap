@@ -15,6 +15,9 @@ const envSchema = z.object({
   CLOUDFLARE_ACCOUNT_ID: optionalValue,
   CLOUDFLARE_AI_TOKEN: optionalValue,
   VIETMAP_API_KEY: optionalValue,
+  ROUTE_EXPLANATION_PROVIDER: z.enum(['off', 'gemini', 'ollama']).default('off'),
+  ROUTE_EXPLANATION_MODEL: optionalValue,
+  ROUTE_COMPARISON_SECRET: z.preprocess(emptyToUndefined, z.string().trim().min(32).optional()),
   GEMINI_TRAFFIC_AI_ENABLED: z
     .string()
     .trim()

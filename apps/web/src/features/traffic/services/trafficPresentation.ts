@@ -1,5 +1,5 @@
 import type { TrafficReportDto } from '@routetwin/shared';
-import { toTrafficMapLayer, type TrafficMapLayer } from '../../map/layers/trafficMapLayer';
+import { toTrafficMapLayer, type TrafficMapLayer } from '../../map/services/trafficMapLayer';
 import type { DemoIncident, IncidentKind } from '../components/TrafficReportPanel';
 
 /** Tên hiển thị của từng loại sự cố (dùng chung cho panel, popup bản đồ). */

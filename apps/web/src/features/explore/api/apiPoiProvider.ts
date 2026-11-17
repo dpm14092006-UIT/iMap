@@ -4,7 +4,7 @@ import { httpClient } from '../../../shared/api/HttpClient';
 import type { Coordinate } from '../../map/types';
 import type { LatLng } from '../../places/types';
 import type { Poi, PoiProvider, PoiSearchTerm } from '../types';
-import { simplifyPath } from './simplifyPath';
+import { simplifyPath } from '../services/simplifyPath';
 
 /** Chỉ gửi trường có giá trị để body/query không chứa `undefined`. */
 function termFields(term: PoiSearchTerm): {
