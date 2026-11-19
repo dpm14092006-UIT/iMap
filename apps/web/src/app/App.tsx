@@ -29,6 +29,7 @@ import type {
 import { useSavedRoutes } from '../features/my-routes/hooks/useSavedRoutes';
 import type { SavedRoute } from '../features/my-routes/types';
 import { NavigationBanner } from '../features/navigation/components/NavigationBanner';
+import { Speedometer } from '../features/navigation/components/Speedometer';
 import type { PickTarget } from '../features/navigation/components/RoutePanel';
 import { TrafficLegend } from '../features/map/components/TrafficLegend';
 import { useDirections } from '../features/navigation/hooks/useDirections';
@@ -1221,12 +1222,19 @@ export function App() {
         </div>
       )}
 
+      {!isNavigationIdle && navigationStatus !== 'arrived' && (
+        <Speedometer
+          speedKph={navigation.speedKph}
+          hasGpsFix={navigationStatus === 'navigating' && !navigation.error && navigation.mode === 'real'}
+          belowBanner={activePanel !== null}
+        />
+      )}
+
       <NavigationBanner
         status={navigationStatus}
         instruction={navigation.nextInstruction}
         distanceToInstructionMeters={navigation.distanceToInstructionMeters}
         distanceRemainingMeters={navigation.distanceRemainingMeters}
-        speedKph={navigation.speedKph}
         offRoute={offRoute}
         error={navigation.error}
         canRecalculate={Boolean(navigationRoute && navigationLocation)}

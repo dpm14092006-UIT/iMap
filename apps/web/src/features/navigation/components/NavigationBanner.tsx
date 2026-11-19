@@ -13,7 +13,6 @@ type NavigationBannerProps = {
   instruction: { text: string; sign?: number } | null;
   distanceToInstructionMeters: number;
   distanceRemainingMeters: number;
-  speedKph: number | null;
   offRoute: boolean;
   error: string;
   canRecalculate: boolean;
@@ -62,7 +61,6 @@ export function NavigationBanner({
   instruction,
   distanceToInstructionMeters,
   distanceRemainingMeters,
-  speedKph,
   offRoute,
   error,
   canRecalculate,
@@ -177,21 +175,6 @@ export function NavigationBanner({
                   · {t(demo?.mode === 'demo' ? 'GPS giả lập (demo)' : 'GPS trực tiếp')}
                 </p>
               )}
-              <span
-                className="shrink-0 rounded-full bg-white/10 px-2 py-1 text-xs font-bold tabular-nums text-white"
-                aria-label={
-                  speedKph === null
-                    ? t('Đang chờ tín hiệu GPS để đo tốc độ')
-                    : t('Tốc độ GPS hiện tại: {speed} km/h', { speed: Math.round(speedKph) })
-                }
-                title={
-                  speedKph === null
-                    ? t('Đang chờ tín hiệu GPS để đo tốc độ')
-                    : t('Tốc độ GPS hiện tại: {speed} km/h', { speed: Math.round(speedKph) })
-                }
-              >
-                {speedKph === null ? '—' : Math.round(speedKph)} km/h
-              </span>
             </div>
           )}
           {error && status !== 'error' && <p className="mt-1 text-xs text-amber-200">{t(error)}</p>}
