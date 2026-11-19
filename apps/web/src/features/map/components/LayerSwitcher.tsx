@@ -9,6 +9,11 @@ type LayerSwitcherProps = {
   overlays: MapOverlays;
   onLayerChange: (layer: MapLayer) => void;
   onOverlaysChange: (overlays: MapOverlays) => void;
+  /**
+   * Nút nằm ở góc nào của bản đồ. Popover mở về phía còn trống:
+   * 'left' (mặc định) mở sang phải, 'right' mở sang trái để không tràn khỏi mép màn hình.
+   */
+  align?: 'left' | 'right';
 };
 
 const baseOptions = [
@@ -43,8 +48,14 @@ function LayerThumb({ kind, className = '' }: { kind: 'street' | 'satellite'; cl
   );
 }
 
-/** Nút thẻ ảnh "Lớp" ở góc dưới trái; mở popover chọn nền bản đồ và các lớp phủ. */
-export function LayerSwitcher({ layer, overlays, onLayerChange, onOverlaysChange }: LayerSwitcherProps) {
+/** Nút thẻ ảnh "Lớp" (góc dưới trái, hoặc dưới phải khi đang dẫn đường); mở popover chọn nền bản đồ và các lớp phủ. */
+export function LayerSwitcher({
+  layer,
+  overlays,
+  onLayerChange,
+  onOverlaysChange,
+  align = 'left',
+}: LayerSwitcherProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const titleId = useId();
@@ -56,7 +67,8 @@ export function LayerSwitcher({ layer, overlays, onLayerChange, onOverlaysChange
       open={open}
       onClose={() => setOpen(false)}
       label={t('Lớp bản đồ')}
-      panelClassName="bottom-full left-0 mb-2 w-[272px]"
+      // max-w giữ hộp nằm trọn trong màn hình hẹp (16px lề mỗi bên).
+      panelClassName={`bottom-full mb-2 w-[272px] max-w-[calc(100vw-32px)] ${align === 'right' ? 'right-0' : 'left-0'}`}
       trigger={
         <button
           type="button"

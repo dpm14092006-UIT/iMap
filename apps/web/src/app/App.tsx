@@ -244,6 +244,7 @@ export function App() {
     status: navigationStatus,
     route: navigationRoute,
     location: navigationLocation,
+    displayLocation: navigationDisplayLocation,
     headingDegrees: navigationHeadingDegrees,
     nextStopIndex,
     offRoute,
@@ -276,7 +277,8 @@ export function App() {
   const isNavigationIdle = navigationStatus === 'idle';
   const isNavigating = navigationStatus === 'navigating' || navigationStatus === 'locating';
   const isNavigationMarkerVisible = navigationStatus !== 'idle' && navigationStatus !== 'error';
-  const mapLocation = isNavigationIdle ? currentLocation : navigationLocation;
+  // Mũi tên dẫn đường vẽ ở vị trí đã hút về tuyến; vị trí GPS thô vẫn dùng cho tính lại tuyến và báo cáo.
+  const mapLocation = isNavigationIdle ? currentLocation : navigationDisplayLocation;
   const [isRecalculatingNavigation, setIsRecalculatingNavigation] = useState(false);
   const lastAutomaticRerouteAt = useRef(0);
   // Giữ id tuyến đang dẫn trong ref để bỏ kết quả tính lại nếu chuyến đi đã đổi trong lúc chờ API.
@@ -301,16 +303,16 @@ export function App() {
   useEffect(() => {
     if (
       !followPaused &&
-      navigationLocation &&
+      navigationDisplayLocation &&
       (navigationStatus === 'navigating' || navigationStatus === 'arrived')
     ) {
-      mapController.current?.followLocation(navigationLocation);
+      mapController.current?.followLocation(navigationDisplayLocation);
     }
-  }, [navigationLocation, navigationStatus, followPaused]);
+  }, [navigationDisplayLocation, navigationStatus, followPaused]);
   const recenterNavigation = useCallback(() => {
     setFollowPaused(false);
-    if (navigationLocation) mapController.current?.followLocation(navigationLocation);
-  }, [navigationLocation]);
+    if (navigationDisplayLocation) mapController.current?.followLocation(navigationDisplayLocation);
+  }, [navigationDisplayLocation]);
   /** Nút bản đồ (zoom, toàn Việt Nam) lúc dẫn đường cũng là xem trước: thôi bám vị trí. */
   const pauseFollowIfNavigating = () => {
     if (!isNavigationIdle) setFollowPaused(true);
@@ -1179,6 +1181,7 @@ export function App() {
         <>
           {!isNavigationIdle && (
             <LayerSwitcher
+              align="right"
               layer={layer}
               overlays={overlays}
               onLayerChange={setLayer}
@@ -1458,6 +1461,7 @@ export function App() {
           }}
           onAccept={routeAlert.accept}
           onKeep={routeAlert.keep}
+          belowNavigationBanner={!isNavigationIdle && activePanel !== null}
           onClose={routeAlert.close}
         />
       )}

@@ -18,7 +18,10 @@ export type NavigationStatus = 'idle' | 'locating' | 'navigating' | 'arrived' | 
 export type NavigationSessionState = {
   status: NavigationStatus;
   route: RoutePlan | null;
+  /** Vị trí GPS thô: dùng cho tính lại tuyến, gắn báo cáo… */
   location: LatLng | null;
+  /** Vị trí vẽ mũi tên trên bản đồ (đã hút về tuyến khi còn đúng tuyến). */
+  displayLocation: LatLng | null;
   headingDegrees: number | null;
   speedKph: number | null;
   nextInstruction: RouteInstruction | null;
@@ -35,6 +38,7 @@ const idleState: NavigationSessionState = {
   status: 'idle',
   route: null,
   location: null,
+  displayLocation: null,
   headingDegrees: null,
   speedKph: null,
   nextInstruction: null,
@@ -129,21 +133,32 @@ export function useNavigationSession() {
       headingRef.current = headingDegrees;
       const guidance = engine.evaluate(location, fix.accuracyMeters, progressRatioRef.current);
       progressRatioRef.current = guidance.progressRatio;
-      setState((current) => ({
-        ...current,
-        status: guidance.arrived ? 'arrived' : 'navigating',
-        location,
-        headingDegrees,
-        speedKph: guidance.arrived ? null : speedKph,
-        nextInstruction: guidance.nextInstruction,
-        distanceToInstructionMeters: guidance.distanceToInstructionMeters,
-        distanceRemainingMeters: guidance.distanceRemainingMeters,
-        progressRatio: guidance.progressRatio,
-        offRoute: !guidance.arrived && guidance.offRoute,
-        offRouteFixes: !guidance.arrived && guidance.offRoute ? current.offRouteFixes + 1 : 0,
-        nextStopIndex: guidance.nextStopIndex,
-        error: '',
-      }));
+      setState((current) => {
+        // GPS quá kém: giữ nguyên kết luận lệch/đúng tuyến của lần trước, không đếm thêm.
+        const offRoute = guidance.arrived ? false : guidance.reliable ? guidance.offRoute : current.offRoute;
+        const offRouteFixes =
+          guidance.arrived || !offRoute
+            ? 0
+            : guidance.reliable
+              ? current.offRouteFixes + 1
+              : current.offRouteFixes;
+        return {
+          ...current,
+          status: guidance.arrived ? 'arrived' : 'navigating',
+          location,
+          displayLocation: guidance.displayLocation,
+          headingDegrees,
+          speedKph: guidance.arrived ? null : speedKph,
+          nextInstruction: guidance.nextInstruction,
+          distanceToInstructionMeters: guidance.distanceToInstructionMeters,
+          distanceRemainingMeters: guidance.distanceRemainingMeters,
+          progressRatio: guidance.progressRatio,
+          offRoute,
+          offRouteFixes,
+          nextStopIndex: guidance.nextStopIndex,
+          error: '',
+        };
+      });
       if (guidance.arrived) stopSource();
     },
     [stopSource],

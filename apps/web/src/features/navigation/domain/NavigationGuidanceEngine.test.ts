@@ -77,6 +77,35 @@ describe('NavigationGuidanceEngine', () => {
     expect(engine.evaluate(point, 100, 0).offRoute).toBe(false);
   });
 
+  it('rẽ nhầm sang đường song song cách ~55 m: báo lệch tuyến khi GPS tốt', () => {
+    // Trước đây ngưỡng tối thiểu 70 m nên trường hợp này bị coi là vẫn đúng tuyến.
+    expect(engine.evaluate({ lat: 10.0005, lng: 106.02 }, 10, 0).offRoute).toBe(true);
+  });
+
+  it('GPS rất kém không nới ngưỡng quá 120 m', () => {
+    // ~167 m lệch với sai số 300 m: ngưỡng cũ là 450 m nên không bao giờ phát hiện được.
+    expect(engine.evaluate({ lat: 10.0015, lng: 106.02 }, 300, 0).offRoute).toBe(true);
+    expect(NavigationGuidanceEngine.offRouteThreshold(300)).toBe(
+      NavigationGuidanceEngine.MAX_OFF_ROUTE_METERS,
+    );
+    expect(NavigationGuidanceEngine.offRouteThreshold(5)).toBe(NavigationGuidanceEngine.MIN_OFF_ROUTE_METERS);
+  });
+
+  it('lần đo có sai số quá lớn được đánh dấu không đáng tin', () => {
+    expect(engine.evaluate({ lat: 10, lng: 106.02 }, 30, 0).reliable).toBe(true);
+    expect(engine.evaluate({ lat: 10, lng: 106.02 }, 150, 0).reliable).toBe(false);
+  });
+
+  it('còn trên tuyến: mũi tên được hút về tuyến; lệch tuyến: giữ vị trí GPS', () => {
+    const near = engine.evaluate({ lat: 10.0002, lng: 106.02 }, 10, 0);
+    expect(near.offRoute).toBe(false);
+    expect(near.displayLocation.lat).toBeCloseTo(10, 6);
+    expect(near.displayLocation.lng).toBeCloseTo(106.02, 5);
+
+    const far = { lat: 10.005, lng: 106.02 };
+    expect(engine.evaluate(far, 10, 0).displayLocation).toEqual(far);
+  });
+
   it('tới điểm cuối: đã đến nơi', () => {
     expect(engine.evaluate({ lat: 10, lng: 106.03 }, 10, 0.9).arrived).toBe(true);
   });
