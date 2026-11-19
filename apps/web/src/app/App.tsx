@@ -1458,6 +1458,7 @@ export function App() {
           }}
           onAccept={routeAlert.accept}
           onKeep={routeAlert.keep}
+          belowNavigationBanner={!isNavigationIdle && activePanel !== null}
           onClose={routeAlert.close}
         />
       )}
