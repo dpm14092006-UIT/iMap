@@ -1179,6 +1179,7 @@ export function App() {
         <>
           {!isNavigationIdle && (
             <LayerSwitcher
+              align="right"
               layer={layer}
               overlays={overlays}
               onLayerChange={setLayer}
