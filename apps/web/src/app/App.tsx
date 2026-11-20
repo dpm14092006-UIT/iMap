@@ -64,6 +64,8 @@ import type {
   TrafficVehicleScope,
 } from '../features/traffic/components/TrafficReportPanel';
 import { useTrafficReports, type RealtimeTrafficReport } from '../features/traffic/hooks/useTrafficReports';
+import { RequestSequence } from '../shared/async/RequestSequence';
+import { parseRealtimeReport } from '../features/traffic/services/realtimeReport';
 import {
   incidentLabels,
   toIncidents,
@@ -500,13 +502,33 @@ export function App() {
     openPanel('directions');
   };
 
+  /** Đánh số các lần đặt điểm đi/đến bằng tra địa chỉ, để kết quả về chậm không ghi đè lựa chọn mới hơn. */
+  const endpointRequests = useRef(new RequestSequence<PickTarget>());
+  /** Điểm đi/đến hiện tại, đọc được sau `await` (closure chỉ giữ giá trị cũ). */
+  const currentEndpoints = useRef({ origin: directions.origin, destination: directions.destination });
+  currentEndpoints.current = { origin: directions.origin, destination: directions.destination };
+  /**
+   * Bắt đầu tra địa chỉ cho điểm đi/đến; hàm trả về cho biết kết quả còn được ghi hay không:
+   * chỉ khi đây vẫn là yêu cầu mới nhất VÀ trong lúc chờ người dùng chưa tự chọn điểm khác
+   * (gõ tìm, đảo chiều…) — những cách đó không đi qua bộ đánh số.
+   */
+  const beginEndpointLookup = (target: PickTarget) => {
+    const requestId = endpointRequests.current.next(target);
+    const before = currentEndpoints.current[target];
+    return () =>
+      endpointRequests.current.isLatest(target, requestId) && currentEndpoints.current[target] === before;
+  };
+
   /** Click bản đồ: tùy panel đang mở mà xử lý khác nhau. */
   const handleMapClick = async (point: LatLng) => {
     // 1. Đang chọn điểm đi/đến trên bản đồ.
     if (pickTarget) {
       const target = pickTarget;
       setPickTarget(null);
+      const stillWanted = beginEndpointLookup(target);
       const place = await placeFromPoint(point, 'map');
+      // Tra địa chỉ có thể mất vài giây: nếu đã chọn lại điểm này thì bỏ kết quả cũ.
+      if (!stillWanted()) return;
       if (target === 'origin') directions.setOrigin(place);
       else directions.setDestination(place);
       return;
@@ -536,8 +558,10 @@ export function App() {
   const setOriginFromGps = async () => {
     setIsLocating(true);
     try {
+      const stillWanted = beginEndpointLookup('origin');
       const fix = await locate();
-      directions.setOrigin(await placeFromPoint(fix.point, 'gps'));
+      const place = await placeFromPoint(fix.point, 'gps');
+      if (stillWanted()) directions.setOrigin(place);
       mapController.current?.flyTo(fix.point, 15);
     } catch (error) {
       showToast(t(errorMessage(error, 'Không lấy được vị trí.')));
@@ -706,8 +730,11 @@ export function App() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
     const onMessage = (event: MessageEvent) => {
-      const data = event.data as { type?: string; report?: RealtimeTrafficReport } | null;
-      if (data?.type === 'traffic_alert' && data.report) onRealtimeTrafficReport(data.report);
+      const data = event.data as { type?: unknown; report?: unknown } | null;
+      if (data?.type !== 'traffic_alert') return;
+      // Dữ liệu từ push là dữ liệu ngoài: kiểm tra trước khi dùng, giữ thêm số liệu cộng đồng (đã kiểm kiểu).
+      const report = parseRealtimeReport(data.report);
+      if (report) onRealtimeTrafficReport({ ...report, ...pickCommunityCounts(data.report as object) });
     };
     navigator.serviceWorker.addEventListener('message', onMessage);
     return () => navigator.serviceWorker.removeEventListener('message', onMessage);
@@ -811,8 +838,12 @@ export function App() {
     }
 
     // Tuyến nhiều điểm: tính lại và chỉ hiển thị trên bản đồ.
+    // Dùng chung bộ đếm với planMultiStopRoute: mở tuyến khác, sang panel khác hay lập hành trình mới
+    // trong lúc chờ thì bỏ kết quả này, không vẽ đè và không đóng panel người dùng đang dùng.
+    const requestId = ++multiPlanGeneration.current;
     setActiveRoute(null);
     const result = await routeApi.createPlan(stops, saved.vehicle, saved.objective ?? 'time');
+    if (requestId !== multiPlanGeneration.current) return;
     if ('error' in result) {
       showToast(t(result.error));
       return;
