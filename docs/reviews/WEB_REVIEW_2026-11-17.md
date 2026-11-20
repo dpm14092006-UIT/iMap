@@ -18,7 +18,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
   Mỗi tuyến lưu cả hình học vào localStorage; `save()` nuốt lỗi QuotaExceeded trong khi App vẫn toast "Đã lưu hành trình". Tải lại trang là mất.
   _Gợi ý:_ không lưu `plan.legs[].points` (đã tính lại khi mở), và `save()` trả về thành công/thất bại để App báo đúng.
 
-- [ ] **4. Link chia sẻ mất điểm dừng và tiêu chí** — `features/navigation/components/RouteShareBar.tsx:19`, `services/routeShareLink.ts`
+- [x] **4. Link chia sẻ mất điểm dừng và tiêu chí** — `features/navigation/components/RouteShareBar.tsx:19`, `services/routeShareLink.ts`
   Chỉ mã hóa from/to/mode; mất waypoints, objective (nhanh/ngắn nhất), avoidFerry.
 
 - [x] **5. Mở lại tuyến đã lưu bị đổi tiêu chí** — `app/App.tsx:788`

@@ -1058,7 +1058,7 @@ export function App() {
     mapController.current?.fitRoute(route);
   };
 
-  // Liên kết chia sẻ ?from=…&to=…&mode=… tự điền điểm đi/đến và tính tuyến khi tải trang.
+  // Liên kết chia sẻ ?from=…&to=…&mode=…(&via=…&by=…&ferry=…) tự điền tuyến và tính khi tải trang.
   const sharedRoute = useMemo(() => parseRouteShareLink(window.location.search), []);
   const sharedRouteApplied = useRef(false);
   useEffect(() => {
