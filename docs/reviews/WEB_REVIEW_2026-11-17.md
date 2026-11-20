@@ -62,7 +62,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 
 ## B. Hiệu năng
 
-- [ ] **17. Mỗi sự kiện realtime tải lại toàn bộ báo cáo** — `features/traffic/hooks/useTrafficReports.ts:108`
+- [x] **17. Mỗi sự kiện realtime tải lại toàn bộ báo cáo** — `features/traffic/hooks/useTrafficReports.ts:108`
   Gom các sự kiện (debounce ~500 ms) trước khi `refresh()`.
 - [ ] **18. Ký lại link ảnh mỗi lần danh sách báo cáo đổi** — `features/traffic/components/TrafficReportPanel.tsx:165`
   Chỉ ký ảnh mới (cache theo `imagePath`), không phụ thuộc identity của mảng `incidents`.
