@@ -117,10 +117,11 @@ export class RecentPlacesRepository {
     };
   }
 
+  /** Supabase trả `{ error }` thay vì ném lỗi; ném ra để nơi gọi biết đồng bộ thất bại. */
   async record(kind: RecentPlaceKind, place: Place): Promise<void> {
     const client = await getSupabaseClient();
     if (!client) return;
-    await client.rpc('record_recent_place', {
+    const { error } = await client.rpc('record_recent_place', {
       p_kind: kind,
       p_place_key: recentPlaceKey(place),
       p_name: place.name.slice(0, 200),
@@ -130,11 +131,17 @@ export class RecentPlacesRepository {
       p_lng: place.lng,
       p_source: place.source,
     });
+    if (error) throw new Error(`Không lưu được lịch sử địa điểm: ${error.message}`);
   }
 
   async remove(kind: RecentPlaceKind, place: Place): Promise<void> {
     const client = await getSupabaseClient();
     if (!client) return;
-    await client.from('recent_places').delete().eq('kind', kind).eq('place_key', recentPlaceKey(place));
+    const { error } = await client
+      .from('recent_places')
+      .delete()
+      .eq('kind', kind)
+      .eq('place_key', recentPlaceKey(place));
+    if (error) throw new Error(`Không xóa được lịch sử địa điểm: ${error.message}`);
   }
 }

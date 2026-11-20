@@ -36,7 +36,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
   _Gợi ý:_ trước khi `signOut`, gọi `delete_push_subscription` + `deleteRouteWatch(endpoint)`.
   _Ghi chú khi sửa:_ RPC `delete_push_subscription` chỉ cấp quyền cho `service_role` nên web không gọi được. Thay bằng xóa thẳng dòng của mình trong `push_subscriptions` (RLS `delete_self`; `route_watches` tự xóa theo `on delete cascade`) và hủy đăng ký push trong trình duyệt, chạy qua `AuthProvider.onBeforeSignOut` trước khi mất phiên.
 
-- [ ] **9. Lỗi Supabase khi ghi lịch sử bị bỏ qua** — `features/places/services/recentPlaces.ts:100`, `:115`
+- [x] **9. Lỗi Supabase khi ghi lịch sử bị bỏ qua** — `features/places/services/recentPlaces.ts:100`, `:115`
   `rpc()`/`.delete()` trả `{ error }` chứ không throw, nên `.catch()` ở nơi gọi không bao giờ chạy.
 
 - [ ] **10. Chọn điểm trên bản đồ bị kết quả cũ ghi đè** — `app/App.tsx:504`
