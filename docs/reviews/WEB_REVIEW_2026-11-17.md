@@ -55,7 +55,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 - [x] **14. Payload push từ service worker không được kiểm tra** — `app/App.tsx:691`
   Dùng lại `parseRealtimeReport` (đang có trong `useTrafficReports.ts`) trước khi gọi `onRealtimeTrafficReport`.
 
-- [ ] **15. Lỗi khởi tạo MediaRecorder báo nhầm là thiếu quyền micro** — `features/place-assistant/hooks/useApiSpeechDraft.ts:112`
+- [x] **15. Lỗi khởi tạo MediaRecorder báo nhầm là thiếu quyền micro** — `features/place-assistant/hooks/useApiSpeechDraft.ts:112`
 
 - [x] **16. Id báo cáo không encode trong URL** — `features/traffic/api/trafficApi.ts:40`
   Dùng `encodeURIComponent(id)`.
