@@ -2,9 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TrafficReportBounds, TrafficReportDto, TrafficReportInput } from '@routetwin/shared';
 import { trafficApi, trafficPhotos, vietnamBounds } from '../api/trafficApi';
 import { getSupabaseClient } from '../../auth/services/supabaseClient';
+import { debounce } from '../../../shared/async/debounce';
 import { parseRealtimeReport, type RealtimeTrafficReport } from '../services/realtimeReport';
 
 export type { RealtimeTrafficReport } from '../services/realtimeReport';
+
+/** Gom các sự kiện realtime đến dồn dập trong khoảng này (ms) thành một lần tải lại danh sách. */
+const REALTIME_REFRESH_DEBOUNCE_MS = 500;
 
 export function useTrafficReports(
   accessToken: string | null,
@@ -63,6 +67,9 @@ export function useTrafficReports(
     if (!realtimeEnabled) return;
     let active = true;
     let removeChannel: (() => void) | undefined;
+    // Mỗi sự kiện từng tải lại toàn bộ báo cáo trong khung bản đồ; nhiều người cùng báo/xác nhận thì
+    // gọi API liên tục. Gom các sự kiện trong REALTIME_REFRESH_DEBOUNCE_MS thành một lần tải.
+    const scheduleRefresh = debounce(() => void refreshRef.current(), REALTIME_REFRESH_DEBOUNCE_MS);
     void getSupabaseClient()
       .then((client) => {
         if (!active || !client) return;
@@ -70,8 +77,9 @@ export function useTrafficReports(
           .channel('traffic:reports', { config: { private: false } })
           .on('broadcast', { event: 'traffic_report_changed' }, (message) => {
             const report = parseRealtimeReport(message.payload);
+            // Cảnh báo trên tuyến vẫn báo ngay; chỉ việc tải lại danh sách được gom.
             if (report) onRealtimeReportRef.current?.(report);
-            void refreshRef.current();
+            scheduleRefresh();
           })
           .subscribe((status) => {
             if (status === 'SUBSCRIBED') void refreshRef.current();
@@ -83,6 +91,7 @@ export function useTrafficReports(
       .catch(() => undefined);
     return () => {
       active = false;
+      scheduleRefresh.cancel();
       removeChannel?.();
     };
   }, [realtimeEnabled]);

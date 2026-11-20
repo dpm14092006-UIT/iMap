@@ -33,6 +33,11 @@ export function isRecordablePlace(place: Place | null | undefined): place is Pla
   return Boolean(place && place.source !== 'gps' && place.name.trim() && Number.isFinite(place.lat));
 }
 
+/** Điểm này đã đứng đầu danh sách chưa (ghi lại cũng không đổi gì, khỏi gọi server). */
+export function isMostRecentPlace(list: Place[], place: Place): boolean {
+  return Boolean(list[0] && recentPlaceKey(list[0]) === recentPlaceKey(place));
+}
+
 /** Thêm điểm lên đầu danh sách, bỏ trùng, giữ tối đa 10. */
 export function pushRecentPlace(list: Place[], place: Place): Place[] {
   const key = recentPlaceKey(place);
