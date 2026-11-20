@@ -42,7 +42,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 - [x] **10. Chọn điểm trên bản đồ bị kết quả cũ ghi đè** — `app/App.tsx:504`
   `placeFromPoint` (reverse geocode, timeout 45 s) không hủy/không đánh số request; chọn nhanh hai lần thì lần chậm về sau thắng.
 
-- [ ] **11. Mở lại hành trình nhiều điểm không chống kết quả cũ** — `app/App.tsx:799`
+- [x] **11. Mở lại hành trình nhiều điểm không chống kết quả cũ** — `app/App.tsx:799`
   Sau `await createPlan` luôn `setActiveRoute` + đóng panel, kể cả khi người dùng đã sang tuyến khác (khác với `planMultiStopRoute` có `multiPlanGeneration`).
 
 - [x] **12. Mất timeout trên Safari cũ** — `shared/api/HttpClient.ts:83`

@@ -823,8 +823,12 @@ export function App() {
     }
 
     // Tuyến nhiều điểm: tính lại và chỉ hiển thị trên bản đồ.
+    // Dùng chung bộ đếm với planMultiStopRoute: mở tuyến khác, sang panel khác hay lập hành trình mới
+    // trong lúc chờ thì bỏ kết quả này, không vẽ đè và không đóng panel người dùng đang dùng.
+    const requestId = ++multiPlanGeneration.current;
     setActiveRoute(null);
     const result = await routeApi.createPlan(stops, saved.vehicle, saved.objective ?? 'time');
+    if (requestId !== multiPlanGeneration.current) return;
     if ('error' in result) {
       showToast(t(result.error));
       return;
