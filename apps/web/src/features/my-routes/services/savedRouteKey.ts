@@ -5,7 +5,7 @@ const coordinateKey = (place: { lat: number; lng: number }) =>
   `${place.lat.toFixed(5)},${place.lng.toFixed(5)}`;
 
 /**
- * Khóa nhận biết "cùng một tuyến" khi lưu: loại tuyến + loại xe + tiêu chí + toàn bộ điểm dừng theo thứ tự.
+ * Khóa nhận biết "cùng một tuyến" khi lưu: loại tuyến + loại xe + tiêu chí + tránh phà + toàn bộ điểm dừng theo thứ tự.
  * Lưu lại đúng tuyến này thì thay bản cũ; khác xe, khác tiêu chí hay khác điểm ghé thì giữ cả hai.
  * (Trước đây so theo tiêu đề nên A→B ô tô bị A→B xe máy ghi đè.)
  */
@@ -14,5 +14,6 @@ export function savedRouteKey(route: SavedRoute): string {
     ? route.stops
     : [route.origin, ...(route.destination ? [route.destination] : [])];
   const objective = route.objective ?? route.plan?.objective ?? 'time';
-  return [route.kind, route.vehicle, objective, ...stops.map(coordinateKey)].join('|');
+  const ferry = route.avoidFerry ? 'no-ferry' : 'ferry';
+  return [route.kind, route.vehicle, objective, ferry, ...stops.map(coordinateKey)].join('|');
 }

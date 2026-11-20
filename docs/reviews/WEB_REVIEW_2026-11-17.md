@@ -21,7 +21,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 - [ ] **4. Link chia sẻ mất điểm dừng và tiêu chí** — `features/navigation/components/RouteShareBar.tsx:19`, `services/routeShareLink.ts`
   Chỉ mã hóa from/to/mode; mất waypoints, objective (nhanh/ngắn nhất), avoidFerry.
 
-- [ ] **5. Mở lại tuyến đã lưu bị đổi tiêu chí** — `app/App.tsx:788`
+- [x] **5. Mở lại tuyến đã lưu bị đổi tiêu chí** — `app/App.tsx:788`
   `openSavedRoute()` không truyền `objective`/`avoidFerry` của tuyến đã lưu vào `directions.open()`.
 
 - [ ] **6. Thêm/bỏ điểm ghé bằng trợ lý reset tiêu chí về "time"** — `app/App.tsx:888`, `app/App.tsx:900`

@@ -48,6 +48,10 @@ describe('savedRouteKey', () => {
     );
   });
 
+  it('bật "tránh phà" thì là tuyến khác', () => {
+    expect(savedRouteKey(saved({ avoidFerry: true }))).not.toBe(savedRouteKey(saved({ avoidFerry: false })));
+  });
+
   it('hai hành trình nhiều điểm cùng điểm xuất phát, cùng số điểm nhưng khác điểm ghé thì khác khóa', () => {
     const first = saved({ kind: 'multi', stops: [A, B, C] });
     const second = saved({ kind: 'multi', stops: [A, C, B] });

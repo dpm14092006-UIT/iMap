@@ -26,7 +26,8 @@ import type {
   RoutePlan,
   TransportMode,
 } from '../features/map/types';
-import { useSavedRoutes } from '../features/my-routes/hooks/useSavedRoutes';
+import { useSavedRoutes, type SaveRouteOptions } from '../features/my-routes/hooks/useSavedRoutes';
+import { savedRouteDirectionsQuery, savedRouteStops } from '../features/my-routes/services/savedRouteQuery';
 import type { SavedRoute } from '../features/my-routes/types';
 import { NavigationBanner } from '../features/navigation/components/NavigationBanner';
 import { Speedometer } from '../features/navigation/components/Speedometer';
@@ -763,10 +764,10 @@ export function App() {
   }, [offRoute, offRouteFixes, isRecalculatingNavigation, recalculateNavigation]);
 
   // --- Tuyến đã lưu ---
-  const savePlan = (plan: RoutePlan) => {
+  const savePlan = (plan: RoutePlan, options?: SaveRouteOptions) => {
     // save() trả về false khi trình duyệt chặn hoặc hết bộ nhớ: báo thật, không báo "đã lưu".
     showToast(
-      savedRoutes.save(plan)
+      savedRoutes.save(plan, options)
         ? t('Đã lưu hành trình trên thiết bị này')
         : t('Không lưu được: bộ nhớ trình duyệt đầy hoặc bị chặn. Hành trình sẽ mất khi tải lại trang.'),
     );
@@ -778,25 +779,18 @@ export function App() {
   };
 
   const openSavedRoute = async (saved: SavedRoute) => {
-    const stops =
-      saved.stops && saved.stops.length > 1
-        ? saved.stops
-        : saved.destination
-          ? [saved.origin, saved.destination]
-          : [];
+    const stops = savedRouteStops(saved);
     if (stops.length < 2) {
       showToast(t('Không thể mở lại hành trình này.'));
       return;
     }
 
-    // Tuyến 2 điểm: mở trong panel chỉ đường để xem chỉ dẫn và đổi xe được.
-    if (saved.kind === 'route') {
+    // Tuyến chỉ đường: mở trong panel để xem chỉ dẫn và đổi xe được.
+    // Khôi phục đủ điểm ghé, tiêu chí và "tránh phà" như lúc lưu (trước đây bị reset về mặc định).
+    const query = saved.kind === 'route' ? savedRouteDirectionsQuery(saved) : null;
+    if (query) {
       openPanel('directions');
-      const result = await directions.open({
-        origin: stops[0]!,
-        destination: stops[stops.length - 1]!,
-        vehicle: saved.vehicle,
-      });
+      const result = await directions.open(query);
       if (result) showToast(t('Đã tính lại tuyến đã lưu bằng VietMap'));
       return;
     }
@@ -1327,7 +1321,7 @@ export function App() {
             onClose={closePanel}
             onPickOnMap={(target) => setPickTarget((current) => (current === target ? null : target))}
             onSave={() => {
-              if (directions.route) savePlan(directions.route);
+              if (directions.route) savePlan(directions.route, { avoidFerry: directions.avoidFerry });
             }}
             onStartNavigation={startNavigation}
             onPreviewRoute={previewRoute}

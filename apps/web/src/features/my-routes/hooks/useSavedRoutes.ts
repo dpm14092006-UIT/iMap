@@ -9,7 +9,10 @@ import type { SavedRoute } from '../types';
 
 const defaultRepository = new LocalStorageSavedRouteRepository();
 
-function toSavedRoute(plan: RoutePlan): SavedRoute {
+/** Tùy chọn của panel chỉ đường không nằm trong RoutePlan nhưng cần để mở lại đúng tuyến. */
+export type SaveRouteOptions = { avoidFerry?: boolean };
+
+function toSavedRoute(plan: RoutePlan, options: SaveRouteOptions = {}): SavedRoute {
   const first = plan.stops[0]!;
   const last = plan.stops[plan.stops.length - 1]!;
   const title =
@@ -26,6 +29,7 @@ function toSavedRoute(plan: RoutePlan): SavedRoute {
     vehicle: plan.vehicle,
     // Không lưu cả `plan` (hình học tuyến rất nặng): khi mở lại luôn tính lại bằng VietMap.
     objective: plan.objective,
+    avoidFerry: options.avoidFerry ?? false,
     originId: first.id,
     originName: first.name,
     destinationId: last.id,
@@ -49,8 +53,8 @@ export function useSavedRoutes(repository: SavedRouteRepository = defaultReposit
 
   /** Lưu tuyến lên đầu danh sách; nếu đã lưu đúng tuyến này (xem `savedRouteKey`) thì thay bằng bản mới. */
   const save = useCallback(
-    (plan: RoutePlan): boolean => {
-      const item = toSavedRoute(plan);
+    (plan: RoutePlan, options?: SaveRouteOptions): boolean => {
+      const item = toSavedRoute(plan, options);
       const key = savedRouteKey(item);
       return commit([item, ...routes.filter((route) => savedRouteKey(route) !== key)]);
     },
