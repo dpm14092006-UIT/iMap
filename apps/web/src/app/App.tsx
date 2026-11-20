@@ -1332,7 +1332,8 @@ export function App() {
             onClose={closePanel}
             onPickOnMap={(target) => setPickTarget((current) => (current === target ? null : target))}
             onSave={() => {
-              if (directions.route) savePlan(directions.route, { avoidFerry: directions.avoidFerry });
+              if (directions.route)
+                savePlan(directions.route, { avoidFerry: directions.avoidFerry, panel: 'directions' });
             }}
             onStartNavigation={startNavigation}
             onPreviewRoute={previewRoute}
