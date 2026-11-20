@@ -4,6 +4,7 @@ import {
   LocalStorageSavedRouteRepository,
   type SavedRouteRepository,
 } from '../services/SavedRouteRepository';
+import { savedRouteKey } from '../services/savedRouteKey';
 import type { SavedRoute } from '../types';
 
 const defaultRepository = new LocalStorageSavedRouteRepository();
@@ -39,10 +40,11 @@ export function useSavedRoutes(repository: SavedRouteRepository = defaultReposit
     repository.save(routes);
   }, [repository, routes]);
 
-  /** Lưu tuyến lên đầu danh sách; tuyến trùng tiêu đề được thay bằng bản mới. */
+  /** Lưu tuyến lên đầu danh sách; nếu đã lưu đúng tuyến này (xem `savedRouteKey`) thì thay bằng bản mới. */
   const save = useCallback((plan: RoutePlan) => {
     const item = toSavedRoute(plan);
-    setRoutes((current) => [item, ...current.filter((route) => route.title !== item.title)]);
+    const key = savedRouteKey(item);
+    setRoutes((current) => [item, ...current.filter((route) => savedRouteKey(route) !== key)]);
   }, []);
 
   const remove = useCallback((id: string) => {

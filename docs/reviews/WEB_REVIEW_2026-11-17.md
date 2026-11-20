@@ -10,7 +10,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
   `trigger()` ghi mọi sự cố vào `offered`, kể cả sự cố *không* nằm trên tuyến (offer `clear`); `isOffered()` lại so khớp bán kính 80 m. Một báo cáo cách tuyến 150 m đến trước sẽ khiến báo cáo *trên* tuyến cách nó 60 m không bao giờ được tính đường tránh.
   _Gợi ý:_ chỉ ghi vào `offered` khi `onRoute`.
 
-- [ ] **2. Tuyến đã lưu ghi đè nhau** — `features/my-routes/hooks/useSavedRoutes.ts:45`
+- [x] **2. Tuyến đã lưu ghi đè nhau** — `features/my-routes/hooks/useSavedRoutes.ts:45`
   Bỏ trùng theo `title`, mà title không có loại xe/điểm dừng. Lưu A→B ô tô rồi A→B xe máy thì mất bản ô tô; hai hành trình nhiều điểm cùng điểm xuất phát, cùng số điểm cũng đè nhau.
   _Gợi ý:_ khóa trùng gồm vehicle + objective + danh sách id/tọa độ các điểm.
 
