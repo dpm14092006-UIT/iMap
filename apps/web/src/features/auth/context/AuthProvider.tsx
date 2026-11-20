@@ -1,5 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import type { Session, User } from '@supabase/supabase-js';
+import { runSignOutTasks, type SignOutTask } from '../services/signOutTasks';
 import { getSupabaseClient, supabaseConfigured } from '../services/supabaseClient';
 
 type AuthContextValue = {
@@ -10,6 +20,11 @@ type AuthContextValue = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
+  /**
+   * Đăng ký việc chạy ngay trước khi đăng xuất (vẫn còn phiên để gọi Supabase), ví dụ xóa đăng ký
+   * thông báo đẩy của máy này. Trả về hàm hủy đăng ký.
+   */
+  onBeforeSignOut: (task: SignOutTask) => () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -17,6 +32,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(supabaseConfigured);
+  const signOutTasks = useRef(new Set<SignOutTask>());
 
   useEffect(() => {
     let active = true;
@@ -76,9 +92,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     const client = await getSupabaseClient();
     if (!client) return;
+    await runSignOutTasks(signOutTasks.current);
     const { error } = await client.auth.signOut();
     if (error) throw error;
     setSession(null);
+  }, []);
+
+  const onBeforeSignOut = useCallback((task: SignOutTask) => {
+    signOutTasks.current.add(task);
+    return () => {
+      signOutTasks.current.delete(task);
+    };
   }, []);
 
   const value = useMemo<AuthContextValue>(
@@ -90,8 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signIn,
       signUp,
       signOut,
+      onBeforeSignOut,
     }),
-    [session, loading, signIn, signUp, signOut],
+    [session, loading, signIn, signUp, signOut, onBeforeSignOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -31,9 +31,10 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
   Kết quả `repository.list()` về sau `record()` sẽ ghi đè state và cache.
   _Gợi ý:_ gộp remote với các mục local mới hơn, hoặc bỏ qua kết quả list nếu đã có record trong lúc chờ.
 
-- [ ] **8. Đăng xuất vẫn nhận push** — `features/notifications/hooks/usePushNotifications.ts:51`, `hooks/useRouteWatch.ts:49`
+- [x] **8. Đăng xuất vẫn nhận push** — `features/notifications/hooks/usePushNotifications.ts:51`, `hooks/useRouteWatch.ts:49`
   Khi đăng xuất chỉ xóa endpoint ở state; đăng ký push và `route_watches` trên server vẫn còn → máy dùng chung tiếp tục nhận cảnh báo tuyến của người trước.
   _Gợi ý:_ trước khi `signOut`, gọi `delete_push_subscription` + `deleteRouteWatch(endpoint)`.
+  _Ghi chú khi sửa:_ RPC `delete_push_subscription` chỉ cấp quyền cho `service_role` nên web không gọi được. Thay bằng xóa thẳng dòng của mình trong `push_subscriptions` (RLS `delete_self`; `route_watches` tự xóa theo `on delete cascade`) và hủy đăng ký push trong trình duyệt, chạy qua `AuthProvider.onBeforeSignOut` trước khi mất phiên.
 
 - [ ] **9. Lỗi Supabase khi ghi lịch sử bị bỏ qua** — `features/places/services/recentPlaces.ts:100`, `:115`
   `rpc()`/`.delete()` trả `{ error }` chứ không throw, nên `.catch()` ở nơi gọi không bao giờ chạy.
