@@ -26,7 +26,8 @@ import type {
   RoutePlan,
   TransportMode,
 } from '../features/map/types';
-import { useSavedRoutes } from '../features/my-routes/hooks/useSavedRoutes';
+import { useSavedRoutes, type SaveRouteOptions } from '../features/my-routes/hooks/useSavedRoutes';
+import { savedRouteDirectionsQuery, savedRouteStops } from '../features/my-routes/services/savedRouteQuery';
 import type { SavedRoute } from '../features/my-routes/types';
 import { NavigationBanner } from '../features/navigation/components/NavigationBanner';
 import { Speedometer } from '../features/navigation/components/Speedometer';
@@ -245,6 +246,7 @@ export function App() {
     status: navigationStatus,
     route: navigationRoute,
     location: navigationLocation,
+    displayLocation: navigationDisplayLocation,
     headingDegrees: navigationHeadingDegrees,
     nextStopIndex,
     offRoute,
@@ -277,7 +279,8 @@ export function App() {
   const isNavigationIdle = navigationStatus === 'idle';
   const isNavigating = navigationStatus === 'navigating' || navigationStatus === 'locating';
   const isNavigationMarkerVisible = navigationStatus !== 'idle' && navigationStatus !== 'error';
-  const mapLocation = isNavigationIdle ? currentLocation : navigationLocation;
+  // Mũi tên dẫn đường vẽ ở vị trí đã hút về tuyến; vị trí GPS thô vẫn dùng cho tính lại tuyến và báo cáo.
+  const mapLocation = isNavigationIdle ? currentLocation : navigationDisplayLocation;
   const [isRecalculatingNavigation, setIsRecalculatingNavigation] = useState(false);
   const lastAutomaticRerouteAt = useRef(0);
   // Giữ id tuyến đang dẫn trong ref để bỏ kết quả tính lại nếu chuyến đi đã đổi trong lúc chờ API.
@@ -302,16 +305,16 @@ export function App() {
   useEffect(() => {
     if (
       !followPaused &&
-      navigationLocation &&
+      navigationDisplayLocation &&
       (navigationStatus === 'navigating' || navigationStatus === 'arrived')
     ) {
-      mapController.current?.followLocation(navigationLocation);
+      mapController.current?.followLocation(navigationDisplayLocation);
     }
-  }, [navigationLocation, navigationStatus, followPaused]);
+  }, [navigationDisplayLocation, navigationStatus, followPaused]);
   const recenterNavigation = useCallback(() => {
     setFollowPaused(false);
-    if (navigationLocation) mapController.current?.followLocation(navigationLocation);
-  }, [navigationLocation]);
+    if (navigationDisplayLocation) mapController.current?.followLocation(navigationDisplayLocation);
+  }, [navigationDisplayLocation]);
   /** Nút bản đồ (zoom, toàn Việt Nam) lúc dẫn đường cũng là xem trước: thôi bám vị trí. */
   const pauseFollowIfNavigating = () => {
     if (!isNavigationIdle) setFollowPaused(true);
@@ -776,9 +779,13 @@ export function App() {
   }, [offRoute, offRouteFixes, isRecalculatingNavigation, recalculateNavigation]);
 
   // --- Tuyến đã lưu ---
-  const savePlan = (plan: RoutePlan) => {
-    savedRoutes.save(plan);
-    showToast(t('Đã lưu hành trình trên thiết bị này'));
+  const savePlan = (plan: RoutePlan, options?: SaveRouteOptions) => {
+    // save() trả về false khi trình duyệt chặn hoặc hết bộ nhớ: báo thật, không báo "đã lưu".
+    showToast(
+      savedRoutes.save(plan, options)
+        ? t('Đã lưu hành trình trên thiết bị này')
+        : t('Không lưu được: bộ nhớ trình duyệt đầy hoặc bị chặn. Hành trình sẽ mất khi tải lại trang.'),
+    );
   };
 
   const deleteSavedRoute = (id: string) => {
@@ -787,32 +794,25 @@ export function App() {
   };
 
   const openSavedRoute = async (saved: SavedRoute) => {
-    const stops =
-      saved.stops && saved.stops.length > 1
-        ? saved.stops
-        : saved.destination
-          ? [saved.origin, saved.destination]
-          : [];
+    const stops = savedRouteStops(saved);
     if (stops.length < 2) {
       showToast(t('Không thể mở lại hành trình này.'));
       return;
     }
 
-    // Tuyến 2 điểm: mở trong panel chỉ đường để xem chỉ dẫn và đổi xe được.
-    if (saved.kind === 'route') {
+    // Tuyến chỉ đường: mở trong panel để xem chỉ dẫn và đổi xe được.
+    // Khôi phục đủ điểm ghé, tiêu chí và "tránh phà" như lúc lưu (trước đây bị reset về mặc định).
+    const query = saved.kind === 'route' ? savedRouteDirectionsQuery(saved) : null;
+    if (query) {
       openPanel('directions');
-      const result = await directions.open({
-        origin: stops[0]!,
-        destination: stops[stops.length - 1]!,
-        vehicle: saved.vehicle,
-      });
+      const result = await directions.open(query);
       if (result) showToast(t('Đã tính lại tuyến đã lưu bằng VietMap'));
       return;
     }
 
     // Tuyến nhiều điểm: tính lại và chỉ hiển thị trên bản đồ.
     setActiveRoute(null);
-    const result = await routeApi.createPlan(stops, saved.vehicle, saved.plan?.objective ?? 'time');
+    const result = await routeApi.createPlan(stops, saved.vehicle, saved.objective ?? 'time');
     if ('error' in result) {
       showToast(t(result.error));
       return;
@@ -894,19 +894,28 @@ export function App() {
   };
 
   // --- Trợ lý địa điểm (N2): thêm/bỏ điểm ghé vào tuyến đang hiển thị ---
-  const addAssistantStop = (candidate: RouteStopCandidate, expectedRouteId: string) => {
+  const addAssistantStop = async (candidate: RouteStopCandidate, expectedRouteId: string) => {
     if (!activeRoute || activeRoute.id !== expectedRouteId || activeRoute.stops.length !== 2) {
       showToast(t('Tuyến đã thay đổi. Hãy tìm lại điểm dừng.'));
       return;
     }
     const stop = placeFromStop(candidate.place);
-    setActiveRoute(
-      routePlanFromResult(
-        candidate.route,
-        [activeRoute.stops[0]!, stop, activeRoute.stops[1]!],
-        activeRoute.vehicle,
-      ),
-    );
+    const stops = [activeRoute.stops[0]!, stop, activeRoute.stops[1]!];
+    const { id: originalId, vehicle, objective } = activeRoute;
+    // Trợ lý luôn tính tuyến qua điểm ghé theo "nhanh nhất". Tuyến đang theo "ngắn nhất" thì tính lại
+    // đúng tiêu chí đó, thay vì dùng tuyến của trợ lý rồi gắn nhầm nhãn (trước đây còn reset về "time").
+    let plan: RoutePlan;
+    if (objective === 'time') {
+      plan = routePlanFromResult(candidate.route, stops, vehicle, objective);
+    } else {
+      const result = await routeApi.createPlan(stops, vehicle, objective);
+      if ('error' in result) {
+        showToast(t(result.error));
+        return;
+      }
+      plan = result;
+    }
+    setActiveRoute((current) => (current?.id === originalId ? plan : current));
     showToast(t('Đã thêm điểm ghé: {name}', { name: stop.name }));
   };
 
@@ -916,6 +925,8 @@ export function App() {
     const result = await routeApi.createPlan(
       [activeRoute.stops[0]!, activeRoute.stops[activeRoute.stops.length - 1]!],
       activeRoute.vehicle,
+      // Giữ tiêu chí của tuyến đang xem (trước đây mặc định "time").
+      activeRoute.objective,
     );
     if ('error' in result) {
       showToast(t(result.error));
@@ -1062,7 +1073,7 @@ export function App() {
     mapController.current?.fitRoute(route);
   };
 
-  // Liên kết chia sẻ ?from=…&to=…&mode=… tự điền điểm đi/đến và tính tuyến khi tải trang.
+  // Liên kết chia sẻ ?from=…&to=…&mode=…(&via=…&by=…&ferry=…) tự điền tuyến và tính khi tải trang.
   const sharedRoute = useMemo(() => parseRouteShareLink(window.location.search), []);
   const sharedRouteApplied = useRef(false);
   useEffect(() => {
@@ -1194,6 +1205,7 @@ export function App() {
         <>
           {!isNavigationIdle && (
             <LayerSwitcher
+              align="right"
               layer={layer}
               overlays={overlays}
               onLayerChange={setLayer}
@@ -1339,7 +1351,8 @@ export function App() {
             onClose={closePanel}
             onPickOnMap={(target) => setPickTarget((current) => (current === target ? null : target))}
             onSave={() => {
-              if (directions.route) savePlan(directions.route);
+              if (directions.route)
+                savePlan(directions.route, { avoidFerry: directions.avoidFerry, panel: 'directions' });
             }}
             onStartNavigation={startNavigation}
             onPreviewRoute={previewRoute}
@@ -1477,6 +1490,7 @@ export function App() {
           }}
           onAccept={routeAlert.accept}
           onKeep={routeAlert.keep}
+          belowNavigationBanner={!isNavigationIdle && activePanel !== null}
           onClose={routeAlert.close}
         />
       )}

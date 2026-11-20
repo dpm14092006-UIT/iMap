@@ -6,34 +6,35 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 
 ## A. Lỗi logic (ưu tiên sửa trước)
 
-- [ ] **1. Sự cố cạnh tuyến chặn gợi ý đổi tuyến** — `features/traffic/hooks/useRouteTrafficAlert.ts:157`
+- [x] **1. Sự cố cạnh tuyến chặn gợi ý đổi tuyến** — `features/traffic/hooks/useRouteTrafficAlert.ts:157`
   `trigger()` ghi mọi sự cố vào `offered`, kể cả sự cố *không* nằm trên tuyến (offer `clear`); `isOffered()` lại so khớp bán kính 80 m. Một báo cáo cách tuyến 150 m đến trước sẽ khiến báo cáo *trên* tuyến cách nó 60 m không bao giờ được tính đường tránh.
   _Gợi ý:_ chỉ ghi vào `offered` khi `onRoute`.
 
-- [ ] **2. Tuyến đã lưu ghi đè nhau** — `features/my-routes/hooks/useSavedRoutes.ts:45`
+- [x] **2. Tuyến đã lưu ghi đè nhau** — `features/my-routes/hooks/useSavedRoutes.ts:45`
   Bỏ trùng theo `title`, mà title không có loại xe/điểm dừng. Lưu A→B ô tô rồi A→B xe máy thì mất bản ô tô; hai hành trình nhiều điểm cùng điểm xuất phát, cùng số điểm cũng đè nhau.
   _Gợi ý:_ khóa trùng gồm vehicle + objective + danh sách id/tọa độ các điểm.
 
-- [ ] **3. Báo "đã lưu" nhưng không lưu được** — `features/my-routes/services/SavedRouteRepository.ts:27`
+- [x] **3. Báo "đã lưu" nhưng không lưu được** — `features/my-routes/services/SavedRouteRepository.ts:27`
   Mỗi tuyến lưu cả hình học vào localStorage; `save()` nuốt lỗi QuotaExceeded trong khi App vẫn toast "Đã lưu hành trình". Tải lại trang là mất.
   _Gợi ý:_ không lưu `plan.legs[].points` (đã tính lại khi mở), và `save()` trả về thành công/thất bại để App báo đúng.
 
-- [ ] **4. Link chia sẻ mất điểm dừng và tiêu chí** — `features/navigation/components/RouteShareBar.tsx:19`, `services/routeShareLink.ts`
+- [x] **4. Link chia sẻ mất điểm dừng và tiêu chí** — `features/navigation/components/RouteShareBar.tsx:19`, `services/routeShareLink.ts`
   Chỉ mã hóa from/to/mode; mất waypoints, objective (nhanh/ngắn nhất), avoidFerry.
 
-- [ ] **5. Mở lại tuyến đã lưu bị đổi tiêu chí** — `app/App.tsx:788`
+- [x] **5. Mở lại tuyến đã lưu bị đổi tiêu chí** — `app/App.tsx:788`
   `openSavedRoute()` không truyền `objective`/`avoidFerry` của tuyến đã lưu vào `directions.open()`.
 
-- [ ] **6. Thêm/bỏ điểm ghé bằng trợ lý reset tiêu chí về "time"** — `app/App.tsx:888`, `app/App.tsx:900`
+- [x] **6. Thêm/bỏ điểm ghé bằng trợ lý reset tiêu chí về "time"** — `app/App.tsx:888`, `app/App.tsx:900`
   `routePlanFromResult(...)` và `routeApi.createPlan(...)` thiếu `activeRoute.objective`.
 
-- [ ] **7. Lịch sử địa điểm mất mục vừa thêm** — `features/places/context/RecentPlacesProvider.tsx:50`
+- [x] **7. Lịch sử địa điểm mất mục vừa thêm** — `features/places/context/RecentPlacesProvider.tsx:50`
   Kết quả `repository.list()` về sau `record()` sẽ ghi đè state và cache.
   _Gợi ý:_ gộp remote với các mục local mới hơn, hoặc bỏ qua kết quả list nếu đã có record trong lúc chờ.
 
-- [ ] **8. Đăng xuất vẫn nhận push** — `features/notifications/hooks/usePushNotifications.ts:51`, `hooks/useRouteWatch.ts:49`
+- [x] **8. Đăng xuất vẫn nhận push** — `features/notifications/hooks/usePushNotifications.ts:51`, `hooks/useRouteWatch.ts:49`
   Khi đăng xuất chỉ xóa endpoint ở state; đăng ký push và `route_watches` trên server vẫn còn → máy dùng chung tiếp tục nhận cảnh báo tuyến của người trước.
   _Gợi ý:_ trước khi `signOut`, gọi `delete_push_subscription` + `deleteRouteWatch(endpoint)`.
+  _Ghi chú khi sửa:_ RPC `delete_push_subscription` chỉ cấp quyền cho `service_role` nên web không gọi được. Thay bằng xóa thẳng dòng của mình trong `push_subscriptions` (RLS `delete_self`; `route_watches` tự xóa theo `on delete cascade`) và hủy đăng ký push trong trình duyệt, chạy qua `AuthProvider.onBeforeSignOut` trước khi mất phiên.
 
 - [ ] **9. Lỗi Supabase khi ghi lịch sử bị bỏ qua** — `features/places/services/recentPlaces.ts:100`, `:115`
   `rpc()`/`.delete()` trả `{ error }` chứ không throw, nên `.catch()` ở nơi gọi không bao giờ chạy.

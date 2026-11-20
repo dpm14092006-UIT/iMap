@@ -72,4 +72,33 @@ describe('route share round-trip regression matrix', () => {
     expect(parsed?.destination.lat).toBe(Number(route.destination.lat.toFixed(6)));
     expect(parsed?.destination.lng).toBe(Number(route.destination.lng.toFixed(6)));
   });
+
+  it('giữ điểm ghé theo thứ tự, tiêu chí "ngắn nhất" và "tránh phà"', () => {
+    const route: SharedRoute = {
+      origin: place('A', 10.77, 106.69),
+      destination: place('B', 10.8, 106.7),
+      vehicle: 'car',
+      via: [place('Ghé 1, Quận 3', 10.78, 106.68), place('Ghé 2', 10.79, 106.66)],
+      objective: 'distance',
+      avoidFerry: true,
+    };
+    const parsed = parseRouteShareLink(new URL(buildRouteShareUrl(route, 'https://imap.example/')).search);
+    expect(parsed?.via?.map((stop) => stop.name)).toEqual(['Ghé 1, Quận 3', 'Ghé 2']);
+    expect(parsed?.via?.[0]).toMatchObject({ lat: 10.78, lng: 106.68 });
+    expect(parsed?.objective).toBe('distance');
+    expect(parsed?.avoidFerry).toBe(true);
+  });
+
+  it('link cũ không có các tham số mới: không điểm ghé, "nhanh nhất", không tránh phà', () => {
+    expect(parseRouteShareLink('?from=10,106,A&to=11,107,B')).toMatchObject({
+      via: [],
+      objective: 'time',
+      avoidFerry: false,
+    });
+  });
+
+  it('bỏ qua điểm ghé sai định dạng thay vì làm hỏng cả link', () => {
+    const parsed = parseRouteShareLink('?from=10,106,A&to=11,107,B&via=abc&via=10.5,106.5,C');
+    expect(parsed?.via?.map((stop) => stop.name)).toEqual(['C']);
+  });
 });

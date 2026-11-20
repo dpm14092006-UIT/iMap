@@ -12,6 +12,17 @@ export type Guidance = {
   /** Tỷ lệ đã đi được, 0..1, truyền lại làm `previousProgressRatio` cho lần đánh giá kế tiếp. */
   progressRatio: number;
   offRoute: boolean;
+  /**
+   * Lần GPS này đủ chính xác để tính vào bộ đếm lệch tuyến hay không.
+   * Sai số quá lớn (trong phố nhiều nhà cao tầng) thì không kết luận được là lệch hay không.
+   */
+  reliable: boolean;
+  /**
+   * Vị trí để vẽ mũi tên: khi còn trên tuyến thì "hút" về điểm gần nhất trên tuyến
+   * (như các app dẫn đường) để GPS nhiễu không làm mũi tên trôi sang đường bên cạnh;
+   * khi lệch tuyến thì giữ nguyên vị trí GPS để người dùng thấy mình đang ở đâu.
+   */
+  displayLocation: LatLng;
   /** Chỉ số điểm dừng kế tiếp trong `route.stops` (≥ 1). */
   nextStopIndex: number;
   arrived: boolean;
@@ -22,8 +33,15 @@ export type Guidance = {
  * Một engine gắn với một tuyến; tạo engine mới khi tuyến đổi (ví dụ sau khi tính lại).
  */
 export class NavigationGuidanceEngine {
-  /** Sai lệch tối thiểu (mét) để coi là lệch tuyến, bất kể độ chính xác GPS. */
-  static readonly MIN_OFF_ROUTE_METERS = 70;
+  /**
+   * Ngưỡng lệch tuyến = sai số GPS × 1,5, kẹp trong [MIN, MAX] mét.
+   * MIN đủ nhỏ để bắt được việc rẽ nhầm sang đường song song (phố nội thành cách nhau ~50–100 m);
+   * MAX giữ cho GPS kém không nới ngưỡng tới vài trăm mét làm mất hẳn khả năng phát hiện lệch tuyến.
+   */
+  static readonly MIN_OFF_ROUTE_METERS = 40;
+  static readonly MAX_OFF_ROUTE_METERS = 120;
+  /** Sai số GPS lớn hơn mức này (mét) thì lần đo không được tính là lệch hay đúng tuyến. */
+  static readonly UNRELIABLE_ACCURACY_METERS = 100;
   /** Cách điểm cuối trong bán kính này (mét) thì coi là đã đến. */
   static readonly ARRIVAL_RADIUS_METERS = 35;
   /** Còn lại ít hơn quãng này (mét) trên tuyến thì coi là đã đến. */
@@ -64,8 +82,8 @@ export class NavigationGuidanceEngine {
     const progressRatio = this.routeMeters > 0 ? progressMeters / this.routeMeters : 0;
     const distanceRemainingMeters = Math.max(0, this.routeMeters - progressMeters);
     const { nextInstruction, distanceToInstructionMeters } = this.findNextInstruction(progressMeters);
-    const offRoute =
-      distanceFromRoute > Math.max(NavigationGuidanceEngine.MIN_OFF_ROUTE_METERS, accuracyMeters * 1.5);
+    const offRoute = distanceFromRoute > NavigationGuidanceEngine.offRouteThreshold(accuracyMeters);
+    const displayLocation = !offRoute && nearest ? this.path.pointAt(nearest.progress) : point;
 
     return {
       nextInstruction,
@@ -73,9 +91,17 @@ export class NavigationGuidanceEngine {
       distanceRemainingMeters,
       progressRatio,
       offRoute,
+      reliable: accuracyMeters <= NavigationGuidanceEngine.UNRELIABLE_ACCURACY_METERS,
+      displayLocation,
       nextStopIndex: this.findNextStopIndex(geometryProgress),
       arrived: !offRoute && this.hasArrived(point, progressRatio, distanceRemainingMeters),
     };
+  }
+
+  /** Khoảng cách tới tuyến (mét) vượt quá mức này thì coi là lệch tuyến. */
+  static offRouteThreshold(accuracyMeters: number): number {
+    const { MIN_OFF_ROUTE_METERS, MAX_OFF_ROUTE_METERS } = NavigationGuidanceEngine;
+    return Math.min(MAX_OFF_ROUTE_METERS, Math.max(MIN_OFF_ROUTE_METERS, accuracyMeters * 1.5));
   }
 
   /** Chỉ dẫn hiện tại: chỉ dẫn đầu tiên mà điểm kết thúc của nó còn ở phía trước. */

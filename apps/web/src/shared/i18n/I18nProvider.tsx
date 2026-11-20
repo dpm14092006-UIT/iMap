@@ -235,6 +235,8 @@ const translations: Record<string, string> = {
   'Đang mở tuyến đã lưu…': 'Opening saved routes…',
   'Đang mở tài khoản…': 'Opening account…',
   'Đã lưu hành trình trên thiết bị này': 'Trip saved on this device',
+  'Không lưu được: bộ nhớ trình duyệt đầy hoặc bị chặn. Hành trình sẽ mất khi tải lại trang.':
+    "Couldn't save: browser storage is full or blocked. The trip will be lost when you reload the page.",
   'Đã xóa hành trình đã lưu': 'Saved trip deleted',
   'Không thể mở lại hành trình này.': 'Could not reopen this trip.',
   'Đã tính lại tuyến đã lưu bằng VietMap': 'Saved route recalculated with VietMap',

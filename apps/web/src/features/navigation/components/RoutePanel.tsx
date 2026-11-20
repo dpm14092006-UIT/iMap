@@ -331,7 +331,17 @@ export function RoutePanel({
 
       {origin && destination && (
         <div className="mt-2">
-          <RouteShareBar origin={origin} destination={destination} vehicle={vehicle} />
+          <RouteShareBar
+            route={{
+              origin,
+              destination,
+              vehicle,
+              // Chia sẻ đủ điểm ghé và tùy chọn để người nhận mở ra đúng tuyến này.
+              via: directions.waypoints.flatMap((item) => (item.place ? [item.place] : [])),
+              objective,
+              avoidFerry,
+            }}
+          />
         </div>
       )}
 

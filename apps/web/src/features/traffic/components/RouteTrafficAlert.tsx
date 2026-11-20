@@ -11,6 +11,12 @@ type Props = {
   onAccept: () => void;
   onKeep: () => void;
   onClose: () => void;
+  /**
+   * Thẻ "Đang dẫn đường" đang nằm ở trên cùng (khi mở panel Báo cáo...).
+   * Khi đó banner xếp ngay dưới thẻ, theo biến --sheet-top-inset mà NavigationBanner đo,
+   * thay vì vị trí cố định — tránh che mất chỉ dẫn rẽ.
+   */
+  belowNavigationBanner?: boolean;
 };
 
 const severityLabels = { low: 'nhẹ', medium: 'vừa', high: 'nặng' } as const;
@@ -21,7 +27,14 @@ const severityStyles = {
 } as const;
 
 /** Banner lớn khi có sự cố trên tuyến + hộp hỏi Có/Không đổi sang đường khác (15 giây). */
-export function RouteTrafficAlert({ alert, community, onAccept, onKeep, onClose }: Props) {
+export function RouteTrafficAlert({
+  alert,
+  community,
+  onAccept,
+  onKeep,
+  onClose,
+  belowNavigationBanner = false,
+}: Props) {
   const { t, language } = useI18n();
   const { incident, offer, decision, distanceAheadMeters } = alert;
   const [now, setNow] = useState(() => Date.now());
@@ -43,6 +56,7 @@ export function RouteTrafficAlert({ alert, community, onAccept, onKeep, onClose 
 
   return (
     <div
+      style={belowNavigationBanner ? { top: 'var(--sheet-top-inset)' } : undefined}
       className="route-alert absolute left-1/2 top-[76px] z-[95] w-[min(440px,calc(100%-24px))] -translate-x-1/2 overflow-hidden rounded-3xl bg-white text-ink shadow-float ring-1 ring-black/10 dark:bg-slate-900 dark:text-white dark:shadow-float-dark dark:ring-white/15 max-md:top-[116px]"
       role="alertdialog"
       aria-live="assertive"
