@@ -10,8 +10,6 @@ import {
 import { SheetPanel } from '../../../app/layout/SheetPanel';
 import type { RoutePlan } from '../../map/types';
 import { assistantApi } from '../api/assistantApi';
-import { useApiSpeechDraft } from '../hooks/useApiSpeechDraft';
-import { useSpeechDraft } from '../hooks/useSpeechDraft';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 type Point = { lat: number; lng: number };
 type Props = {
@@ -45,7 +43,7 @@ export function PlaceAssistantPanel({
 }: Props) {
   const { language: uiLanguage, t } = useI18n();
   const [aiConfigured, setAiConfigured] = useState<boolean | null>(null);
-  const [inputMode, setInputMode] = useState<'actions' | 'voice'>('actions');
+  const [inputMode, setInputMode] = useState<'actions' | 'text'>('actions');
   const [query, setQuery] = useState('');
   const [context, setContext] = useState<string[]>([]);
   const [mode, setMode] = useState<'nearby' | 'route'>(route?.stops.length === 2 ? 'route' : 'nearby');
@@ -57,12 +55,7 @@ export function PlaceAssistantPanel({
   const [result, setResult] = useState<ExplorePlacesResponse | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [voiceLanguage, setVoiceLanguage] = useState(uiLanguage === 'en' ? 'en-US' : 'vi-VN');
   const requestRef = useRef<AbortController | null>(null);
-  const speech = useSpeechDraft(setQuery);
-  const apiSpeech = useApiSpeechDraft(setQuery, accessToken);
-  const [voiceEngine, setVoiceEngine] = useState<'browser' | 'api'>('browser');
-  const voiceBusy = speech.listening || apiSpeech.listening || apiSpeech.processing;
   const examples = exampleRequests[uiLanguage];
   const numberLocale = uiLanguage === 'en' ? 'en-US' : 'vi-VN';
   const routeId = route?.id;
@@ -92,23 +85,18 @@ export function PlaceAssistantPanel({
     requestRef.current?.abort();
     setLoading(false);
   };
-  const stopVoice = () => {
-    speech.stop();
-    apiSpeech.cancel();
-  };
   const submit = async (chosenCategory?: StopCategory) => {
     if (inputMode === 'actions' && !chosenCategory && !category) {
       setError('Hãy chọn loại địa điểm bạn muốn tìm.');
       return;
     }
     const picked = chosenCategory ?? (category || undefined);
-    const text = (inputMode === 'voice' ? query.trim() : '') || (picked ? t(stopCategoryLabels[picked]) : '');
+    const text = (inputMode === 'text' ? query.trim() : '') || (picked ? t(stopCategoryLabels[picked]) : '');
     if (text.length < 2) {
       setError('Hãy nhập nhu cầu hoặc chọn một loại địa điểm.');
       return;
     }
     requestRef.current?.abort();
-    stopVoice();
     const controller = new AbortController();
     requestRef.current = controller;
     setLoading(true);
@@ -118,7 +106,7 @@ export function PlaceAssistantPanel({
       const data = await assistantApi.explorePlaces(
         {
           query: text,
-          context: inputMode === 'voice' ? context : [],
+          context: inputMode === 'text' ? context : [],
           mode,
           vehicle: route?.vehicle === 'car' ? 'car' : 'motorcycle',
           ...(picked ? { category: picked } : {}),
@@ -171,14 +159,13 @@ export function PlaceAssistantPanel({
         aria-label={t('Cách dùng trợ lý')}
         className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-slate-100 dark:bg-slate-700/50 p-1"
       >
-        {(['actions', 'voice'] as const).map((value) => (
+        {(['actions', 'text'] as const).map((value) => (
           <button
             key={value}
             type="button"
             aria-pressed={inputMode === value}
             onClick={() => {
               cancelSearch();
-              stopVoice();
               setInputMode(value);
               setCategory('');
               setResult(null);
@@ -186,16 +173,14 @@ export function PlaceAssistantPanel({
             }}
             className={`rounded-lg p-3 text-[12px] font-semibold ${inputMode === value ? 'bg-white dark:bg-slate-800/60 text-brand-700 dark:text-indigo-300 shadow-sm' : 'text-slate-600 dark:text-slate-300'}`}
           >
-            {value === 'actions' ? t('Chọn thao tác') : t('Giọng nói')}
+            {value === 'actions' ? t('Chọn thao tác') : t('Nhập nhu cầu')}
           </button>
         ))}
       </div>
       <p className="mb-3 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
         {inputMode === 'actions'
           ? t('Chọn loại địa điểm và phạm vi, rồi bấm Tìm. Kết quả lấy từ dữ liệu OpenStreetMap.')
-          : t(
-              'Nói nhu cầu, kiểm tra hoặc sửa câu nhận dạng rồi bấm Tìm. Trợ lý sẽ hỏi lại nếu yêu cầu chưa rõ.',
-            )}
+          : t('Nhập nhu cầu rồi bấm Tìm. Trợ lý sẽ hỏi lại nếu yêu cầu chưa rõ.')}
       </p>
       <div
         role="group"
@@ -250,7 +235,7 @@ export function PlaceAssistantPanel({
         </p>
       )}
       <form onSubmit={handleSubmit} className="space-y-3">
-        {inputMode === 'voice' ? (
+        {inputMode === 'text' ? (
           <>
             <p
               role="status"
@@ -259,17 +244,15 @@ export function PlaceAssistantPanel({
               {aiConfigured === true
                 ? t('Đã cấu hình AI hiểu nhu cầu. Nếu dịch vụ lỗi, trợ lý sẽ thông báo khi dùng từ khóa.')
                 : aiConfigured === false
-                  ? t(
-                      'AI chưa bật. Bạn vẫn có thể nói hoặc nhập nhu cầu đơn giản; trợ lý đang hiểu bằng từ khóa.',
-                    )
+                  ? t('AI chưa bật. Bạn vẫn có thể nhập nhu cầu đơn giản; trợ lý đang hiểu bằng từ khóa.')
                   : t('Chưa xác nhận được trạng thái AI. Nguồn xử lý sẽ hiển thị cùng kết quả.')}
             </p>
             <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-              {t('Nhu cầu / câu đã nhận dạng')}
+              {t('Nhu cầu của bạn')}
               <textarea
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                disabled={loading || voiceBusy}
+                disabled={loading}
                 maxLength={300}
                 rows={3}
                 placeholder={t('Ví dụ: Tìm trạm xăng trong bán kính 2 km')}
@@ -281,7 +264,7 @@ export function PlaceAssistantPanel({
                 <button
                   key={example}
                   type="button"
-                  disabled={loading || voiceBusy}
+                  disabled={loading}
                   onClick={() => {
                     setQuery(example);
                     setCategory('');
@@ -292,93 +275,6 @@ export function PlaceAssistantPanel({
                 </button>
               ))}
             </div>
-            <label className="block text-[11px] text-slate-600 dark:text-slate-300">
-              {t('Dịch vụ giọng nói')}
-              <select
-                aria-label={t('Dịch vụ giọng nói')}
-                value={voiceEngine}
-                disabled={voiceBusy}
-                onChange={(event) => {
-                  setVoiceEngine(event.target.value as 'browser' | 'api');
-                  setVoiceLanguage(uiLanguage === 'en' ? 'en-US' : 'vi-VN');
-                }}
-                className="ml-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 text-ink dark:text-slate-100 p-2"
-              >
-                <option value="browser">{t('Trình duyệt')}</option>
-                <option value="api" disabled={!apiSpeech.available}>
-                  {apiSpeech.available ? 'Whisper API' : t('Whisper API (chưa cấu hình)')}
-                </option>
-              </select>
-            </label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={
-                  loading ||
-                  apiSpeech.processing ||
-                  (voiceEngine === 'api' ? !apiSpeech.available : !speech.supported)
-                }
-                onClick={() =>
-                  voiceEngine === 'api'
-                    ? apiSpeech.listening
-                      ? apiSpeech.stop()
-                      : void apiSpeech.start()
-                    : speech.listening
-                      ? speech.stop()
-                      : speech.start(voiceLanguage)
-                }
-                className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-[11px] font-semibold text-brand-700 dark:text-indigo-300 disabled:opacity-40"
-              >
-                {apiSpeech.processing
-                  ? t('Đang nhận dạng…')
-                  : apiSpeech.listening
-                    ? t('Xong, nhận dạng')
-                    : speech.listening
-                      ? t('Dừng nghe')
-                      : t('Nhập bằng giọng nói')}
-              </button>
-              <select
-                aria-label={t('Ngôn ngữ giọng nói')}
-                disabled={voiceBusy || voiceEngine === 'api'}
-                value={voiceLanguage}
-                onChange={(event) => setVoiceLanguage(event.target.value)}
-                className="min-w-0 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 text-ink dark:text-slate-100 p-2 text-[11px]"
-              >
-                <option value="en-US">English</option>
-                <option value="vi-VN">{t('Tiếng Việt')}</option>
-              </select>
-            </div>
-            <p className="text-[11px] leading-4 text-slate-500 dark:text-slate-400">
-              {voiceEngine === 'api'
-                ? t(
-                    'Ghi tối đa 15 giây; âm thanh gửi qua máy chủ đến Cloudflare Whisper. Bấm Xong để nhận dạng, kiểm tra chữ rồi bấm Tìm.',
-                  )
-                : speech.supported
-                  ? t(
-                      'Chỉ nghe khi bạn bấm nút. Trình duyệt có thể gửi âm thanh đến dịch vụ nhận giọng nói. Kiểm tra chữ rồi bấm Tìm; không tự gửi.',
-                    )
-                  : t('Trình duyệt này chưa hỗ trợ giọng nói. Bạn vẫn có thể nhập chữ tiếng Anh hoặc Việt.')}
-            </p>
-            {(speech.listening || apiSpeech.listening) && (
-              <p role="status" className="text-[11px] text-brand-700 dark:text-indigo-300">
-                {t('Đang nghe…')}
-              </p>
-            )}
-            {(apiSpeech.listening || apiSpeech.processing) && (
-              <button type="button" onClick={apiSpeech.cancel} className="text-[11px] underline">
-                {t('Hủy ghi âm / nhận dạng')}
-              </button>
-            )}
-            {apiSpeech.error && voiceEngine === 'api' && (
-              <p role="alert" className="text-[11px] text-amber-800 dark:text-amber-200">
-                {t(apiSpeech.error)}
-              </p>
-            )}
-            {speech.error && (
-              <p role="alert" className="text-[11px] text-amber-800 dark:text-amber-200">
-                {t(speech.error)}
-              </p>
-            )}
           </>
         ) : (
           <fieldset disabled={loading}>
@@ -412,7 +308,7 @@ export function PlaceAssistantPanel({
             {inputMode === 'actions' ? t('Phạm vi và giới hạn') : t('Bộ lọc tùy chọn')}
           </summary>
           <div className="mt-2 space-y-2">
-            {inputMode === 'voice' && (
+            {inputMode === 'text' && (
               <label className="block text-[11px]">
                 {t('Loại địa điểm')}
                 <select
@@ -483,7 +379,7 @@ export function PlaceAssistantPanel({
         </details>
         <button
           type="submit"
-          disabled={loading || voiceBusy || (inputMode === 'actions' && !category)}
+          disabled={loading || (inputMode === 'actions' && !category)}
           className="w-full rounded-xl bg-brand-600 p-3 text-[12px] font-bold text-white hover:bg-brand-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
         >
           {loading ? t('Đang tìm địa điểm…') : t('Tìm địa điểm')}
@@ -498,7 +394,7 @@ export function PlaceAssistantPanel({
           </button>
         )}
       </form>
-      {inputMode === 'voice' && context.length > 0 && (
+      {inputMode === 'text' && context.length > 0 && (
         <button
           type="button"
           onClick={() => {

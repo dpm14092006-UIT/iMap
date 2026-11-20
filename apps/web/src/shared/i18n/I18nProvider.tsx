@@ -6,6 +6,28 @@ const STORAGE_KEY = 'imap-language';
 
 /** English translations for user-facing Vietnamese copy. Unlisted strings remain Vietnamese. */
 const translations: Record<string, string> = {
+  'Nhập nhu cầu': 'Type a request',
+  'Nhu cầu của bạn': 'Your request',
+  'Nhập nhu cầu rồi bấm Tìm. Trợ lý sẽ hỏi lại nếu yêu cầu chưa rõ.':
+    'Type your request and select Search. The assistant will ask for clarification when needed.',
+  'AI chưa bật. Bạn vẫn có thể nhập nhu cầu đơn giản; trợ lý đang hiểu bằng từ khóa.':
+    'AI is not enabled. You can still type a simple request; the assistant uses keywords.',
+  'Tắt âm thanh chỉ đường và cảnh báo': 'Mute directions and alerts',
+  'Bật âm thanh chỉ đường và cảnh báo': 'Enable directions and alerts',
+  'Âm thanh chỉ đường và cảnh báo': 'Directions and alert audio',
+  'Thiết bị chỉ hỗ trợ chuông cảnh báo': 'This device supports alert tones only',
+  'Âm thanh': 'Audio',
+  'Tắt tiếng': 'Muted',
+  'Bắt đầu dẫn đường.': 'Starting navigation.',
+  'Đã bật âm thanh chỉ đường.': 'Navigation audio is on.',
+  'Bạn đã đến nơi.': 'You have arrived.',
+  'Mất tín hiệu GPS. Đang tìm lại vị trí.': 'GPS signal lost. Finding your location.',
+  'Bạn đang rời khỏi lộ trình. Đang kiểm tra đường đi.': 'You are off route. Checking your route.',
+  'Sau {distance}, {instruction}': 'In {distance}, {instruction}',
+  '{distance} ki lô mét': '{distance} kilometers',
+  '{distance} mét': '{distance} meters',
+  'Cảnh báo: {incident} trên tuyến của bạn.': 'Warning: {incident} on your route.',
+  'Cảnh báo: {incident}, phía trước {distance}.': 'Warning: {incident}, {distance} ahead.',
   'Bản đồ tương tác Việt Nam': 'Interactive map of Vietnam',
   'Chỉ đường': 'Directions',
   'Nhiều điểm': 'Multi-stop',
@@ -279,25 +301,14 @@ const translations: Record<string, string> = {
   'TÌM THEO NHU CẦU': 'SEARCH BY NEED',
   'Cách dùng trợ lý': 'How to use the assistant',
   'Chọn thao tác': 'Choose an action',
-  'Giọng nói': 'Voice',
   'Chọn loại địa điểm và phạm vi, rồi bấm Tìm. Kết quả lấy từ dữ liệu OpenStreetMap.':
     'Choose a place type and area, then select Search. Results use OpenStreetMap data.',
-  'Nói nhu cầu, kiểm tra hoặc sửa câu nhận dạng rồi bấm Tìm. Trợ lý sẽ hỏi lại nếu yêu cầu chưa rõ.':
-    'Describe what you need, review or edit the recognized text, then select Search. The assistant will ask follow-up questions if needed.',
   'Phạm vi tìm kiếm': 'Search area',
   'Quanh vị trí chọn': 'Near selected location',
   'Dọc tuyến đang đi': 'Along current route',
   'Dùng tâm bản đồ hiện tại': 'Use current map center',
-  'Nhu cầu / câu đã nhận dạng': 'Request / recognized speech',
   'Ví dụ: Tìm trạm xăng trong bán kính 2 km': 'Example: Find a gas station within 2 km',
   'Trình duyệt': 'Browser',
-  'Đang nhận dạng…': 'Recognizing…',
-  'Xong, nhận dạng': 'Done, transcribe',
-  'Dừng nghe': 'Stop listening',
-  'Nhập bằng giọng nói': 'Speak your request',
-  'Ngôn ngữ giọng nói': 'Speech language',
-  'Đang nghe…': 'Listening…',
-  'Hủy ghi âm / nhận dạng': 'Cancel recording / transcription',
   'Bạn muốn tìm gì?': 'What are you looking for?',
   'Phạm vi và giới hạn': 'Area and limits',
   'Bộ lọc tùy chọn': 'Optional filters',
@@ -622,7 +633,6 @@ const translations: Record<string, string> = {
     'Create an account and sign in to unlock member features.',
   'Tìm địa điểm theo nhu cầu bằng AI': 'Find places by describing what you need with AI',
   'Gợi ý điểm dừng dọc tuyến đang đi': 'Get stop suggestions along your route',
-  'Tìm kiếm bằng giọng nói': 'Search by voice',
   'Đăng nhập / Đăng ký': 'Sign in / Sign up',
   'Bạn vẫn có thể xem bản đồ, tìm địa chỉ và chỉ đường mà không cần tài khoản.':
     'You can still view the map, search addresses, and get directions without an account.',
@@ -657,8 +667,6 @@ const translations: Record<string, string> = {
   'Đăng nhập để dùng phân tích ảnh.': 'Sign in to use image analysis.',
   'Ảnh phải có định dạng JPG, PNG hoặc WebP.': 'Images must be JPG, PNG, or WebP.',
   'Ảnh tối đa 5 MB.': 'Images must be 5 MB or smaller.',
-  'AI chưa bật. Bạn vẫn có thể nói hoặc nhập nhu cầu đơn giản; trợ lý đang hiểu bằng từ khóa.':
-    'AI is unavailable. You can still speak or type a simple request; the assistant will use keyword matching.',
   'AI hiểu yêu cầu': 'AI understood the request',
   'Bỏ điểm dừng để tìm lại': 'Remove the stop and search again',
   'Chưa có kết quả trong phạm vi dữ liệu khảo sát. Thử đổi vị trí hoặc bán kính.':
@@ -667,24 +675,16 @@ const translations: Record<string, string> = {
     'No places in the surveyed area match these limits.',
   'Chưa xác nhận được trạng thái AI. Nguồn xử lý sẽ hiển thị cùng kết quả.':
     'Could not confirm AI availability. The processing source will be shown with the results.',
-  'Chỉ nghe khi bạn bấm nút. Trình duyệt có thể gửi âm thanh đến dịch vụ nhận giọng nói. Kiểm tra chữ rồi bấm Tìm; không tự gửi.':
-    'Listening starts only when you select the button. Your browser may send audio to a speech recognition service. Review the text and select Search; nothing is submitted automatically.',
   'Cách vị trí chọn khoảng {distance} km đường thẳng.':
     'About {distance} km in a straight line from the selected location.',
   'Cần một tuyến hai điểm để tính đường đi thêm. Bạn vẫn có thể hỏi hoặc chuyển sang tìm quanh vị trí.':
     'A route with an origin and destination is needed to calculate detour distance. You can still ask a question or search near a location.',
-  'Dịch vụ giọng nói': 'Speech service',
-  'Ghi tối đa 15 giây; âm thanh gửi qua máy chủ đến Cloudflare Whisper. Bấm Xong để nhận dạng, kiểm tra chữ rồi bấm Tìm.':
-    'Record up to 15 seconds. Audio is sent through the server to Cloudflare Whisper. Select Done to transcribe, review the text, then select Search.',
   'Hãy chọn loại địa điểm bạn muốn tìm.': 'Choose the type of place you want to find.',
   'Hãy nhập nhu cầu hoặc chọn một loại địa điểm.': 'Enter what you need or choose a place type.',
   'Không tìm được địa điểm.': 'Could not find places.',
   'Kết quả đã quá 2 phút. Hãy tìm lại.': 'These results are over two minutes old. Search again.',
-  'Trình duyệt này chưa hỗ trợ giọng nói. Bạn vẫn có thể nhập chữ tiếng Anh hoặc Việt.':
-    'This browser does not support speech recognition. You can still type in English or Vietnamese.',
   'Tìm quanh: {lat}, {lng}. Bấm bản đồ để đổi vị trí.':
     'Search near {lat}, {lng}. Select the map to change the location.',
-  'Whisper API (chưa cấu hình)': 'Whisper API (not configured)',
   '{category} · bán kính {radius} km · khoảng cách đường thẳng.':
     '{category} · {radius} km radius · straight-line distance.',
   '{category} · tối đa {distance} km và {duration} phút đi thêm.':
@@ -694,19 +694,6 @@ const translations: Record<string, string> = {
   'Đang dùng bộ lọc ngôn ngữ; chưa có kết quả từ AI': 'Using keyword filters; no AI results yet',
   'Đã cấu hình AI hiểu nhu cầu. Nếu dịch vụ lỗi, trợ lý sẽ thông báo khi dùng từ khóa.':
     'AI request understanding is configured. If the service fails, the assistant will report it and use keyword matching.',
-  'Microphone chưa được cấp quyền. Bạn vẫn có thể nhập chữ.':
-    'Microphone access was not granted. You can still type.',
-  'Chưa nghe rõ câu nói. Hãy thử lại hoặc nhập chữ.': 'Speech was unclear. Try again or type instead.',
-  'Không nhận được giọng nói. Hãy thử lại hoặc nhập chữ.':
-    'No speech was detected. Try again or type instead.',
-  'Trình duyệt chưa khởi động được nhận giọng nói. Bạn có thể nhập chữ.':
-    'The browser could not start speech recognition. You can type instead.',
-  'Không ghi được âm thanh. Hãy thử lại hoặc nhập chữ.': 'Could not record audio. Try again or type instead.',
-  'Voice chưa sẵn sàng.': 'Voice is not ready.',
-  'Chưa được cấp quyền micro hoặc không có thiết bị. Kiểm tra quyền micro và dùng HTTPS.':
-    'Microphone access was denied or no device is available. Check microphone permissions and use HTTPS.',
-  'Hãy nói từ 0,2 đến 15 giây.': 'Speak for 0.2 to 15 seconds.',
-  'Bản ghi quá lớn. Hãy nói ngắn hơn.': 'The recording is too large. Speak for less time.',
   '{count} báo cáo trong 30 phút / 75 m từ {reporters} người{freshness}':
     '{count} reports within 75 m over 30 minutes from {reporters} people{freshness}',
   'Ngập đường': 'Flooding',
@@ -825,21 +812,6 @@ const translations: Record<string, string> = {
   'Không thể tải dữ liệu giao thông lúc này': 'Could not load traffic data right now.',
   'Không tìm thấy báo cáo giao thông': 'Traffic report not found.',
   'Báo cáo này đã hết hạn': 'This report has expired.',
-  'Cần WAV PCM16 mono 16 kHz, dài từ 0,2 đến 15 giây.':
-    'Audio must be mono 16 kHz PCM16 WAV and 0.2 to 15 seconds long.',
-  'Đã hết quota hoặc bị giới hạn voice. Không tự chuyển sang dịch vụ trả phí.':
-    'Voice usage is exhausted or rate limited. The app will not switch to a paid service automatically.',
-  'Dịch vụ nhận giọng nói chưa sẵn sàng. Hãy thử lại hoặc nhập chữ.':
-    'Speech recognition is unavailable. Try again or type instead.',
-  'Không nhận được câu nói rõ ràng dưới 300 ký tự. Hãy nói ngắn hơn hoặc nhập chữ.':
-    'No clear speech of 300 characters or fewer was detected. Speak for less time or type instead.',
-  'Không nhận dạng được âm thanh lúc này. Hãy thử lại hoặc nhập chữ.':
-    'Could not transcribe the audio right now. Try again or type instead.',
-  'API voice chưa được cấu hình. Có thể dùng nhập chữ hoặc voice trình duyệt.':
-    'The voice API is not configured. You can type or use browser speech recognition.',
-  'Chỉ nhận audio/wav.': 'Only WAV audio is supported.',
-  'Chưa có âm thanh.': 'No audio was received.',
-  'Voice đang bận. Thử lại sau một phút.': 'Voice is busy. Try again in a minute.',
   'Chưa cấu hình VietMap Matrix.': 'VietMap Matrix is not configured.',
   'Không lấy được chi phí đường đi từ VietMap. Hãy thử lại.':
     'Could not get route costs from VietMap. Try again.',

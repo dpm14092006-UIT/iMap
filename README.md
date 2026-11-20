@@ -91,14 +91,14 @@ Frontend chia theo feature (`map`, `places`, `explore`, `navigation`, `multi-sto
 
 Mục lục tài liệu: [docs/README.md](docs/README.md).
 
-## Trợ lý địa điểm và voice (nhánh dpm)
+## Trợ lý địa điểm và âm thanh dẫn đường
 
-Tìm nhu cầu chung quanh vị trí hoặc dọc tuyến, hỏi lại khi mơ hồ, thêm/bỏ điểm ghé theo chi phí đường đi thật. Voice trình duyệt và Whisper API là cách điền bản nháp để người dùng kiểm tra trước khi tìm.
+Tìm nhu cầu chung quanh vị trí hoặc dọc tuyến, hỏi lại khi mơ hồ, thêm/bỏ điểm ghé theo chi phí đường đi thật. Nhập nhu cầu bằng chữ hoặc chọn loại địa điểm. Âm thanh chỉ dùng cho chỉ dẫn và cảnh báo giao thông, có nút bật/tắt khi dẫn đường.
 
 - [Thiết kế/API và phạm vi](docs/features/PLACE_ASSISTANT_TECHNICAL.md)
 - [Thuật toán tìm điểm ghé](docs/features/ROUTE_STOPS_TECHNICAL.md)
 - [Benchmark Whisper trên 48 audio](docs/benchmarks/VOICE_BENCHMARK.md)
-- [Deploy web + API Vercel, cấu hình voice free quota](docs/guides/DEPLOY_API.md)
+- [Deploy web + API Vercel](docs/guides/DEPLOY_API.md)
 
 ## Tìm kiếm toàn Việt Nam
 

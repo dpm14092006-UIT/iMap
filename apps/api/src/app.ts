@@ -9,7 +9,6 @@ import { createOptimizationRouter } from './modules/optimization/presentation/op
 import { createPlacesRouter } from './modules/places/presentation/places.routes.js';
 import { createRouteStopsRouter } from './modules/route-stops/presentation/route-stops.routes.js';
 import { createTrafficRouter } from './modules/traffic/presentation/traffic.routes.js';
-import { createVoiceRouter } from './modules/voice/voice.routes.js';
 import { errorHandler } from './shared/http/error-handler.js';
 import { notImplemented } from './shared/http/not-implemented.js';
 import { getRequestId } from './shared/http/request-context.js';
@@ -83,7 +82,6 @@ export function createApp(container = createContainer()) {
     }),
   );
   app.use('/api/route-stops', createRouteStopsRouter(container.findRouteStops, container.explorePlaces));
-  app.use('/api/voice', createVoiceRouter());
   app.use(
     '/api/routes/optimize',
     createOptimizationRouter(container.optimizationController, container.rateLimits.optimize),

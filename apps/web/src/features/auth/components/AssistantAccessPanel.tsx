@@ -27,11 +27,7 @@ export function AssistantAccessPanel({ loading, onClose }: { loading: boolean; o
             {t('Tạo tài khoản và đăng nhập để mở các tính năng dành cho thành viên.')}
           </p>
           <ul className="my-5 space-y-3 text-xs text-slate-600 dark:text-slate-300">
-            {[
-              t('Tìm địa điểm theo nhu cầu bằng AI'),
-              t('Gợi ý điểm dừng dọc tuyến đang đi'),
-              t('Tìm kiếm bằng giọng nói'),
-            ].map((label) => (
+            {[t('Tìm địa điểm theo nhu cầu bằng AI'), t('Gợi ý điểm dừng dọc tuyến đang đi')].map((label) => (
               <li key={label} className="flex items-center gap-2">
                 <Icon name="check" size={15} className="shrink-0 text-brand-600 dark:text-indigo-300" />
                 {label}

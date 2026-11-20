@@ -1,13 +1,13 @@
 # Trợ lý địa điểm — bản tích hợp dpm
 
-Ngày 09/11/2026. Dùng tab **Trợ lý địa điểm**. Gõ hoặc nói nhu cầu tiếng Anh/Việt; không cần biết tên POI. Đây là tìm loại địa điểm trong dữ liệu OSM, chưa phải tìm mọi thực thể bằng ngôn ngữ tự nhiên.
+Ngày 09/11/2026. Dùng tab **Trợ lý địa điểm**. Gõ nhu cầu tiếng Anh/Việt; không cần biết tên POI. Đây là tìm loại địa điểm trong dữ liệu OSM, chưa phải tìm mọi thực thể bằng ngôn ngữ tự nhiên.
 
-Toàn bộ trợ lý và voice yêu cầu tài khoản đã đăng nhập. API xác minh Bearer token với Supabase; khách vẫn dùng tìm địa chỉ và chỉ đường. Xem [phân quyền](../architecture/FEATURE_ACCESS.md).
+Trợ lý yêu cầu tài khoản đã đăng nhập. API xác minh Bearer token với Supabase; khách vẫn dùng tìm địa chỉ và chỉ đường. Xem [phân quyền](../architecture/FEATURE_ACCESS.md).
 
 ## Luồng và trách nhiệm
 
 ```text
-Chữ / voice → bản nháp → người dùng bấm Tìm
+Chữ / chọn loại → bản nháp → người dùng bấm Tìm
 → POST /api/route-stops/explore
 → AiStopIntentParser hoặc KeywordStopIntentParser
 → intent được Zod kiểm tra
@@ -34,19 +34,18 @@ Dọc tuyến: chỉ nhận tuyến hai đầu mút, xe máy/ô tô. Giới hạ
 
 Response envelope `{ "data": ... }`, discriminated union theo `status`: `clarify`, `needs_location`, `needs_route`, `results`. `results` phân tiếp `mode=nearby|route`. Có `source=ai|rules`, cảnh báo và thời điểm khảo sát. Bộ lọc loại/bán kính/km/phút chọn tay ưu tiên câu chữ. Validation lỗi 400; provider lỗi 502; giới hạn tải 429, không giả kết quả rỗng khi upstream hỏng.
 
-`POST /api/route-stops/search` giữ endpoint chuyên tìm điểm ghé. Cùng giới hạn 5 lần/phút/tài khoản và tối đa 2 request xử lý mỗi process. Cache Overpass 2 phút/30 mục, dedupe request trùng. Đây là guard demo trong RAM, không phải giới hạn toàn cục trên nhiều Vercel instance; cần limiter chung nếu mở công khai với tải lớn.
+`POST /api/route-stops/search` giữ endpoint chuyên tìm điểm ghé. Cùng giới hạn 5 lần/phút/tài khoản qua bộ đếm nguyên tử trong Postgres và tối đa 2 request xử lý mỗi process qua limiter trong RAM. Cache Overpass 2 phút/30 mục, dedupe request trùng.
 
-## Voice
+## Âm thanh dẫn đường
 
-- Trình duyệt: Web Speech Recognition, mặc định English, có tùy chọn Việt; hỗ trợ tùy browser. Chỉ lấy final transcript, không tự tìm kiếm, hủy phiên bỏ callback muộn.
-- Whisper API: hiện nút chọn khi backend cấu hình được. MediaRecorder chỉ bắt đầu sau click và quyền micro. Tối đa 15 giây, có nút Xong/Hủy. Trình duyệt decode/resample mono 16 kHz, PCM16 WAV; backend kiểm tra header/kích thước/thời lượng trước gửi Cloudflare Whisper. Audio không ghi vào disk/log của ứng dụng. Luồng này hướng tới tiếng Anh; model Cloudflare có thể tự nhận ngôn ngữ, API không ép `en-US`.
-- `GET /api/voice/config`: trạng thái khả dụng không lộ key. `POST /api/voice/transcribe`: `Content-Type: audio/wav`, body binary ≤500.000 byte; audio 0,2–15 giây, response `{data:{text,provider}}`, text tối đa 300 ký tự. Timeout provider 25 giây, không retry/fallback trả phí. Quota lỗi 429, provider không dùng được 502, chưa cấu hình 503.
-- Micro cần localhost hoặc HTTPS. Có hiển thị nơi gửi audio. Nhận dạng chỉ điền ô chữ; người dùng kiểm tra trước bấm Tìm. Chưa kiểm chứng micro người thật trên từng thiết bị.
+Từ 19/11/2026 đã bỏ thu âm, Web Speech Recognition và Whisper API. Trợ lý chỉ nhận chữ hoặc loại địa điểm chọn tay; `/api/voice/*` không còn được đăng ký.
 
-Xem [benchmark audio thật](../benchmarks/VOICE_BENCHMARK.md), [cấu hình deploy](../guides/DEPLOY_API.md).
+Khi bắt đầu dẫn đường, `useNavigationAudio` phát chỉ dẫn bằng `SpeechSynthesis` theo ngôn ngữ giao diện. Mỗi bước nhắc lúc chuẩn bị, còn 200 m và còn 40 m; không lặp lại cùng mốc do GPS dao động. Cảnh báo được ưu tiên hơn chỉ dẫn. Nút loa trên banner bật/tắt cả lời đọc và chuông, lưu lựa chọn trên thiết bị; rung và banner vẫn hoạt động khi tắt tiếng. Dừng chuyến đi hủy lời đọc. Giọng đọc phụ thuộc trình duyệt và giọng đã cài trên thiết bị, không xin quyền micro hoặc gọi API nhận giọng nói.
+
+Các benchmark nhận dạng giọng nói cũ chỉ giữ để tham khảo lịch sử.
 
 ## Xác minh và giới hạn
 
-Typecheck và build toàn repo; bộ test HTTP/provider/intent/geometry/voice. Kiểm thử trình duyệt dùng POI/tuyến và SpeechRecognition fixture, có banner mô phỏng; đã kiểm tra mơ hồ → chọn loại, đổi nhu cầu fuel → school, bản nháp voice không tự search, ghé tuyến tăng tổng và bỏ điểm trở về tuyến gốc. Fixture không chứng minh ASR hoặc chất lượng dữ liệu thật.
+Typecheck và build toàn repo; bộ test HTTP/provider/intent/geometry/âm thanh. Các phiên kiểm thử trình duyệt trước đây dùng POI/tuyến mô phỏng để kiểm tra mơ hồ → chọn loại, đổi nhu cầu fuel → school, ghé tuyến tăng tổng và bỏ điểm trở về tuyến gốc. Kiểm thử SpeechRecognition thuộc phiên bản đã gỡ, chỉ còn giá trị lịch sử. Fixture không chứng minh chất lượng dữ liệu thật hoặc âm thanh trên thiết bị.
 
-Whisper local được chạy thật trên 48 audio TTS, xem báo cáo riêng. Chưa có Cloudflare/Gemini/VietMap key nên chưa xác minh các dịch vụ đó end-to-end. Overpass public từng trả HTTP406/timeout trong môi trường kiểm tra; có xử lý lỗi minh bạch và `OVERPASS_API_URL` thay được. Không cam kết POI đầy đủ, đang mở cửa, lối vào hoặc giao thông realtime. Không có migration mới cho tính năng này.
+Whisper local được chạy thật trên 48 audio TTS, xem báo cáo riêng. Chưa có Gemini/VietMap key nên chưa xác minh các dịch vụ đó end-to-end. Overpass public từng trả HTTP406/timeout trong môi trường kiểm tra; có xử lý lỗi minh bạch và `OVERPASS_API_URL` thay được. Không cam kết POI đầy đủ, đang mở cửa, lối vào hoặc giao thông realtime. Không có migration mới cho tính năng này.

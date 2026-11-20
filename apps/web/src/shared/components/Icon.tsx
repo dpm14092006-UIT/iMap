@@ -53,7 +53,9 @@ export type IconName =
   | 'chevron-left'
   | 'chevron-right'
   | 'arrow-left'
-  | 'warning';
+  | 'warning'
+  | 'volume'
+  | 'volume-off';
 
 type IconProps = SVGProps<SVGSVGElement> & { name: IconName; size?: number };
 
@@ -67,6 +69,8 @@ const common = {
 
 /** Nội dung SVG tĩnh (do dự án viết sẵn) của từng biểu tượng, hệ tọa độ 24×24. */
 const shapes: Record<IconName, string> = {
+  volume: '<path d="m11 5-6 4H2v6h3l6 4V5Z" /><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14" />',
+  'volume-off': '<path d="m11 5-6 4H2v6h3l6 4V5Z" /><path d="m16 9 6 6M22 9l-6 6" />',
   sparkles:
     '<path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3Z" /><path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z" />',
   'arrow-up-right': '<path d="M7 17 17 7" /><path d="M8 7h9v9" />',

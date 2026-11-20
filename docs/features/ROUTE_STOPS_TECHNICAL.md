@@ -1,12 +1,12 @@
 # Tìm điểm dừng dọc tuyến — thiết kế và hướng dẫn kỹ thuật
 
-Ngày triển khai: 09/11/2026. Nhánh tích hợp: `dpm`. Giao diện cuối nằm trong **Trợ lý địa điểm**, chế độ **Dọc tuyến đang đi**. Xem thêm `PLACE_ASSISTANT_TECHNICAL.md` cho chế độ quanh vị trí và voice.
+Ngày triển khai: 09/11/2026. Nhánh tích hợp: `dpm`. Giao diện cuối nằm trong **Trợ lý địa điểm**, chế độ **Dọc tuyến đang đi**. Xem thêm `PLACE_ASSISTANT_TECHNICAL.md` cho chế độ quanh vị trí và âm thanh dẫn đường.
 
 Từ bản phân quyền thành viên, cả `/search` và `/explore` yêu cầu Authorization Bearer token hợp lệ. Xem FEATURE_ACCESS.md.
 
 ## Phạm vi sản phẩm
 
-Người dùng tính tuyến A → B, nhập yêu cầu bằng chữ tiếng Việt hoặc tiếng Anh, xem các điểm ghé đủ điều kiện rồi chọn “Ghé điểm này”. Voice điền bản nháp qua nhận dạng trình duyệt hoặc Whisper API; người dùng kiểm tra rồi chủ động bấm Tìm. Xem PLACE_ASSISTANT_TECHNICAL.md và DEPLOY_API.md cho endpoint audio.
+Người dùng tính tuyến A → B, nhập yêu cầu bằng chữ tiếng Việt hoặc tiếng Anh hoặc chọn loại địa điểm, bấm Tìm, xem các điểm ghé đủ điều kiện rồi chọn “Ghé điểm này”. Tính năng thu âm và nhận dạng giọng nói đã được gỡ; âm thanh hiện chỉ phát chỉ dẫn và cảnh báo khi dẫn đường.
 
 Ví dụ: “Tìm trạm xăng, đi thêm tối đa 1 km” hoặc “Find a gas station along my route, with at most 1 km extra”.
 

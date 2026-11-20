@@ -57,6 +57,7 @@ type Options = {
   otherIncidents: LatLng[];
   /** Có Web Push từ server không (có thì không cần tự hiện thông báo hệ thống khi tab chạy nền). */
   pushActive: boolean;
+  soundEnabled?: () => boolean;
   onAccept: (plan: RoutePlan) => void;
   notificationText: (incident: RouteAlertIncident) => { title: string; body: string };
 };
@@ -146,7 +147,7 @@ export function useRouteTrafficAlert(options: Options) {
     (incident: RouteAlertIncident, distanceAheadMeters: number | null) => {
       const { route, pushActive, notificationText } = optionsRef.current;
       if (!route) return;
-      playAlertFeedback();
+      playAlertFeedback(optionsRef.current.soundEnabled?.() ?? true);
       if (document.visibilityState !== 'visible' && !pushActive) {
         const text = notificationText(incident);
         void showLocalSystemNotification(text.title, text.body, `traffic-${incident.id}`);

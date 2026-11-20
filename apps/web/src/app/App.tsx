@@ -34,6 +34,7 @@ import type { PickTarget } from '../features/navigation/components/RoutePanel';
 import { TrafficLegend } from '../features/map/components/TrafficLegend';
 import { useDirections } from '../features/navigation/hooks/useDirections';
 import { useNavigationSession } from '../features/navigation/hooks/useNavigationSession';
+import { useNavigationAudio } from '../features/navigation/hooks/useNavigationAudio';
 import { RouteApiClient, routePlanFromResult } from '../features/navigation/api/RouteApiClient';
 import { parseRouteShareLink } from '../features/navigation/services/routeShareLink';
 import { rerouteApi } from '../features/navigation/api/RerouteApiClient';
@@ -543,6 +544,7 @@ export function App() {
   };
 
   const startNavigation = (route: RoutePlan) => {
+    navigationAudio.begin();
     // Mở app với ?demo=1 thì mặc định chạy GPS giả; đổi lại "Thật" ngay trên banner.
     startNavigationSession(route, demoEnabled ? 'demo' : 'real');
     openPanel(null);
@@ -651,6 +653,7 @@ export function App() {
       : (activeRoute?.durationMin ?? null),
     otherIncidents: routeIncidents,
     pushActive: Boolean(push.endpoint),
+    soundEnabled: () => navigationAudio.enabled,
     onAccept: (plan) => {
       setActiveRoute(plan);
       if (navigationRoute) updateNavigationRoute(plan);
@@ -659,6 +662,18 @@ export function App() {
       title: t('{incident} trên tuyến của bạn', { incident: t(incident.title) }),
       body: t('Mở để xem đường khác tránh sự cố.'),
     }),
+  });
+  const navigationAudio = useNavigationAudio({
+    routeId: navigationRoute?.id ?? activeRoute?.id ?? null,
+    status: navigationStatus,
+    offRoute,
+    instruction: navigation.nextInstruction,
+    instructionIndex: navigation.nextInstruction
+      ? (navigationRoute?.legs.flatMap((leg) => leg.instructions ?? []).indexOf(navigation.nextInstruction) ??
+        -1)
+      : -1,
+    distanceMeters: navigation.distanceToInstructionMeters,
+    alert: routeAlert.alert,
   });
   const triggerRouteAlert = routeAlert.trigger;
   routeAlertTriggerRef.current = (report) => {
@@ -1241,8 +1256,12 @@ export function App() {
         isRecalculating={isRecalculatingNavigation}
         onRecalculate={() => void recalculateNavigation()}
         onRetry={() => {
-          if (navigationRoute) startNavigationSession(navigationRoute, navigation.mode);
+          if (navigationRoute) {
+            navigationAudio.begin();
+            startNavigationSession(navigationRoute, navigation.mode);
+          }
         }}
+        audio={navigationAudio}
         onReport={() => {
           const point = navigationLocation ?? currentLocation;
           setSelectedMapPoint(point);

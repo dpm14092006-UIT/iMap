@@ -23,11 +23,14 @@ async function start() {
 const protectedEndpoints = [
   ['POST', '/api/route-stops/search'],
   ['POST', '/api/route-stops/explore'],
-  ['POST', '/api/voice/transcribe'],
-  ['GET', '/api/voice/config'],
   ['POST', '/api/traffic-reports/analyze-image'],
 ] as const;
 describe('member access on the actual application', () => {
+  it('does not expose retired speech recognition endpoints', async () => {
+    const { base } = await start();
+    expect((await fetch(base + '/api/voice/config')).status).toBe(404);
+    expect((await fetch(base + '/api/voice/transcribe', { method: 'POST' })).status).toBe(404);
+  });
   it('blocks every AI endpoint before invoking providers for an anonymous visitor', async () => {
     const auth = vi.spyOn(SupabaseClientFactory.prototype, 'create');
     const { base, stops, explore } = await start();

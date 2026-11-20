@@ -1,5 +1,7 @@
 # Kiểm thử voice tiếng Anh
 
+> Tài liệu lịch sử: chức năng thu âm/nhận dạng đã được gỡ từ 19/11/2026. Báo cáo này không mô tả chức năng hiện tại.
+
 Chạy ngày 09/11/2026 bằng nhận dạng thực sự, không mock transcript. Đây là benchmark phát triển nhỏ, không phải chứng nhận độ chính xác thực địa.
 
 ## Thiết lập

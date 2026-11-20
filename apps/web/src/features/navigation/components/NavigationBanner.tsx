@@ -21,6 +21,7 @@ type NavigationBannerProps = {
   onRetry: () => void;
   onReport: () => void;
   onStop: () => void;
+  audio?: { enabled: boolean; supported: boolean; toggle: () => void };
   /** Chế độ Demo (GPS giả) chỉ có khi mở app với ?demo=1. Không truyền thì banner như cũ. */
   demo?: DemoControls;
   /** Người dùng đang tự kéo / zoom xem trước, bản đồ không bám vị trí. */
@@ -69,6 +70,7 @@ export function NavigationBanner({
   onRetry,
   onReport,
   onStop,
+  audio,
   demo,
   followPaused = false,
   onRecenter,
@@ -137,6 +139,23 @@ export function NavigationBanner({
           className={`h-2 w-2 rounded-full ${offRoute ? 'bg-amber-400' : status === 'arrived' ? 'bg-emerald-400' : 'animate-pulse bg-teal-300'}`}
         />
         {offRoute ? t('ĐANG LỆCH KHỎI TUYẾN') : statusLabels[status] ? t(statusLabels[status]!) : ''}
+        {audio && (
+          <button
+            type="button"
+            onClick={audio.toggle}
+            aria-pressed={audio.enabled}
+            aria-label={t(
+              audio.enabled ? 'Tắt âm thanh chỉ đường và cảnh báo' : 'Bật âm thanh chỉ đường và cảnh báo',
+            )}
+            title={t(
+              audio.supported ? 'Âm thanh chỉ đường và cảnh báo' : 'Thiết bị chỉ hỗ trợ chuông cảnh báo',
+            )}
+            className="ml-auto flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full bg-white/10 px-3 text-xs font-bold text-white ring-1 ring-white/20 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-300"
+          >
+            <Icon name={audio.enabled ? 'volume' : 'volume-off'} size={16} />
+            <span className="max-md:hidden">{t(audio.enabled ? 'Âm thanh' : 'Tắt tiếng')}</span>
+          </button>
+        )}
       </div>
       <div className="flex items-center gap-3 px-4 py-3">
         {isGuiding && (

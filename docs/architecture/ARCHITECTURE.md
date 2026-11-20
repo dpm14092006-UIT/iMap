@@ -39,7 +39,7 @@ Web dùng React nên giao diện là hàm component; **toàn bộ logic không t
 | Lưu trữ | `SavedRouteRepository` (interface) ← `LocalStorageSavedRouteRepository`; `TrafficPhotoStorage` | Ẩn nơi lưu; đổi cài đặt không sửa hook |
 | Miền dẫn đường | `Geodesy`, `RoutePath`, `NavigationGuidanceEngine` | Toán khoảng cách/tiến độ/lệch tuyến, có test, không biết React |
 | Bản đồ | `LeafletMapController` | Adapter bọc Leaflet; React chỉ gọi method public |
-| Giọng nói | `SpeechDraftSession` | Phiên nhận dạng giọng nói của trình duyệt |
+| Âm thanh dẫn đường | `NavigationSpeaker` | Phát lời chỉ dẫn/cảnh báo, không thu âm |
 | Giao diện | `ErrorBoundary` + component/hook | Hook chỉ nối lớp với React (state, effect) |
 
 Quy tắc: component không gọi `fetch` hay `localStorage` trực tiếp; hook nhận lớp qua tham số (mặc định là bản dùng chung) để thay bằng bản giả khi test.
@@ -48,7 +48,7 @@ Quy tắc: component không gọi `fetch` hay `localStorage` trực tiếp; hook
 
 Mỗi module theo `presentation (Controller/Router) → application (UseCase + Port) → domain → infrastructure (Adapter)`.
 Hạ tầng dùng chung ở `shared/http`: `SessionAuthenticator` (xác thực), `FeatureQuotaGuard` (hạn mức theo người dùng),
-`ConcurrencyLimiter` (giới hạn song song mỗi instance); `CloudflareWhisperTranscriber` đóng gói nhà cung cấp giọng nói.
+`ConcurrencyLimiter` (giới hạn song song mỗi instance). Nhận dạng giọng nói đã được gỡ; âm thanh đầu ra chạy ở trình duyệt.
 
 ## Hợp đồng module UI
 

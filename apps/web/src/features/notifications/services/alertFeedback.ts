@@ -1,12 +1,27 @@
 /** Kêu + rung để cảnh báo trên tuyến không bị "im im". Trình duyệt chặn âm thanh thì bỏ qua êm. */
 let audioContext: AudioContext | null = null;
 
-export function playAlertFeedback(): void {
+/** Gọi ngay từ thao tác Bắt đầu/Bật âm thanh để mở âm thanh trên trình duyệt di động. */
+export function prepareAlertAudio(): void {
+  try {
+    const Context =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Context) return;
+    audioContext ??= new Context();
+    void audioContext.resume().catch(() => {});
+  } catch {
+    /* Banner vẫn hoạt động nếu thiết bị không hỗ trợ âm thanh. */
+  }
+}
+
+export function playAlertFeedback(audible = true): void {
   try {
     navigator.vibrate?.([300, 120, 300, 120, 300]);
   } catch {
     // Một số trình duyệt không cho rung.
   }
+  if (!audible) return;
   try {
     const AudioContextClass =
       window.AudioContext ??
@@ -14,7 +29,7 @@ export function playAlertFeedback(): void {
     if (!AudioContextClass) return;
     audioContext ??= new AudioContextClass();
     const context = audioContext;
-    void context.resume?.();
+    void context.resume().catch(() => {});
     const start = context.currentTime + 0.02;
     [0, 0.28, 0.56].forEach((offset, index) => {
       const oscillator = context.createOscillator();

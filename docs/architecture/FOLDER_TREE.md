@@ -18,7 +18,7 @@ iMap/
 │   │       │   ├── my-routes/            Tuyến đã lưu (localStorage)
 │   │       │   ├── traffic/              Báo cáo giao thông, ảnh, cảnh báo trên tuyến
 │   │       │   ├── notifications/        Web Push, theo dõi tuyến
-│   │       │   └── place-assistant/      Trợ lý địa điểm, voice
+│   │       │   └── place-assistant/      Trợ lý địa điểm, nhập nhu cầu
 │   │       └── shared/                   api/ (HttpClient), components/, geo/, hooks/, i18n/, text/
 │   └── api/                              Express + TypeScript
 │       ├── data/osm/                     Đồ thị OSM trung tâm TP.HCM (Dijkstra/A*)
@@ -33,7 +33,6 @@ iMap/
 │           │   ├── optimization/         Matrix + chiến lược TSP
 │           │   ├── route-stops/          Tìm và chèn điểm ghé theo chi phí thật
 │           │   ├── traffic/              Báo cáo, xác minh cộng đồng, push
-│           │   ├── voice/                Whisper speech-to-text
 │           │   └── my-routes/            Chỉ có README (API chưa triển khai)
 │           ├── shared/                   http/, errors/, supabase/, geo/, text/, async/
 │           └── testing/                  Helper dùng chung cho test
