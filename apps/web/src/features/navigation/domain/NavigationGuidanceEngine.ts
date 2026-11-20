@@ -2,7 +2,7 @@ import type { RouteInstruction } from '@routetwin/shared';
 import type { RoutePlan } from '../../map/types';
 import type { LatLng } from '../../places/types';
 import { Geodesy } from './Geodesy';
-import { RoutePath } from './RoutePath';
+import { RoutePath, type PathMatch } from './RoutePath';
 
 /** Kết quả của một lần đánh giá vị trí GPS so với tuyến. */
 export type Guidance = {
@@ -56,11 +56,17 @@ export class NavigationGuidanceEngine {
   /** Quãng đường theo VietMap (mét); dùng làm thước đo chính, hình học chỉ để định vị. */
   private readonly routeMeters: number;
   private readonly instructions: RouteInstruction[];
+  /**
+   * Vị trí trên tuyến của từng điểm dừng (theo chỉ số trong `route.stops`), tính một lần khi tạo engine.
+   * Trước đây khớp lại mọi điểm dừng với toàn bộ tuyến mỗi lần có GPS (≈ số điểm × số đoạn mỗi giây).
+   */
+  private readonly stopMatches: (PathMatch | null)[];
 
   constructor(private readonly route: RoutePlan) {
     this.path = new RoutePath(route.legs);
     this.routeMeters = route.distanceKm > 0 ? route.distanceKm * 1000 : this.path.totalMeters;
     this.instructions = route.legs.flatMap((leg) => leg.instructions ?? []);
+    this.stopMatches = route.stops.map((stop, index) => (index === 0 ? null : this.path.closest(stop)));
   }
 
   evaluate(point: LatLng, accuracyMeters: number, previousProgressRatio: number): Guidance {
@@ -143,7 +149,7 @@ export class NavigationGuidanceEngine {
   private findNextStopIndex(geometryProgress: number): number {
     const { stops } = this.route;
     for (let index = 1; index < stops.length; index++) {
-      const match = this.path.closest(stops[index]!);
+      const match = this.stopMatches[index];
       if (
         match &&
         match.progress >= geometryProgress - NavigationGuidanceEngine.STOP_PASSED_TOLERANCE_METERS &&
