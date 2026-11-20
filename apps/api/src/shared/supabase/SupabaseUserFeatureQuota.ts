@@ -1,10 +1,9 @@
 import { AppError } from '../errors/AppError.js';
+import type { FeatureQuota, QuotaFeature } from '../quota/FeatureQuota.js';
 import { SupabaseClientFactory } from './SupabaseClientFactory.js';
 
-export type QuotaFeature = 'route_stops' | 'route_explanation';
-
 /** Shared per-user minute quota for authenticated endpoints that call external providers. */
-export class SupabaseUserFeatureQuota {
+export class SupabaseUserFeatureQuota implements FeatureQuota {
   constructor(private readonly clients = new SupabaseClientFactory()) {}
 
   async consume(feature: QuotaFeature, accessToken: string): Promise<void> {

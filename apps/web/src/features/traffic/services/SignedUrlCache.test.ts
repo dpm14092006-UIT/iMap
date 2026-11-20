@@ -1,7 +1,28 @@
 import { describe, expect, it, vi } from 'vitest';
+import { deferred } from '../../../testing/fixtures';
 import { SignedUrlCache } from './SignedUrlCache';
 
 describe('SignedUrlCache (review #18)', () => {
+  it.each(['empty', 'error'] as const)(
+    'an expired request ending with %s cannot evict its replacement',
+    async (outcome) => {
+      let now = 0;
+      const old = deferred<string | null>();
+      const current = deferred<string | null>();
+      const sign = vi.fn().mockReturnValueOnce(old.promise).mockReturnValue(current.promise);
+      const cache = new SignedUrlCache(sign, 1_000, () => now);
+      const first = cache.get('a.png').catch(() => null);
+      now = 1_001;
+      const replacement = cache.get('a.png');
+      if (outcome === 'empty') old.resolve(null);
+      else old.reject(new Error('old request failed'));
+      await first;
+      current.resolve('new-signed-url');
+      expect(await replacement).toBe('new-signed-url');
+      expect(await cache.get('a.png')).toBe('new-signed-url');
+      expect(sign).toHaveBeenCalledTimes(2);
+    },
+  );
   it('ảnh đã ký thì không ký lại khi danh sách báo cáo cập nhật', async () => {
     const sign = vi.fn(async (path: string) => `https://signed/${path}`);
     const cache = new SignedUrlCache(sign, 60_000);

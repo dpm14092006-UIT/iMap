@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Icon } from '../../../shared/components/Icon';
-import { poiCatalog, poiCategoryOrder } from '../data/poiCatalog';
+import { Icon } from '../../../shared/ui/Icon';
+import { poiCatalog, poiCategoryOrder } from '../domain/poiCatalog';
 import type { PoiCategory, PoiSearchTerm } from '../types';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 

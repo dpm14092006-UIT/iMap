@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
-import { Popover } from '../../../app/layout/Popover';
-import { Icon } from '../../../shared/components/Icon';
+import { Popover } from '../../../shared/ui/Popover';
+import { Icon } from '../../../shared/ui/Icon';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import type { MapLayer, MapOverlays } from '../types';
 
@@ -88,7 +88,7 @@ export function LayerSwitcher({
         </button>
       }
     >
-      <p id={titleId} className="mb-2 text-xs font-bold text-ink dark:text-white">
+      <p id={titleId} className="mb-2 text-xs font-bold text-content">
         {t('Loại bản đồ')}
       </p>
       <div className="grid grid-cols-2 gap-2" role="group" aria-labelledby={titleId}>
@@ -109,7 +109,7 @@ export function LayerSwitcher({
         })}
       </div>
 
-      <p className="mb-1 mt-3 text-xs font-bold text-ink dark:text-white">{t('Lớp phủ')}</p>
+      <p className="mb-1 mt-3 text-xs font-bold text-content">{t('Lớp phủ')}</p>
       <ul className="space-y-0.5">
         {overlayOptions.map((option) => {
           const checked = overlays[option.key];
@@ -131,7 +131,7 @@ export function LayerSwitcher({
                   aria-hidden="true"
                 >
                   <span
-                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-white dark:bg-slate-800/60 shadow transition-all ${checked && !disabled ? 'left-[18px]' : 'left-0.5'}`}
+                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-surface shadow transition-all ${checked && !disabled ? 'left-[18px]' : 'left-0.5'}`}
                   />
                 </span>
               </button>

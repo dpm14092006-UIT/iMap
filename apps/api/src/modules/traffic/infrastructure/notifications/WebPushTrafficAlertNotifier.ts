@@ -2,6 +2,7 @@ import type { TrafficReportDto } from '@routetwin/shared';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import webPush from 'web-push';
 import type { TrafficAlertNotifier } from '../../application/ports/TrafficAlertNotifier.js';
+import { isAllowedPushEndpoint } from '../../domain/pushEndpointPolicy.js';
 
 type Watcher = {
   endpoint: string;
@@ -36,6 +37,8 @@ const severityLabels: Record<TrafficReportDto['severity'], string> = {
 /** Hành lang quanh tuyến (mét) để coi sự cố nằm trên tuyến của xe. */
 const ROUTE_CORRIDOR_METERS = 150;
 const SEND_CONCURRENCY = 20;
+/** Mỗi lần gửi tối đa bao lâu, để một push service chậm không giữ cả lượt gửi. */
+const SEND_TIMEOUT_MS = 10_000;
 
 /** Nội dung thông báo dùng chung cho Web Push và test. */
 export function trafficPushPayload(report: TrafficReportDto, watcher?: Partial<Watcher>) {
@@ -72,7 +75,7 @@ export function trafficPushPayload(report: TrafficReportDto, watcher?: Partial<W
 
 /**
  * Tìm các trình duyệt có tuyến đang đi qua điểm sự cố (PostGIS, RPC chỉ service_role gọi được)
- * rồi gửi Web Push. Đăng ký hết hạn (404/410) được xóa luôn.
+ * rồi gửi Web Push. Đăng ký hết hạn (404/410) hoặc endpoint ngoài chính sách (chống SSRF) được xóa luôn.
  */
 export class WebPushTrafficAlertNotifier implements TrafficAlertNotifier {
   private readonly client: SupabaseClient;
@@ -105,11 +108,22 @@ export class WebPushTrafficAlertNotifier implements TrafficAlertNotifier {
   }
 
   private async send(report: TrafficReportDto, watcher: Watcher): Promise<void> {
+    // Kiểm tra lại ngay trước khi gửi: dữ liệu cũ (trước migration 0009) hoặc ghi thẳng vào DB không được tin.
+    if (!isAllowedPushEndpoint(watcher.endpoint)) {
+      console.warn('Web push endpoint rejected by policy');
+      await this.client.rpc('delete_push_subscription', { p_endpoint: watcher.endpoint });
+      return;
+    }
     try {
       await webPush.sendNotification(
         { endpoint: watcher.endpoint, keys: { p256dh: watcher.p256dh, auth: watcher.auth } },
         JSON.stringify(trafficPushPayload(report, watcher)),
-        { TTL: 15 * 60, urgency: 'high', topic: report.id.replace(/-/g, '').slice(0, 32) },
+        {
+          TTL: 15 * 60,
+          urgency: 'high',
+          topic: report.id.replace(/-/g, '').slice(0, 32),
+          timeout: SEND_TIMEOUT_MS,
+        },
       );
     } catch (error) {
       const statusCode = (error as { statusCode?: number }).statusCode;

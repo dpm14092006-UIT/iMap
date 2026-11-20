@@ -1,3 +1,4 @@
+import { foldVietnamese } from '@routetwin/shared';
 import type { RouteComparisonFact, RouteComparisonResult, RoutePreference } from '@routetwin/shared';
 
 // VietMap signs: left/right, including slight/sharp turns, and U-turns.
@@ -17,11 +18,7 @@ export function countRouteTurns(instructions: readonly { sign?: number }[]): num
 const noPreference: RoutePreference = { goal: null, maxExtraMinutes: null };
 
 export function readRoutePreference(text: string): RoutePreference {
-  const query = text
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
-    .replaceAll('đ', 'd');
+  const query = foldVietnamese(text);
   if (/\b(?:an toan|ket xe|tac duong|thu phi|mien phi|cao toc|tranh pha|safety|traffic|toll)\b/.test(query)) {
     return noPreference;
   }

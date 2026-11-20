@@ -10,7 +10,7 @@ import {
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { whenIdle } from '../../../shared/async/whenIdle';
-import { runSignOutTasks, type SignOutTask } from '../services/signOutTasks';
+import { runSignOutTasks, type SignOutTask } from '../domain/signOutTasks';
 import { getSupabaseClient, supabaseConfigured } from '../services/supabaseClient';
 
 type AuthContextValue = {
@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
+    let receivedAuthEvent = false;
     let unsubscribe: (() => void) | undefined;
     const init = () => {
       void (async () => {
@@ -51,18 +52,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const {
             data: { subscription },
           } = client.auth.onAuthStateChange((_event, nextSession) => {
+            if (!active) return;
+            receivedAuthEvent = true;
             setSession(nextSession);
+            setLoading(false);
             if (nextSession?.access_token)
               void client.realtime.setAuth(nextSession.access_token).catch(() => undefined);
           });
           unsubscribe = () => subscription.unsubscribe();
           const { data } = await client.auth.getSession();
-          if (!active) return;
+          if (!active || receivedAuthEvent) return;
           setSession(data.session);
           if (data.session?.access_token)
             void client.realtime.setAuth(data.session.access_token).catch(() => undefined);
         } catch {
-          if (active) setSession(null);
+          if (active && !receivedAuthEvent) setSession(null);
         } finally {
           if (active) setLoading(false);
         }

@@ -2,7 +2,7 @@ import type { NearbyPoiRequest, PoiResult } from '@routetwin/shared';
 import { haversineMeters } from '../../../../shared/geo/haversine.js';
 import { PoiLookup } from '../services/PoiLookup.js';
 import type { PoiSearchProvider } from '../ports/PoiSearchProvider.js';
-import { dedupeByCoordinates } from './poi-result.js';
+import { dedupeByCoordinates } from '../poiResult.js';
 
 /** Tìm địa điểm thật quanh một tâm (một điểm mẫu), xếp theo khoảng cách tới tâm. */
 export class SearchPoisNearbyUseCase {

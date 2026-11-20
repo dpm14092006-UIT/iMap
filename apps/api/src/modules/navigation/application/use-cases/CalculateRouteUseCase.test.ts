@@ -1,6 +1,6 @@
 import type { RoutePathResult, RouteRequest } from '@routetwin/shared';
 import { describe, expect, it, vi } from 'vitest';
-import type { RouteProvider } from '../../domain/ports/RouteProvider.js';
+import type { RouteProvider } from '../ports/RouteProvider.js';
 import { CalculateRouteUseCase } from './CalculateRouteUseCase.js';
 
 /** Đường thẳng dọc kinh tuyến; `offset` (độ kinh) dịch ngang để tạo tuyến khác hẳn. */

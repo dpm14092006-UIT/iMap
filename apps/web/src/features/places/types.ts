@@ -21,8 +21,42 @@ export type Place = {
   source: PlaceSource;
 };
 
-/** Tọa độ đơn giản theo định dạng JSON của dự án: {lat, lng}. */
-export type LatLng = { lat: number; lng: number };
-
 /** A suggestion may need one details request before it can be used as a route point. */
 export type PlaceSearchSuggestion = Omit<Place, 'lat' | 'lng'> & { lat?: number; lng?: number };
+
+import { type Ref } from 'react';
+import type { LatLng } from '../../shared/geo/types';
+import { type IconName } from '../../shared/ui/Icon';
+
+export type ComboboxAction = {
+  label: string;
+  icon: IconName;
+  /**
+   * true: Enter luôn chạy dòng này (từ khóa khớp danh mục). false: chỉ khi không có địa điểm nào
+   * chứa đúng chữ đã gõ (có dấu), vd. "phở" không khớp "Đường Phó Đức Chính".
+   */
+  preferred: boolean;
+  onRun: () => void;
+};
+export type PlaceComboboxProps = {
+  value: string;
+  getFocus?: () => LatLng;
+  /** Địa điểm gợi ý có sẵn (lọc tại chỗ, không cần gọi API). */
+  places: Place[];
+  onChange: (value: string) => void;
+  onSelect: (place: Place) => void;
+  placeholder: string;
+  icon?: IconName | null;
+  className?: string;
+  inputClassName?: string;
+  ariaLabel: string;
+  maxSuggestions?: number;
+  /** Để nơi dùng focus ô nhập bằng phím tắt. */
+  inputRef?: Ref<HTMLInputElement>;
+  /** Dòng thao tác đầu danh sách, dựng từ nội dung đang gõ; null thì không có. */
+  action?: ComboboxAction | null;
+  /** Điểm đã dùng gần đây (đã đăng nhập), hiện khi ô trống hoặc chưa sửa tên điểm đang chọn. */
+  recentPlaces?: Place[];
+  recentActive?: boolean;
+  onRemoveRecent?: (place: Place) => void;
+};

@@ -1,9 +1,9 @@
 import type { CongestionLevel, RouteCongestion, RouteRequest, RouteResult } from '@routetwin/shared';
 import { z } from 'zod';
 import { AppError } from '../../../../shared/errors/AppError.js';
-import type { AlternativeRouteProvider } from '../../domain/ports/AlternativeRouteProvider.js';
+import type { AlternativeRouteProvider } from '../../application/ports/AlternativeRouteProvider.js';
 import { countRouteTurns } from '../../domain/routeComparison.js';
-import type { RouteProvider } from '../../domain/ports/RouteProvider.js';
+import type { RouteProvider } from '../../application/ports/RouteProvider.js';
 
 const vietmapResponseSchema = z.object({
   code: z.string(),

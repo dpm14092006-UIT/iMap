@@ -1,4 +1,4 @@
-import { Icon } from '../../../shared/components/Icon';
+import { Icon } from '../../../shared/ui/Icon';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type Props = {
@@ -25,7 +25,7 @@ export function PushPermissionCard({ busy, error, isAuthenticated, onEnable, onD
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold">{t('Nhận cảnh báo kẹt xe trên tuyến')}</p>
-          <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
+          <p className="mt-1 text-xs leading-5 text-content-muted">
             {isAuthenticated
               ? t(
                   'Bật thông báo để được báo ngay khi có người báo cáo sự cố trên tuyến của bạn, kể cả khi đã tắt màn hình.',

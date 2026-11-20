@@ -10,14 +10,16 @@
   "scripts": {
     "dev": "npm run build -w @routetwin/shared && concurrently -k -n API,WEB -c cyan,magenta \"npm run dev -w @routetwin/api\" \"npm run dev -w @routetwin/web\"",
     "build": "npm run build -w @routetwin/shared && npm run build -w @routetwin/api && npm run build -w @routetwin/web",
-    "test": "npm run build -w @routetwin/shared && npm run test -w @routetwin/api && npm run test -w @routetwin/web",
+    "test": "npm run build -w @routetwin/shared && npm run test -w @routetwin/shared && npm run test -w @routetwin/api && npm run test -w @routetwin/web",
     "typecheck": "npm run build -w @routetwin/shared && npm run typecheck -w @routetwin/api && npm run typecheck -w @routetwin/web",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "osm:import": "tsx scripts/osm/import-osm.ts",
     "benchmark:pathfinding": "tsx scripts/benchmark/benchmark-pathfinding.ts",
-    "benchmark:tsp": "tsx scripts/benchmark/benchmark-tsp.ts"
+    "benchmark:tsp": "tsx scripts/benchmark/benchmark-tsp.ts",
+    "verify": "node scripts/verify/verify.mjs",
+    "test:browser": "npm run build -w @routetwin/shared && node scripts/verify/browser.mjs"
   },
   "engines": {
     "node": ">=20.19"
@@ -29,6 +31,7 @@
     "eslint": "^10.14.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.14.0",
+    "playwright": "^1.62.1",
     "prettier": "^3.9.10",
     "tsx": "^4.19.2",
     "typescript": "^5.8.3",

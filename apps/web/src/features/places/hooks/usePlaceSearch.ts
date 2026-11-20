@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import type { LatLng } from '../../../shared/geo/types';
 import { placeApi } from '../api/placeApi';
-import type { LatLng, PlaceSearchSuggestion } from '../types';
+import type { PlaceSearchSuggestion } from '../types';
 
 /** Trạng thái tìm kiếm để UI hiển thị đúng thông báo (đang tìm / không có / lỗi). */
 type PlaceSearchStatus = 'idle' | 'loading' | 'ready' | 'error';

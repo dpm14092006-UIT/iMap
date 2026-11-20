@@ -1,8 +1,9 @@
 import { useState, type Ref } from 'react';
-import { popularPlaces } from '../data/popularPlaces';
-import type { LatLng, Place } from '../types';
-import { PlaceCombobox, type ComboboxAction } from './PlaceCombobox';
+import type { LatLng } from '../../../shared/geo/types';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
+import { popularPlaces } from '../domain/popularPlaces';
+import type { Place } from '../types';
+import { PlaceCombobox, type ComboboxAction } from './PlaceCombobox';
 
 type PlaceSearchBarProps = {
   getFocus?: () => LatLng;

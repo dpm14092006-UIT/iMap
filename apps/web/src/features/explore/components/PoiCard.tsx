@@ -1,6 +1,6 @@
-import { Icon } from '../../../shared/components/Icon';
-import { formatDistanceMeters } from '../../navigation/utils/format';
-import { poiMetaFor } from '../data/poiCatalog';
+import { Icon } from '../../../shared/ui/Icon';
+import { formatDistanceMeters } from '../../../shared/format/units';
+import { poiMetaFor } from '../domain/poiCatalog';
 import type { Poi } from '../types';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 
@@ -80,7 +80,7 @@ export function PoiCard({
       >
         <PoiTile poi={poi} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-bold text-ink dark:text-white">{poi.name}</span>
+          <span className="block truncate text-sm font-bold text-content">{poi.name}</span>
           <span className="mt-0.5 block text-xs font-semibold" style={{ color: meta.color }}>
             {t(meta.label)}
           </span>

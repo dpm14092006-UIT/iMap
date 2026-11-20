@@ -18,13 +18,16 @@ export class SignedUrlCache {
   get(path: string): Promise<string | null> {
     const cached = this.entries.get(path);
     if (cached && cached.expiresAt > this.now()) return cached.url;
+    const evictIfCurrent = () => {
+      if (this.entries.get(path)?.url === url) this.entries.delete(path);
+    };
     const url = this.sign(path).then(
       (signed) => {
-        if (!signed) this.entries.delete(path);
+        if (!signed) evictIfCurrent();
         return signed;
       },
       (error: unknown) => {
-        this.entries.delete(path);
+        evictIfCurrent();
         throw error;
       },
     );

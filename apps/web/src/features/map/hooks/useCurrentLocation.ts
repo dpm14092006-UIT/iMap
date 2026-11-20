@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import type { LatLng } from '../../places/types';
+import type { LatLng } from '../../../shared/geo/types';
 
 type LocationFix = { point: LatLng; accuracyMeters: number };
 

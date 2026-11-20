@@ -1,4 +1,4 @@
-import type { RouteObjective, RoutePlan, TransportMode } from '../map/types';
+import type { RouteObjective, RoutePlan, TransportMode } from '../routing/types';
 import type { Place } from '../places/types';
 
 export type SavedRoute = {

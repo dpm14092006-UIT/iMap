@@ -40,7 +40,7 @@ curl http://localhost:4000/api/health
 
 - **N1 – Navigation & Optimization**: `apps/web/src/features/map|places|navigation|multi-stop|my-routes`, `apps/api/src/modules/places|navigation|optimization|my-routes`, thuật toán và graph OSM. Sở hữu `MapView`.
 - **N2 – Traffic & Data**: `apps/web/src/features/traffic|auth`, `apps/api/src/modules/traffic|auth`, `supabase/`, API middleware, migrations/RLS/Realtime.
-- **Cả hai**: `packages/shared`, `.github`, `docs/`, `apps/api/src/composition-root.ts` và hợp đồng `TrafficMapLayer`. Mọi thay đổi shared phải qua PR review.
+- **Cả hai**: `packages/shared`, `.github`, `docs/`, `apps/api/src/compositionRoot.ts` và hợp đồng `TrafficMapLayer`. Mọi thay đổi shared phải qua PR review.
 
 ## Cấu trúc OOP
 
@@ -50,7 +50,7 @@ Backend **feature-first + Clean Architecture**:
 - **application**: use cases, port (interface) cho repositories/providers; chỉ phụ thuộc domain/ports.
 - **infrastructure**: triển khai ports bằng Vietmap, OSM và Supabase.
 - **presentation**: Express controller/route + schema validation.
-- **composition-root.ts**: nơi tạo object và inject dependencies vào constructor.
+- **compositionRoot.ts**: nơi tạo object và inject dependencies vào constructor.
 
 Đường đi request: `Route -> Controller -> UseCase -> Interface (port) -> Adapter`. Domain không biết API key, HTTP hay SQL.
 
@@ -108,13 +108,11 @@ Bản đồ khởi đầu ở khung nhìn Việt Nam, có nút quay về toàn q
 
 Xem [kết quả kiểm tra tìm kiếm](docs/benchmarks/SEARCH_VERIFICATION.md).
 
-## Dẫn đường, tính lại tuyến và chế độ Demo
+## Dẫn đường và tính lại tuyến
 
 - **Dẫn đường:** bấm "Bắt đầu chuyến đi" sau khi tìm tuyến. App theo dõi vị trí, hiện chỉ dẫn rẽ tiếp theo và quãng đường còn lại.
 - **Tính lại tuyến (N1):** khi lệch tuyến đủ lâu, hoặc có sự cố đang hoạt động (mức Vừa trở lên) nằm trên tuyến trong 1,5 km phía trước, app gọi `POST /api/routes/reroute` từ vị trí hiện tại. Server chọn tuyến tốt nhất không đi qua sự cố → tuyến thay thế của VietMap → đi vòng qua điểm cạnh sự cố; nếu không né được (sự cố nằm trên con đường duy nhất vào/ra điểm) thì báo rõ để người dùng chú ý.
-- **Chế độ Demo (GPS giả):** mở app với `?demo=1` (ví dụ `http://localhost:5173/?demo=1`). Khi bắt đầu chuyến đi, xe tự chạy dọc tuyến; banner dẫn đường có công tắc **Thật / Demo** (đổi được giữa chuyến) và các nút Tạm dừng, Rẽ nhầm, Sự cố phía trước. Sự cố giả chỉ nằm trên máy, không gửi lên hệ thống báo cáo. Link thường không hiện các điều khiển này.
-- **Chế độ thuyết trình (cùng link `?demo=1`):** panel Chỉ đường có khối **So sánh Dijkstra / A\*** (bảng số nút duyệt, thời gian chạy; vẽ hai tuyến và vùng dữ liệu OSM trên bản đồ); panel Nhiều điểm có ô **Thuật toán sắp xếp** (Tự động / Held–Karp / NN + 2-opt). Kịch bản trình bày: `docs/guides/DEMO_SCRIPT_N1.md`.
-- Thiết kế: `useNavigationSession` đọc vị trí qua interface `PositionSource` với hai cài đặt `BrowserGpsSource` (GPS thật) và `SimulatedGpsSource` (GPS giả) — Strategy pattern, engine dẫn đường dùng chung.
+- Thiết kế: `useNavigationSession` chỉ đọc GPS thiết bị qua `BrowserGpsSource`. GPS chỉ bật sau khi người dùng bấm Bắt đầu và được dừng khi kết thúc/đến nơi/rời ứng dụng. Quy trình kiểm tra: [NAVIGATION_CHECKLIST.md](docs/guides/NAVIGATION_CHECKLIST.md).
 
 ## Thứ tự điểm dừng
 

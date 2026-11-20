@@ -100,7 +100,7 @@ describe('AI intent adapter', () => {
         ollamaUrl: 'http://localhost:11434',
       }).parse('Tìm trạm xăng');
       expect(result.source).toBe('rules');
-      expect(result.warning).toContain('hết lượt');
+      expect(result.source === 'rules' ? result.warning : '').toContain('hết lượt');
       expect(fetcher).toHaveBeenCalledTimes(1);
     }
   });

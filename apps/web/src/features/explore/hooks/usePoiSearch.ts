@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { Coordinate } from '../../map/types';
-import type { LatLng } from '../../places/types';
-import { sameTerm } from '../data/poiCatalog';
-import { poiErrorMessage } from '../services/poiErrors';
-import { ALONG_ROUTE_RADIUS_M, poiSortsByMode, sortPois } from '../services/poiOptions';
+import type { Coordinate, LatLng } from '../../../shared/geo/types';
+import { sameTerm } from '../domain/poiCatalog';
+import { poiErrorMessage } from '../domain/poiErrors';
+import { ALONG_ROUTE_RADIUS_M, poiSortsByMode, sortPois } from '../domain/poiOptions';
 import type { Poi, PoiProvider, PoiSearchTerm, PoiSort } from '../types';
 
 export type PoiMode = 'nearby' | 'alongRoute';

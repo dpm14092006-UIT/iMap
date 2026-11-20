@@ -23,7 +23,7 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
       <h1 className="text-[30px] font-semibold leading-tight tracking-[-.045em]">
         {user ? t('Sẵn sàng lên đường?') : signingUp ? t('Bắt đầu với iMap.') : t('Chào bạn trở lại.')}
       </h1>
-      <p className="mt-2.5 text-[13px] leading-6 text-slate-500 dark:text-slate-400">
+      <p className="mt-2.5 text-[13px] leading-6 text-content-subtle">
         {user
           ? t('Hành trình tiếp theo đang chờ bạn.')
           : signingUp
@@ -84,10 +84,7 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
     return (
       <>
         {heading}
-        <p
-          className="rounded-2xl bg-slate-50 dark:bg-slate-800/60 p-5 text-sm text-slate-600 dark:text-slate-300"
-          role="status"
-        >
+        <p className="rounded-2xl bg-surface-muted p-5 text-sm text-content-muted" role="status">
           {t('Đang kiểm tra phiên đăng nhập…')}
         </p>
       </>
@@ -117,8 +114,8 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
             <p className="text-xs font-semibold text-brand-700 dark:text-indigo-300">
               {t('Bạn đã đăng nhập')}
             </p>
-            <p className="mt-2 break-all text-base font-bold text-ink dark:text-slate-100">{user.email}</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+            <p className="mt-2 break-all text-base font-bold text-content">{user.email}</p>
+            <p className="mt-2 text-sm leading-6 text-content-muted">
               {t('Sẵn sàng gửi và xác minh báo cáo giao thông cùng cộng đồng.')}
             </p>
           </div>
@@ -132,7 +129,7 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
             type="button"
             disabled={busy}
             onClick={() => void logout()}
-            className="min-h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 px-4 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 dark:focus-visible:ring-indigo-400/30 disabled:opacity-50"
+            className="min-h-11 w-full rounded-xl border border-line px-4 text-sm font-semibold text-content-muted hover:bg-slate-50 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 dark:focus-visible:ring-indigo-400/30 disabled:opacity-50"
           >
             {busy ? t('Đang đăng xuất…') : t('Đăng xuất')}
           </button>
@@ -140,7 +137,7 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
       ) : (
         <>
           <div
-            className="mb-6 grid grid-cols-2 gap-5 border-b border-slate-200 dark:border-white/10"
+            className="mb-6 grid grid-cols-2 gap-5 border-b border-line"
             role="group"
             aria-label={t('Chọn phương thức tài khoản')}
           >
@@ -157,7 +154,7 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
                   setMessage('');
                   setShowPassword(false);
                 }}
-                className={`relative -mb-px min-h-11 border-b-2 px-1 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 dark:focus-visible:ring-indigo-400/30 disabled:opacity-50 ${mode === value ? 'border-brand-600 text-brand-700 dark:text-indigo-300' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-ink dark:hover:text-slate-100'}`}
+                className={`relative -mb-px min-h-11 border-b-2 px-1 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 dark:focus-visible:ring-indigo-400/30 disabled:opacity-50 ${mode === value ? 'border-brand-600 text-brand-700 dark:text-indigo-300' : 'border-transparent text-content-subtle hover:text-ink dark:hover:text-slate-100'}`}
               >
                 {value === 'sign_in' ? t('Đăng nhập') : t('Đăng ký')}
               </button>
@@ -165,10 +162,7 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
           </div>
           <form onSubmit={(event) => void submit(event)} aria-busy={busy} className="space-y-4">
             <div>
-              <label
-                htmlFor={`${id}-email`}
-                className="text-xs font-semibold text-slate-600 dark:text-slate-300"
-              >
+              <label htmlFor={`${id}-email`} className="text-xs font-semibold text-content-muted">
                 Email
               </label>
               <input
@@ -184,14 +178,11 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="ban@example.com"
-                className="mt-2 h-12 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-[#fafbfc] dark:bg-slate-800 px-3.5 text-base text-ink dark:text-slate-100 sm:text-[13px] outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-brand-400 dark:focus:border-indigo-400 focus:ring-4 focus:ring-brand-50 dark:focus:ring-indigo-400/20 disabled:bg-slate-50 dark:disabled:bg-slate-800/40"
+                className="mt-2 h-12 w-full rounded-xl border border-line bg-[#fafbfc] dark:bg-slate-800 px-3.5 text-base text-content sm:text-[13px] outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-brand-400 dark:focus:border-indigo-400 focus:ring-4 focus:ring-brand-50 dark:focus:ring-indigo-400/20 disabled:bg-slate-50 dark:disabled:bg-slate-800/40"
               />
             </div>
             <div>
-              <label
-                htmlFor={`${id}-password`}
-                className="text-xs font-semibold text-slate-600 dark:text-slate-300"
-              >
+              <label htmlFor={`${id}-password`} className="text-xs font-semibold text-content-muted">
                 {t('Mật khẩu')}
               </label>
               <div className="relative mt-2">
@@ -207,7 +198,7 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   aria-describedby={signingUp ? `${id}-password-help` : undefined}
-                  className="h-12 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-[#fafbfc] dark:bg-slate-800 placeholder:text-slate-400 dark:placeholder:text-slate-500 pl-3.5 pr-16 text-base text-ink dark:text-slate-100 sm:text-[13px] outline-none focus:border-brand-400 dark:focus:border-indigo-400 focus:ring-4 focus:ring-brand-50 dark:focus:ring-indigo-400/20 disabled:bg-slate-50 dark:disabled:bg-slate-800/40"
+                  className="h-12 w-full rounded-xl border border-line bg-[#fafbfc] dark:bg-slate-800 placeholder:text-slate-400 dark:placeholder:text-slate-500 pl-3.5 pr-16 text-base text-content sm:text-[13px] outline-none focus:border-brand-400 dark:focus:border-indigo-400 focus:ring-4 focus:ring-brand-50 dark:focus:ring-indigo-400/20 disabled:bg-slate-50 dark:disabled:bg-slate-800/40"
                 />
                 <button
                   type="button"
@@ -215,13 +206,13 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
                   aria-pressed={showPassword}
                   aria-label={showPassword ? t('Ẩn mật khẩu') : t('Hiện mật khẩu')}
                   onClick={() => setShowPassword((value) => !value)}
-                  className="absolute inset-y-0 right-1 my-1 rounded-lg px-3 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40"
+                  className="absolute inset-y-0 right-1 my-1 rounded-lg px-3 text-xs font-semibold text-content-muted hover:bg-slate-50 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40"
                 >
                   {showPassword ? t('Ẩn') : t('Hiện')}
                 </button>
               </div>
               {signingUp && (
-                <p id={`${id}-password-help`} className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                <p id={`${id}-password-help`} className="mt-2 text-xs text-content-subtle">
                   {t('Dùng ít nhất 8 ký tự. Bạn có thể cần xác nhận qua email.')}
                 </p>
               )}

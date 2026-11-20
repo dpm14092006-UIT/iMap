@@ -29,9 +29,10 @@ export class TrafficApiClient {
     return this.http.post<TrafficReportDto>('/traffic-reports', input, { accessToken });
   }
 
-  analyzeImage(file: File, task: TrafficImageAnalysisTask, accessToken: string) {
+  analyzeImage(file: File, task: TrafficImageAnalysisTask, accessToken: string, signal?: AbortSignal) {
     return this.http.post<TrafficImageAnalysisDto>(`/traffic-reports/analyze-image?task=${task}`, file, {
       accessToken,
+      signal,
       headers: { 'Content-Type': file.type },
     });
   }

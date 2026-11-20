@@ -1,5 +1,5 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
-import { getRequestId } from './request-context.js';
+import { getRequestId } from './requestContext.js';
 
 export type RateLimitDecision = {
   allowed: boolean;

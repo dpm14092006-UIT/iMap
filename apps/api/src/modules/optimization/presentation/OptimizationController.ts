@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { OptimizeRouteUseCase } from '../application/OptimizeRouteUseCase.js';
+import type { OptimizeRouteUseCase } from '../application/use-cases/OptimizeRouteUseCase.js';
 
 /** HTTP cho tối ưu hành trình nhiều điểm. Validate nằm trong use case (trước khi gọi Matrix tính phí). */
 export class OptimizationController {

@@ -12,7 +12,7 @@
 10. **Testing:** unit tests cho domain/use case; adapter tests bằng mock; integration tests với database staging; E2E trên mobile/desktop.
 11. **Error handling:** domain error -> status phù hợp; không trả stack/secret ra client.
 12. **React:** component chức năng + hooks, feature folders; không phải viết class component để gọi là OOP.
-13. **Code review:** `packages/shared` và `composition-root.ts` phải được cả hai xác nhận.
+13. **Code review:** `packages/shared` và `compositionRoot.ts` phải được cả hai xác nhận.
 
 ## Ví dụ luồng dependency
 

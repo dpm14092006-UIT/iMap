@@ -1,6 +1,6 @@
 import type { RoutePathResult, RouteRequest, RouteResult, RouteVariant } from '@routetwin/shared';
 import { areNearDuplicateRoutes } from '../../domain/algorithms/routeSimilarity.js';
-import type { RouteProvider } from '../../domain/ports/RouteProvider.js';
+import type { RouteProvider } from '../ports/RouteProvider.js';
 
 type AvoidOption = NonNullable<RouteRequest['avoid']>[number];
 

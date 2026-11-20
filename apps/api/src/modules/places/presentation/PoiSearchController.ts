@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { alongRoutePoiRequestSchema, nearbyPoiRequestSchema, type PoiResult } from '@routetwin/shared';
 import { ConcurrencyLimiter } from '../../../shared/http/ConcurrencyLimiter.js';
-import { getRequestId } from '../../../shared/http/request-context.js';
+import { getRequestId } from '../../../shared/http/requestContext.js';
 import type { SearchPoisAlongRouteUseCase } from '../application/use-cases/SearchPoisAlongRouteUseCase.js';
 import type { SearchPoisNearbyUseCase } from '../application/use-cases/SearchPoisNearbyUseCase.js';
 

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getSupabaseClient } from '../../auth/services/supabaseClient';
 import { HttpClient } from '../../../shared/api/HttpClient';
+import { getSupabaseClient } from '../../auth/services/supabaseClient';
 import { TrafficApiClient, TrafficPhotoStorage } from './trafficApi';
 
 vi.mock('../../auth/services/supabaseClient', () => ({ getSupabaseClient: vi.fn() }));

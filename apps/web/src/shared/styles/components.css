@@ -1,0 +1,75 @@
+.panel-scroll {
+  overscroll-behavior: contain;
+  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-width: thin;
+}
+
+.panel-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.panel-scroll::-webkit-scrollbar-thumb {
+  border-radius: 99px;
+  background: #cbd5e1;
+}
+
+.panel-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.toast-message {
+  max-width: calc(100vw - 24px);
+  animation: toast-in 0.18s ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.dark .panel-scroll {
+  scrollbar-color: #475569 transparent;
+}
+
+.dark .panel-scroll::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@layer components {
+  .ui-button {
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition;
+    @apply focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/30;
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .ui-button-primary {
+    @apply bg-primary text-on-primary hover:bg-primary-hover;
+  }
+  .ui-button-secondary {
+    @apply border border-line bg-surface text-content hover:bg-surface-raised;
+  }
+  .ui-button-ghost {
+    @apply text-content-muted hover:bg-surface-raised;
+  }
+  .ui-button-danger {
+    @apply border border-line bg-surface text-danger hover:bg-surface-raised;
+  }
+  .ui-field {
+    @apply min-h-10 w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-content;
+    @apply placeholder:text-content-subtle focus:outline-none focus:border-focus focus:ring-4 focus:ring-focus/20;
+    @apply disabled:cursor-not-allowed disabled:opacity-60;
+  }
+}

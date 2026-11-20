@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { RoutePlan } from '../../map/types';
+import type { RoutePlan } from '../../routing/types';
 import type { SavedRoute } from '../types';
 import { LocalStorageSavedRouteRepository } from './SavedRouteRepository';
 

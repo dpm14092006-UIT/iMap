@@ -104,4 +104,23 @@ describe('RerouteUseCase', () => {
     await expect(new RerouteUseCase(provider).execute({ ...input, stops: [], avoid: [] })).rejects.toThrow();
     expect(provider.calculateAlternatives).not.toHaveBeenCalled();
   });
+
+  it('giữ loại đường cần tránh (phà) cho mọi tuyến ứng viên, kể cả tuyến đi vòng', async () => {
+    const provider = providerReturning([straight], [eastern], [eastern]);
+    await new RerouteUseCase(provider).execute({
+      ...input,
+      avoid: [incidentOnStraight],
+      avoidRoads: ['ferry'],
+    });
+    expect(provider.calculateAlternatives.mock.calls.length).toBeGreaterThan(1);
+    for (const [request] of provider.calculateAlternatives.mock.calls) {
+      expect(request.avoid).toEqual(['ferry']);
+    }
+  });
+
+  it('không gửi avoid khi tuyến gốc không tránh loại đường nào', async () => {
+    const provider = providerReturning([straight]);
+    await new RerouteUseCase(provider).execute({ ...input, avoid: [] });
+    expect(provider.calculateAlternatives.mock.calls[0]![0]).not.toHaveProperty('avoid');
+  });
 });

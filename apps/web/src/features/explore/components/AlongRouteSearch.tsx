@@ -1,5 +1,5 @@
-import { Icon } from '../../../shared/components/Icon';
-import { alongRouteCategories, poiCatalog } from '../data/poiCatalog';
+import { Icon } from '../../../shared/ui/Icon';
+import { alongRouteCategories, poiCatalog } from '../domain/poiCatalog';
 import type { PoiCategory, PoiSearchTerm } from '../types';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 

@@ -1,7 +1,7 @@
 import { httpClient } from '../../../shared/api/HttpClient';
 import { getSupabaseClient } from '../../auth/services/supabaseClient';
-import type { Coordinate, TransportMode } from '../../map/types';
-import type { LatLng } from '../../places/types';
+import type { Coordinate, LatLng } from '../../../shared/geo/types';
+import type { TransportMode } from '../../routing/types';
 
 type PushConfig = { enabled: boolean; publicKey: string | null };
 

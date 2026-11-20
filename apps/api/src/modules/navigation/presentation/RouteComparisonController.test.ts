@@ -3,10 +3,12 @@ import { once } from 'node:events';
 import type { Server } from 'node:http';
 import type { RouteComparisonSnapshot, RoutePathResult } from '@routetwin/shared';
 import { afterEach, expect, it, vi } from 'vitest';
-import { createApp } from '../../../app.js';
-import { createContainer } from '../../../composition-root.js';
+import { createApp } from '../../../createApp.js';
+import { createContainer } from '../../../compositionRoot.js';
 import { SupabaseClientFactory } from '../../../shared/supabase/SupabaseClientFactory.js';
 import { CalculateRouteUseCase } from '../application/use-cases/CalculateRouteUseCase.js';
+import { CompareRoutesUseCase } from '../application/use-cases/CompareRoutesUseCase.js';
+import { SupabaseUserFeatureQuota } from '../../../shared/supabase/SupabaseUserFeatureQuota.js';
 import { GenerativeRoutePreferenceProvider } from '../infrastructure/comparison/GenerativeRoutePreferenceProvider.js';
 import { SignedRouteComparison } from '../infrastructure/comparison/SignedRouteComparison.js';
 import { RouteComparisonController } from './RouteComparisonController.js';
@@ -67,12 +69,16 @@ it('uses verified VietMap facts and sends only the preference to AI after auth a
     baseUrl: 'http://model.test',
     model: 'demo',
   });
-  const comparison = new RouteComparisonController(new SignedRouteComparison('test-key'), model);
-  container.routeComparisonController = comparison;
+  const compareRoutes = new CompareRoutesUseCase(
+    new SignedRouteComparison('test-key'),
+    model,
+    new SupabaseUserFeatureQuota(),
+  );
+  container.routeComparisonController = new RouteComparisonController(compareRoutes);
   const calculate = new CalculateRouteUseCase({
     calculate: async () => ({ ...fast, alternatives: [fewerTurns] }),
   });
-  container.routeController = new RouteController(calculate, comparison);
+  container.routeController = new RouteController(calculate, compareRoutes);
   server = createApp(container).listen(0, '127.0.0.1');
   await once(server, 'listening');
   const address = server.address();
