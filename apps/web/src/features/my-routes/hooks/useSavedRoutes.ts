@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { RoutePlan } from '../../map/types';
 import {
   LocalStorageSavedRouteRepository,
@@ -24,7 +24,8 @@ function toSavedRoute(plan: RoutePlan): SavedRoute {
     destination: last,
     stops: plan.stops,
     vehicle: plan.vehicle,
-    plan,
+    // Không lưu cả `plan` (hình học tuyến rất nặng): khi mở lại luôn tính lại bằng VietMap.
+    objective: plan.objective,
     originId: first.id,
     originName: first.name,
     destinationId: last.id,
@@ -36,20 +37,30 @@ function toSavedRoute(plan: RoutePlan): SavedRoute {
 export function useSavedRoutes(repository: SavedRouteRepository = defaultRepository) {
   const [routes, setRoutes] = useState<SavedRoute[]>(() => repository.load());
 
-  useEffect(() => {
-    repository.save(routes);
-  }, [repository, routes]);
+  /** Ghi danh sách mới xuống nơi lưu rồi cập nhật giao diện; trả về false nếu không ghi được. */
+  const commit = useCallback(
+    (next: SavedRoute[]) => {
+      const persisted = repository.save(next);
+      setRoutes(next);
+      return persisted;
+    },
+    [repository],
+  );
 
   /** Lưu tuyến lên đầu danh sách; nếu đã lưu đúng tuyến này (xem `savedRouteKey`) thì thay bằng bản mới. */
-  const save = useCallback((plan: RoutePlan) => {
-    const item = toSavedRoute(plan);
-    const key = savedRouteKey(item);
-    setRoutes((current) => [item, ...current.filter((route) => savedRouteKey(route) !== key)]);
-  }, []);
+  const save = useCallback(
+    (plan: RoutePlan): boolean => {
+      const item = toSavedRoute(plan);
+      const key = savedRouteKey(item);
+      return commit([item, ...routes.filter((route) => savedRouteKey(route) !== key)]);
+    },
+    [commit, routes],
+  );
 
-  const remove = useCallback((id: string) => {
-    setRoutes((current) => current.filter((route) => route.id !== id));
-  }, []);
+  const remove = useCallback(
+    (id: string): boolean => commit(routes.filter((route) => route.id !== id)),
+    [commit, routes],
+  );
 
   return { routes, save, remove };
 }

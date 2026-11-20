@@ -764,8 +764,12 @@ export function App() {
 
   // --- Tuyến đã lưu ---
   const savePlan = (plan: RoutePlan) => {
-    savedRoutes.save(plan);
-    showToast(t('Đã lưu hành trình trên thiết bị này'));
+    // save() trả về false khi trình duyệt chặn hoặc hết bộ nhớ: báo thật, không báo "đã lưu".
+    showToast(
+      savedRoutes.save(plan)
+        ? t('Đã lưu hành trình trên thiết bị này')
+        : t('Không lưu được: bộ nhớ trình duyệt đầy hoặc bị chặn. Hành trình sẽ mất khi tải lại trang.'),
+    );
   };
 
   const deleteSavedRoute = (id: string) => {
@@ -799,7 +803,7 @@ export function App() {
 
     // Tuyến nhiều điểm: tính lại và chỉ hiển thị trên bản đồ.
     setActiveRoute(null);
-    const result = await routeApi.createPlan(stops, saved.vehicle, saved.plan?.objective ?? 'time');
+    const result = await routeApi.createPlan(stops, saved.vehicle, saved.objective ?? 'time');
     if ('error' in result) {
       showToast(t(result.error));
       return;

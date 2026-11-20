@@ -13,6 +13,6 @@ export function savedRouteKey(route: SavedRoute): string {
   const stops = route.stops?.length
     ? route.stops
     : [route.origin, ...(route.destination ? [route.destination] : [])];
-  const objective = route.plan?.objective ?? 'time';
+  const objective = route.objective ?? route.plan?.objective ?? 'time';
   return [route.kind, route.vehicle, objective, ...stops.map(coordinateKey)].join('|');
 }

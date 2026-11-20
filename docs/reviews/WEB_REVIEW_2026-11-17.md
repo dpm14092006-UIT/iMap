@@ -14,7 +14,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
   Bỏ trùng theo `title`, mà title không có loại xe/điểm dừng. Lưu A→B ô tô rồi A→B xe máy thì mất bản ô tô; hai hành trình nhiều điểm cùng điểm xuất phát, cùng số điểm cũng đè nhau.
   _Gợi ý:_ khóa trùng gồm vehicle + objective + danh sách id/tọa độ các điểm.
 
-- [ ] **3. Báo "đã lưu" nhưng không lưu được** — `features/my-routes/services/SavedRouteRepository.ts:27`
+- [x] **3. Báo "đã lưu" nhưng không lưu được** — `features/my-routes/services/SavedRouteRepository.ts:27`
   Mỗi tuyến lưu cả hình học vào localStorage; `save()` nuốt lỗi QuotaExceeded trong khi App vẫn toast "Đã lưu hành trình". Tải lại trang là mất.
   _Gợi ý:_ không lưu `plan.legs[].points` (đã tính lại khi mở), và `save()` trả về thành công/thất bại để App báo đúng.
 
