@@ -27,7 +27,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 - [x] **6. Thêm/bỏ điểm ghé bằng trợ lý reset tiêu chí về "time"** — `app/App.tsx:888`, `app/App.tsx:900`
   `routePlanFromResult(...)` và `routeApi.createPlan(...)` thiếu `activeRoute.objective`.
 
-- [ ] **7. Lịch sử địa điểm mất mục vừa thêm** — `features/places/context/RecentPlacesProvider.tsx:50`
+- [x] **7. Lịch sử địa điểm mất mục vừa thêm** — `features/places/context/RecentPlacesProvider.tsx:50`
   Kết quả `repository.list()` về sau `record()` sẽ ghi đè state và cache.
   _Gợi ý:_ gộp remote với các mục local mới hơn, hoặc bỏ qua kết quả list nếu đã có record trong lúc chờ.
 
