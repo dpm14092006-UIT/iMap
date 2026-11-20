@@ -130,11 +130,11 @@ export function AuthPage() {
   const { language, setLanguage, t } = useI18n();
   useEffect(() => {
     const previousTitle = document.title;
-    document.title = t('Đăng nhập · iMap');
+    document.title = 'iMap';
     return () => {
       document.title = previousTitle;
     };
-  }, [t]);
+  }, []);
 
   return (
     <div className={isDark ? 'dark' : ''}>

@@ -24,7 +24,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = language;
     const isLoginPage = window.location.pathname.replace(/\/+$/, '') === '/login';
     if (!isLoginPage) {
-      document.title = language === 'en' ? 'iMap · Maps & directions' : 'iMap · Bản đồ & chỉ đường';
+      document.title = 'iMap';
     }
     const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
     if (description) {
