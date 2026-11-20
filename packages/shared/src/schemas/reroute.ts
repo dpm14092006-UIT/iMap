@@ -22,6 +22,11 @@ export const rerouteRequestSchema = z.object({
   vehicle: z.enum(['car', 'motorcycle']),
   objective: z.enum(['distance', 'duration']).default('duration'),
   avoid: z.array(blockingIncidentSchema).max(30).default([]),
+  /** Loại đường cần tránh của tuyến gốc (ví dụ phà), giữ nguyên khi tính lại. */
+  avoidRoads: z
+    .array(z.enum(['ferry', 'toll']))
+    .max(2)
+    .optional(),
 });
 export type RerouteRequest = z.infer<typeof rerouteRequestSchema>;
 

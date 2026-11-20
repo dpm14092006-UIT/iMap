@@ -100,6 +100,8 @@ export function useRouteTrafficAlert(options: Options) {
           { lat: incident.lat, lng: incident.lng, radiusMeters: AVOID_RADIUS_METERS },
           ...otherIncidents.slice(0, 29).map(({ lat, lng }) => ({ lat, lng, radiusMeters: 60 })),
         ],
+        // Đường tránh sự cố vẫn phải giữ tùy chọn tránh phà của tuyến đang đi.
+        ...(route.avoidFerry ? { avoidRoads: ['ferry' as const] } : {}),
       });
       if (requestId.current !== id || optionsRef.current.route?.id !== route.id) return;
       if (result.strategy === 'unavoidable' || result.blockedCount > 0) {
@@ -107,7 +109,13 @@ export function useRouteTrafficAlert(options: Options) {
         return;
       }
       const startPlace = isNavigating && location ? basicPlaceFromPoint(location, 'gps') : route.stops[0]!;
-      const plan = routePlanFromResult(result.route, [startPlace, ...stops], route.vehicle, route.objective);
+      const plan = routePlanFromResult(
+        result.route,
+        [startPlace, ...stops],
+        route.vehicle,
+        route.objective,
+        route.avoidFerry ?? false,
+      );
       const deltaMin = plan.durationMin - (remainingMinutes ?? route.durationMin);
       setAlert((current) =>
         current

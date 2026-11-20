@@ -90,12 +90,15 @@ export function useNavigationRerouting({ navigation, routeIncidents, onRerouted,
             lng,
             radiusMeters: IncidentAheadDetector.INCIDENT_RADIUS_METERS,
           })),
+          // Tuyến gốc tránh phà thì tuyến tính lại cũng phải tránh.
+          ...(route.avoidFerry ? { avoidRoads: ['ferry' as const] } : {}),
         });
         plan = routePlanFromResult(
           result.route,
           [basicPlaceFromPoint(location, 'gps'), ...destinationStops],
           route.vehicle,
           route.objective,
+          route.avoidFerry ?? false,
         );
         strategy = result.strategy;
       } catch (error) {

@@ -44,4 +44,6 @@ Dẫn đường chỉ dùng BrowserGpsSource. Adapter chặn callback đã xếp
 | Quota route-stops | `RouteStopsController` kiểm tra body → xin chỗ xử lý → trừ hạn mức ngay trước khi gọi use case; bỏ `requireFeatureQuota` chạy trước validation | Body sai và instance đầy không trừ lượt; hết lượt không gọi provider |
 | Trợ lý và tránh phà | `RoutePlan.avoidFerry`; `RouteApiClient.createPlan(..., avoidFerry)` gửi `avoid: ['ferry']`; trợ lý tính lại tuyến khi tuyến đang tránh phà thay vì dùng tuyến dựng sẵn; tuyến đã lưu lấy tùy chọn từ tuyến | Thêm/bỏ điểm ghé giữ tiêu chí và tránh phà; API client gửi đúng body |
 
-Còn mở: outbox/hàng đợi bền cho Web Push (hiện chỉ có timeout từng lần gửi và `Promise.race` 4 giây); tính lại tuyến khi dẫn đường (`/routes/reroute`) chưa nhận tùy chọn tránh phà.
+| Tính lại tuyến và tránh phà | `rerouteRequestSchema.avoidRoads`; `RerouteUseCase` gửi tùy chọn cho mọi tuyến ứng viên kể cả tuyến đi vòng; tự tính lại khi lệch tuyến và đề xuất đổi tuyến khi có sự cố đều gửi theo `RoutePlan.avoidFerry` và giữ cờ trên tuyến mới | Use case: mọi lần gọi provider đều mang `avoid: ['ferry']`; hook tính lại: gửi `avoidRoads` và tuyến mới vẫn tránh phà |
+
+Còn mở: outbox/hàng đợi bền cho Web Push (hiện chỉ có timeout từng lần gửi và `Promise.race` 4 giây); cần chọn hạ tầng (Vercel `waitUntil`, Supabase queue hoặc worker riêng) trước khi triển khai.

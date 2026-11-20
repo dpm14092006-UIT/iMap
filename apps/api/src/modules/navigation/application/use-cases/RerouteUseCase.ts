@@ -31,6 +31,7 @@ export class RerouteUseCase {
       points,
       vehicle: input.vehicle,
       objective: input.objective,
+      ...this.roadPreferences(input),
     });
     const best = candidates[0]!;
 
@@ -94,6 +95,7 @@ export class RerouteUseCase {
             points,
             vehicle: input.vehicle,
             objective: input.objective,
+            ...this.roadPreferences(input),
           })),
         );
       } catch {
@@ -117,6 +119,11 @@ export class RerouteUseCase {
     const stops = [...input.stops];
     stops.splice(insertAt === -1 ? stops.length - 1 : insertAt, 0, detour);
     return [input.from, ...stops];
+  }
+
+  /** Loại đường cần tránh của tuyến gốc (phà, trạm thu phí) được giữ cho mọi tuyến ứng viên. */
+  private roadPreferences(input: RerouteRequest) {
+    return input.avoidRoads?.length ? { avoid: input.avoidRoads } : {};
   }
 
   private cost(route: RouteResult, objective: RerouteRequest['objective']): number {

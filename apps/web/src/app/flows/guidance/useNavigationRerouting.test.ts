@@ -13,9 +13,9 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-function setup() {
+function setup(route = routePlan()) {
   const navigation = {
-    route: routePlan(),
+    route,
     status: 'navigating',
     location: { lat: 10, lng: 106 },
     nextStopIndex: 1,
@@ -43,6 +43,23 @@ const response = (): RerouteResult => ({
   strategy: 'direct',
   blockedCount: 0,
   candidatesChecked: 1,
+});
+
+describe('navigation rerouting giữ tùy chọn tuyến', () => {
+  it('tuyến tránh phà: gửi avoidRoads và tuyến mới vẫn tránh phà', async () => {
+    vi.mocked(rerouteApi.reroute).mockResolvedValue(response());
+    const { result, onRerouted } = setup({ ...routePlan(), avoidFerry: true });
+    await act(() => result.current.recalculate());
+    expect(vi.mocked(rerouteApi.reroute).mock.calls[0]![0]).toMatchObject({ avoidRoads: ['ferry'] });
+    expect(onRerouted.mock.calls[0]![0]).toMatchObject({ avoidFerry: true });
+  });
+
+  it('tuyến thường: không gửi avoidRoads', async () => {
+    vi.mocked(rerouteApi.reroute).mockResolvedValue(response());
+    const { result } = setup();
+    await act(() => result.current.recalculate());
+    expect(vi.mocked(rerouteApi.reroute).mock.calls[0]![0]).not.toHaveProperty('avoidRoads');
+  });
 });
 
 describe('navigation rerouting concurrency', () => {
