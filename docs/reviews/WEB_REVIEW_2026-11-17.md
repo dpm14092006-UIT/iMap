@@ -39,7 +39,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 - [x] **9. Lỗi Supabase khi ghi lịch sử bị bỏ qua** — `features/places/services/recentPlaces.ts:100`, `:115`
   `rpc()`/`.delete()` trả `{ error }` chứ không throw, nên `.catch()` ở nơi gọi không bao giờ chạy.
 
-- [ ] **10. Chọn điểm trên bản đồ bị kết quả cũ ghi đè** — `app/App.tsx:504`
+- [x] **10. Chọn điểm trên bản đồ bị kết quả cũ ghi đè** — `app/App.tsx:504`
   `placeFromPoint` (reverse geocode, timeout 45 s) không hủy/không đánh số request; chọn nhanh hai lần thì lần chậm về sau thắng.
 
 - [ ] **11. Mở lại hành trình nhiều điểm không chống kết quả cũ** — `app/App.tsx:799`

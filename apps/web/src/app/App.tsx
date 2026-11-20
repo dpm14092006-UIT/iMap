@@ -63,6 +63,7 @@ import type {
   TrafficVehicleScope,
 } from '../features/traffic/components/TrafficReportPanel';
 import { useTrafficReports, type RealtimeTrafficReport } from '../features/traffic/hooks/useTrafficReports';
+import { RequestSequence } from '../shared/async/RequestSequence';
 import { parseRealtimeReport } from '../features/traffic/services/realtimeReport';
 import {
   incidentLabels,
@@ -500,13 +501,33 @@ export function App() {
     openPanel('directions');
   };
 
+  /** Đánh số các lần đặt điểm đi/đến bằng tra địa chỉ, để kết quả về chậm không ghi đè lựa chọn mới hơn. */
+  const endpointRequests = useRef(new RequestSequence<PickTarget>());
+  /** Điểm đi/đến hiện tại, đọc được sau `await` (closure chỉ giữ giá trị cũ). */
+  const currentEndpoints = useRef({ origin: directions.origin, destination: directions.destination });
+  currentEndpoints.current = { origin: directions.origin, destination: directions.destination };
+  /**
+   * Bắt đầu tra địa chỉ cho điểm đi/đến; hàm trả về cho biết kết quả còn được ghi hay không:
+   * chỉ khi đây vẫn là yêu cầu mới nhất VÀ trong lúc chờ người dùng chưa tự chọn điểm khác
+   * (gõ tìm, đảo chiều…) — những cách đó không đi qua bộ đánh số.
+   */
+  const beginEndpointLookup = (target: PickTarget) => {
+    const requestId = endpointRequests.current.next(target);
+    const before = currentEndpoints.current[target];
+    return () =>
+      endpointRequests.current.isLatest(target, requestId) && currentEndpoints.current[target] === before;
+  };
+
   /** Click bản đồ: tùy panel đang mở mà xử lý khác nhau. */
   const handleMapClick = async (point: LatLng) => {
     // 1. Đang chọn điểm đi/đến trên bản đồ.
     if (pickTarget) {
       const target = pickTarget;
       setPickTarget(null);
+      const stillWanted = beginEndpointLookup(target);
       const place = await placeFromPoint(point, 'map');
+      // Tra địa chỉ có thể mất vài giây: nếu đã chọn lại điểm này thì bỏ kết quả cũ.
+      if (!stillWanted()) return;
       if (target === 'origin') directions.setOrigin(place);
       else directions.setDestination(place);
       return;
@@ -536,8 +557,10 @@ export function App() {
   const setOriginFromGps = async () => {
     setIsLocating(true);
     try {
+      const stillWanted = beginEndpointLookup('origin');
       const fix = await locate();
-      directions.setOrigin(await placeFromPoint(fix.point, 'gps'));
+      const place = await placeFromPoint(fix.point, 'gps');
+      if (stillWanted()) directions.setOrigin(place);
       mapController.current?.flyTo(fix.point, 15);
     } catch (error) {
       showToast(t(errorMessage(error, 'Không lấy được vị trí.')));
