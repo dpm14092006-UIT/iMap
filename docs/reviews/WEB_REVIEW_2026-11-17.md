@@ -45,7 +45,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 - [ ] **11. Mở lại hành trình nhiều điểm không chống kết quả cũ** — `app/App.tsx:799`
   Sau `await createPlan` luôn `setActiveRoute` + đóng panel, kể cả khi người dùng đã sang tuyến khác (khác với `planMultiStopRoute` có `multiPlanGeneration`).
 
-- [ ] **12. Mất timeout trên Safari cũ** — `shared/api/HttpClient.ts:83`
+- [x] **12. Mất timeout trên Safari cũ** — `shared/api/HttpClient.ts:83`
   Khi có `signal` mà trình duyệt chưa có `AbortSignal.any` (iOS < 17.4), timeout 45 s bị bỏ → request treo, UI quay mãi.
   _Gợi ý:_ tự gộp hai signal bằng một AbortController khi thiếu `AbortSignal.any`.
 

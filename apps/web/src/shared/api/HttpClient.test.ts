@@ -74,4 +74,54 @@ describe('HttpClient', () => {
     const error = (await client.get('/x').catch((cause: unknown) => cause)) as ApiError;
     expect(error).toMatchObject({ status: 429, message: 'Chậm lại', retryAfterSeconds: undefined });
   });
+
+  it('quá giờ báo lỗi TIMEOUT kể cả khi trình duyệt chỉ ném AbortError chung chung', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(
+          (_url: string, init: RequestInit) =>
+            new Promise((_resolve, reject) => {
+              init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+            }),
+        ),
+      );
+      const request = new HttpClient({ baseUrl: '', timeoutMs: 1000 }).get('/slow');
+      const assertion = expect(request).rejects.toMatchObject({ code: 'TIMEOUT' });
+      await vi.advanceTimersByTimeAsync(1000);
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('hẹn giờ vẫn chạy khi server gửi header rồi treo lúc gửi nội dung', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((_url: string, init: RequestInit) =>
+          Promise.resolve({
+            ok: true,
+            status: 200,
+            headers: new Headers(),
+            // Nội dung không bao giờ tới, chỉ dừng khi tín hiệu hủy bật.
+            json: () =>
+              new Promise((_resolve, reject) => {
+                init.signal?.addEventListener('abort', () =>
+                  reject(new DOMException('aborted', 'AbortError')),
+                );
+              }),
+          } as unknown as Response),
+        ),
+      );
+      const request = new HttpClient({ baseUrl: '', timeoutMs: 1000 }).get('/stalled-body');
+      const assertion = expect(request).rejects.toMatchObject({ code: 'TIMEOUT' });
+      await vi.advanceTimersByTimeAsync(1000);
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
