@@ -1,0 +1,1984 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iMap — 10 phương án giao diện</title>
+<style>
+*{box-sizing:border-box}
+:root{font-family:"Inter",system-ui,-apple-system,sans-serif;color:#242a32;background:#ebedf0;font-synthesis:none}
+body{margin:0;min-height:100dvh;display:grid;grid-template-rows:auto 1fr}button,input{font:inherit}button{cursor:pointer;color:inherit}button:focus-visible,input:focus-visible{outline:3px solid #c98c30;outline-offset:3px}button:disabled{cursor:default}h1,h2,h3,p{margin:0}svg{display:block;width:18px;height:18px;flex:none}button svg{pointer-events:none}
+.gallery{display:flex;align-items:center;gap:26px;padding:14px 24px;background:#fcfcfd;border-bottom:1px solid #dce1e7}
+.gallery-title{font-size:13px;font-weight:750;white-space:nowrap}.gallery-title span{color:#596576;font-weight:500;margin-left:5px}
+.concepts{display:flex;gap:5px;flex:1;flex-wrap:wrap}.concepts button{padding:8px 12px;border:0;border-radius:7px;background:transparent;font-size:12px;font-weight:650;white-space:nowrap}.concepts button:hover{background:#edf0f4}.concepts button[aria-pressed=true]{background:#242c3a;color:#fff}
+.sample{font-size:11px;color:#586575;white-space:nowrap}
+#stage{position:relative;isolation:isolate;min-height:0;background:var(--surface);color:var(--ink);--surface:#f9f7f1;--ink:#222d27;--muted:#5d685f;--line:#deddd4;--accent:#254cdf;--on-accent:#fff;--soft:#e8edfe;--map-bg:#eae8de}
+.map{position:relative;isolation:isolate;min-height:300px;background:var(--map-bg);overflow:hidden}
+canvas{display:block;position:absolute;width:100%;height:100%;inset:0}
+.map-controls{position:absolute;right:16px;top:16px;display:grid;gap:6px}
+.map-controls button,.icon{display:grid;place-items:center;width:42px;height:42px;padding:0;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px}
+.map-controls button:hover,.icon:hover,.quiet:hover{background:var(--soft);color:var(--ink)}
+.map-controls button[aria-pressed=true]{color:var(--accent)}
+.map-legend{position:absolute;bottom:12px;right:13px;padding:5px 8px;background:var(--surface);border-radius:5px;font-size:10px;color:var(--muted)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:-.04em;font-size:24px;white-space:nowrap}.brand svg{width:23px;height:23px;color:var(--accent)}
+.place-pair{display:grid;gap:12px;position:relative}.place-pair:before{content:"";position:absolute;left:6px;top:12px;bottom:14px;border-left:1px dashed var(--muted)}
+.place{position:relative;display:grid;gap:2px;padding-left:24px;min-width:0}.place:before{content:"";position:absolute;left:1px;top:6px;width:8px;height:8px;border:2px solid var(--accent);border-radius:50%;background:var(--surface)}.place:last-child:before{background:var(--accent)}.place small{color:var(--muted);font-size:11px}.place b{font-size:14px;line-height:1.3}
+.row,.heading-row{display:flex;align-items:center;gap:9px}.heading-row{justify-content:space-between}.heading-row h2{font-size:17px}.stack{display:grid;gap:10px}.muted{color:var(--muted);font-size:13px;line-height:1.4}
+.quiet,.primary,.chip{display:inline-flex;justify-content:center;align-items:center;gap:7px;min-height:42px;padding:8px 14px;border-radius:8px;font-weight:700;font-size:13px;border:1px solid var(--line);background:transparent}
+.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}.primary:hover{filter:brightness(1.12)}.primary svg{width:16px;height:16px}.chip{min-height:34px;padding:5px 10px;color:var(--muted);white-space:nowrap}.chip[aria-pressed=true]{background:var(--soft);color:var(--ink);border-color:transparent}
+.routes{display:grid;gap:7px}.route{width:100%;text-align:left;display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;padding:12px 13px;border:1px solid var(--line);border-radius:9px;background:transparent}.route:hover{background:var(--soft)}.route[aria-pressed=true]{border-color:var(--accent);background:var(--soft)}.route strong{display:block;font-size:18px;letter-spacing:-.045em}.route small{display:block;color:var(--muted);font-size:11px;margin-top:3px}.route .delta{font-size:11px;white-space:nowrap;color:var(--muted);font-weight:650}.route[aria-pressed=true] .delta{color:var(--accent)}
+.number{font-weight:800;letter-spacing:-.085em;line-height:.92;font-size:clamp(45px,6vw,84px);font-variant-numeric:tabular-nums}.number small{font-size:.35em;letter-spacing:-.04em}
+.atlas{display:grid;grid-template-columns:minmax(320px,390px) 1fr}.atlas .sidebar{padding:clamp(20px,3vw,42px);display:grid;align-content:start;gap:24px}.atlas h1{font-family:Georgia,serif;font-size:clamp(36px,4.1vw,64px);font-weight:500;line-height:.96;letter-spacing:-.06em}.atlas .route{border-width:0 0 1px;border-radius:0;padding-inline:8px}.atlas .route[aria-pressed=true]{border-color:var(--line);box-shadow:inset 3px 0 var(--accent);padding-inline:12px}.atlas .row .primary{flex:1}
+#stage.float{--surface:#fff;--ink:#202b24;--muted:#57685f;--line:#e2e9e2;--accent:#166849;--on-accent:#fff;--soft:#e1f2e7;--map-bg:#edf2e8}
+.float>.map{position:absolute;inset:0}.float .float-top{position:absolute;top:19px;left:20px;display:flex;align-items:center;gap:8px}.float .search{background:var(--surface);box-shadow:0 4px 20px #23463424;border:0;border-radius:999px;padding:11px 15px;display:flex;align-items:center;gap:9px;min-width:min(345px,70vw);text-align:left;font-weight:650}.float .search span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.float .float-bottom{position:absolute;left:20px;bottom:22px;width:min(375px,calc(100% - 40px));display:grid;gap:10px}.float .float-card,.float .float-routes{border:1px solid var(--line);border-radius:22px;background:var(--surface);padding:16px;box-shadow:0 8px 35px #23463428}.float .float-card{display:grid;gap:12px}.float .number{font-size:55px}.float .float-card .row{justify-content:space-between}.float .primary,.float .quiet{border-radius:99px}.float .float-routes{padding:12px}.float .map-legend{bottom:8px}
+#stage.dispatch{--surface:#141c24;--ink:#e1edea;--muted:#9dacb7;--line:#34434e;--accent:#80f1cb;--on-accent:#10251e;--soft:#213930;--map-bg:#1b242b}
+.dispatch{display:grid;grid-template-rows:auto 1fr}.dispatch .top{height:65px;display:flex;align-items:center;justify-content:space-between;padding:0 21px;border-bottom:1px solid var(--line)}.dispatch .work{display:grid;grid-template-columns:235px 1fr 255px;min-height:570px}.dispatch .work>aside{padding:20px;display:grid;align-content:start;gap:20px}.dispatch .work>aside:first-child{border-right:1px solid var(--line)}.dispatch .work>aside:last-child{border-left:1px solid var(--line)}.dispatch h1{font-size:21px;letter-spacing:-.04em}.dispatch .number{font-size:50px}.dispatch .route{border-radius:3px}.dispatch .primary{width:100%;border-radius:4px}.dispatch .traffic-note{padding-top:12px;border-top:1px solid var(--line)}.dispatch .traffic-note b{display:block;color:var(--ink);margin-bottom:3px}
+#stage.deck{--surface:#fffbf3;--ink:#3d241e;--muted:#75574f;--line:#e8d8cf;--accent:#ad422d;--on-accent:#fff;--soft:#fae6dd;--map-bg:#efe6d7}
+.deck{display:grid;grid-template-rows:minmax(360px,1fr) auto}.deck .deck-header{position:absolute;z-index:1;top:16px;left:18px;background:var(--surface);border:1px solid var(--line);padding:8px 12px;border-radius:5px}.deck .deck-dock{display:grid;grid-template-columns:1.2fr 2.1fr auto;gap:24px;align-items:center;padding:22px clamp(18px,3vw,45px);border-top:1px solid var(--line)}.deck .deck-dock .routes{grid-template-columns:repeat(3,1fr)}.deck .route{min-height:94px;grid-template-columns:1fr}.deck .route .delta{justify-self:start}.deck .deck-dock>.stack .primary{white-space:nowrap}
+#stage.focus{--surface:#f5f1ff;--ink:#27203c;--muted:#5f547a;--line:#dcd4ed;--accent:#5c36b5;--on-accent:#fff;--soft:#e8defc;--map-bg:#e9e5f2}
+.focus{display:grid;grid-template-columns:minmax(320px,43%) 1fr;grid-template-rows:auto 1fr auto;gap:16px;padding:22px 28px}.focus .focus-top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between}.focus .story{display:grid;align-content:center;gap:19px;padding:16px clamp(5px,3vw,40px) 16px 4px}.focus h1{font-size:clamp(29px,4vw,54px);max-width:420px;letter-spacing:-.065em;line-height:1}.focus .map{border:1px solid var(--line);border-radius:24px 24px 24px 5px}.focus .focus-footer{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center}.focus .routes{grid-template-columns:repeat(3,1fr)}.focus .route{border-radius:14px}
+.notice{position:fixed;z-index:12;left:50%;bottom:23px;transform:translateX(-50%);max-width:calc(100% - 28px);padding:10px 16px;color:#fff;background:#263242;border-radius:10px;font-size:13px;box-shadow:0 8px 26px #1114}.notice:empty{display:none}
+dialog{color:#222a36;border:1px solid #dbe2ec;border-radius:16px;width:min(420px,calc(100% - 30px));padding:21px}dialog::backdrop{background:#17213173}dialog form{display:grid;gap:15px}dialog .heading-row{margin-bottom:2px}dialog label{display:grid;gap:5px;font-size:13px;font-weight:650}dialog input{width:100%;border:1px solid #aab3c0;border-radius:8px;padding:10px;color:#263141;background:#f8fafb}dialog .primary{--accent:#2447cb;--on-accent:#fff;width:100%}dialog .icon{--line:#dbe2ec;--surface:#fff;--ink:#222a36}
+@media(max-width:870px){.sample{display:none}.gallery{gap:14px;padding:10px 14px}.dispatch .work{grid-template-columns:180px 1fr 185px}.dispatch .work>aside{padding:13px}.deck .deck-dock{grid-template-columns:1fr 2fr}.deck .deck-dock>.stack{grid-column:1/-1;display:flex;align-items:center;justify-content:flex-end}.focus{padding:16px}.focus .route{grid-template-columns:1fr}.focus .route strong{font-size:16px}}
+@media(max-width:650px){.gallery{display:grid;gap:7px;padding:9px 10px}.concepts{flex-wrap:nowrap;overflow:auto;padding:2px;scrollbar-width:none}.concepts button{flex:none;min-height:40px;padding-inline:9px}.atlas{display:flex;flex-direction:column}.atlas .map{order:-1;min-height:350px}.atlas .sidebar{padding:20px;gap:18px}.float{min-height:640px}.float .float-top{left:10px;top:10px}.float .float-bottom{left:10px;bottom:25px;width:calc(100% - 20px)}.float .map-controls{top:68px}.dispatch .work{grid-template-columns:1fr;min-height:0}.dispatch .work>.map{order:-1;min-height:320px}.dispatch .work>aside{padding:16px;border:0!important;border-top:1px solid var(--line)!important;gap:13px}.dispatch .top{height:50px;padding:0 12px}.deck{grid-template-rows:minmax(320px,55dvh) auto}.deck .deck-dock{grid-template-columns:1fr;gap:13px;padding:14px}.deck .deck-dock .routes{gap:5px}.deck .route{padding:8px;min-height:110px}.deck .route strong{font-size:15px}.focus{grid-template-columns:1fr;grid-template-rows:auto auto auto auto;gap:10px;padding:12px}.focus .map{grid-row:2;min-height:315px}.focus .story{gap:12px;padding:5px}.focus .focus-footer{grid-template-columns:1fr}.focus .focus-footer .primary{width:100%}.focus .routes{gap:5px}.focus .route{padding:8px}.focus .route small,.deck .route small{line-height:1.25}.map-controls{right:10px;top:10px}.notice{bottom:auto;top:84px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important}}
+body{grid-template-rows:auto auto 1fr}
+#toolbar{background:var(--surface);color:var(--ink);border-bottom:1px solid var(--line);z-index:2}
+.app-tools{display:flex;align-items:center;gap:10px;padding:8px clamp(10px,2vw,25px)}
+.app-tools .search{display:flex;flex:1;min-width:0;justify-content:flex-start;max-width:365px;text-align:left}.app-tools .search span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app-tools .settings{display:flex;align-items:center;gap:5px;margin-left:auto}.app-tools select{height:40px}
+.feature-nav{display:flex;gap:3px;flex:1;justify-content:center;min-width:0}.feature-nav button{white-space:nowrap;padding-inline:12px}
+.app-categories{display:flex;align-items:center;gap:8px;padding:0 clamp(10px,2vw,25px) 7px}
+.app-categories .category-list{display:flex;gap:5px;overflow:auto;min-width:0;scrollbar-width:none}
+.app-categories .row{margin-left:auto;gap:4px;flex:none}.app-categories .icon{width:32px;height:32px}.app-categories .quiet{min-height:32px;white-space:nowrap}
+#stage,#toolbar,#edit{color:var(--ink);--surface:#f9f7f1;--ink:#222d27;--muted:#5d685f;--line:#deddd4;--accent:#254cdf;--on-accent:#fff;--soft:#e8edfe}
+#toolbar[data-theme=float],#edit[data-theme=float]{--surface:#fff;--ink:#202b24;--muted:#57685f;--line:#e2e9e2;--accent:#166849;--on-accent:#fff;--soft:#e1f2e7}
+#toolbar[data-theme=dispatch],#edit[data-theme=dispatch]{--surface:#141c24;--ink:#e1edea;--muted:#9dacb7;--line:#34434e;--accent:#80f1cb;--on-accent:#10251e;--soft:#213930}
+#toolbar[data-theme=deck],#edit[data-theme=deck]{--surface:#fffbf3;--ink:#3d241e;--muted:#75574f;--line:#e8d8cf;--accent:#ad422d;--on-accent:#fff;--soft:#fae6dd}
+#toolbar[data-theme=focus],#edit[data-theme=focus]{--surface:#f5f1ff;--ink:#27203c;--muted:#5f547a;--line:#dcd4ed;--accent:#5c36b5;--on-accent:#fff;--soft:#e8defc}
+#edit{background:var(--surface);border-color:var(--line);width:min(565px,calc(100% - 24px));max-height:calc(100dvh - 36px);color-scheme:light dark}
+#edit[data-theme=dispatch]{color-scheme:dark}#edit:not([data-theme=dispatch],[data-theme=night]){color-scheme:light}
+#edit .icon,#edit .primary{--surface:inherit;--ink:inherit;--line:inherit;--accent:inherit;--on-accent:inherit}
+#edit .primary{width:auto}
+.demo-title{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.demo-title h2{font-size:clamp(20px,2.4vw,28px);letter-spacing:-.04em;line-height:1.05;margin:2px 0}.demo-title p{margin-top:6px}.demo-title>.icon{width:36px;height:36px}
+.demo-pane{display:grid;align-content:start;gap:15px;min-width:0}.demo-pane h3,#edit h3{font-size:14px}.demo-pane form,.demo-body{display:grid;gap:12px;min-width:0}
+.demo-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}.demo-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.demo-field{display:grid;gap:5px;font-size:12px;font-weight:650;min-width:0}
+.demo-field input,.demo-field select,.demo-field textarea,.app-tools select{width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;padding:8px;color:var(--ink);background:var(--surface);font:inherit}
+.demo-field textarea{resize:vertical}.demo-field input:not([type=checkbox]),.demo-field select{min-height:40px}
+.demo-check{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);min-height:30px}.demo-check input{accent-color:var(--accent)}
+.demo-card{padding:11px;border:1px solid var(--line);border-radius:10px;display:grid;gap:7px;min-width:0;overflow-wrap:anywhere}.demo-card h3{line-height:1.25}
+.demo-details{border-top:1px solid var(--line);padding-top:9px}.demo-details summary{font-size:13px;font-weight:700;cursor:pointer}.demo-details[open] summary{margin-bottom:8px}
+.demo-list{margin:0;padding-left:23px;display:grid;gap:10px;font-size:13px}.demo-steps{display:grid;gap:8px;margin:0;padding:0;list-style:none}.demo-step{display:grid;gap:5px}.demo-step .demo-row .quiet{min-height:34px;padding:5px 9px}
+.demo-stat{font-variant-numeric:tabular-nums;font-weight:800;font-size:28px;letter-spacing:-.05em}.demo-result{padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.route-actions{display:flex;gap:5px;flex-wrap:wrap}.route-actions .quiet{min-height:33px;padding:5px 8px;font-size:11px}.route-extra{display:flex;gap:4px;margin-top:5px}.route-extra button{min-height:31px;padding:4px 7px;font-size:11px}
+.map-controls{z-index:2}.map-caption{display:flex;align-items:center;gap:4px;position:absolute;bottom:12px;left:12px}.map-caption .chip{border:0;background:var(--surface)}.map-legend{pointer-events:none}
+.pick-map{position:absolute;top:12px;left:9px;right:66px;z-index:2;background:var(--surface);padding:8px;border-radius:8px;font-size:13px}.pick-map canvas{cursor:crosshair}.map.is-picking canvas{cursor:crosshair}
+#stage.has-feature:not(.float) .demo-pane{max-height:min(72dvh,680px);overflow:auto;padding:3px 5px 4px 2px;scrollbar-width:thin}
+#stage.has-feature.atlas .sidebar{padding-top:22px;gap:14px}
+#stage.has-feature.float .float-bottom{bottom:20px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;max-height:min(72dvh,600px);overflow:auto}
+#stage.has-feature.dispatch .work{grid-template-columns:235px 1fr minmax(285px,32%)}
+#stage.has-feature.deck .deck-dock{grid-template-columns:minmax(210px,1fr) minmax(320px,2fr);align-items:start}.deck .deck-dock>.demo-pane{max-width:680px}
+#stage.has-feature.focus .story{align-content:start}
+#stage.has-feature.focus .focus-footer{display:none}
+#stage.float .float-bottom{pointer-events:none}#stage.float .float-bottom>*{pointer-events:auto}#stage.has-feature.float .float-bottom{pointer-events:auto}
+#stage.float .map-caption{left:auto;right:9px;bottom:36px}
+#stage.deck .map-caption{left:18px}
+#edit .demo-body{max-height:72dvh;overflow:auto;padding:3px 5px}
+.sample-photo{display:grid;place-items:center;min-height:100px;border-radius:8px;background:linear-gradient(145deg,#c4d2dc 35%,#8c9d9c 35% 48%,#435361 48% 70%,#505c47 70%);color:white;text-shadow:0 1px 4px #111;font-weight:750}
+@media(min-width:651px){#stage.float{min-height:540px}}
+@media(max-width:870px){.feature-nav button{padding-inline:7px}.app-tools{gap:6px}.app-tools .settings .quiet{padding-inline:8px}#stage.has-feature.dispatch .work{grid-template-columns:160px 1fr 230px}}
+@media(max-width:650px){
+ .app-tools{display:grid;grid-template-columns:minmax(0,1fr) auto;padding:5px 7px}.app-tools .settings{gap:3px}.app-tools .settings .quiet{padding-inline:5px}.app-tools .settings .icon{width:35px}.feature-nav{grid-row:2;grid-column:1/-1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:100%}.feature-nav button{white-space:normal;padding:3px;font-size:11px;min-height:43px}.app-categories{padding:0 7px 5px;gap:3px}.app-categories .icon{width:27px}.app-categories .quiet{font-size:11px;padding-inline:5px}.app-tools .search{font-size:12px;padding-inline:7px}.app-tools select{padding:3px;font-size:12px}
+ #stage.has-feature:not(.float) .demo-pane{max-height:none;overflow:visible}
+ #stage.has-feature.float{min-height:720px}#stage.has-feature.float .float-bottom{max-height:440px;bottom:14px}
+ #stage.has-feature.dispatch .work,#stage.has-feature.deck .deck-dock{grid-template-columns:1fr}
+ #stage.float .map-controls{top:12px}#stage.float .map-caption{bottom:auto;top:200px}
+ .demo-title>.icon{width:42px;height:42px}
+}
+#stage.metro,#toolbar[data-theme=metro],#edit[data-theme=metro]{--surface:#fff6d7;--ink:#282314;--muted:#615636;--line:#e5d7a4;--accent:#a02331;--on-accent:#fff;--soft:#f3e3be;--map-bg:#f0e9d9}
+#stage.night,#toolbar[data-theme=night],#edit[data-theme=night]{--surface:#151325;--ink:#f7f2ff;--muted:#c0b3d7;--line:#3e3457;--accent:#f2aeff;--on-accent:#281432;--soft:#332346;--map-bg:#211a31}
+#stage.postcard,#toolbar[data-theme=postcard],#edit[data-theme=postcard]{--surface:#fff3ec;--ink:#462936;--muted:#715460;--line:#e8d1d7;--accent:#833f61;--on-accent:#fff;--soft:#f6dee8;--map-bg:#eedfd9}
+#stage.mosaic,#toolbar[data-theme=mosaic],#edit[data-theme=mosaic]{--surface:#edf6ff;--ink:#152d44;--muted:#466076;--line:#c9e2f7;--accent:#14659a;--on-accent:#fff;--soft:#d8eafb;--map-bg:#e4f1ee}
+#stage.pocket,#toolbar[data-theme=pocket],#edit[data-theme=pocket]{--surface:#ecf5ed;--ink:#193328;--muted:#446152;--line:#c7dfcf;--accent:#205e53;--on-accent:#fff;--soft:#d6ebe2;--map-bg:#dde7d7}
+#edit[data-theme=night]{color-scheme:dark}
+.metro{display:grid;grid-template-columns:minmax(240px,285px) minmax(0,1fr);grid-template-rows:1fr auto}
+.metro .metro-main{padding:24px 24px 20px;display:grid;align-content:start;gap:20px;border-top:7px solid var(--accent);border-right:1px solid var(--line)}
+.metro .metro-main h1{font-family:"Arial Narrow",system-ui,sans-serif;font-size:clamp(27px,3vw,47px);line-height:1;letter-spacing:-.065em}
+.metro .place-pair{gap:25px}.metro .place-pair:before{border-left:3px solid var(--accent);left:6px}.metro .place{padding-left:29px}.metro .place:before{width:14px;height:14px;border:3px solid var(--accent);left:0;top:10px}
+.metro .metro-bar{grid-column:1/-1;padding:10px 18px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:15px;border-top:1px solid var(--line)}
+.metro .metro-bar .routes{grid-template-columns:repeat(3,minmax(0,1fr))}
+.night{min-height:550px!important}.night>.map{position:absolute;inset:0}
+.night .night-hud{position:absolute;z-index:1;left:18px;top:18px;right:74px;display:grid;grid-template-columns:auto minmax(150px,310px);justify-content:space-between;gap:12px;pointer-events:none}
+.night .night-hud>*{pointer-events:auto}
+.night .night-command,.night .night-options{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:13px}
+.night .night-command .heading-row{gap:14px}.night h1{font-size:clamp(24px,3.5vw,40px);letter-spacing:-.05em}.night .number{font-size:52px}
+.night .night-options{position:absolute;z-index:1;right:16px;bottom:26px;width:min(348px,calc(100% - 32px));display:grid;gap:9px;max-height:75%;overflow:auto}
+.night .map-caption{left:8px}.night .map-controls{right:10px}
+.postcard{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,360px);gap:22px;padding:20px;background:var(--surface)}
+.postcard .map{border:1px solid var(--line);border-radius:4px;min-height:415px}
+.postcard .letter{display:grid;align-content:start;gap:13px;padding:10px 11px 12px;border-top:5px double var(--accent);border-bottom:5px double var(--accent)}
+.postcard h1{font:500 clamp(30px,4vw,54px)/.94 Georgia,serif;letter-spacing:-.06em}
+.postcard .route{border-radius:2px}.postcard .primary{border-radius:2px}
+.mosaic{display:grid;grid-template-columns:minmax(190px,1fr) minmax(260px,1.8fr) minmax(200px,1fr);grid-template-rows:1fr auto;gap:12px;padding:16px}
+.mosaic .map{grid-column:2/-1;min-height:310px;border-radius:15px}
+.mosaic .mosaic-intro,.mosaic .mosaic-routes,.mosaic .mosaic-action{display:grid;align-content:start;gap:12px;padding:16px;border:1px solid var(--line);border-radius:15px}
+.mosaic .mosaic-intro{background:var(--soft);border:0}.mosaic .mosaic-routes{grid-column:1/3}.mosaic .routes{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mosaic .mosaic-action{background:var(--accent);color:var(--on-accent);border:0}.mosaic .mosaic-action .muted{color:inherit}.mosaic .mosaic-action .quiet,.mosaic .mosaic-action .primary{background:var(--surface);color:var(--ink);border:0}
+.mosaic h1{font-size:clamp(22px,3vw,44px);line-height:1.04;letter-spacing:-.065em}.mosaic .number{font-size:48px}
+#stage.has-feature.mosaic{grid-template-columns:minmax(310px,1fr) minmax(0,1.25fr);grid-template-rows:1fr}#stage.has-feature.mosaic .map{grid-column:2}
+.pocket{padding:16px clamp(15px,6vw,78px);display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(300px,1fr) auto;gap:0}
+.pocket .pocket-top{padding:10px 15px;display:flex;align-items:center;gap:16px;justify-content:space-between;border:1px solid var(--line);border-radius:16px 16px 0 0}.pocket h1{font-size:clamp(18px,3vw,32px);letter-spacing:-.04em}
+.pocket .map{min-height:300px}
+.pocket .pocket-strip{padding:12px 16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(270px,1.2fr) auto;gap:14px;align-items:center;border:1px solid var(--line);border-radius:0 0 16px 16px}
+.pocket .pocket-strip .routes{grid-template-columns:repeat(3,minmax(0,1fr))}.pocket .pocket-strip .route{grid-template-columns:1fr}.pocket .pocket-strip>.demo-pane{grid-column:1/-1;padding:4px 2px}
+@media(max-width:870px){.mosaic{grid-template-columns:1fr 1.5fr}.mosaic .map{grid-column:2}.mosaic .mosaic-routes{grid-column:1}.mosaic .mosaic-routes .routes{grid-template-columns:1fr}.postcard{gap:10px;padding:12px}.pocket .pocket-strip{grid-template-columns:1fr 1.4fr}.pocket .pocket-strip>.route-actions{grid-column:1/-1}}
+@media(max-width:650px){
+ .metro{grid-template-columns:1fr;grid-template-rows:auto auto auto}.metro .map{grid-row:1;min-height:300px}.metro .metro-main{padding:13px 17px;gap:11px;border-top-width:4px}.metro .metro-main>.brand{display:none}.metro .metro-bar{grid-template-columns:1fr;padding:10px 12px;gap:8px}.metro .metro-bar .route{grid-template-columns:1fr;padding:8px}
+ .night{min-height:690px!important}.night .night-hud{left:9px;top:10px;right:66px;grid-template-columns:1fr}.night .night-hud>.brand{display:none}.night .night-options{right:8px;bottom:20px;width:calc(100% - 16px);max-height:60%;padding:10px}.night .night-command{padding:9px}.night .number{font-size:40px}.night .map-caption{bottom:auto;top:218px}
+ .postcard{grid-template-columns:1fr;padding:9px;gap:9px}.postcard .map{min-height:300px}.postcard .letter{padding:10px;gap:12px}
+ .mosaic,#stage.has-feature.mosaic{grid-template-columns:1fr;grid-template-rows:auto;gap:8px;padding:9px}.mosaic .map,#stage.has-feature.mosaic .map{grid-column:1;grid-row:1;min-height:285px}.mosaic .mosaic-intro,.mosaic .mosaic-routes,.mosaic .mosaic-action{padding:12px}.mosaic .mosaic-routes .routes{grid-template-columns:repeat(3,minmax(0,1fr))}.mosaic .mosaic-routes .route{grid-template-columns:1fr;padding:7px}
+ .pocket{padding:9px;grid-template-rows:auto 320px auto}.pocket .pocket-top{gap:6px;padding:9px 10px}.pocket .pocket-strip{grid-template-columns:1fr;padding:10px;gap:9px}.pocket .pocket-strip .route{padding:7px}
+ .metro .route-extra,.pocket .route-extra,.mosaic .route-extra,.focus .route-extra,.deck .route-extra{flex-wrap:wrap}
+ .route .delta{white-space:normal}.map-caption .chip{max-width:160px;white-space:normal}
+}
+body{grid-template-columns:minmax(0,1fr);grid-template-areas:"gallery" "tools" "stage"}
+.gallery{grid-area:gallery;min-width:0;gap:16px}
+.concepts{min-width:0}.gallery-title{flex:none}
+#toolbar{grid-area:tools;min-width:0}
+#stage{grid-area:stage;min-width:0}
+.atlas .sidebar{padding:clamp(16px,2vw,30px);gap:16px}.atlas h1{font-size:clamp(34px,4vw,54px)}
+.atlas .route{padding-block:8px}.atlas .route-actions .primary{flex:1 0 125px}
+.route-actions .primary{min-height:42px}
+.route-extra .quiet{min-height:35px}
+.float .float-card>.demo-row{align-items:flex-end}.float .float-card .route-actions{flex:1;justify-content:flex-end}
+.deck .deck-dock .route-extra,.focus .focus-footer .route-extra,.mosaic .mosaic-routes .route-extra{margin-bottom:3px}
+.metro{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(300px,1fr) auto}
+.metro .metro-main{display:grid;grid-template-columns:auto minmax(235px,1fr) auto;align-items:center;gap:24px;border-right:0;padding:15px 25px}
+.metro .metro-main .place-pair{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
+.metro .metro-main .place-pair:before{border-left:0;border-top:3px solid var(--accent);top:13px;left:6px;right:calc(50% - 18px);bottom:auto}
+.metro .metro-main .place{padding:26px 0 0}.metro .metro-main .place:before{top:6px}
+.metro .metro-main .metro-heading{display:grid;gap:8px}.metro .metro-main h1{font-size:clamp(25px,3vw,34px)}
+#stage.has-feature.metro{grid-template-columns:minmax(300px,420px) minmax(0,1fr);grid-template-rows:1fr}
+#stage.has-feature.metro .metro-main{display:block;padding:18px 18px 10px}
+.pocket{width:min(760px,100%);justify-self:center;align-self:start;padding:14px 18px;grid-template-rows:auto minmax(290px,46dvh) auto;background:var(--surface);box-shadow:0 0 0 1px var(--line),0 13px 40px #172e2722}
+body[data-layout=pocket]{background:#dbe7df}
+.pocket .pocket-strip{grid-template-columns:1fr}
+.pocket .pocket-summary{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+.pocket .pocket-summary strong{font-size:25px;letter-spacing:-.045em}
+.pocket .pocket-strip>.route-actions{justify-content:flex-end}.pocket .pocket-strip>.route-actions .primary{flex:1}
+.pocket .pocket-strip .routes{grid-template-columns:1fr}.pocket .pocket-strip .route{grid-template-columns:1fr auto}
+#stage.has-feature.pocket{grid-template-rows:auto minmax(210px,31dvh) auto}
+#stage.has-feature.pocket .map{min-height:210px}
+@media(min-width:960px){
+ body[data-layout=dispatch]{grid-template-columns:178px minmax(0,1fr);grid-template-rows:auto 1fr;grid-template-areas:"gallery gallery" "tools stage"}
+ body[data-layout=dispatch] #toolbar{border-right:1px solid var(--line);border-bottom:0}
+ body[data-layout=dispatch] .app-tools{display:flex;flex-direction:column;align-items:stretch;padding:14px 9px}
+ body[data-layout=dispatch] .feature-nav{flex-direction:column;gap:6px}
+ body[data-layout=dispatch] .feature-nav button{justify-content:flex-start;border-radius:4px}
+ body[data-layout=dispatch] .app-categories{display:grid;gap:7px}
+ body[data-layout=dispatch] .category-list{display:grid;height:142px;overflow:auto}.app-categories .row{margin-left:0}
+ body[data-layout=dispatch] .app-categories .row{gap:2px;justify-content:center;padding-bottom:7px}
+ body[data-layout=dispatch] .app-categories .row .icon{display:none}
+ body[data-layout=dispatch] .settings{margin-inline:auto}
+ body[data-layout=deck],body[data-layout=metro]{grid-template-rows:auto 1fr auto;grid-template-areas:"gallery" "stage" "tools"}
+ body[data-layout=deck] #toolbar,body[data-layout=metro] #toolbar{position:sticky;bottom:0;border-top:1px solid var(--line);border-bottom:0}
+ body[data-layout=deck] .deck{grid-template-rows:minmax(320px,1fr) auto}
+ body[data-layout=focus]{grid-template-columns:minmax(0,1fr) 178px;grid-template-rows:auto 1fr;grid-template-areas:"gallery gallery" "stage tools"}
+ body[data-layout=focus] #toolbar{border-left:1px solid var(--line);border-bottom:0}
+ body[data-layout=focus] .app-tools{flex-direction:column;align-items:stretch;padding:13px 10px}
+ body[data-layout=focus] .feature-nav{flex-direction:column;gap:7px}.focus .focus-footer{grid-template-columns:minmax(0,1fr) minmax(135px,auto)}
+ body[data-layout=focus] .app-categories{display:grid;gap:8px}
+ body[data-layout=focus] .category-list{display:grid;height:119px}.app-categories .row{margin-left:0}
+ body[data-layout=focus] .app-categories .row .icon{display:none}
+ body[data-layout=postcard] .app-tools{flex-direction:row-reverse}
+ body[data-layout=postcard] .app-tools .settings{margin-left:0;margin-right:auto}
+ body[data-layout=mosaic] .feature-nav{justify-content:flex-end}
+ body[data-layout=float] .app-tools .search{border-radius:99px}
+ body[data-layout=night] .app-tools .search{border-radius:3px}
+}
+@media(max-width:959px){.gallery{display:grid;gap:7px}.concepts{flex-wrap:nowrap;overflow:auto;padding:2px;scrollbar-width:none}}
+@media(max-width:650px){
+ .gallery{padding:7px 8px}.gallery-title{font-size:12px}.concepts button{min-height:44px}
+ .app-tools .settings .icon,.app-tools select,.app-tools .search,.app-tools .settings .quiet{min-height:44px}
+ .app-categories .chip,.app-categories .quiet{min-height:38px}
+ .app-categories .row [data-value="-1"]{display:none}.app-categories .row .icon{min-height:38px}
+ .map-controls button,.map-controls .icon{width:44px;height:44px}
+ .route-extra .quiet,.route-actions .quiet{min-height:40px}.feature-nav button{min-height:44px}
+ body[data-layout=pocket] .feature-nav,body[data-layout=float] .feature-nav,body[data-layout=night] .feature-nav,body[data-layout=deck] .feature-nav{position:fixed;z-index:8;bottom:0;left:0;right:0;width:100%;padding:5px 6px max(5px,env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line)}
+ body[data-layout=pocket],body[data-layout=float],body[data-layout=night],body[data-layout=deck]{padding-bottom:55px}
+ .atlas .sidebar{padding:14px;gap:14px}.atlas .sidebar>.brand{display:none}.atlas .map{min-height:285px}
+ .focus .map{grid-row:3;min-height:275px}.focus .story{grid-row:2}.focus .story .number{font-size:42px}
+ .metro .metro-main{grid-row:1;grid-template-columns:minmax(0,1fr);gap:9px;padding:10px 12px}.metro .metro-main .metro-heading{display:block}.metro .metro-main .metro-heading .brand{display:none}.metro .map{grid-row:2;min-height:275px}.metro .metro-main>.demo-row{grid-row:3}
+ #stage.has-feature.metro{grid-template-columns:1fr;grid-template-rows:auto}#stage.has-feature.metro .map{grid-row:1}
+ .dispatch .work>.map{min-height:285px}.dispatch .work>aside:nth-last-child(1){grid-row:2}.dispatch .work>aside:first-child{grid-row:3}
+ .postcard .map{min-height:270px}.postcard .letter h1{font-size:29px}
+ .pocket{padding:8px;grid-template-rows:auto minmax(260px,42dvh) auto}.pocket .map{min-height:260px}.pocket .pocket-top h1{font-size:16px}
+ .pocket .pocket-top .brand{font-size:19px}.pocket .pocket-top .brand svg{width:17px}
+ .mosaic .mosaic-intro{grid-row:1}.mosaic .map{grid-row:2;min-height:240px}
+ .night .night-command{background:var(--surface)}.night .night-options{max-height:55%}
+ .map-caption{bottom:20px}
+ .notice{z-index:20;top:auto;bottom:65px}
+}
+@media(prefers-reduced-motion:no-preference){.concepts,.category-list{scroll-behavior:smooth}}
+.concept-mobile{display:none}
+@media(max-width:650px){
+ html{scroll-padding-bottom:65px}
+ .gallery{grid-template-columns:minmax(0,1fr) auto;align-items:center}
+ .gallery-title span{display:none}
+ .gallery .concepts{display:none}
+ .concept-mobile{display:flex;align-items:center;gap:7px;white-space:nowrap;font-size:11px;color:#576273}
+ .concept-mobile select{min-height:44px;border:1px solid #cdd5dd;background:#fff;padding:5px 19px 5px 8px;border-radius:8px;color:#222b37;font-size:13px;font-weight:700}
+ .app-tools select{width:47px;flex:none}
+ .app-tools .settings .icon{flex:none;width:38px}
+ .app-tools .settings .quiet{white-space:nowrap}
+}
+.app-tools .settings select{width:49px;flex:none}
+.app-tools .settings .icon{flex:none}
+.app-tools .settings .quiet{white-space:nowrap}
+@media(min-width:960px){
+ body[data-layout=dispatch] .settings,body[data-layout=focus] .settings{display:grid;grid-template-columns:49px 42px;justify-content:center;margin-inline:0}
+ body[data-layout=dispatch] .settings [data-value=auth],body[data-layout=focus] .settings [data-value=auth]{grid-column:1/-1}
+}
+</style>
+</head>
+<body>
+<header class="gallery">
+  <div class="gallery-title">iMap <span>· 10 phương án giao diện</span></div>
+  <nav class="concepts" aria-label="Chọn phương án giao diện"></nav>
+  <label class="concept-mobile"><span>Mẫu giao diện</span><select id="concept-select" aria-label="Mẫu giao diện"></select></label>
+  <span class="sample">Chuyến đi mô phỏng · TP. Hồ Chí Minh</span>
+</header>
+<section id="toolbar" aria-label="Công cụ iMap"></section>
+<main id="stage" aria-label="Phương án giao diện đang xem"></main>
+<div id="notice" class="notice" role="status"></div>
+<dialog id="edit" aria-labelledby="modal-title"></dialog>
+<datalist id="place-options"></datalist>
+<script>
+const icons = {
+  info:'<circle cx="12" cy="12" r="8"/><path d="M12 11v5m0-8h.01"/>',
+  close:'<path d="m6 6 12 12M18 6 6 18"/>',
+  left:'<path d="m15 6-6 6 6 6"/>',
+  right:'<path d="m9 6 6 6-6 6"/>',
+  globe:'<circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="3.5" ry="8"/><path d="M4 12h16"/>',
+  pin:'<path d="M20 10c0 5-8 10-8 10s-8-5-8-10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.6"/>',
+  search:'<circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 5 5"/>',
+  arrow:'<path d="m4 11 16-7-7 16-2-7z"/>',
+  plus:'<path d="M5 12h14M12 5v14"/>',
+  minus:'<path d="M5 12h14"/>',
+  locate:'<circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>',
+  layers:'<path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/>',
+  edit:'<path d="m13 6 5 5m-13 8 4-1L20 7l-4-4L5 14l-1 5z"/>',
+  cycle:'<circle cx="5.5" cy="16" r="3.2"/><circle cx="18.5" cy="16" r="3.2"/><path d="m5.5 16 5-7 4 7h-9m13 0-4-10h-3"/>',
+  car:'<path d="m4 12 2-6h12l2 6m-16 0h16v5H4zm2 5v2m12-2v2M7 14h1m8 0h1"/>'
+};
+function icon(name) {
+  return '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">'+icons[name]+'</svg>';
+}
+const concepts = [
+  {id:'atlas',name:'Atlas',description:'Bảng trái kiểu biên tập'},
+  {id:'float',name:'Map First',description:'Bản đồ toàn màn hình'},
+  {id:'dispatch',name:'Dispatch',description:'Ba cột điều phối'},
+  {id:'deck',name:'Route Deck',description:'Dải so sánh dưới bản đồ'},
+  {id:'focus',name:'Focus',description:'Bố cục tập trung vào thời gian đến'},
+  {id:'metro',name:'Metro',description:'Sơ đồ ga nối hành trình với dải tuyến'},
+  {id:'night',name:'Night Ride',description:'Màn hình dẫn đường ban đêm'},
+  {id:'postcard',name:'Postcard',description:'Bản đồ bên trái và hành trình như bưu thiếp'},
+  {id:'mosaic',name:'Mosaic',description:'Các ô bản đồ, hành trình, tuyến và hành động'},
+  {id:'pocket',name:'Pocket',description:'Khung bản đồ và dải tuyến gọn cho điện thoại'}
+];
+const variants = {
+  bike: [
+    {min:3,km:'1,3',name:'Qua Hàm Nghi',signal:'Nhanh nhất',traffic:'Đông 300 m'},
+    {min:4,km:'1,4',name:'Qua Lý Tự Trọng',signal:'+1 phút',traffic:'Đông 190 m'},
+    {min:5,km:'1,4',name:'Qua Pasteur',signal:'+2 phút',traffic:'Đông 420 m'}
+  ],
+  car: [
+    {min:5,km:'1,3',name:'Qua Hàm Nghi',signal:'Nhanh nhất',traffic:'Đông 350 m'},
+    {min:6,km:'1,4',name:'Qua Lý Tự Trọng',signal:'+1 phút',traffic:'Đông 250 m'},
+    {min:7,km:'1,4',name:'Qua Pasteur',signal:'+2 phút',traffic:'Đông 480 m'}
+  ]
+};
+const stage = document.querySelector('#stage');
+const notice = document.querySelector('#notice');
+const picker = document.querySelector('.concepts');
+const edit = document.querySelector('#edit');
+const conceptSelect=document.querySelector('#concept-select');
+let concept='atlas', route=0, vehicle='bike', zoom=1, traffic=false, expanded=false, navigating=false, noticeTimer;
+picker.innerHTML = concepts.map((item) => '<button type="button" data-concept="'+item.id+'" title="'+item.description+'">'+item.name+'</button>').join('');
+conceptSelect.innerHTML=concepts.map(item=>'<option value="'+item.id+'">'+item.name+'</option>').join('');
+conceptSelect.addEventListener('change',()=>changeConcept(conceptSelect.value));
+function brand(){return '<div class="brand">'+icon('pin')+' iMap</div>'}
+function button(action, text, glyph, style='quiet'){return '<button type="button" class="'+style+'" data-action="'+action+'">'+(glyph?icon(glyph):'')+text+'</button>'}
+function iconButton(action, label, glyph, attrs=''){return '<button type="button" class="icon" data-action="'+action+'" aria-label="'+label+'" title="'+label+'" '+attrs+'>'+icon(glyph)+'</button>'}
+function start(){return button('start','Bắt đầu','arrow','primary')}
+function time(item){return '<div class="number">'+item.min+' <small>phút</small></div>'}
+const IMAP_TRANSLATIONS={
+  'Bản đồ tương tác Việt Nam': 'Interactive map of Vietnam',
+  'Chỉ đường': 'Directions',
+  'Nhiều điểm': 'Multi-stop',
+  'Giao thông': 'Traffic',
+  'Đã lưu': 'Saved',
+  'Trợ lý': 'Assistant',
+  'Trợ lý địa điểm, yêu cầu đăng nhập': 'Places assistant, sign-in required',
+  'Công cụ bản đồ': 'Map tools',
+  'Công cụ bản đồ (thanh tab)': 'Map tools (tab bar)',
+  'Bản đồ': 'Map',
+  'Vệ tinh': 'Satellite',
+  'Giao thông trực tiếp': 'Live traffic',
+  'Quầng màu quanh sự cố và đoạn tắc trên tuyến':
+    'Color overlays around incidents and congested route segments',
+  'Sự cố cộng đồng': 'Community incidents',
+  'Marker kẹt xe, tai nạn, ngập…': 'Markers for traffic, crashes, flooding…',
+  'Địa hình': 'Terrain',
+  'Đường đồng mức (chỉ với nền Bản đồ)': 'Contour lines (Map layer only)',
+  'Lớp bản đồ': 'Map layers',
+  Lớp: 'Layers',
+  'Loại bản đồ': 'Map type',
+  'Lớp phủ': 'Overlays',
+  'Chế độ tối tự động 18:00–06:00': 'Automatic dark mode, 6:00 PM–6:00 AM',
+  'Điều khiển bản đồ': 'Map controls',
+  'Định vị vị trí hiện tại': 'Locate current position',
+  'Phóng to bản đồ': 'Zoom in',
+  'Thu nhỏ bản đồ': 'Zoom out',
+  'Xem toàn Việt Nam': 'Show all of Vietnam',
+  'Tìm địa điểm trên bản đồ': 'Search places on the map',
+  'Chọn tuyến {route}': 'Select route {route}',
+  'Tìm địa điểm, đường hoặc địa chỉ': 'Search for a place, road, or address',
+  'Thông thoáng': 'Free-flowing',
+  'Vừa phải': 'Moderate',
+  Đông: 'Heavy',
+  Tắc: 'Congested',
+  Chậm: 'Slow',
+  'Hiện chú giải giao thông': 'Show traffic legend',
+  'Chú giải giao thông': 'Traffic legend',
+  'Màu tuyến theo dữ liệu giao thông VietMap': 'Route colors from VietMap traffic data',
+  'Mức độ từ nhanh đến chậm': 'Traffic levels from fastest to slowest',
+  'Thu gọn chú giải': 'Collapse legend',
+  'Tắt lớp giao thông trực tiếp': 'Turn off live traffic layer',
+  'Cập nhật': 'Update',
+  'Thông tin bản đồ': 'Map information',
+  'Đăng nhập tài khoản': 'Sign in',
+  English: 'English',
+  'Tiếng Việt': 'Vietnamese',
+  'Ngôn ngữ': 'Language',
+  'Ăn uống': 'Food & drink',
+  'Khám phá': 'Explore',
+  'Cập nhật kết quả khi di chuyển bản đồ': 'Update results when the map moves',
+  'Thử lại': 'Try again',
+  'Nguồn: VietMap': 'Source: VietMap',
+  'Đang tìm…': 'Searching…',
+  'Chưa có tuyến để tìm dọc đường. Hãy tính tuyến ở bảng Chỉ đường.':
+    'There is no route to search along yet. Calculate a route in Directions first.',
+  'Thử mở rộng bán kính hoặc đổi từ khóa.': 'Try expanding the radius or changing your search term.',
+  'Ngay trên đường đi': 'On the route',
+  'Chỉ đường đến đây': 'Directions here',
+  'Thêm điểm dừng': 'Add stop',
+  Lưu: 'Save',
+  'Tất cả': 'All',
+  'Tên đường': 'Road name',
+  'Gợi ý địa điểm': 'Place suggestions',
+  'Tìm tên đường, bỏ số nhà': 'Search by road name, excluding house number',
+  'Đang tìm địa điểm…': 'Searching for places…',
+  'Không lấy được tọa độ địa điểm.': 'Could not get the place coordinates.',
+  'Không kết nối được dịch vụ tìm kiếm. Thử lại hoặc chọn trên bản đồ.':
+    'Could not connect to the search service. Try again or choose a point on the map.',
+  'Chưa tìm thấy địa chỉ phù hợp. Thử thêm phường, tỉnh/thành hoặc chọn điểm trên bản đồ.':
+    'No matching address found. Add a ward or city, or choose a point on the map.',
+  'Đang lấy tọa độ địa điểm…': 'Getting place coordinates…',
+  'Đang tìm thêm…': 'Searching for more…',
+  'VietMap · ưu tiên gần khu vực tìm kiếm': 'VietMap · prioritizing the search area',
+  'Địa điểm gợi ý có sẵn': 'Suggested place',
+  'Địa điểm': 'Place',
+  'Chi tiết địa điểm': 'Place details',
+  'Điểm chọn trên bản đồ': 'Point selected on the map',
+  'Vị trí GPS của thiết bị': 'Device GPS location',
+  'Tìm thấy qua VietMap': 'Found with VietMap',
+  'Tìm thấy qua Photon / OpenStreetMap': 'Found with Photon / OpenStreetMap',
+  'Tuyến đường đã lưu': 'Saved routes',
+  'Hành trình của bạn': 'Your trips',
+  'Được lưu an toàn trên trình duyệt này': 'Saved securely in this browser',
+  'Chưa có tuyến đã lưu': 'No saved routes yet',
+  'Tìm đường hoặc tối ưu hành trình nhiều điểm, sau đó nhấn “Lưu”.':
+    'Find a route or optimize a multi-stop trip, then select “Save”.',
+  'Tuyến đường': 'Route',
+  'Xem tuyến': 'View route',
+  'CÁ NHÂN': 'PERSONAL',
+  'Tuyến được lưu trên trình duyệt này. Khi mở lại, ứng dụng sẽ tính tuyến mới qua VietMap.':
+    'Routes are saved in this browser. When reopened, the app calculates a fresh route with VietMap.',
+  'ĐANG MỞ': 'OPENING',
+  'Đang mở trang đăng nhập…': 'Opening sign-in…',
+  'Mỗi hành trình, một kết nối.': 'Every journey brings us together.',
+  'Đi đâu tiếp theo?': 'Where to next?',
+  'Tìm đường, lưu hành trình và cập nhật giao thông cùng cộng đồng iMap.':
+    'Find routes, save trips, and share traffic updates with the iMap community.',
+  'Đăng nhập · iMap': 'Sign in · iMap',
+  'Về bản đồ': 'Back to map',
+  'Khám phá bản đồ trước': 'Explore the map first',
+  'Cùng bạn trên mọi tuyến đường': 'With you on every route',
+  'Đang tải…': 'Loading…',
+  Đóng: 'Close',
+  'Quay lại': 'Back',
+  'Đóng bảng': 'Close panel',
+  'Chưa có địa điểm phù hợp.': 'No matching places found.',
+  'Chọn điểm đi và điểm đến.': 'Choose an origin and destination.',
+  'Điểm đi và điểm đến đang trùng nhau.': 'The origin and destination are the same.',
+  'Hãy chọn điểm đi và điểm đến.': 'Choose an origin and destination.',
+  'Hãy chọn địa điểm cho tất cả điểm dừng hoặc xóa ô còn trống.':
+    'Choose a place for every stop or remove the empty fields.',
+  'Đi ngay': 'Leave now',
+  'Khởi hành lúc': 'Depart at',
+  'Đến lúc': 'Arrive by',
+  'Thời điểm khởi hành': 'Departure time',
+  Giờ: 'Time',
+  'Chỉ để ước tính giờ đến, chưa dự báo tắc đường theo giờ.':
+    'Used only to estimate arrival time; traffic by time of day is not forecast.',
+  'Ngắn nhất': 'Shortest',
+  'Nhanh nhất': 'Fastest',
+  Thật: 'Live GPS',
+  'ĐANG TÌM GPS': 'ACQUIRING GPS',
+  'ĐANG DẪN ĐƯỜNG': 'NAVIGATING',
+  'ĐÃ ĐẾN NƠI': 'ARRIVED',
+  'MẤT TÍN HIỆU GPS': 'GPS SIGNAL LOST',
+  'Chưa có quyền GPS. Hãy cho phép định vị rồi thử lại.':
+    'GPS permission is unavailable. Allow location access and try again.',
+  'GPS đang bắt tín hiệu. Đang tiếp tục tìm vị trí…':
+    'GPS is acquiring a signal. Still looking for your location…',
+  'Tín hiệu GPS tạm thời không ổn định.': 'The GPS signal is temporarily unstable.',
+  'Thiết bị này không hỗ trợ định vị GPS.': 'This device does not support GPS location.',
+  'Tiếp tục theo tuyến đường': 'Continue along the route',
+  'Điều hướng chuyến đi': 'Trip navigation',
+  'ĐANG LỆCH KHỎI TUYẾN': 'OFF ROUTE',
+  'Bạn đang rời khỏi lộ trình': 'You are off route',
+  'Chuyến đi đã hoàn tất': 'Trip complete',
+  'Đang lấy vị trí GPS…': 'Getting GPS location…',
+  'Thực hiện chỉ dẫn tiếp theo': 'Follow the next instruction',
+  'GPS giả lập (demo)': 'Simulated GPS (demo)',
+  'GPS trực tiếp': 'Live GPS',
+  'Đang chờ tín hiệu GPS để đo tốc độ': 'Waiting for a GPS signal to measure speed',
+  'Tốc độ GPS hiện tại: {speed} km/h': 'Current GPS speed: {speed} km/h',
+  'Vị trí GPS đang cách xa tuyến. Tính lại từ vị trí hiện tại để tiếp tục.':
+    'Your GPS location is far from the route. Recalculate from your current position to continue.',
+  'Nguồn vị trí': 'Location source',
+  'Chế độ dẫn đường': 'Navigation mode',
+  '▶ Tiếp tục': '▶ Resume',
+  '⏸ Tạm dừng': '⏸ Pause',
+  '↪ Rẽ nhầm': '↪ Simulate wrong turn',
+  '⚠ Sự cố phía trước': '⚠ Incident ahead',
+  'Đang tính lại…': 'Recalculating…',
+  'Tính lại tuyến': 'Recalculate route',
+  'Thử lại GPS': 'Retry GPS',
+  'Về vị trí': 'Recenter',
+  'Toàn tuyến': 'Overview',
+  'Báo cáo': 'Report',
+  'Kết thúc': 'End',
+  'chuyến đi': 'trip',
+  'Chỉ dẫn từng bước': 'Turn-by-turn directions',
+  'Tiếp tục theo đường': 'Continue on the road',
+  'Ước tính': 'Estimate',
+  Hủy: 'Cancel',
+  'Chạm vào bản đồ để chọn': 'Tap the map to choose',
+  'điểm đi': 'origin',
+  'điểm đến': 'destination',
+  'Đang mở trợ lý…': 'Opening assistant…',
+  'Đang mở chỉ đường…': 'Opening directions…',
+  'Đang mở giao thông…': 'Opening traffic…',
+  'Đang mở tuyến đã lưu…': 'Opening saved routes…',
+  'Đang mở tài khoản…': 'Opening account…',
+  'Đã lưu hành trình trên thiết bị này': 'Trip saved on this device',
+  'Đã xóa hành trình đã lưu': 'Saved trip deleted',
+  'Không thể mở lại hành trình này.': 'Could not reopen this trip.',
+  'Đã tính lại tuyến đã lưu bằng VietMap': 'Saved route recalculated with VietMap',
+  'Đã tính lại hành trình đã lưu bằng VietMap': 'Saved trip recalculated with VietMap',
+  'Đã hủy hành trình cũ.': 'Previous trip canceled.',
+  'Đã tối ưu thứ tự ghé theo đường đi VietMap': 'Stop order optimized using VietMap routes',
+  'Đăng nhập để gửi báo cáo.': 'Sign in to submit a report.',
+  'Đăng nhập để xác minh báo cáo.': 'Sign in to verify a report.',
+  'Đã đồng bộ báo cáo giao thông': 'Traffic report synced',
+  'Tuyến đã thay đổi. Hãy tìm lại điểm dừng.': 'The route has changed. Search for the stop again.',
+  'Đã bỏ lưu địa điểm': 'Place removed from saved items',
+  'Đang chờ GPS để gắn báo cáo vào vị trí hiện tại.':
+    'Waiting for GPS to attach the report to your current location.',
+  'Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.':
+    'Map tiles by OpenStreetMap · routes calculated with the VietMap API.',
+  'Không lấy được vị trí.': 'Could not get your location.',
+  'Không tính lại được tuyến.': 'Could not recalculate the route.',
+  'Tài khoản iMap': 'iMap account',
+  'Sẵn sàng lên đường?': 'Ready to hit the road?',
+  'Bắt đầu với iMap.': 'Get started with iMap.',
+  'Chào bạn trở lại.': 'Welcome back.',
+  'Hành trình tiếp theo đang chờ bạn.': 'Your next trip is waiting.',
+  'Tạo tài khoản để chia sẻ và xác nhận giao thông.':
+    'Create an account to share and verify traffic reports.',
+  'Đăng nhập để tiếp tục hành trình của bạn.': 'Sign in to continue your journey.',
+  'Tạo tài khoản thành công. Bạn có thể quay lại bản đồ.': 'Account created. You can return to the map.',
+  'Đã gửi yêu cầu tạo tài khoản. Hãy kiểm tra email để xác nhận trước khi đăng nhập.':
+    'Sign-up request sent. Check your email to confirm before signing in.',
+  'Đăng nhập thành công. Bạn có thể quay lại bản đồ.': 'Signed in. You can return to the map.',
+  'Email hoặc mật khẩu chưa đúng. Vui lòng kiểm tra lại.':
+    'Email or password is incorrect. Please check and try again.',
+  'Hãy xác nhận email trước khi đăng nhập.': 'Confirm your email before signing in.',
+  'Không thể xác thực tài khoản lúc này. Vui lòng thử lại.':
+    'Could not authenticate your account right now. Please try again.',
+  'Đã đăng xuất.': 'Signed out.',
+  'Không thể đăng xuất. Vui lòng thử lại.': 'Could not sign out. Please try again.',
+  'Đang kiểm tra phiên đăng nhập…': 'Checking sign-in session…',
+  'Đăng nhập đang được thiết lập': 'Sign-in is being configured',
+  'Bạn vẫn có thể xem bản đồ và tìm đường. Vui lòng quay lại sau để đăng nhập tài khoản.':
+    'You can still view the map and find routes. Please come back later to sign in.',
+  'Bạn đã đăng nhập': 'You are signed in',
+  'Sẵn sàng gửi và xác minh báo cáo giao thông cùng cộng đồng.':
+    'You can now submit and verify traffic reports with the community.',
+  'Tiếp tục với bản đồ': 'Continue to map',
+  'Đang đăng xuất…': 'Signing out…',
+  'Đăng xuất': 'Sign out',
+  'Chọn phương thức tài khoản': 'Choose account action',
+  'Đăng nhập': 'Sign in',
+  'Đăng ký': 'Sign up',
+  'Mật khẩu': 'Password',
+  'Nhập mật khẩu': 'Enter password',
+  'Ẩn mật khẩu': 'Hide password',
+  'Hiện mật khẩu': 'Show password',
+  Ẩn: 'Hide',
+  Hiện: 'Show',
+  'Dùng ít nhất 8 ký tự. Bạn có thể cần xác nhận qua email.':
+    'Use at least 8 characters. You may need to confirm by email.',
+  'Đang xử lý…': 'Processing…',
+  'Tài khoản của bạn': 'Your account',
+  'Mở trang tài khoản': 'Open account page',
+  'DÀNH CHO THÀNH VIÊN': 'MEMBERS ONLY',
+  'Trợ lý địa điểm': 'Places assistant',
+  'ĐỊA ĐIỂM': 'PLACE',
+  'TÌM THEO NHU CẦU': 'SEARCH BY NEED',
+  'Cách dùng trợ lý': 'How to use the assistant',
+  'Chọn thao tác': 'Choose an action',
+  'Giọng nói': 'Voice',
+  'Chọn loại địa điểm và phạm vi, rồi bấm Tìm. Kết quả lấy từ dữ liệu OpenStreetMap.':
+    'Choose a place type and area, then select Search. Results use OpenStreetMap data.',
+  'Nói nhu cầu, kiểm tra hoặc sửa câu nhận dạng rồi bấm Tìm. Trợ lý sẽ hỏi lại nếu yêu cầu chưa rõ.':
+    'Describe what you need, review or edit the recognized text, then select Search. The assistant will ask follow-up questions if needed.',
+  'Phạm vi tìm kiếm': 'Search area',
+  'Quanh vị trí chọn': 'Near selected location',
+  'Dọc tuyến đang đi': 'Along current route',
+  'Dùng tâm bản đồ hiện tại': 'Use current map center',
+  'Nhu cầu / câu đã nhận dạng': 'Request / recognized speech',
+  'Ví dụ: Tìm trạm xăng trong bán kính 2 km': 'Example: Find a gas station within 2 km',
+  'Trình duyệt': 'Browser',
+  'Đang nhận dạng…': 'Recognizing…',
+  'Xong, nhận dạng': 'Done, transcribe',
+  'Dừng nghe': 'Stop listening',
+  'Nhập bằng giọng nói': 'Speak your request',
+  'Ngôn ngữ giọng nói': 'Speech language',
+  'Đang nghe…': 'Listening…',
+  'Hủy ghi âm / nhận dạng': 'Cancel recording / transcription',
+  'Bạn muốn tìm gì?': 'What are you looking for?',
+  'Phạm vi và giới hạn': 'Area and limits',
+  'Bộ lọc tùy chọn': 'Optional filters',
+  'Loại địa điểm': 'Place type',
+  'Hiểu từ yêu cầu': 'Infer from request',
+  'Bán kính (km)': 'Radius (km)',
+  'Mặc định 2 km': 'Default: 2 km',
+  'Đi thêm tối đa (km)': 'Maximum extra distance (km)',
+  'Thêm tối đa (phút)': 'Maximum extra time (minutes)',
+  'Mặc định 15 phút': 'Default: 15 minutes',
+  'Bộ lọc chọn tay được ưu tiên hơn câu nhập.': 'Manually selected filters take priority over your request.',
+  'Tìm địa điểm': 'Search places',
+  'Hủy tìm kiếm': 'Cancel search',
+  'Xóa ngữ cảnh trao đổi': 'Clear conversation context',
+  'Xem trên bản đồ': 'View on map',
+  'Nguồn OSM': 'OSM source',
+  'Ghé điểm này': 'Add this stop',
+  'Nguồn dữ liệu và giới hạn': 'Data sources and limitations',
+  'Sắp xếp': 'Sort',
+  'Bán kính': 'Radius',
+  'Bộ lọc': 'Filters',
+  'Cuộn danh mục sang trái': 'Scroll categories left',
+  'Cuộn danh mục sang phải': 'Scroll categories right',
+  'Khám phá quanh đây': 'Explore nearby',
+  'Tìm dọc tuyến': 'Search along route',
+  'Thông tin tuyến đường': 'Route details',
+  'Mức giao thông trên tuyến': 'Traffic along route',
+  'Có sự cố giao thông trên tuyến': 'Traffic incident on route',
+  'Không thu phí': 'No tolls',
+  'Có đoạn đi phà': 'Includes a ferry',
+  'Chi tiết': 'Details',
+  'Xem trước': 'Preview',
+  'Thứ tự bạn nhập không đi được; đã tìm thứ tự hợp lệ':
+    'The entered stop order is not feasible; a valid order was found',
+  'Tiết kiệm': 'Savings',
+  'so với thứ tự bạn': 'compared with your entered order',
+  'nhập:': 'entered:',
+  'Thứ tự bạn nhập đã là tốt nhất': 'Your entered order is already optimal',
+  'Tính theo ma trận chi phí VietMap, có thể lệch nhẹ so với tuyến cuối.':
+    'Based on the VietMap cost matrix; the final route may differ slightly.',
+  'Bản đồ Việt Nam với tìm kiếm địa điểm và công cụ lập hành trình.':
+    'Vietnam map with place search and trip planning tools.',
+  'Bản đồ & chỉ đường': 'Maps & directions',
+  'iMap cần bật JavaScript để hiển thị bản đồ và chỉ đường.':
+    'iMap needs JavaScript enabled to show the map and directions.',
+  'Tài khoản': 'Account',
+  'Có phiên bản iMap mới. Chọn Cập nhật để tải lại trang.':
+    'A new version of iMap is available. Select Update to reload the page.',
+  'Có phiên bản mới. Cập nhật iMap': 'New version available. Update iMap',
+  'Có phiên bản iMap mới': 'A new version of iMap is available',
+  Nhanh: 'Fast',
+  'Nhà hàng': 'Restaurant',
+  'Cà phê': 'Cafe',
+  'Khách sạn': 'Hotel',
+  'Điểm tham quan': 'Attractions',
+  'Bảo tàng': 'Museum',
+  'Trạm xe buýt': 'Bus stop',
+  'Nhà thuốc': 'Pharmacy',
+  Xăng: 'Fuel',
+  'Sạc EV': 'EV charging',
+  'dọc tuyến': 'along route',
+  'quanh đây': 'nearby',
+  'quanh tuyến': 'along the route',
+  'Cách tuyến {distance}': '{distance} from route',
+  '+{minutes} phút đi vòng': '+{minutes} min detour',
+  'Km {distance} trên tuyến': 'Km {distance} along route',
+  'Cách {distance}': '{distance} away',
+  '{count} kết quả': '{count} results',
+  'Không thấy {term} trong {radius} {where}': 'No {term} found within {radius} {where}',
+  'Điểm xuất phát': 'Starting point',
+  'Điểm dừng {number}': 'Stop {number}',
+  'Đưa điểm dừng {number} lên trước': 'Move stop {number} earlier',
+  'Đưa điểm dừng {number} xuống sau': 'Move stop {number} later',
+  'Xóa điểm dừng {number}': 'Remove stop {number}',
+  'Điểm đến': 'Destination',
+  'Bạn muốn đi đâu?': 'Where do you want to go?',
+  'Đảo chiều điểm đi và điểm đến': 'Swap origin and destination',
+  'Đảo chiều': 'Swap',
+  'Đang dẫn đường': 'Navigating',
+  'Bắt đầu': 'Start',
+  'GPS chỉ bật khi bạn nhấn Bắt đầu. Thời gian là ước tính và có thể đổi theo giao thông.':
+    'GPS starts only after you select Start. Travel time is an estimate and may change with traffic.',
+  'Đang lấy tuyến đường…': 'Getting routes…',
+  'Tìm đường': 'Find routes',
+  'Lộ trình': 'ROUTE',
+  'Đang định vị…': 'Locating…',
+  'Vị trí của tôi': 'My location',
+  'Chọn điểm đi': 'Choose origin',
+  'Chọn điểm đến': 'Choose destination',
+  'Tuyến sẽ đi theo thứ tự bạn đặt. Dùng mũi tên để sắp xếp điểm dừng.':
+    'The route follows your chosen order. Use the arrows to reorder stops.',
+  'Tùy chọn tuyến': 'Route options',
+  'Tùy chọn': 'Options',
+  'Ưu tiên tuyến': 'Route preference',
+  'Tiêu chí tìm tuyến': 'Route preference',
+  'Tránh phà': 'Avoid ferries',
+  'VietMap hiện chưa hỗ trợ loại trừ cao tốc trong API tuyến đang dùng.':
+    'The current VietMap routing API does not support avoiding highways.',
+  'Tránh cao tốc: chưa hỗ trợ': 'Avoid highways: not supported',
+  'Các tuyến có thể đi': 'Available routes',
+  '{count} phương án': '{count} options',
+  'Tuyến VietMap theo phương tiện và tùy chọn đã chọn. Thời gian là ước tính.':
+    'Routes are calculated by VietMap using your selected vehicle and preferences. Travel time is an estimate.',
+  'Phương tiện': 'Vehicle',
+  'Xe máy': 'Motorcycle',
+  'Ô tô': 'Car',
+  'Chọn phương tiện nhanh nhất: {vehicle}': 'Select the fastest vehicle: {vehicle}',
+  'Tính tuyến cho cả xe máy và ô tô để biết phương tiện nhanh nhất':
+    'Calculate routes for both motorcycles and cars to see which is fastest',
+  'Tốt nhất': 'Best',
+  'Nên khởi hành lúc {time}': 'Suggested departure: {time}',
+  'Dự kiến đến lúc {time}': 'Estimated arrival: {time}',
+  'Mức giao thông trên tuyến: {levels}': 'Traffic along route: {levels}',
+  '+{minutes} phút': '+{minutes} min',
+  'qua {street}': 'via {street}',
+  'Kẹt xe {length}': 'Congestion {length}',
+  'Có thu phí ~{amount} ₫': 'Toll ~₫{amount}',
+  'Đã sao chép liên kết': 'Link copied',
+  'Không tự sao chép được. Hãy chọn liên kết và nhấn Ctrl+C.':
+    'Could not copy automatically. Select the link and press Ctrl+C.',
+  'Chia sẻ tuyến': 'Share route',
+  'Gửi tới điện thoại': 'Send to phone',
+  'Mở tuyến này trên điện thoại': 'Open this route on your phone',
+  'Sao chép liên kết dưới đây rồi gửi cho chính bạn qua Zalo, Messenger hoặc email, sau đó mở trên điện thoại.':
+    'Copy the link below, send it to yourself via Zalo, Messenger, or email, then open it on your phone.',
+  'Liên kết tuyến đường': 'Route link',
+  'Sao chép liên kết': 'Copy link',
+  'Chia sẻ': 'Share',
+  'Đã định vị · sai số khoảng {meters} m': 'Located · accuracy about {meters} m',
+  'Cảnh báo tuyến: {incident} mức {severity}. Đã cập nhật đoạn đường.':
+    'Route alert: {incident} is {severity}. The route segment has been updated.',
+  nhẹ: 'low',
+  vừa: 'moderate',
+  nặng: 'high',
+  'Đã chuyển sang tuyến thay thế để tránh sự cố': 'Switched to an alternative route to avoid the incident',
+  'Đã tính lại tuyến từ vị trí hiện tại': 'Route recalculated from your current location',
+  'Đã đi vòng để tránh sự cố': 'Detoured to avoid the incident',
+  'Không tìm được đường tránh sự cố, hãy chú ý':
+    'No route could avoid the incident. Please proceed carefully.',
+  'Đường đóng (demo)': 'Road closed (demo)',
+  'Đã gửi báo cáo; Supabase chưa cập nhật phân luồng, cảnh báo tạm áp dụng cho cả ô tô và xe máy.':
+    'Report submitted. Supabase has not updated vehicle routing yet, so this alert temporarily applies to both cars and motorcycles.',
+  'Đã thêm điểm ghé: {name}': 'Added stop: {name}',
+  'Đang khám phá quanh TP.HCM. Hãy phóng to bản đồ tới khu vực bạn muốn.':
+    'Exploring near Ho Chi Minh City. Zoom in to the area you want to search.',
+  'Đã thêm điểm dừng: {name}': 'Added stop: {name}',
+  'Đã lưu {name}': 'Saved {name}',
+  'Tìm {what} {where}': 'Find {what} {where}',
+  'Chạm vào bản đồ để chọn {target}': 'Tap the map to choose a {target}',
+  'Trong {distance}': 'In {distance}',
+  'Còn {distance}': '{distance} remaining',
+  'Tuyến khác': 'Alternative route',
+  'Tránh trạm thu phí': 'Avoid tolls',
+  'Kẹt xe': 'Congestion',
+  'Chọn thời gian khởi hành': 'Choose departure time',
+  'Chưa có kết quả phù hợp.': 'No matching results.',
+  'Tìm thấy {count} địa điểm': 'Found {count} places',
+  'Chạm vào bản đồ để chọn điểm đi': 'Tap the map to choose an origin',
+  'Chạm vào bản đồ để chọn điểm đến': 'Tap the map to choose a destination',
+  'Đi thẳng': 'Continue straight',
+  'Rẽ trái': 'Turn left',
+  'Rẽ phải': 'Turn right',
+  'Rẽ nhẹ trái': 'Bear left',
+  'Rẽ nhẹ phải': 'Bear right',
+  'Quay đầu': 'Make a U-turn',
+  'Đến nơi': 'You have arrived',
+  'Rẽ gắt trái': 'Turn sharply left',
+  'Rẽ gắt phải': 'Turn sharply right',
+  'Giữ làn trái': 'Keep left',
+  'Giữ làn phải': 'Keep right',
+  'Qua điểm dừng': 'Pass the stop',
+  'Vào vòng xuyến': 'Enter the roundabout',
+  'Đi vào đường': 'Enter the road',
+  'Đi ra đường': 'Exit the road',
+  'Xuất phát': 'Start',
+  'Chờ GPS': 'Waiting for GPS',
+  'Các tuyến': 'Routes',
+  'Đang cập nhật…': 'Updating…',
+  'Báo cáo giao thông': 'Traffic report',
+  'Cảnh báo giao thông': 'Traffic alert',
+  'Không thể tải dữ liệu.': 'Could not load data.',
+  'Khu vực này': 'This area',
+  'Thời tiết minh họa': 'Illustrative weather',
+  'Nhiệt độ': 'Temperature',
+  'Cách tuyến {distance} · {detour}': '{distance} from route · {detour}',
+  'đi vòng khoảng {minutes} phút': 'about {minutes} min detour',
+  'ngay trên đường đi': 'right on the route',
+  'Cách tâm tìm kiếm {distance}': '{distance} from search center',
+  'Tọa độ': 'Coordinates',
+  'Mở địa điểm trên OpenStreetMap': 'Open place in OpenStreetMap',
+  'Tìm đường đến đây': 'Directions here',
+  'Nguồn địa điểm được ghi rõ theo từng kết quả ở trên.': 'The source is listed for each result above.',
+  'Ước tính: Giao thông thông thoáng': 'Estimated: Free-flowing traffic',
+  'Ước tính: Giao thông vừa phải': 'Estimated: Moderate traffic',
+  'Ước tính: Giao thông đông đúc': 'Estimated: Heavy traffic',
+  Nắng: 'Sunny',
+  'Nhiều mây': 'Cloudy',
+  'Mưa rào': 'Showers',
+  'Trời quang': 'Clear',
+  'Mở rộng thẻ Khu vực này (thời tiết minh họa, giao thông ước tính)':
+    'Expand this area card (illustrative weather, estimated traffic)',
+  'Thu gọn thẻ Khu vực này': 'Collapse this area card',
+  'Mức giao thông là ước tính từ giờ cao điểm và báo cáo cộng đồng, không phải dữ liệu thời gian thực':
+    'Traffic is estimated from rush hours and community reports, not live data',
+  'Thời tiết minh họa: {weather}': 'Illustrative weather: {weather}',
+  'Có thể chậm hơn ~{minutes} phút': 'May be ~{minutes} min slower',
+  'Chưa thấy dấu hiệu chậm hơn': 'No signs of slower traffic',
+  '{count} sự cố đang báo': '{count} reported incidents',
+  'Chưa có sự cố': 'No incidents reported',
+  'Mở bảng Giao thông': 'Open Traffic',
+  'Thời tiết minh họa · Giao thông ước tính từ giờ cao điểm và báo cáo cộng đồng':
+    'Illustrative weather · Traffic estimated from rush hours and community reports',
+  'Khu vực này: {temperature} độ (thời tiết minh họa), {traffic} (ước tính từ giờ cao điểm và báo cáo cộng đồng). Mở bảng Giao thông':
+    'This area: {temperature} degrees (illustrative weather), {traffic} (estimated from rush hours and community reports). Open Traffic',
+  'Theo tuyến': 'Along route',
+  'Gần nhất': 'Nearest',
+  'Ít đi vòng nhất': 'Shortest detour',
+  'Sắp xếp: {sort}': 'Sort: {sort}',
+  'Sắp xếp theo': 'Sort by',
+  'Bán kính: {radius}': 'Radius: {radius}',
+  'Bán kính tìm kiếm': 'Search radius',
+  'Loại tìm kiếm': 'Search type',
+  'CỘNG ĐỒNG': 'COMMUNITY',
+  'Tình hình giao thông': 'Traffic conditions',
+  'Cảnh báo cộng đồng': 'Community alerts',
+  'Tự hết hạn': 'Expire automatically',
+  'Báo cáo sự cố': 'Report an incident',
+  'Chạm bản đồ để chọn vị trí': 'Tap the map to choose a location',
+  'Mức độ sự cố · chọn thủ công': 'Incident severity · choose manually',
+  'Áp dụng cho loại xe': 'Applies to vehicle type',
+  'Loại xe áp dụng báo cáo': 'Vehicle type for report',
+  'Ghi chú ngắn': 'Short note',
+  'không bắt buộc': 'optional',
+  'Ví dụ: ngập sâu gần giao lộ…': 'Example: deep flooding near the intersection…',
+  'Ảnh hiện trường': 'Incident photo',
+  'Tối đa 5 MB': '5 MB maximum',
+  'Chụp ảnh': 'Take photo',
+  'Chọn ảnh': 'Choose photo',
+  'Trên điện thoại, nút Chụp ảnh sẽ mở camera. Ảnh chỉ được lưu cùng báo cáo khi bạn bấm Gửi báo cáo.':
+    'On phones, Take photo opens the camera. The image is only attached when you submit the report.',
+  'Xem trước ảnh hiện trường': 'Preview incident photo',
+  'Xóa ảnh đã chọn': 'Remove selected photo',
+  'Hỗ trợ từ AI': 'AI assistance',
+  'tùy chọn': 'optional',
+  'Gợi ý loại sự cố': 'Suggest incident type',
+  'Đang phân tích…': 'Analyzing…',
+  'Đang nhận diện…': 'Recognizing…',
+  'Nhận diện biển báo': 'Read traffic sign',
+  'Ảnh chỉ được gửi đến Google Gemini khi bạn bấm một nút trên. Với gói miễn phí, Google có thể dùng nội dung để cải thiện dịch vụ và người đánh giá có thể xem. Tránh ảnh có khuôn mặt hoặc biển số.':
+    'Images are only sent to Google Gemini when you select one of the buttons above. On the free plan, Google may use content to improve its services and human reviewers may see it. Avoid images with faces or license plates.',
+  'Đang kiểm tra cấu hình Gemini…': 'Checking Gemini configuration…',
+  'AI ảnh chưa bật trên backend. Cần GEMINI_TRAFFIC_AI_ENABLED=true và GEMINI_API_KEY.':
+    'Image AI is not enabled on the backend. GEMINI_TRAFFIC_AI_ENABLED=true and GEMINI_API_KEY are required.',
+  'Đang phân tích ảnh…': 'Analyzing image…',
+  'Gợi ý sự cố': 'Incident suggestion',
+  'Tin cậy: {confidence}': 'Confidence: {confidence}',
+  'Quan sát: {details}': 'Observations: {details}',
+  'Ảnh chưa đủ căn cứ để xác định sự cố giao thông.':
+    'The image does not provide enough evidence to identify a traffic incident.',
+  'AI chỉ gợi ý loại sự cố và ghi chú. Mức độ do bạn tự chọn.':
+    'AI only suggests the incident type and note. You choose the severity.',
+  'Dùng gợi ý để điền form': 'Use suggestion to fill the form',
+  'Chưa nhận diện được biển báo rõ ràng': 'Could not clearly identify a traffic sign',
+  'Chữ/số nhìn thấy: {text}': 'Visible text/numbers: {text}',
+  'Chỉ là gợi ý hình ảnh; hiệu lực còn phụ thuộc chiều đường và biển phụ. Không tự thay đổi tuyến đường.':
+    'This is only an image suggestion; applicability depends on travel direction and supplementary signs. It will not change your route automatically.',
+  'Đang gửi…': 'Submitting…',
+  'Gửi báo cáo': 'Submit report',
+  'Đăng nhập để gửi báo cáo': 'Sign in to submit a report',
+  'Chọn đúng vị trí trên bản đồ trước khi gửi.': 'Choose the correct location on the map before submitting.',
+  'Báo cáo gần đây': 'Recent reports',
+  'Đang đồng bộ báo cáo…': 'Syncing reports…',
+  '{count} báo cáo trong 30 phút / 75 m · {reporters} người gửi riêng biệt':
+    '{count} reports in 30 min / 75 m · {reporters} distinct reporters',
+  'cập nhật': 'updated',
+  'chưa có xác nhận mới': 'no recent confirmation',
+  'Mở ảnh minh chứng': 'Open evidence photo',
+  'Ảnh minh chứng: {incident}': 'Evidence photo: {incident}',
+  'Có ảnh minh chứng': 'Evidence photo attached',
+  'Đã thông': 'Cleared',
+  'Vẫn còn': 'Still active',
+  'Chưa có báo cáo trong khu vực này. Hãy chọn vị trí và gửi cập nhật đầu tiên.':
+    'No reports in this area yet. Choose a location and submit the first update.',
+  'Báo cáo được đồng bộ qua Supabase và tự ẩn khi hết hạn. Hãy tự xác minh tình hình trước khi di chuyển.':
+    'Reports sync through Supabase and disappear when they expire. Verify conditions before traveling.',
+  'Bắt đầu chuyến đi': 'Start trip',
+  'Chọn các điểm cần ghé. Tự sắp xếp thứ tự tốt nhất theo thời gian hoặc quãng đường, giữ cố định điểm xuất phát.':
+    'Choose your stops. Automatically find the best order by time or distance while keeping the starting point fixed.',
+  'Chọn điểm xuất phát': 'Choose a starting point',
+  'Danh sách điểm dừng': 'Stop list',
+  'Tối đa {count} điểm cần ghé.': 'You can add up to {count} stops.',
+  'Điểm này đã có trong hành trình.': 'This place is already in the trip.',
+  'Điểm xuất phát trùng một điểm cần ghé.': 'The starting point matches one of the stops.',
+  'Hãy chọn điểm xuất phát từ gợi ý.': 'Choose a starting point from the suggestions.',
+  'Không tính được hành trình. Hãy thử lại.': 'Could not calculate the trip. Please try again.',
+  'LẬP KẾ HOẠCH': 'TRIP PLANNER',
+  'Hành trình nhiều điểm': 'Multi-stop trip',
+  'Xóa hành trình': 'Clear trip',
+  'Điểm xuất phát hành trình nhiều điểm': 'Multi-stop trip starting point',
+  'Ưu tiên': 'Preference',
+  'Thời gian': 'Time',
+  'Quay lại điểm xuất phát': 'Return to starting point',
+  'Điểm cần ghé': 'Stops',
+  'Xóa {name}': 'Remove {name}',
+  'Tìm điểm dừng để thêm': 'Search for a stop to add',
+  'Đang tối ưu đường đi…': 'Optimizing route…',
+  'Tối ưu hành trình': 'Optimize trip',
+  'Đã sắp xếp hành trình': 'Trip order optimized',
+  '{minutes} phút': '{minutes} minutes',
+  'Tối ưu theo chi phí đường bộ VietMap, có xét chiều di chuyển. Để đi theo thứ tự tự chọn, dùng mục Chỉ đường.':
+    'Optimized using VietMap road costs and travel direction. To keep your own stop order, use Directions.',
+  'Thứ tự bạn nhập không đi được; đã tìm thứ tự hợp lệ ({cost}).':
+    'Your entered order was not feasible; a valid order was found ({cost}).',
+  'Tiết kiệm ': 'Savings: ',
+  'so với thứ tự bạn nhập: {original} → {optimized}.':
+    'compared with your entered order: {original} → {optimized}.',
+  'Thứ tự bạn nhập đã là tốt nhất ({cost}).': 'Your entered order is already optimal ({cost}).',
+  Xóa: 'Remove',
+  'Đang kiểm tra tài khoản…': 'Checking account…',
+  'Đăng nhập để dùng trợ lý AI': 'Sign in to use the AI assistant',
+  'Tạo tài khoản và đăng nhập để mở các tính năng dành cho thành viên.':
+    'Create an account and sign in to unlock member features.',
+  'Tìm địa điểm theo nhu cầu bằng AI': 'Find places by describing what you need with AI',
+  'Gợi ý điểm dừng dọc tuyến đang đi': 'Get stop suggestions along your route',
+  'Tìm kiếm bằng giọng nói': 'Search by voice',
+  'Đăng nhập / Đăng ký': 'Sign in / Sign up',
+  'Bạn vẫn có thể xem bản đồ, tìm địa chỉ và chỉ đường mà không cần tài khoản.':
+    'You can still view the map, search addresses, and get directions without an account.',
+  'Minh họa hành trình': 'Trip illustration',
+  'iMap — về bản đồ': 'iMap — back to map',
+  'iMap · Cùng bạn trên mọi tuyến đường': 'iMap · With you on every route',
+  'TÀI KHOẢN': 'ACCOUNT',
+  'Đã có lỗi xảy ra': 'Something went wrong',
+  'Ứng dụng gặp sự cố khi hiển thị. Tải lại trang để tiếp tục; các tuyến đã lưu của bạn vẫn còn.':
+    'The app had trouble displaying this page. Reload to continue; your saved routes are still available.',
+  'Tải lại trang': 'Reload page',
+  'Tự động': 'Automatic',
+  'Tai nạn': 'Crash',
+  Ngập: 'Flooding',
+  'Đường đóng': 'Road closure',
+  'Chướng ngại vật': 'Road hazard',
+  'Thi công': 'Roadworks',
+  'Sự cố giao thông': 'Traffic incident',
+  'Lớp giao thông': 'Traffic layer',
+  'Trên tuyến': 'On route',
+  'Đã lưu an toàn trên trình duyệt này': 'Saved securely in this browser',
+  'Điện thoại': 'Phone',
+  'Địa điểm gợi ý': 'Suggested place',
+  'Nổi bật': 'Recommended',
+  'Gần vị trí tìm kiếm': 'Near search center',
+  'Trạm xăng': 'Gas station',
+  'Tạo tài khoản': 'Create account',
+  'Ô tô + xe máy': 'Cars + motorcycles',
+  'Đã gửi báo cáo. Cảm ơn bạn đã cập nhật tình hình.': 'Report submitted. Thank you for sharing an update.',
+  'Đã điền loại sự cố và ghi chú. Mức độ vẫn theo lựa chọn thủ công của bạn.':
+    'Incident type and note filled in. Severity remains as you selected.',
+  'Đăng nhập để dùng phân tích ảnh.': 'Sign in to use image analysis.',
+  'Ảnh phải có định dạng JPG, PNG hoặc WebP.': 'Images must be JPG, PNG, or WebP.',
+  'Ảnh tối đa 5 MB.': 'Images must be 5 MB or smaller.',
+  'AI chưa bật. Bạn vẫn có thể nói hoặc nhập nhu cầu đơn giản; trợ lý đang hiểu bằng từ khóa.':
+    'AI is unavailable. You can still speak or type a simple request; the assistant will use keyword matching.',
+  'AI hiểu yêu cầu': 'AI understood the request',
+  'Bỏ điểm dừng để tìm lại': 'Remove the stop and search again',
+  'Chưa có kết quả trong phạm vi dữ liệu khảo sát. Thử đổi vị trí hoặc bán kính.':
+    'No results in the surveyed area. Try changing the location or search radius.',
+  'Chưa tìm thấy điểm đáp ứng giới hạn trong phạm vi khảo sát.':
+    'No places in the surveyed area match these limits.',
+  'Chưa xác nhận được trạng thái AI. Nguồn xử lý sẽ hiển thị cùng kết quả.':
+    'Could not confirm AI availability. The processing source will be shown with the results.',
+  'Chỉ nghe khi bạn bấm nút. Trình duyệt có thể gửi âm thanh đến dịch vụ nhận giọng nói. Kiểm tra chữ rồi bấm Tìm; không tự gửi.':
+    'Listening starts only when you select the button. Your browser may send audio to a speech recognition service. Review the text and select Search; nothing is submitted automatically.',
+  'Cách vị trí chọn khoảng {distance} km đường thẳng.':
+    'About {distance} km in a straight line from the selected location.',
+  'Cần một tuyến hai điểm để tính đường đi thêm. Bạn vẫn có thể hỏi hoặc chuyển sang tìm quanh vị trí.':
+    'A route with an origin and destination is needed to calculate detour distance. You can still ask a question or search near a location.',
+  'Dịch vụ giọng nói': 'Speech service',
+  'Ghi tối đa 15 giây; âm thanh gửi qua máy chủ đến Cloudflare Whisper. Bấm Xong để nhận dạng, kiểm tra chữ rồi bấm Tìm.':
+    'Record up to 15 seconds. Audio is sent through the server to Cloudflare Whisper. Select Done to transcribe, review the text, then select Search.',
+  'Hãy chọn loại địa điểm bạn muốn tìm.': 'Choose the type of place you want to find.',
+  'Hãy nhập nhu cầu hoặc chọn một loại địa điểm.': 'Enter what you need or choose a place type.',
+  'Không tìm được địa điểm.': 'Could not find places.',
+  'Kết quả đã quá 2 phút. Hãy tìm lại.': 'These results are over two minutes old. Search again.',
+  'Trình duyệt này chưa hỗ trợ giọng nói. Bạn vẫn có thể nhập chữ tiếng Anh hoặc Việt.':
+    'This browser does not support speech recognition. You can still type in English or Vietnamese.',
+  'Tìm quanh: {lat}, {lng}. Bấm bản đồ để đổi vị trí.':
+    'Search near {lat}, {lng}. Select the map to change the location.',
+  'Whisper API (chưa cấu hình)': 'Whisper API (not configured)',
+  '{category} · bán kính {radius} km · khoảng cách đường thẳng.':
+    '{category} · {radius} km radius · straight-line distance.',
+  '{category} · tối đa {distance} km và {duration} phút đi thêm.':
+    '{category} · up to {distance} km and {duration} minutes extra travel.',
+  '{origin} → {destination}. So sánh với tuyến không ghé.':
+    '{origin} → {destination}. Compared with the route without this stop.',
+  'Đang dùng bộ lọc ngôn ngữ; chưa có kết quả từ AI': 'Using keyword filters; no AI results yet',
+  'Đã cấu hình AI hiểu nhu cầu. Nếu dịch vụ lỗi, trợ lý sẽ thông báo khi dùng từ khóa.':
+    'AI request understanding is configured. If the service fails, the assistant will report it and use keyword matching.',
+  'Microphone chưa được cấp quyền. Bạn vẫn có thể nhập chữ.':
+    'Microphone access was not granted. You can still type.',
+  'Chưa nghe rõ câu nói. Hãy thử lại hoặc nhập chữ.': 'Speech was unclear. Try again or type instead.',
+  'Không nhận được giọng nói. Hãy thử lại hoặc nhập chữ.':
+    'No speech was detected. Try again or type instead.',
+  'Trình duyệt chưa khởi động được nhận giọng nói. Bạn có thể nhập chữ.':
+    'The browser could not start speech recognition. You can type instead.',
+  'Không ghi được âm thanh. Hãy thử lại hoặc nhập chữ.': 'Could not record audio. Try again or type instead.',
+  'Voice chưa sẵn sàng.': 'Voice is not ready.',
+  'Chưa được cấp quyền micro hoặc không có thiết bị. Kiểm tra quyền micro và dùng HTTPS.':
+    'Microphone access was denied or no device is available. Check microphone permissions and use HTTPS.',
+  'Hãy nói từ 0,2 đến 15 giây.': 'Speak for 0.2 to 15 seconds.',
+  'Bản ghi quá lớn. Hãy nói ngắn hơn.': 'The recording is too large. Speak for less time.',
+  '{count} báo cáo trong 30 phút / 75 m từ {reporters} người{freshness}':
+    '{count} reports within 75 m over 30 minutes from {reporters} people{freshness}',
+  'Ngập đường': 'Flooding',
+  'Vật cản': 'Obstacle',
+  Nhẹ: 'Low',
+  Vừa: 'Moderate',
+  Nặng: 'High',
+  'Cả hai': 'Both',
+  'Chưa rõ': 'Unknown',
+  'sự cố giao thông': 'traffic incident',
+  'Quãng đường': 'Distance',
+  'Công viên': 'Park',
+  'Di tích lịch sử': 'Historic site',
+  'Khu vực': 'Area',
+  'Khu đô thị': 'Urban area',
+  'Nút giao': 'Interchange',
+  'Phố đi bộ': 'Pedestrian street',
+  'Địa điểm nổi bật': 'Landmark',
+  'Sân bay': 'Airport',
+  'Trường đại học': 'University',
+  Chợ: 'Market',
+  'Bệnh viện': 'Hospital',
+  'Trung tâm thương mại': 'Shopping mall',
+  'Bến xe': 'Bus station',
+  'Địa chỉ': 'Address',
+  'Điểm đã chọn trên bản đồ': 'Selected map point',
+  'Điểm trên bản đồ': 'Map point',
+  'Vị trí hiện tại': 'Current location',
+  'Chưa cấu hình Supabase Auth.': 'Supabase Auth is not configured.',
+  'Địa điểm chưa có tọa độ. Hãy chọn kết quả khác.': 'This place has no coordinates. Choose another result.',
+  'Dịch vụ lấy tọa độ chưa sẵn sàng.': 'The place lookup service is unavailable.',
+  'VietMap trả về dữ liệu địa điểm không hợp lệ.': 'VietMap returned invalid place data.',
+  'Không kết nối được VietMap Search. Hãy thử lại.': 'Could not connect to VietMap Search. Try again.',
+  'Máy chủ phản hồi quá lâu. Hãy thử lại.': 'The server took too long to respond. Try again.',
+  'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.':
+    'Could not connect to the server. Check your connection and try again.',
+  'Bạn thao tác quá nhanh, hãy thử lại sau ít giây.':
+    'You are doing that too quickly. Try again in a few seconds.',
+  'Bạn thao tác quá nhanh, thử lại sau {seconds} giây.':
+    'You are doing that too quickly. Try again in {seconds} seconds.',
+  'Lỗi API ({status})': 'API error ({status})',
+  'Phản hồi API không hợp lệ': 'Invalid API response',
+  'Đường đi rỗng.': 'The route is empty.',
+  'Thứ tự tối ưu trả về không hợp lệ.': 'The optimized stop order is invalid.',
+  'Không kết nối được dịch vụ tối ưu hành trình. Hãy thử lại.':
+    'Could not connect to the trip optimization service. Try again.',
+  'Chọn ít nhất điểm đi và điểm đến.': 'Choose at least an origin and destination.',
+  'Dịch vụ chỉ đường trả về tuyến không hợp lệ.': 'The directions service returned an invalid route.',
+  'Không kết nối được máy chủ chỉ đường. Hãy thử lại sau ít phút.':
+    'Could not connect to the directions server. Try again in a few minutes.',
+  'Phóng to khu vực cần xem để tải báo cáo giao thông.': 'Zoom in on an area to load traffic reports.',
+  'Không kết nối được máy chủ giao thông.': 'Could not connect to the traffic server.',
+  'Máy chủ chưa cấu hình khóa VietMap nên chưa tìm được địa điểm.':
+    'The VietMap key is not configured on the server, so places cannot be searched.',
+  'Khóa VietMap chưa được cấp quyền tìm địa điểm.': 'The VietMap key is not authorized to search for places.',
+  'VietMap đã hết hạn mức tìm địa điểm. Hãy thử lại sau.':
+    'The VietMap place search quota has been reached. Try again later.',
+  'VietMap đang bận. Hãy thử lại sau ít phút.': 'VietMap is busy. Try again in a few minutes.',
+  'VietMap trả về dữ liệu không hợp lệ. Hãy thử lại.': 'VietMap returned invalid data. Try again.',
+  'Đang có nhiều lượt tìm cùng lúc. Hãy thử lại sau vài giây.':
+    'There are many searches at once. Try again in a few seconds.',
+  'Yêu cầu tìm kiếm không hợp lệ. Hãy đổi từ khóa hoặc bán kính.':
+    'The search request is invalid. Change the search term or radius.',
+  'Không tải được danh sách địa điểm. Hãy thử lại.': 'Could not load places. Try again.',
+  'Đăng nhập để gửi báo cáo giao thông.': 'Sign in to submit a traffic report.',
+  'Không xác định được tài khoản để lưu ảnh.': 'Could not identify the account to save the image.',
+  'Đăng nhập để xác minh báo cáo giao thông.': 'Sign in to verify a traffic report.',
+  'Cần cấu hình Supabase để đính kèm ảnh.': 'Supabase must be configured to attach an image.',
+  'Ảnh phải là JPG, PNG hoặc WebP và không quá 5 MB.':
+    'Images must be JPG, PNG, or WebP and no larger than 5 MB.',
+  'Không tải được ảnh lên. Kiểm tra kết nối và quyền lưu trữ.':
+    'Could not upload the image. Check your connection and storage permissions.',
+  'Không thể dọn ảnh chưa gắn với báo cáo.': 'Could not remove the image that is not attached to a report.',
+  'Vui lòng đăng nhập để phân tích ảnh': 'Sign in to analyze an image.',
+  'Ảnh phải là JPG, PNG hoặc WebP.': 'Images must be JPG, PNG, or WebP.',
+  'Không đọc được ảnh hoặc ảnh vượt quá 5 MB.': 'Could not read the image, or it is larger than 5 MB.',
+  'Nội dung ảnh không khớp với định dạng tệp.': 'The image content does not match its file type.',
+  'Tìm điểm dừng hiện hỗ trợ tuyến trong đô thị dài tối đa 80 km.':
+    'Stop search currently supports urban routes up to 80 km long.',
+  'Tuyến trải trên khu vực quá rộng. Hãy chọn một chặng ngắn hơn.':
+    'This route covers too large an area. Choose a shorter leg.',
+  'Chưa tính được đường đi qua các điểm dừng. Vui lòng thử lại sau.':
+    'Could not calculate a route through the stops. Try again later.',
+  'Chỉ khảo sát tối đa 4 địa điểm gần hình học tuyến trong bán kính 1,5 km; không bảo đảm tối ưu trên toàn bộ địa điểm.':
+    'We check up to four places within 1.5 km of the route geometry; this does not guarantee the best choice among all places.',
+  'Dữ liệu OpenStreetMap có thể thiếu hoặc cũ. Giờ mở cửa và lối vào chưa được xác minh; thời gian dự kiến chưa gồm lúc ghé.':
+    'OpenStreetMap data may be incomplete or outdated. Opening hours and entrances are unverified; estimated travel time does not include a stop.',
+  'Chưa tính được tuyến qua {count} địa điểm; kết quả có thể chưa đầy đủ.':
+    'Could not calculate routes through {count} places; results may be incomplete.',
+  'Chưa xác minh trạng thái đang mở cửa.': 'Opening status has not been verified.',
+  'Chưa có dữ liệu để lọc giá, tiện ích hoặc chất lượng địa điểm.':
+    'There is no data to filter by price, amenities, or place quality.',
+  'Đang dùng bộ lọc từ khóa; AI chưa được bật.': 'Using keyword matching; AI is unavailable.',
+  'AI đang bận hoặc hết lượt; kết quả dùng bộ lọc từ khóa.':
+    'AI is busy or has reached its usage limit; results use keyword matching.',
+  'Chọn một vị trí hoặc dùng tâm bản đồ để tìm gần đó.':
+    'Choose a location or use the map center to search nearby.',
+  'Hãy tính tuyến hai điểm trước, hoặc chọn tìm quanh vị trí trên bản đồ.':
+    'Calculate a route between two points first, or search near a location on the map.',
+  'Khoảng cách hiển thị là đường thẳng, chưa phải quãng đường lái xe. Dữ liệu OSM có thể thiếu hoặc cũ; chưa xác minh giờ mở cửa/lối vào.':
+    'Distances are straight-line estimates, not driving distances. OSM data may be incomplete or outdated; opening hours and entrances are unverified.',
+  'Vị trí này chưa được hỗ trợ. Hãy chọn lại trên bản đồ.':
+    'This location is not supported. Choose another point on the map.',
+  'Điểm đi và điểm đến cần cách nhau ít nhất 20 m.':
+    'The origin and destination must be at least 20 m apart.',
+  'Hãy chọn một loại địa điểm để tìm kiếm.': 'Choose a type of place to search for.',
+  'Không có hành trình nối đủ các điểm. Hãy kiểm tra vị trí và phương tiện.':
+    'No route connects all of the selected places. Check their locations and the vehicle type.',
+  'Vui lòng đăng nhập để thực hiện thao tác này': 'Sign in to perform this action.',
+  'Vui lòng đăng ký tài khoản và đăng nhập để sử dụng tính năng này':
+    'Create an account and sign in to use this feature.',
+  'Vui lòng đăng nhập lại': 'Sign in again.',
+  'Phiên đăng nhập không hợp lệ hoặc đã hết hạn': 'Your sign-in session is invalid or has expired.',
+  'Không thể xác minh tài khoản lúc này': 'Could not verify your account right now.',
+  'Thông tin giao thông không hợp lệ': 'The traffic report details are invalid.',
+  'Không thể tải dữ liệu giao thông lúc này': 'Could not load traffic data right now.',
+  'Không tìm thấy báo cáo giao thông': 'Traffic report not found.',
+  'Báo cáo này đã hết hạn': 'This report has expired.',
+  'Cần WAV PCM16 mono 16 kHz, dài từ 0,2 đến 15 giây.':
+    'Audio must be mono 16 kHz PCM16 WAV and 0.2 to 15 seconds long.',
+  'Đã hết quota hoặc bị giới hạn voice. Không tự chuyển sang dịch vụ trả phí.':
+    'Voice usage is exhausted or rate limited. The app will not switch to a paid service automatically.',
+  'Dịch vụ nhận giọng nói chưa sẵn sàng. Hãy thử lại hoặc nhập chữ.':
+    'Speech recognition is unavailable. Try again or type instead.',
+  'Không nhận được câu nói rõ ràng dưới 300 ký tự. Hãy nói ngắn hơn hoặc nhập chữ.':
+    'No clear speech of 300 characters or fewer was detected. Speak for less time or type instead.',
+  'Không nhận dạng được âm thanh lúc này. Hãy thử lại hoặc nhập chữ.':
+    'Could not transcribe the audio right now. Try again or type instead.',
+  'API voice chưa được cấu hình. Có thể dùng nhập chữ hoặc voice trình duyệt.':
+    'The voice API is not configured. You can type or use browser speech recognition.',
+  'Chỉ nhận audio/wav.': 'Only WAV audio is supported.',
+  'Chưa có âm thanh.': 'No audio was received.',
+  'Voice đang bận. Thử lại sau một phút.': 'Voice is busy. Try again in a minute.',
+  'Chưa cấu hình VietMap Matrix.': 'VietMap Matrix is not configured.',
+  'Không lấy được chi phí đường đi từ VietMap. Hãy thử lại.':
+    'Could not get route costs from VietMap. Try again.',
+  'Key VietMap chưa được cấp quyền Matrix để sắp xếp điểm dừng.':
+    'The VietMap key is not authorized to use Matrix for stop ordering.',
+  'VietMap Matrix chưa được bật hoặc đã hết hạn mức.':
+    'VietMap Matrix is disabled or has reached its usage limit.',
+  'VietMap Matrix chưa sẵn sàng.': 'VietMap Matrix is unavailable.',
+  'VietMap trả ma trận không hợp lệ.': 'VietMap returned an invalid matrix.',
+  'VietMap Matrix đã hết hạn mức trong ngày.': 'The VietMap Matrix daily usage limit has been reached.',
+  'VietMap không tính được ma trận cho các điểm đã chọn.':
+    'VietMap could not calculate a matrix for these places.',
+  'Ma trận thiếu chi phí giữa các điểm dừng.': 'The matrix is missing costs between stops.',
+  'VietMap Search đã đạt hạn mức hoặc chưa được bật.':
+    'VietMap Search is disabled or has reached its usage limit.',
+  'VietMap Search đang bận. Hãy thử lại.': 'VietMap Search is busy. Try again.',
+  'Chưa cấu hình VIETMAP_API_KEY cho dịch vụ chỉ đường.':
+    'The routing service has no VIETMAP_API_KEY configured.',
+  'Dịch vụ chỉ đường phản hồi quá chậm. Hãy thử lại.':
+    'The routing service took too long to respond. Try again.',
+  'Không kết nối được dịch vụ chỉ đường VietMap.': 'Could not connect to the VietMap routing service.',
+  'VietMap từ chối API key. Kiểm tra key và phạm vi sử dụng trong cấu hình máy chủ.':
+    'VietMap rejected the API key. Check the key and its allowed usage in the server configuration.',
+  'VietMap đang giới hạn yêu cầu. Vui lòng thử lại sau ít phút.':
+    'VietMap is rate limiting requests. Try again in a few minutes.',
+  'Tài khoản VietMap chưa bật API hoặc đã hết hạn mức.':
+    'The VietMap account has not enabled the API or has reached its usage limit.',
+  'VietMap chưa thể tính tuyến lúc này.': 'VietMap cannot calculate a route right now.',
+  'VietMap trả về dữ liệu tuyến không hợp lệ.': 'VietMap returned invalid route data.',
+  'Không đọc được hình học tuyến VietMap trả về.': 'Could not read the route geometry returned by VietMap.',
+  'VietMap không tìm được tuyến phù hợp giữa các điểm đã chọn.':
+    'VietMap could not find a suitable route between the selected places.',
+  'VietMap trả về tuyến thiếu tọa độ đường đi.': 'The route returned by VietMap is missing path coordinates.',
+  // --- N1: chế độ thuyết trình (?demo=1) ---
+  'So sánh thuật toán': 'Algorithm comparison',
+  'Chế độ thuyết trình': 'Presentation mode',
+  'Dijkstra & A* trên đồ thị OSM trung tâm TP.HCM': 'Dijkstra & A* on the central Ho Chi Minh City OSM graph',
+  'Tiêu chí tối ưu': 'Optimization goal',
+  'Đang chạy thuật toán…': 'Running algorithms…',
+  'Chạy Dijkstra & A*': 'Run Dijkstra & A*',
+  'Thuật toán': 'Algorithm',
+  'Thời gian*': 'Time*',
+  'Node duyệt': 'Nodes visited',
+  'A* duyệt ít hơn {saving}% số node, cùng chi phí tối ưu.':
+    'A* visited {saving}% fewer nodes for the same optimal cost.',
+  'Điểm được gắn vào đường gần nhất (lệch {from} m / {to} m). *Thời gian ước tính khi đường thông thoáng, chưa tính kẹt xe. Dữ liệu © OpenStreetMap.':
+    'Points are snapped to the nearest road ({from} m / {to} m away). *Free-flow time estimate without congestion. Data © OpenStreetMap.',
+  'Không chạy được thuật toán.': 'Could not run the algorithms.',
+  'Điểm xuất phát nằm ngoài vùng dữ liệu bản đồ của thuật toán (trung tâm TP.HCM).':
+    'The starting point is outside the algorithm map area (central Ho Chi Minh City).',
+  'Điểm đến nằm ngoài vùng dữ liệu bản đồ của thuật toán (trung tâm TP.HCM).':
+    'The destination is outside the algorithm map area (central Ho Chi Minh City).',
+  'Không tìm được đường giữa hai điểm trong vùng dữ liệu.':
+    'No path was found between the two points in the data area.',
+  'Chính xác (Held–Karp)': 'Exact (Held–Karp)',
+  'Nhanh (NN + 2-opt)': 'Fast (NN + 2-opt)',
+  'Thuật toán sắp xếp': 'Ordering algorithm',
+  'Chính xác: Held–Karp luôn ra thứ tự tối ưu. Nhanh: NN + 2-opt, gần đúng — dùng để so sánh.':
+    'Exact: Held–Karp always finds the optimal order. Fast: NN + 2-opt, approximate — for comparison.',
+  'Lần tối ưu vừa rồi: Held–Karp · tối ưu chính xác': 'Last run: Held–Karp · exact optimum',
+  'Lần tối ưu vừa rồi: NN + 2-opt · gần đúng': 'Last run: NN + 2-opt · approximate',
+};
+const toolbar=document.querySelector('#toolbar');
+const paneTitles={directions:'Chỉ đường',multi:'Hành trình nhiều điểm',traffic:'Tình hình giao thông',saved:'Tuyến đường đã lưu',assistant:'Trợ lý địa điểm',poi:'Khám phá',place:'Chi tiết địa điểm',area:'Khu vực này',navigation:'Điều hướng chuyến đi'};
+const categories=['Nhà hàng','Cà phê','Khách sạn','Điểm tham quan','Bảo tàng','Trạm xe buýt','Nhà thuốc','ATM','Xăng','Sạc EV'];
+const poiSamples=['Nhà hàng Ngon','The Workshop Coffee','Hotel Continental','Dinh Độc Lập','Bảo tàng TP. Hồ Chí Minh','Trạm xe buýt Hàm Nghi','Nhà thuốc Pasteur','ATM Lê Lợi','Trạm xăng Nguyễn Đình Chiểu','Trạm sạc Điện Biên Phủ'];
+const places=['Chợ Bến Thành','Bưu điện Trung tâm Sài Gòn','Dinh Độc Lập','Nhà hát Thành phố','Công viên Tao Đàn',...poiSamples];
+const roads=['Đường Lê Lợi','Đường Pasteur','Đường Hàm Nghi','Đường Lý Tự Trọng','Đường Nguyễn Huệ'];
+const secondaryPoi=[
+  ['Bếp Mẹ Ỉn','Cơm tấm Nguyễn Trung Trực'],['Cà phê Cộng','Cà phê Nhà thờ Đức Bà'],
+  ['Khách sạn Rex','Khách sạn Majestic'],['Phố đi bộ Nguyễn Huệ','Công viên Tao Đàn'],
+  ['Bảo tàng Mỹ thuật','Bảo tàng Chứng tích Chiến tranh'],['Trạm xe buýt Bến Thành','Trạm xe buýt Nhà hát'],
+  ['Nhà thuốc Lê Thánh Tôn','Nhà thuốc Nguyễn Huệ'],['ATM Pasteur','ATM Đồng Khởi'],
+  ['Trạm xăng Lý Tự Trọng','Trạm xăng Trần Hưng Đạo'],['Trạm sạc Bến Thành','Trạm sạc Nguyễn Huệ']
+];
+const incidentTypes=['Kẹt xe','Tai nạn','Công trình','Ngập','Đóng đường','Chướng ngại vật'];
+const state={
+  pane:'directions', modal:'', language:'vi', origin:places[0], destination:places[1], waypoints:[], routeReady:true,
+  multiOrigin:places[0], multiStops:[places[2],places[3]], optimized:false,
+  objective:'Nhanh nhất', ferry:false, departure:'Đi ngay', hour:'08:00', multiVehicle:'Xe máy', multiPriority:'Thời gian', roundtrip:false,
+  base:'Bản đồ', incidents:true, terrain:false, autoDark:false, legend:true,
+  term:categories[1], query:'', searchMode:'Tất cả', scope:'nearby', sort:'Gần nhất', radius:'2 km', autoSearch:true, savedPlaces:new Set(),
+  place:places[1], pick:'', pin:false, zoomMode:'city', member:false, authTab:'login', showPassword:false,
+  trafficType:incidentTypes[0], severity:'Vừa', applies:'Ô tô + xe máy', reportNote:'', photo:false, aiReport:'', reports:[{title:'Kẹt xe',street:'Ngã tư Pasteur · Lê Lợi',status:''}],
+  assistantMode:'actions', assistantScope:'nearby', assistantCategory:categories[1], assistantResult:false, assistantStop:false, listening:false, queryAssistant:'',
+  voiceService:'Trình duyệt',voiceLanguage:'Tiếng Việt', assistantRadius:'2', assistantDetour:'2', assistantMinutes:'15',
+  saved:[{id:1,origin:places[0],destination:places[1],note:'Xe máy · 1,3 km · 3 phút'}], nextSavedId:2,
+  demo:false, algorithm:'Tự động', compare:false, compareMetric:'Thời gian', paused:false, offRoute:false, navSource:'Mô phỏng'
+};
+document.querySelector('#place-options').innerHTML=[...places,...roads].map(name=>'<option value="'+name+'"></option>').join('');
+let reportPoint=false;
+let pocketExpanded=false;
+function esc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);}
+const translations=IMAP_TRANSLATIONS;
+const tr=(label)=>state.language==='en'?(translations[label]??label):label;
+function localize(root){
+  if(state.language!=='en') return;
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  for(let node=walker.nextNode();node;node=walker.nextNode()){
+    const key=node.data.trim();
+    if(translations[key]) node.data=node.data.replace(key,translations[key]);
+  }
+  for(const el of root.querySelectorAll('[aria-label],[title],[placeholder]')){
+    for(const attr of ['aria-label','title','placeholder']){
+      const value=el.getAttribute(attr);
+      if(translations[value]) el.setAttribute(attr,translations[value]);
+    }
+  }
+}
+function action(id,label,kind='quiet',value='',pressed){
+  return '<button type="button" class="'+kind+'" data-demo="'+id+'" data-value="'+esc(value)+'"'+(pressed===undefined?'':' aria-pressed="'+pressed+'"')+'>'+esc(label)+'</button>';
+}
+function control(id,label,glyph,value=''){
+  return '<button type="button" class="icon" data-demo="'+id+'" data-value="'+esc(value)+'" title="'+esc(label)+'" aria-label="'+esc(label)+'">'+icon(glyph)+'</button>';
+}
+function form(id,body){return '<form data-form="'+id+'">'+body+'</form>';}
+function field(label,name,value='',type='text',attrs=''){
+  return '<label class="demo-field"><span>'+label+'</span><input type="'+type+'" name="'+name+'" value="'+esc(value)+'" '+attrs+'></label>';
+}
+function selectField(label,name,items,selected){
+  return '<label class="demo-field"><span>'+label+'</span><select name="'+name+'" data-state="'+name+'">'+items.map((item)=>{
+    const [value,text]=Array.isArray(item)?item:[item,item];
+    return '<option value="'+esc(value)+'"'+(value===selected?' selected':'')+'>'+esc(text)+'</option>';
+  }).join('')+'</select></label>';
+}
+function check(label,key){
+  return '<label class="demo-check"><input type="checkbox" data-state="'+key+'"'+( (key==='traffic'?traffic:state[key])?' checked':'')+'> <span>'+label+'</span></label>';
+}
+function choices(key,items,active=state[key]){
+  return '<div class="demo-row">'+items.map((item)=>{
+    const [value,text]=Array.isArray(item)?item:[item,item];
+    return action('set',text,'chip',key+'|'+value,active===value);
+  }).join('')+'</div>';
+}
+function row(...children){return '<div class="demo-row">'+children.join('')+'</div>';}
+function fields(...children){return '<div class="demo-fields">'+children.join('')+'</div>';}
+function card(...children){return '<article class="demo-card">'+children.join('')+'</article>';}
+function details(label,body){return '<details class="demo-details"><summary>'+label+'</summary><div class="demo-body">'+body+'</div></details>';}
+function muted(text){return '<p class="muted">'+esc(text)+'</p>';}
+function submit(label){return '<button class="primary" type="submit">'+label+'</button>';}
+function modalButton(key,label){return action('modal',label,'quiet',key);}
+function paneButton(key,label){return action('pane',label,'quiet',key);}
+function renderToolbar(){
+  const focus=document.activeElement;
+  const previous=toolbar.contains(focus)?[focus.dataset.demo,focus.dataset.value,focus.id]:null;
+  const track=toolbar.querySelector('.category-list')?.scrollLeft??0;
+  toolbar.dataset.theme=concept;
+  toolbar.innerHTML='<div class="app-tools"><button class="quiet search" type="button" data-demo="modal" data-value="search">'+icon('search')+'<span>Tìm địa điểm, đường hoặc địa chỉ</span></button><nav class="feature-nav" aria-label="Công cụ bản đồ">'+[['directions','Chỉ đường'],['multi','Nhiều điểm'],['traffic','Giao thông'],['saved','Đã lưu'],['assistant','Trợ lý']].map(([key,label])=>action('pane',label,'chip',key,state.pane===key||(key==='directions'&&['plan','navigation'].includes(state.pane)))).join('')+'</nav><div class="settings"><select id="language" aria-label="Ngôn ngữ" data-state="language"><option value="vi" '+(state.language==='vi'?'selected':'')+'>VI</option><option value="en" '+(state.language==='en'?'selected':'')+'>EN</option></select>'+control('modal','Thông tin bản đồ','info','info')+action('modal',state.member?'Tài khoản':'Đăng nhập','quiet','auth')+'</div></div>'+
+    '<div class="app-categories"><div class="category-list" aria-label="Khám phá quanh đây">'+categories.map((label,index)=>action('poi',label,'chip',String(index),state.pane==='poi'&&state.term===label)).join('')+'</div><div class="row">'+control('scroll','Cuộn danh mục sang trái','left','-1')+control('scroll','Cuộn danh mục sang phải','right','1')+action('along','Dọc tuyến','quiet')+'</div></div>';
+  toolbar.querySelector('.category-list').scrollLeft=track;
+  localize(toolbar);
+  if(previous){
+    const [id,value,htmlId]=previous;
+    if(htmlId) toolbar.querySelector('#'+htmlId)?.focus({preventScroll:true});
+    else if(id) Array.from(toolbar.querySelectorAll('[data-demo]')).find(el=>el.dataset.demo===id&&el.dataset.value===value)?.focus({preventScroll:true});
+  }
+}
+function heading(title,subtitle=''){
+  return '<div class="demo-title"><div><h2>'+title+'</h2>'+(subtitle?muted(subtitle):'')+'</div>'+control('pane','Đóng bảng','close','area')+'</div>';
+}
+function placePair(){
+  return '<div class="place-pair"><div class="place"><small>Điểm xuất phát</small><b>'+esc(state.origin||'Chọn điểm xuất phát')+'</b></div><div class="place"><small>Điểm đến</small><b>'+esc(state.destination||'Chọn điểm đến')+'</b></div></div>';
+}
+function modes(){
+  return row(action('best','Tốt nhất','chip'),...([['bike','Xe máy','cycle'],['car','Ô tô','car']].map(([id,label,glyph])=>'<button type="button" class="chip" data-vehicle="'+id+'" aria-pressed="'+(vehicle===id)+'">'+icon(glyph)+label+'</button>')));
+}
+function routes(){
+  if(!state.routeReady) return muted('Nhập điểm đi và điểm đến để tìm đường.');
+  return '<div class="routes" role="group" aria-label="Các tuyến có thể đi">'+variants[vehicle].map((item,index)=>'<div class="route-item"><button type="button" class="route" data-route="'+index+'" aria-pressed="'+(index===route)+'"><span><strong>'+item.min+' <span>phút</span></strong><small>'+item.km+' km · '+item.name+'</small></span><span class="delta">'+item.signal+'</span></button>'+(index===route?'<div class="route-extra">'+action('route-details','Chi tiết')+action('preview','Xem trước')+'</div>':'')+'</div>').join('')+'</div>';
+}
+function tripActions(withStart=true){
+  return '<div class="route-actions">'+(withStart&&state.routeReady?start():'')+action('pane',state.routeReady?'Sửa hành trình':'Tìm đường',state.routeReady?'quiet':'primary','plan')+(state.routeReady?action('save-route','Lưu')+modalButton('share','Chia sẻ'):'')+'</div>';
+}
+function map(){
+  const pick=state.pick?'<div class="pick-map">'+row('<strong>Chạm vào bản đồ để chọn '+esc(state.pick==='report'?'vị trí báo cáo':state.pick==='destination'?'điểm đến':'điểm đi')+'</strong>',action('use-pin','Dùng vị trí mẫu'),action('cancel-pick','Hủy'))+'</div>':'';
+  const legend=traffic?'<div class="map-caption">'+action('legend',state.legend?'Nhanh ● ● ● Chậm':'Hiện chú giải giao thông','chip')+(state.legend?action('toggle-traffic','Tắt lớp giao thông trực tiếp','chip'):'')+'</div>':'';
+  return '<section class="map'+(state.pick?' is-picking':'')+'" aria-label="Bản đồ minh họa chuyến đi"><canvas aria-hidden="true"></canvas><div class="map-controls">'+control('locate','Định vị vị trí hiện tại','locate')+iconButton('zoom-in','Phóng to bản đồ','plus')+iconButton('zoom-out','Thu nhỏ bản đồ','minus')+control('vietnam','Xem toàn Việt Nam','globe')+control('modal','Lớp bản đồ','layers','layers')+'</div>'+pick+legend+'<div class="map-legend">Bản đồ minh họa</div></section>';
+}
+function pointList(items,scope){
+  if(!items.length) return muted('Chưa có điểm dừng');
+  return '<ol class="demo-steps">'+items.map((point,i)=>'<li class="demo-step demo-card"><b>'+(i+1)+'. '+esc(point)+'</b>'+row(...[['up','↑','Đưa điểm lên trước'],['down','↓','Đưa điểm xuống sau'],['remove','×','Xóa điểm dừng']].map(([move,glyph,label])=>'<button class="quiet" type="button" data-demo="point" data-value="'+scope+'|'+i+'|'+move+'" aria-label="'+label+' '+(i+1)+'"'+((move==='up'&&i===0)||(move==='down'&&i===items.length-1)?' disabled':'')+'>'+glyph+'</button>'))+'</li>').join('')+'</ol>';
+}
+function planPane(){
+  return heading('Chỉ đường')+form('route',modes()+fields(field('Điểm xuất phát','origin',state.origin,'text','list="place-options" required'),field('Điểm đến','destination',state.destination,'text','list="place-options" required'))+
+    pointList(state.waypoints,'route')+row(action('swap','Đảo chiều'),action('locate-origin','Vị trí của tôi'),action('pick','Chọn điểm đi','quiet','origin'),action('pick','Chọn điểm đến','quiet','destination'))+
+    row(action('add-sample','Thêm điểm dừng','quiet','route'))+
+    fields(selectField('Thời điểm khởi hành','departure',['Đi ngay','Khởi hành lúc','Đến lúc'],state.departure),state.departure==='Đi ngay'?'':field('Giờ','hour',state.hour,'time','data-state="hour"'))+
+    details('Tùy chọn',selectField('Ưu tiên tuyến','objective',['Nhanh nhất','Ngắn nhất'],state.objective)+check('Tránh phà','ferry')+muted('Tránh cao tốc: chưa hỗ trợ'))+
+    (state.demo?details('So sánh thuật toán',choices('compareMetric',['Thời gian','Quãng đường'])+action('compare','Chạy Dijkstra và A*')+(state.compare?card('<b>Dijkstra · 126 nút</b>','<b>A* · 57 nút</b>',muted('Cùng chi phí tối ưu · số liệu mẫu')):'')):'')+
+    row(submit('Tìm đường'),state.routeReady?modalButton('share','Gửi tới điện thoại'):''));
+}
+function multiPane(){
+  const stops=state.roundtrip?[...state.multiStops,state.multiOrigin]:state.multiStops;
+  const order=state.optimized&&stops.length>1?[stops[1],stops[0],...stops.slice(2)]:stops;
+  return heading(paneTitles.multi)+form('multi',field('Điểm xuất phát','multiOrigin',state.multiOrigin,'text','list="place-options" required')+
+    row(action('pick','Chọn điểm xuất phát','quiet','multiOrigin'),action('clear-multi','Xóa hành trình'))+
+    fields(selectField('Phương tiện','multiVehicle',['Xe máy','Ô tô'],state.multiVehicle),selectField('Ưu tiên','multiPriority',['Thời gian','Quãng đường'],state.multiPriority))+
+    check('Quay lại điểm xuất phát','roundtrip')+'<h3>Điểm cần ghé</h3>'+pointList(state.multiStops,'multi')+
+    field('Tìm điểm dừng để thêm','newStop','','text','list="place-options"')+row(action('add-multi','Thêm điểm dừng'),submit('Tối ưu hành trình'))+
+    (state.demo?selectField('Thuật toán sắp xếp','algorithm',['Tự động','Chính xác (Held–Karp)','Nhanh (NN + 2-opt)'],state.algorithm):''))+
+    (state.optimized?card('<h3>Đã sắp xếp hành trình</h3>','<div class="demo-stat">11 phút</div>',muted('3,8 km · Tiết kiệm 4 phút so với thứ tự nhập'),'<ol class="demo-list">'+order.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ol>',row(action('save-multi','Lưu'),action('start-navigation','Bắt đầu chuyến đi','primary'))):'');
+}
+function poiEntry(name,index,assistant=false){
+  const distance=[280,480,750][index%3];
+  return card('<h3>'+esc(name)+'</h3>',muted(state.scope==='along'?'Cách tuyến '+distance+' m · +2 phút đi vòng':distance+' m · Quận 1'),
+    row(action('show-place',assistant?'Xem trên bản đồ':'Chi tiết','quiet',name),action('to-place',assistant?'Chỉ đường đến đây':'Chỉ đường','quiet',name),
+    action('save-poi',state.savedPlaces.has(name)?'Đã lưu':'Lưu','chip',name,state.savedPlaces.has(name)),(state.scope==='along'||(assistant&&state.assistantScope==='along'))?action('add-poi',assistant?'Ghé điểm này':'Thêm điểm dừng','quiet',name):''));
+}
+function poiPane(){
+  const index=categories.indexOf(state.term);
+  const results=index>=0?[poiSamples[index],...secondaryPoi[index]]:[...places,...roads].filter(name=>fold(name).includes(fold(state.term))).slice(0,3);
+  const withinRadius=state.radius==='500 m'?results.slice(0,2):results;
+  const items=state.sort==='Tên địa điểm'?[...withinRadius].sort((a,b)=>a.localeCompare(b,'vi')):state.sort==='Ít đi vòng nhất'?[...withinRadius].reverse():withinRadius;
+  return heading(paneTitles.poi,state.term+' · '+(state.scope==='along'?'Dọc tuyến':'Quanh đây'))+
+    (state.scope==='along'?paneButton('directions','Quay lại chỉ đường'):check('Cập nhật kết quả khi di chuyển bản đồ','autoSearch'))+
+    fields(selectField('Sắp xếp','sort',['Gần nhất','Theo thứ tự trên tuyến','Ít đi vòng nhất','Tên địa điểm'],state.sort),selectField('Bán kính','radius',['500 m','1 km','2 km','5 km'],state.radius))+
+    (items.length?items.map((item,i)=>poiEntry(item,i)).join(''):card('<h3>Không thấy địa điểm phù hợp</h3>',modalButton('search','Thử lại')));
+}
+function placePane(){
+  return heading(paneTitles.place)+card('<h3>'+esc(state.place)+'</h3>',muted('Quận 1 · Thành phố Hồ Chí Minh'),muted('Tọa độ mẫu · 10.7798, 106.6990'),row(action('locate','Xem trên bản đồ'),modalButton('osm','Mở địa điểm trên OpenStreetMap')))+row(action('to-place','Tìm đường đến đây','primary',state.place),action('save-poi',state.savedPlaces.has(state.place)?'Đã lưu':'Lưu','chip',state.place,state.savedPlaces.has(state.place)));
+}
+function savedPane(){
+  return heading(paneTitles.saved, 'Lưu trên trình duyệt trong phiên demo')+(state.saved.length?state.saved.map(item=>card('<h3>'+esc(item.destination)+'</h3>',muted(item.origin+' → '+item.destination),muted(item.note),row(action('open-route','Xem tuyến','primary',item.id),action('delete-route','Xóa','quiet',item.id)))).join(''):muted('Chưa có tuyến đã lưu'))+
+    (state.savedPlaces.size?'<h3>Địa điểm đã lưu</h3>'+Array.from(state.savedPlaces,item=>row(action('show-place',item,'quiet',item),action('save-poi','Bỏ lưu','quiet',item))).join(''):'');
+}
+function trafficPane(){
+  return heading(paneTitles.traffic,'Cảnh báo cộng đồng · Tự hết hạn')+
+    '<h3>Báo cáo sự cố</h3>'+row(action('pick',reportPoint?'Đổi vị trí báo cáo':'Chạm bản đồ để chọn vị trí','quiet','report'))+(reportPoint?muted('10.77612, 106.70029'):'')+
+    choices('trafficType',incidentTypes)+'<h3>Mức độ sự cố · chọn thủ công</h3>'+choices('severity',['Nhẹ','Vừa','Nặng'])+
+    selectField('Loại xe áp dụng báo cáo','applies',['Ô tô + xe máy','Ô tô','Xe máy'],state.applies)+
+    field('Ghi chú ngắn','reportNote',state.reportNote,'text','data-state="reportNote" placeholder="Ví dụ: ngập sâu gần giao lộ…"')+
+    '<h3>Ảnh hiện trường</h3>'+row(action('photo','Chụp ảnh'),action('photo','Chọn ảnh'),state.photo?action('remove-photo','Xóa ảnh đã chọn'):'')+
+    (state.photo?'<div class="sample-photo">Ảnh hiện trường mẫu</div>':'')+
+    details('Hỗ trợ từ AI',row(action('report-ai','Gợi ý loại sự cố','quiet','incident'),action('report-ai','Nhận diện biển báo','quiet','sign'))+
+    (state.aiReport==='incident'?card('<b>Gợi ý sự cố · Kẹt xe</b>',muted('Mô phỏng · Hàng xe dừng trước giao lộ'),action('apply-ai','Dùng gợi ý để điền form')):state.aiReport==='sign'?muted('Mô phỏng · Biển giới hạn 40 km/h'):''))+
+    row(state.member?action('send-report','Gửi báo cáo','primary'):action('login-for','Đăng nhập để gửi báo cáo','primary','traffic'))+
+    '<h3>Báo cáo gần đây</h3>'+state.reports.map((item,i)=>card('<b>'+esc(item.title)+'</b>',muted(item.street+(item.status?' · '+item.status:'')),row(modalButton('photo','Mở ảnh minh chứng'),action('verify','Đã thông','quiet',i+'|Đã thông'),action('verify','Vẫn còn','quiet',i+'|Vẫn còn')))).join('');
+}
+function assistantPane(){
+  if(!state.member) return heading(paneTitles.assistant)+card('<h3>Đăng nhập để dùng trợ lý AI</h3>',muted('Tìm địa điểm theo nhu cầu, ghé điểm dọc tuyến và thử điều khiển bằng giọng nói.'),action('login-for','Đăng nhập / Đăng ký','primary','assistant'));
+  const inRoute=state.assistantScope==='along';
+  const voice=state.assistantMode==='voice';
+  return heading(paneTitles.assistant)+choices('assistantMode',[['actions','Chọn thao tác'],['voice','Giọng nói']])+choices('assistantScope',[['nearby','Quanh vị trí chọn'],['along','Dọc tuyến đang đi']])+
+    row(action('locate','Dùng tâm bản đồ hiện tại'),state.assistantStop?action('remove-assistant','Bỏ điểm dừng để tìm lại'):'')+
+    field('Nhu cầu / câu đã nhận dạng','queryAssistant',state.queryAssistant,'text','data-state="queryAssistant" placeholder="Ví dụ: Tìm trạm xăng trong bán kính 2 km"')+
+    (voice?fields(selectField('Dịch vụ giọng nói','voiceService',['Trình duyệt','Whisper API'],state.voiceService),selectField('Ngôn ngữ giọng nói','voiceLanguage',['Tiếng Việt','English'],state.voiceLanguage))+row(action('voice',state.listening?'Xong, nhận dạng':'Nhập bằng giọng nói'),state.listening?action('cancel-voice','Hủy ghi âm / nhận dạng'):''):'')+
+    choices('assistantCategory',categories)+details('Phạm vi và giới hạn',selectField('Loại địa điểm','assistantCategory',categories,state.assistantCategory)+
+    (inRoute?fields(field('Đi thêm tối đa (km)','assistantDetour',state.assistantDetour,'number','min="0.1" step="0.1" data-state="assistantDetour"'),field('Thêm tối đa (phút)','assistantMinutes',state.assistantMinutes,'number','min="1" data-state="assistantMinutes"')):field('Bán kính (km)','assistantRadius',state.assistantRadius,'number','min="0.1" step="0.1" data-state="assistantRadius"')))+
+    row(action('find-assistant','Tìm địa điểm','primary'),action('clear-assistant','Xóa ngữ cảnh trao đổi'))+
+    (state.assistantResult?poiEntry(poiSamples[categories.indexOf(state.assistantCategory)]||poiSamples[1],0,true)+details('Nguồn dữ liệu và giới hạn',muted('Địa điểm minh họa · không truy vấn dữ liệu bên ngoài.')):'');
+}
+function navigationPane(){
+  return heading(paneTitles.navigation,state.offRoute?'Bạn đang rời khỏi lộ trình':'Dẫn đường mô phỏng')+
+    card('<div class="demo-stat">'+(state.paused?'Đã tạm dừng':'Rẽ phải')+'</div>',muted('Trong 180 m · vào đường Pasteur'),muted('Còn 1,1 km · 22 km/h'))+
+    row(action('locate','Định tâm'),action('recalculate','Tính lại tuyến'),action('preview','Xem trước'),action('retry-nav','Thử lại'),paneButton('traffic','Báo cáo'),action('stop-navigation','Kết thúc','primary'))+
+    details('Nguồn vị trí',choices('navSource',['GPS','Mô phỏng'])+row(action('pause',state.paused?'Tiếp tục':'Tạm dừng'),action('wrong-turn','Rẽ nhầm'),action('incident-ahead','Sự cố phía trước')));
+}
+function featurePane(){
+  const builders={plan:planPane,multi:multiPane,traffic:trafficPane,saved:savedPane,assistant:assistantPane,poi:poiPane,place:placePane,navigation:navigationPane,
+    area:()=>heading('Khu vực này')+card('<div class="demo-stat">29 °C</div>',muted('Nhiều mây · Quận 1'),muted('Giao thông ước tính · 1 sự cố trong khu vực'),paneButton('traffic','Xem giao thông'))};
+  return '<section class="demo-pane" aria-label="'+esc(paneTitles[state.pane]||paneTitles.directions)+'">'+builders[state.pane]()+'</section>';
+}
+const fold=(value)=>String(value??'').normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase().replace(/đ/g,'d').trim();
+function searchResults(){
+  const source=state.searchMode==='Tên đường'?roads:[...places,...roads];
+  const matches=state.query?source.filter(name=>fold(name).includes(fold(state.query))):source.slice(0,5);
+  return row(choices('searchMode',['Tất cả','Tên đường']),action('run-search','Tìm địa điểm quanh đây','chip'),action('run-search','Tìm dọc tuyến','chip','along'))+
+    (matches.length?matches.map(name=>action('show-place',name,'quiet',name)).join(''):muted('Không có gợi ý trong dữ liệu mẫu'))+
+    (state.query?action('road-search','Tìm tên đường, bỏ số nhà'):'');
+}
+function departureEstimate(duration){
+  if(state.departure==='Đi ngay') return '';
+  const [hours,minutes]=state.hour.split(':').map(Number);
+  const arrive=state.departure==='Đến lúc';
+  const shifted=(hours*60+minutes+(arrive?-duration:duration)+1440)%1440;
+  const time=[Math.floor(shifted/60),shifted%60].map(value=>String(value).padStart(2,'0')).join(':');
+  return (arrive?'Nên khởi hành lúc ':'Dự kiến đến lúc ')+time;
+}
+function shareLink(){
+  return 'https://imap.example/?from='+encodeURIComponent(state.origin)+'&to='+encodeURIComponent(state.destination);
+}
+function modalContent(key){
+  switch(key){
+    case 'search':
+      return ['Tìm địa điểm',form('search',field('Tìm địa điểm, đường hoặc địa chỉ','query',state.query,'search','data-state="query" data-autofocus')+row(submit('Tìm'))+'<div class="demo-body" id="search-results" aria-label="Gợi ý địa điểm">'+searchResults()+'</div>')];
+    case 'layers':
+      return ['Lớp bản đồ','<h3>Loại bản đồ</h3>'+choices('base',['Bản đồ','Vệ tinh'])+'<h3>Lớp phủ</h3>'+check('Giao thông trực tiếp','traffic')+check('Sự cố cộng đồng','incidents')+check('Địa hình','terrain')+check('Chế độ tối tự động 18:00–06:00','autoDark')];
+    case 'auth':
+      if(state.member) return ['Tài khoản của bạn',card('<h3>Bạn đã đăng nhập</h3>',muted('thanhvien@imap.example · tài khoản mẫu'),row(action('close-modal','Tiếp tục với bản đồ','primary'),action('sign-out','Đăng xuất')))];
+      return ['Tài khoản iMap',choices('authTab',[['login','Đăng nhập'],['register','Đăng ký']])+
+        form('auth',field('Email','email','thanhvien@imap.example','email','autocomplete="off"')+
+        field('Mật khẩu','password','',state.showPassword?'text':'password','placeholder="Mật khẩu mẫu" autocomplete="off"')+
+        row(action('show-password',state.showPassword?'Ẩn mật khẩu':'Hiện mật khẩu'),submit(state.authTab==='login'?'Đăng nhập':'Tạo tài khoản')))+muted('Dùng tài khoản mẫu để mở các tính năng thành viên.')];
+    case 'share':
+      return ['Chia sẻ tuyến',muted(state.origin+' → '+state.destination)+field('Liên kết tuyến đường','shareLink',shareLink(),'url','readonly')+
+        row(action('share-preview','Gửi tới điện thoại','quiet','phone'),action('copy-link','Sao chép liên kết'),action('share-preview','Chia sẻ','quiet','share'))+
+        '<div id="share-feedback" class="demo-result" role="status"></div>'];
+    case 'route-details':{
+      const item=variants[vehicle][route];
+      return ['Chỉ dẫn từng bước',card('<div class="demo-stat">'+item.min+' phút</div>',muted(item.km+' km · '+item.name),muted(item.traffic),departureEstimate(item.min)?muted(departureEstimate(item.min)):'' )+
+        '<ol class="demo-list"><li>Đi về hướng đường Lê Lợi · 300 m</li><li>Rẽ phải vào đường Pasteur · 180 m</li><li>Tiếp tục đến '+esc(state.destination)+'</li></ol>'+
+        row(action('preview','Xem trước'),action('start-navigation','Bắt đầu','primary'))];
+    }
+    case 'pick-stop':
+      return ['Thêm điểm dừng',places.slice(2,8).map(name=>action('choose-stop',name,'quiet',name)).join('')];
+    case 'photo':
+      return ['Ảnh minh chứng','<div class="sample-photo">Ảnh hiện trường mẫu</div>'];
+    case 'osm':
+      return ['OpenStreetMap',muted(state.place+' · tọa độ mẫu 10.7798, 106.6990')];
+    default:
+      return ['Thông tin bản đồ',muted('iMap dùng bản đồ nền OpenStreetMap và tính tuyến qua VietMap. Demo sử dụng bản đồ và dữ liệu minh họa.')+
+        check('Chế độ thuyết trình','demo')+row(action('demo-update','Cập nhật'))];
+  }
+}
+let modalReturn;
+function renderModal(){
+  if(!state.modal) return;
+  const body=edit.querySelector('.demo-body');
+  const scroll=body?.scrollTop??0;
+  const active=edit.contains(document.activeElement)?document.activeElement:null;
+  const key=active?.name||active?.dataset.demo;
+  const value=active?.dataset.value;
+  const selection=active instanceof HTMLInputElement?active.selectionStart:null;
+  const [title,content]=modalContent(state.modal);
+  edit.dataset.theme=concept;
+  edit.innerHTML='<div class="demo-title"><h2 id="modal-title">'+title+'</h2>'+control('close-modal','Đóng','close')+'</div><div class="demo-body">'+content+'</div>';
+  edit.querySelector('.demo-body').scrollTop=scroll;
+  localize(edit);
+  if(!edit.open){
+    modalReturn=document.activeElement;
+    edit.showModal();
+    edit.querySelector('[data-autofocus]')?.focus();
+  }else if(key){
+    const replacement=Array.from(edit.querySelectorAll('input,button,select')).find(el=>el.name===key||(el.dataset.demo===key&&el.dataset.value===value));
+    replacement?.focus({preventScroll:true});
+    if(selection!==null&&replacement?.selectionStart!==null) replacement?.setSelectionRange(selection,selection);
+  }
+}
+function openModal(key){
+  state.modal=key;
+  renderModal();
+}
+function closeModal(){
+  if(edit.open) edit.close();
+  state.modal='';
+}
+edit.addEventListener('close',()=>{
+  state.modal='';
+  if(modalReturn?.isConnected) modalReturn.focus({preventScroll:true});
+});
+function choosePane(key){
+  closeModal();
+  state.pane=key;
+  render();
+  const pane=stage.querySelector('.demo-pane');
+  if(pane && innerWidth<=650 && pane.getBoundingClientRect().top>innerHeight*.52) pane.scrollIntoView({block:'start'});
+}
+function storeRoute(multi=false){
+  const item=variants[vehicle][route];
+  const origin=multi?state.multiOrigin:state.origin;
+  const destination=multi?(state.roundtrip?state.multiOrigin:state.multiStops.at(-1)):(state.destination);
+  const note=multi?'Nhiều điểm · 3,8 km · 11 phút':(vehicle==='bike'?'Xe máy':'Ô tô')+' · '+item.km+' km · '+item.min+' phút';
+  if(!state.saved.some(entry=>entry.origin===origin&&entry.destination===destination&&entry.note===note)){
+    state.saved.unshift({id:state.nextSavedId++,origin,destination,note});
+  }
+  announce('Đã lưu hành trình mẫu');
+}
+function usePin(){
+  const target=state.pick;
+  if(!target) return;
+  state.pick='';
+  state.pin=true;
+  if(target==='report') reportPoint=true;
+  else {
+    state[target]=target==='destination'?places[1]:target==='multiOrigin'?places[0]:'Vị trí trên bản đồ';
+    if(target==='origin'||target==='destination') state.routeReady=false;
+  }
+  render();
+  announce('Đã chọn vị trí mẫu');
+}
+function changePoint(value){
+  const [scope,raw,move]=value.split('|');
+  const items=scope==='multi'?state.multiStops:state.waypoints;
+  const index=Number(raw);
+  if(move==='remove') items.splice(index,1);
+  else {
+    const newIndex=index+(move==='up'?-1:1);
+    if(newIndex>=0&&newIndex<items.length) [items[index],items[newIndex]]=[items[newIndex],items[index]];
+  }
+  if(scope==='route') state.routeReady=false;
+  else state.optimized=false;
+  render();
+}
+function runSearch(scope='nearby',term=state.query||state.term){
+  if(scope==='along'&&!state.member){
+    openModal('auth');
+    announce('Đăng nhập tài khoản mẫu để tìm dọc tuyến');
+    return;
+  }
+  if(scope==='along'&&!state.routeReady){choosePane('plan');announce('Tìm đường trước khi tìm địa điểm dọc tuyến');return;}
+  state.term=term;
+  state.scope=scope;
+  choosePane('poi');
+}
+function startNavigation(){
+  navigating=true;
+  state.offRoute=false;
+  state.paused=false;
+  choosePane('navigation');
+}
+function addMultiStop(){
+  const field=stage.querySelector('[name="newStop"]');
+  const name=field?.value.trim();
+  if(!name){field?.focus();announce('Nhập tên điểm dừng để thêm');return;}
+  state.multiStops.push(name);
+  state.optimized=false;
+  render();
+}
+function updateFlag(key,value){
+  if(key==='traffic') traffic=value;
+  else if(Object.hasOwn(state,key)) state[key]=value;
+  if(key==='language') document.documentElement.lang=value;
+  if(key==='departure'||key==='hour'||key==='objective'||key==='ferry') state.routeReady=false;
+  if(['roundtrip','multiPriority','multiVehicle','algorithm'].includes(key)) state.optimized=false;
+  if(key==='assistantScope'||key==='assistantMode'||key==='assistantCategory') state.assistantResult=false;
+}
+const demoActions={
+  pane:key=>choosePane(key),
+  modal:key=>openModal(key),
+  'close-modal':()=>closeModal(),
+  'pocket-routes':()=>{pocketExpanded=!pocketExpanded;render();},
+  'set':value=>{
+    const [key,selection]=value.split('|');
+    updateFlag(key,selection);
+    if(key==='searchMode'&&state.modal==='search'){
+      const list=edit.querySelector('#search-results');
+      list.innerHTML=searchResults();
+      localize(list);
+      list.querySelector('[aria-pressed="true"]')?.focus();
+    }else {render();renderModal();}
+  },
+  'scroll':amount=>toolbar.querySelector('.category-list').scrollBy({left:Number(amount)*170}),
+  'best':()=>{vehicle='bike';route=0;render();announce('Xe máy · phương tiện nhanh nhất trong dữ liệu mẫu');},
+  'route-details':()=>openModal('route-details'),
+  'preview':()=>{zoom=1.15;state.zoomMode='city';state.pin=true;closeModal();draw();announce('Đang xem trước tuyến trên bản đồ');},
+  'pick':target=>{state.pick=target;render();stage.querySelector('.map')?.scrollIntoView({block:'nearest'});},
+  'use-pin':()=>usePin(),
+  'cancel-pick':()=>{state.pick='';render();},
+  'locate':()=>{zoom=1.1;state.pin=true;state.zoomMode='city';draw();announce('Vị trí mẫu · Quận 1');},
+  'vietnam':()=>{zoom=1;state.zoomMode=state.zoomMode==='country'?'city':'country';draw();announce(state.zoomMode==='country'?'Đang xem Việt Nam · bản đồ minh họa':'Đã trở lại bản đồ thành phố');},
+  'locate-origin':()=>{state.origin='Vị trí của tôi';state.pin=true;state.routeReady=false;render();},
+  'swap':()=>{[state.origin,state.destination]=[state.destination,state.origin];state.routeReady=false;render();},
+  'point':value=>changePoint(value),
+  'add-sample':()=>{openModal('pick-stop');},
+  'choose-stop':name=>{state.waypoints.push(name);state.routeReady=false;closeModal();render();},
+  'add-multi':()=>addMultiStop(),
+  'clear-multi':()=>{state.multiStops=[];state.multiOrigin='';state.optimized=false;render();},
+  'save-route':()=>storeRoute(),
+  'save-multi':()=>storeRoute(true),
+  'open-route':id=>{
+    const entry=state.saved.find(item=>item.id===Number(id));
+    if(entry){state.origin=entry.origin;state.destination=entry.destination;state.routeReady=true;route=0;choosePane('directions');}
+  },
+  'delete-route':id=>{state.saved=state.saved.filter(item=>item.id!==Number(id));render();announce('Đã xóa tuyến mẫu');},
+  'poi':i=>runSearch('nearby',categories[Number(i)]),
+  'along':()=>runSearch('along'),
+  'run-search':scope=>runSearch(scope||'nearby'),
+  'road-search':()=>{state.query=state.query.replace(/^\d+\s*/,'');renderModal();},
+  'show-place':name=>{state.place=name;state.pin=true;choosePane('place');},
+  'to-place':name=>{state.destination=name;state.routeReady=false;choosePane('plan');},
+  'save-poi':name=>{if(state.savedPlaces.has(name)) state.savedPlaces.delete(name);else state.savedPlaces.add(name);render();},
+  'add-poi':name=>{state.waypoints.push(name);state.assistantStop=state.pane==='assistant';render();announce('Đã thêm '+name+' vào điểm dừng');},
+  'toggle-traffic':()=>{traffic=!traffic;render();},
+  'legend':()=>{state.legend=!state.legend;render();},
+  'login-for':()=>openModal('auth'),
+  'show-password':()=>{
+    state.showPassword=!state.showPassword;
+    const input=edit.querySelector('[name="password"]');
+    input.type=state.showPassword?'text':'password';
+    const toggle=edit.querySelector('[data-demo="show-password"]');
+    toggle.textContent=tr(state.showPassword?'Ẩn mật khẩu':'Hiện mật khẩu');
+  },
+  'sign-out':()=>{state.member=false;state.listening=false;closeModal();render();announce('Đã đăng xuất tài khoản mẫu');},
+  'photo':()=>{state.photo=true;render();announce('Đã chọn ảnh mẫu');},
+  'remove-photo':()=>{state.photo=false;state.aiReport='';render();},
+  'report-ai':mode=>{
+    if(!state.member){openModal('auth');return;}
+    if(!state.photo){announce('Chọn ảnh mẫu trước khi phân tích');return;}
+    state.aiReport=mode;render();
+  },
+  'apply-ai':()=>{state.trafficType='Kẹt xe';state.reportNote='Ùn xe gần giao lộ';render();},
+  'send-report':()=>{
+    if(!reportPoint){announce('Chọn vị trí báo cáo trên bản đồ trước');return;}
+    state.reports.unshift({title:state.trafficType,street:state.reportNote||'Vị trí đã chọn · Quận 1',status:'Vừa gửi'});
+    state.reportNote='';state.photo=false;state.aiReport='';render();announce('Đã thêm báo cáo mẫu');
+  },
+  'verify':value=>{
+    if(!state.member){openModal('auth');return;}
+    const [i,status]=value.split('|');state.reports[Number(i)].status=status;render();
+  },
+  'find-assistant':()=>{state.assistantResult=true;render();},
+  'clear-assistant':()=>{state.queryAssistant='';state.assistantResult=false;state.listening=false;render();},
+  'remove-assistant':()=>{state.assistantStop=false;state.waypoints.pop();render();},
+  'voice':()=>{
+    if(state.listening) state.queryAssistant='Tìm một quán cà phê trong bán kính 2 km';
+    state.listening=!state.listening;render();announce(state.listening?'Đang giả lập nghe':'Đã điền câu nhận dạng mẫu');
+  },
+  'cancel-voice':()=>{state.listening=false;render();},
+  'start-navigation':()=>startNavigation(),
+  'stop-navigation':()=>{navigating=false;choosePane('directions');},
+  'pause':()=>{state.paused=!state.paused;render();},
+  'wrong-turn':()=>{state.offRoute=true;render();},
+  'incident-ahead':()=>announce('Mô phỏng: Có báo cáo kẹt xe phía trước'),
+  'recalculate':()=>{state.offRoute=false;render();announce('Đã cập nhật tuyến mẫu');},
+  'retry-nav':()=>{state.paused=false;render();announce('Đã tiếp tục dẫn đường mẫu');},
+  'compare':()=>{state.compare=true;render();},
+  'demo-update':()=>{closeModal();announce('Đang xem phiên bản mới nhất của file demo');},
+  'share-preview':mode=>{edit.querySelector('#share-feedback').textContent=mode==='phone'?'Dùng liên kết mẫu ở trên để minh họa màn hình gửi tới điện thoại.':'Liên kết mẫu sẵn sàng để chia sẻ.';},
+  'copy-link':async()=>{
+    const input=edit.querySelector('[name="shareLink"]');
+    try{await navigator.clipboard.writeText(shareLink());edit.querySelector('#share-feedback').textContent='Đã sao chép liên kết mẫu';}
+    catch{input.select();edit.querySelector('#share-feedback').textContent='Liên kết đã được chọn. Nhấn Ctrl+C hoặc ⌘C để sao chép.';}
+  }
+};
+document.addEventListener('click',event=>{
+  const target=event.target.closest('[data-demo]');
+  if(target){
+    const actionId=target.dataset.demo;
+    const value=target.dataset.value;
+    const root=target.closest('#edit,#stage,#toolbar');
+    demoActions[actionId]?.(value);
+    if(root&&!target.isConnected){
+      Array.from(root.querySelectorAll('[data-demo]')).find(el=>el.dataset.demo===actionId&&el.dataset.value===value)?.focus({preventScroll:true});
+    }
+  }else if(state.pick&&event.target.matches('.map canvas')) usePin();
+});
+document.addEventListener('submit',event=>{
+  const type=event.target.dataset.form;
+  if(!type) return;
+  event.preventDefault();
+  const data=new FormData(event.target);
+  if(type==='auth'){
+    state.member=true;closeModal();render();announce('Đã vào phiên thành viên mô phỏng');
+  }else if(type==='route'){
+    state.origin=String(data.get('origin')).trim();state.destination=String(data.get('destination')).trim();
+    if(!state.origin||!state.destination||fold(state.origin)===fold(state.destination)){announce('Chọn điểm đi và điểm đến khác nhau');return;}
+    state.routeReady=true;route=state.objective==='Ngắn nhất'?0:route;
+    choosePane('directions');announce('Đã hiển thị 3 tuyến mẫu');
+  }else if(type==='multi'){
+    if(event.submitter===null&&String(data.get('newStop')).trim()){addMultiStop();return;}
+    if(state.multiStops.length<2){announce('Thêm ít nhất 2 điểm dừng để tối ưu');return;}
+    state.multiOrigin=String(data.get('multiOrigin')).trim();state.optimized=true;render();
+    stage.querySelector('.demo-pane .demo-stat')?.scrollIntoView({block:'nearest'});
+  }else if(type==='search') runSearch('nearby');
+});
+document.addEventListener('input',event=>{
+  const field=event.target;
+  if(!(field instanceof HTMLInputElement)) return;
+  if(field.type==='checkbox') return;
+  if(field.dataset.state) updateFlag(field.dataset.state,field.value);
+  if(['origin','destination','multiOrigin'].includes(field.name)) state[field.name]=field.value;
+  if(field.name==='query'){
+    const list=edit.querySelector('#search-results');
+    if(list){list.innerHTML=searchResults();localize(list);}
+  }
+});
+document.addEventListener('change',event=>{
+  const el=event.target;
+  if(!el.dataset.state||!(el instanceof HTMLSelectElement||el.type==='checkbox')) return;
+  updateFlag(el.dataset.state,el.type==='checkbox'?el.checked:el.value);
+  if(edit.contains(el)){
+    render();
+  }else {
+    const name=el.name;
+    render();
+    if(name) stage.querySelector('[name="'+name+'"]')?.focus({preventScroll:true});
+  }
+});
+document.addEventListener('keydown',event=>{
+  if(edit.open||/INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
+  if(event.key==='/'||((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='k')){
+    event.preventDefault();openModal('search');
+  }
+});
+
+function render(focusSelector){
+  const samePane=stage.dataset.pane===state.pane;
+  const priorScroll=stage.querySelector('.demo-pane')?.scrollTop??0;
+  const openDetails=samePane?Array.from(stage.querySelectorAll('details[open] summary'),el=>el.textContent):[];
+  conceptSelect.value=concept;
+  picker.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.concept===concept));
+  const item=variants[vehicle][route];
+  const transport=vehicle==='bike'?'Xe máy':'Ô tô';
+  const headingText=state.pane==='directions'?'Chỉ đường':(paneTitles[state.pane]||'Chỉ đường');
+  const alternate=state.pane!=='directions';
+  document.body.dataset.layout=concept;
+  stage.dataset.pane=state.pane;
+  stage.className=concept+(alternate?' has-feature':'');
+  const resultGroup=()=>'<section class="stack"><div class="heading-row"><h2>Các tuyến có thể đi</h2></div>'+routes()+'</section>';
+  const title=()=>'<h1>'+headingText+'</h1>';
+  const estimate=()=>state.routeReady?time(item)+'<p class="muted">'+item.km+' km · '+item.name+'</p>':muted('Nhập điểm đi và điểm đến để tìm đường.');
+  const templates={
+    atlas:()=>'<aside class="sidebar">'+brand()+(alternate?featurePane():title()+placePair()+modes()+resultGroup()+tripActions())+'</aside>'+map(),
+    float:()=>map()+'<div class="float-bottom">'+(alternate?featurePane():(expanded?'<div class="float-routes">'+modes()+routes()+'</div>':'')+'<section class="float-card"><div class="heading-row"><div>'+estimate()+'</div>'+iconButton('vehicle',transport+' · đổi phương tiện',vehicle==='bike'?'cycle':'car')+'</div>'+row(button('more',expanded?'Thu gọn':'3 tuyến',expanded?'minus':'layers'),tripActions())+'</section>')+'</div>',
+    dispatch:()=>'<header class="top">'+brand()+title()+'</header><div class="work"><aside><h2>Hành trình</h2>'+placePair()+modes()+paneButton('plan','Sửa hành trình')+'</aside>'+map()+'<aside>'+(alternate?featurePane():resultGroup()+card('<b>Giao thông tuyến đang chọn</b>',muted(item.traffic))+tripActions())+'</aside></div>',
+    deck:()=>'<header class="deck-header">'+brand()+'</header>'+map()+'<section class="deck-dock"><div class="stack"><div class="heading-row"><h2>Chỉ đường</h2></div>'+placePair()+'</div>'+(alternate?featurePane():routes()+'<div class="stack">'+modes()+tripActions()+'</div>')+'</section>',
+    focus:()=>'<header class="focus-top">'+brand()+control('pane','Sửa hành trình','edit','plan')+'</header><section class="story">'+(alternate?featurePane():'<h1>'+esc(state.destination)+'</h1>'+estimate()+muted('Từ '+state.origin)+modes())+'</section>'+map()+'<footer class="focus-footer">'+routes()+tripActions()+'</footer>',
+    metro:()=>'<aside class="metro-main">'+(alternate?featurePane():'<div class="metro-heading">'+brand()+title()+'</div>'+placePair()+row(modes(),paneButton('plan','Sửa hành trình')))+'</aside>'+map()+(alternate?'':'<section class="metro-bar">'+routes()+tripActions()+'</section>'),
+    night:()=>map()+(alternate?'':'<div class="night-hud"><div class="night-command">'+brand()+'<p class="muted">'+esc(state.destination)+'</p></div><div class="night-command"><div class="heading-row">'+estimate()+control('pane','Sửa hành trình','edit','plan')+'</div></div></div>')+'<section class="night-options">'+(alternate?featurePane():modes()+routes()+tripActions())+'</section>',
+    postcard:()=>map()+'<section class="letter">'+(alternate?featurePane():brand()+'<h1>'+esc(state.destination)+'</h1>'+placePair()+modes()+routes()+tripActions())+'</section>',
+    mosaic:()=>'<section class="mosaic-intro">'+(alternate?featurePane():brand()+title()+placePair()+modes())+'</section>'+map()+(alternate?'':'<section class="mosaic-routes"><h2>Các tuyến có thể đi</h2>'+routes()+'</section><section class="mosaic-action">'+estimate()+tripActions()+'</section>'),
+    pocket:()=>'<header class="pocket-top">'+brand()+'<h1>'+esc(state.destination)+'</h1></header>'+map()+'<section class="pocket-strip">'+(alternate?featurePane():'<div class="pocket-summary"><div><strong>'+item.min+' phút</strong> '+item.km+' km</div>'+action('pocket-routes',pocketExpanded?'Thu gọn':'So sánh 3 tuyến')+'</div>'+modes()+(pocketExpanded?routes():'')+tripActions())+'</section>'
+  };
+  stage.innerHTML=templates[concept]();
+  renderToolbar();
+  localize(stage);
+  stage.querySelectorAll('details summary').forEach(el=>{if(openDetails.includes(el.textContent))el.parentElement.open=true;});
+  if(samePane&&stage.querySelector('.demo-pane')) stage.querySelector('.demo-pane').scrollTop=priorScroll;
+  observer.disconnect();
+  observer.observe(stage.querySelector('.map'));
+  draw();
+  if(focusSelector) stage.querySelector(focusSelector)?.focus({preventScroll:true});
+}
+function announce(text){
+  notice.textContent=tr(text);
+  clearTimeout(noticeTimer);
+  noticeTimer=setTimeout(()=>notice.textContent='',2600);
+}
+function changeConcept(key){
+  if(!key||key===concept) return;
+  concept=key;
+  zoom=1;
+  expanded=false;
+  render();
+}
+picker.addEventListener('click',event=>changeConcept(event.target.closest('[data-concept]')?.dataset.concept));
+stage.addEventListener('click',event=>{
+  const target=event.target.closest('button');
+  if(!target) return;
+  if(target.dataset.route!==undefined){
+    route=Number(target.dataset.route);
+    render('[data-route="'+route+'"]');
+    return;
+  }
+  if(target.dataset.vehicle){
+    vehicle=target.dataset.vehicle;
+    render('[data-vehicle="'+vehicle+'"]');
+    return;
+  }
+  switch(target.dataset.action){
+    case 'zoom-in': zoom=Math.min(1.7,zoom+.15);draw();break;
+    case 'zoom-out': zoom=Math.max(.60,zoom-.15);draw();break;
+    case 'more': expanded=!expanded;render('[data-action="more"]');break;
+    case 'vehicle':
+      vehicle=vehicle==='bike'?'car':'bike';
+      render('[data-action="vehicle"]');
+      break;
+    case 'start': startNavigation();break;
+  }
+});
+const themes={
+  atlas:{ground:'#ebe9df',block:'#e0dfd5',street:'#faf8ef',main:'#ffd9a2',edge:'#cfba97',water:'#b9d7d9',park:'#cbdac4',label:'#616c62',alt:'#758cba'},
+  float:{ground:'#e8eee2',block:'#dce7d9',street:'#f7fbf3',main:'#f3dcac',edge:'#d6c599',water:'#b5d8dc',park:'#bdd8b6',label:'#4d6a59',alt:'#799a87'},
+  dispatch:{ground:'#222d35',block:'#27343d',street:'#40505a',main:'#6e6950',edge:'#313d44',water:'#172f43',park:'#26423b',label:'#b2c2bd',alt:'#647988'},
+  deck:{ground:'#ede4d6',block:'#e4d9c9',street:'#fcf4e8',main:'#efc998',edge:'#cbb396',water:'#b8d4d4',park:'#c3d3ad',label:'#695c50',alt:'#a58d86'},
+  focus:{ground:'#e8e4f0',block:'#ded9e9',street:'#f9f6ff',main:'#e7d2bd',edge:'#cbbbc6',water:'#bcc7e6',park:'#cbd8d4',label:'#665f7b',alt:'#958ab2'},
+  metro:{ground:'#f4ebd3',block:'#e9ddbf',street:'#fff8e5',main:'#e7bb79',edge:'#c9b286',water:'#b8cbd2',park:'#bccd9c',label:'#635639',alt:'#9e8a74'},
+  night:{ground:'#241d36',block:'#2c2541',street:'#4f4167',main:'#785679',edge:'#382b4c',water:'#152641',park:'#253343',label:'#cbb8d6',alt:'#8a78a3'},
+  postcard:{ground:'#f3e2db',block:'#e8d5d0',street:'#fff6ef',main:'#edc8a5',edge:'#ccb2a2',water:'#b1d4d6',park:'#cad0a9',label:'#755965',alt:'#a68796'},
+  mosaic:{ground:'#e3eff1',block:'#d5e4e7',street:'#f6fcfc',main:'#eccda0',edge:'#c8bda7',water:'#a8d0ed',park:'#bcdbc8',label:'#446774',alt:'#7495a9'},
+  pocket:{ground:'#e3ede0',block:'#d5e4d8',street:'#f5faf0',main:'#e8d4a4',edge:'#c8bca2',water:'#acd2d5',park:'#bad5b3',label:'#466658',alt:'#819b8e'},
+  satellite:{ground:'#354336',block:'#455246',street:'#647161',main:'#968d62',edge:'#2a3a30',water:'#173c4c',park:'#2a5740',label:'#f0f2de',alt:'#a3ac90'}
+};
+const paths=[
+  [[402,531],[465,505],[516,464],[553,456],[582,417],[594,374],[647,347]],
+  [[402,531],[415,476],[439,423],[474,397],[527,367],[561,333],[601,328],[647,347]],
+  [[402,531],[461,548],[533,540],[602,484],[647,437],[656,391],[647,347]]
+];
+const arterials=[
+  [[-120,413],[99,383],[232,421],[402,531],[465,505],[516,464],[553,456],[582,417],[594,374],[647,347],[716,308],[818,190],[1060,113],[1320,76]],
+  [[247,850],[316,719],[369,607],[402,531],[415,476],[439,423],[474,397],[527,367],[561,333],[601,328],[647,347],[717,374],[780,359],[894,284],[1300,217]],
+  [[-100,647],[126,634],[243,602],[333,567],[402,531],[461,548],[533,540],[602,484],[647,437],[656,391],[647,347],[632,279],[670,157],[767,-50]],
+  [[-80,171],[159,152],[316,193],[405,237],[510,290],[561,333],[594,374],[656,391],[735,407],[809,450],[1167,549]],
+  [[-70,776],[195,748],[329,779],[452,746],[521,668],[617,617],[698,610],[821,529],[911,463],[1289,469]]
+];
+function cityLine(ctx,points,color,width){
+  ctx.beginPath();
+  points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
+  ctx.lineWidth=width;
+  ctx.strokeStyle=color;
+  ctx.stroke();
+}
+function shape(ctx,points,color){
+  ctx.beginPath();
+  points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
+  ctx.closePath();
+  if(color){ctx.fillStyle=color;ctx.fill();}
+}
+function district(ctx,points,origin,angle,theme,step){
+  ctx.save();
+  shape(ctx,points);
+  ctx.clip();
+  ctx.translate(...origin);
+  ctx.rotate(angle);
+  for(let row=-25;row<=25;row++){
+    for(let col=-25;col<=25;col++){
+      const x=col*step,y=row*step*.81;
+      if((row*13+col*17)%7===0){
+        ctx.fillStyle=theme.park;
+        ctx.fillRect(x+2,y+2,step-4,step*.81-4);
+      }else{
+        ctx.fillStyle=theme.block;
+        const gap=(row*row+col*col)%5+2;
+        ctx.fillRect(x+gap,y+3,step-gap-3,step*.81-6);
+        if((row+col)%3===0){
+          ctx.fillStyle=theme.ground;
+          ctx.fillRect(x+step*.43,y+4,3,step*.81-8);
+        }
+      }
+    }
+  }
+  for(let i=-25;i<=25;i++){
+    const shift=i%4===1?3:0;
+    cityLine(ctx,[[i*step+shift,-1300],[i*step+shift,1300]],theme.street,i%5===0?4.5:2.2);
+    cityLine(ctx,[[-1300,i*step*.81],[1300,i*step*.81]],theme.street,i%5===0?4.5:2.2);
+  }
+  ctx.restore();
+}
+function label(ctx,text,x,y,size,ink,halo,angle=0,weight=600){
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.rotate(angle);
+  ctx.font=weight+' '+size+'px system-ui, sans-serif';
+  ctx.textAlign='center';
+  ctx.lineJoin='round';
+  if(halo){
+    ctx.strokeStyle=halo;
+    ctx.lineWidth=3;
+    ctx.strokeText(text,0,0);
+  }
+  ctx.fillStyle=ink;
+  ctx.fillText(text,0,0);
+  ctx.restore();
+}
+function marker(ctx,x,y,text,fill,dark){
+  ctx.save();ctx.shadowColor='#15192044';ctx.shadowBlur=5;
+  ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fillStyle=fill;ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=dark?'#141c24':'#fff';ctx.stroke();
+  ctx.restore();label(ctx,text,x,y+4,11,dark?'#10251e':'#fff',null,0,800);
+}
+function drawOverview(ctx,width,height,theme,accent){
+  ctx.fillStyle=theme.water;
+  ctx.fillRect(0,0,width,height);
+  const scale=Math.min(width/350,height/560)*zoom;
+  ctx.translate(width/2,height/2);
+  ctx.scale(scale,scale);
+  ctx.translate(-160,-260);
+  const outline=[[149,41],[180,31],[199,48],[228,48],[215,66],[239,74],[223,95],[206,91],[189,116],[174,116],[161,149],[164,174],[188,202],[211,221],[225,253],[253,275],[263,304],[254,330],[265,354],[251,391],[222,408],[207,431],[171,447],[151,471],[123,491],[112,480],[113,452],[139,439],[138,415],[162,390],[184,375],[191,346],[198,318],[188,286],[172,269],[160,246],[140,223],[126,192],[114,160],[112,134],[132,108],[121,86],[97,71],[108,50],[135,54]];
+  shape(ctx,outline,theme.park);
+  label(ctx,'VIỆT NAM',42,280,17,theme.label,theme.water,0,800);
+  for(const [x,y,name] of [[173,88,'Hà Nội'],[230,260,'Đà Nẵng'],[166,429,'TP.HCM']]){
+    ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fillStyle=accent;ctx.fill();
+    label(ctx,name,x+27,y-8,13,theme.label,theme.water,0,700);
+  }
+  label(ctx,'Sơ đồ minh họa',150,523,12,theme.label,theme.water);
+}
+function draw(){
+  const canvas=stage.querySelector('canvas');
+  if(!canvas) return;
+  const {width,height}=canvas.getBoundingClientRect();
+  if(!width || !height) return;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const pxWidth=Math.round(width*dpr),pxHeight=Math.round(height*dpr);
+  if(canvas.width!==pxWidth || canvas.height!==pxHeight){canvas.width=pxWidth;canvas.height=pxHeight;}
+  const ctx=canvas.getContext('2d');
+  const theme=themes[state.base==='Vệ tinh'?'satellite':state.autoDark?'dispatch':concept];
+  const accent=getComputedStyle(stage).getPropertyValue('--accent').trim();
+  const dark=['dispatch','night'].includes(concept);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.fillStyle=theme.ground;
+  ctx.fillRect(0,0,width,height);
+  const scale=Math.min(Math.max(width/1040,height/850),width/305,height/275)*zoom;
+  if(state.zoomMode==='country'){drawOverview(ctx,width,height,theme,accent);return;}
+  const shiftX=concept==='float'&&width>650?width*.13:0;
+  const shiftY=concept==='float'&&width<=650?-height*.16:0;
+  ctx.translate(width*.5+shiftX,height*.5+shiftY);
+  ctx.scale(scale,scale);
+  ctx.translate(-536,-444);
+  ctx.lineJoin='round';
+  ctx.lineCap='round';
+  district(ctx,[[-800,-900],[632,-900],[610,230],[525,318],[319,228],[-800,429]],[300,230],-.28,theme,34);
+  district(ctx,[[-800,429],[319,228],[525,318],[590,376],[475,567],[263,599],[-800,720]],[414,485],.4,theme,30);
+  district(ctx,[[525,318],[610,230],[632,-900],[1700,-900],[1700,433],[730,471],[591,376]],[630,357],-.53,theme,27);
+  district(ctx,[[-800,720],[263,599],[475,567],[591,376],[730,471],[1700,433],[1700,1700],[-800,1700]],[535,605],.33,theme,34);
+  shape(ctx,[[207,389],[263,368],[301,420],[249,443]],theme.park);
+  shape(ctx,[[466,323],[501,305],[523,332],[487,352]],theme.park);
+  shape(ctx,[[609,238],[658,220],[690,254],[654,279]],theme.park);
+  shape(ctx,[[736,500],[773,548],[732,573],[699,535]],theme.park);
+  ctx.beginPath();
+  ctx.moveTo(1020,-600);
+  ctx.bezierCurveTo(626,18, 1054,99, 892,304);
+  ctx.bezierCurveTo(790,437, 718,483, 864,552);
+  ctx.bezierCurveTo(992,611, 923,717, 791,785);
+  ctx.bezierCurveTo(640,869, 654,1024, 892,1370);
+  ctx.bezierCurveTo(729,1024, 742,900, 834,844);
+  ctx.bezierCurveTo(1028,745, 1119,608, 925,514);
+  ctx.bezierCurveTo(820,465, 867,437, 963,340);
+  ctx.bezierCurveTo(1125,171, 804,99, 1095,-600);
+  ctx.closePath();ctx.fillStyle=theme.water;ctx.fill();
+  for(const line of arterials){
+    cityLine(ctx,line,theme.edge,12);
+    cityLine(ctx,line,theme.main,8);
+  }
+  label(ctx,'QUẬN 3',305,272,12,theme.label,theme.ground,0,750);
+  label(ctx,'QUẬN 1',571,257,12,theme.label,theme.ground,0,750);
+  label(ctx,'BẾN NGHÉ',715,281,14,theme.label,theme.ground,0,750);
+  label(ctx,'BẾN THÀNH',386,461,12,theme.label,theme.ground,0,750);
+  label(ctx,'THỦ THIÊM',1015,418,13,theme.label,theme.ground,0,750);
+  label(ctx,'Sông Sài Gòn',933,618,13,theme.label,theme.water,.62,550);
+  label(ctx,'Công viên Tao Đàn',266,407,11,theme.label,theme.park,0,650);
+  label(ctx,'Nguyễn Thị Minh Khai',364,213,11,theme.label,theme.ground,.33,550);
+  label(ctx,'Lê Lợi',500,484,10,theme.label,theme.ground,-.55,650);
+  label(ctx,'Pasteur',666,474,10,theme.label,theme.ground,-.74,650);
+  if(state.terrain&&state.base==='Bản đồ'){
+    ctx.save();ctx.globalAlpha=.34;
+    for(let i=0;i<5;i++){
+      ctx.beginPath();ctx.ellipse(310,322,62+i*14,28+i*9,-.38,0,Math.PI*2);
+      ctx.strokeStyle=theme.label;ctx.lineWidth=1;ctx.stroke();
+    }
+    ctx.restore();
+  }
+  if(state.routeReady){
+    paths.forEach((path,index)=>{
+      if(index===route) return;
+      cityLine(ctx,path,theme.street,7.5);
+      cityLine(ctx,path,theme.alt,4.5);
+    });
+    cityLine(ctx,paths[route],dark?'#10251e':'#fff',11);
+    cityLine(ctx,paths[route],accent,7.2);
+    if(traffic){
+      cityLine(ctx,paths[route].slice(2,4),'#ffac42',5.4);
+      cityLine(ctx,paths[route].slice(4,6),'#e76857',5.4);
+    }
+    if(navigating||state.pin){
+      const [x,y]=paths[route][2];
+      ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fillStyle=accent;ctx.fill();ctx.lineWidth=2.8;ctx.strokeStyle=theme.street;ctx.stroke();
+    }
+    marker(ctx,402,531,'A',accent,dark);
+    marker(ctx,647,347,'B',accent,dark);
+    label(ctx,state.origin,391,560,13,theme.label,theme.ground,0,750);
+    label(ctx,state.destination,657,318,13,theme.label,theme.ground,0,750);
+  }
+  if(state.pane==='multi'&&state.optimized){
+    const visit=[[402,531],[442,384],[523,304],[647,347]];
+    cityLine(ctx,visit,accent,5);
+    visit.forEach(([x,y],index)=>marker(ctx,x,y,index+1,accent,dark));
+  }
+  if(state.incidents){
+    if(traffic){
+      ctx.beginPath();ctx.arc(611,473,28,0,Math.PI*2);ctx.fillStyle='#e7685755';ctx.fill();
+    }
+    marker(ctx,611,473,'!','#b5412f',false);
+  }
+  if(state.pin&&!state.routeReady) marker(ctx,515,462,'•',accent,dark);
+}
+const observer=new ResizeObserver(draw);
+render();
+</script>
+</body>
+</html>
