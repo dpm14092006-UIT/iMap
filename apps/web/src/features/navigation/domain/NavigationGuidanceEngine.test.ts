@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { RoutePlan } from '../../map/types';
 import type { Place } from '../../places/types';
 import { NavigationGuidanceEngine } from './NavigationGuidanceEngine';
@@ -104,6 +104,19 @@ describe('NavigationGuidanceEngine', () => {
 
     const far = { lat: 10.005, lng: 106.02 };
     expect(engine.evaluate(far, 10, 0).displayLocation).toEqual(far);
+  });
+
+  it('khớp các điểm dừng với tuyến một lần khi tạo engine, không lặp lại mỗi lần có GPS (review #20)', () => {
+    const fresh = new NavigationGuidanceEngine(eastwardRoute());
+    const closest = vi.spyOn(RoutePath.prototype, 'closest');
+    try {
+      fresh.evaluate({ lat: 10, lng: 106.015 }, 10, 0);
+      fresh.evaluate({ lat: 10, lng: 106.016 }, 10, 0.2);
+      // Mỗi lần đánh giá chỉ còn 2 lần khớp vị trí GPS (gần nhất + phía trước), không khớp lại 2 điểm dừng.
+      expect(closest).toHaveBeenCalledTimes(4);
+    } finally {
+      closest.mockRestore();
+    }
   });
 
   it('tới điểm cuối: đã đến nơi', () => {

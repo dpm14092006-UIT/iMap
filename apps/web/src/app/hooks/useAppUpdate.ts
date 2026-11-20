@@ -6,11 +6,21 @@ const CHECK_INTERVAL_MS = 60_000;
 
 type AppVersionResponse = { version?: unknown };
 
+/**
+ * Có nên hỏi máy chủ phiên bản mới không: không cần khi đã biết có bản mới (nút tải lại đang hiện),
+ * và không hỏi khi tab đang ẩn (tốn mạng/pin, người dùng cũng không thấy thông báo).
+ */
+export function shouldCheckForUpdate(updateAvailable: boolean, visibility: DocumentVisibilityState): boolean {
+  return !updateAvailable && visibility === 'visible';
+}
+
 /** Checks for a newer deployment and lets the user reload when ready. */
 export function useAppUpdate() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
+    // Đã có bản mới: thôi kiểm tra cho tới khi người dùng tải lại trang.
+    if (updateAvailable) return;
     let active = true;
 
     const checkForUpdate = async () => {
@@ -28,13 +38,14 @@ export function useAppUpdate() {
     };
 
     const checkWhenVisible = () => {
-      if (document.visibilityState === 'visible') void checkForUpdate();
+      if (shouldCheckForUpdate(false, document.visibilityState)) void checkForUpdate();
     };
-    const intervalId = window.setInterval(() => void checkForUpdate(), CHECK_INTERVAL_MS);
+    // Tab ẩn thì bỏ qua lượt định kỳ; khi quay lại tab sẽ kiểm tra ngay nhờ visibilitychange/focus.
+    const intervalId = window.setInterval(checkWhenVisible, CHECK_INTERVAL_MS);
 
     window.addEventListener('focus', checkWhenVisible);
     document.addEventListener('visibilitychange', checkWhenVisible);
-    void checkForUpdate();
+    checkWhenVisible();
 
     return () => {
       active = false;
@@ -42,7 +53,7 @@ export function useAppUpdate() {
       window.removeEventListener('focus', checkWhenVisible);
       document.removeEventListener('visibilitychange', checkWhenVisible);
     };
-  }, []);
+  }, [updateAvailable]);
 
   return {
     updateAvailable,

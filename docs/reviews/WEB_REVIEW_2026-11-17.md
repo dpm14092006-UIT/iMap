@@ -62,16 +62,16 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 
 ## B. Hiệu năng
 
-- [ ] **17. Mỗi sự kiện realtime tải lại toàn bộ báo cáo** — `features/traffic/hooks/useTrafficReports.ts:108`
+- [x] **17. Mỗi sự kiện realtime tải lại toàn bộ báo cáo** — `features/traffic/hooks/useTrafficReports.ts:108`
   Gom các sự kiện (debounce ~500 ms) trước khi `refresh()`.
-- [ ] **18. Ký lại link ảnh mỗi lần danh sách báo cáo đổi** — `features/traffic/components/TrafficReportPanel.tsx:165`
+- [x] **18. Ký lại link ảnh mỗi lần danh sách báo cáo đổi** — `features/traffic/components/TrafficReportPanel.tsx:165`
   Chỉ ký ảnh mới (cache theo `imagePath`), không phụ thuộc identity của mảng `incidents`.
-- [ ] **19. Gọi 2 RPC lịch sử mỗi lần đổi tuyến** — `app/App.tsx:633` + `RecentPlacesProvider.tsx:68`
+- [x] **19. Gọi 2 RPC lịch sử mỗi lần đổi tuyến** — `app/App.tsx:633` + `RecentPlacesProvider.tsx:68`
   Bỏ qua RPC khi điểm đã đứng đầu danh sách; không ghi lại khi chỉ đổi phương án/tính lại tuyến.
-- [ ] **20. Tính lại vị trí các điểm dừng mỗi lần có GPS** — `features/navigation/domain/NavigationGuidanceEngine.ts:120`
+- [x] **20. Tính lại vị trí các điểm dừng mỗi lần có GPS** — `features/navigation/domain/NavigationGuidanceEngine.ts:120`
   Tính `progress` của từng điểm dừng một lần trong constructor.
-- [ ] **21. Chờ cứng 1,2 giây trước khi tải đăng nhập** — `features/auth/context/AuthProvider.tsx:50`
-- [ ] **22. Vẫn kiểm tra phiên bản mỗi phút sau khi đã có bản mới / khi tab ẩn** — `app/hooks/useAppUpdate.ts:33`
+- [x] **21. Chờ cứng 1,2 giây trước khi tải đăng nhập** — `features/auth/context/AuthProvider.tsx:50`
+- [x] **22. Vẫn kiểm tra phiên bản mỗi phút sau khi đã có bản mới / khi tab ẩn** — `app/hooks/useAppUpdate.ts:33`
 
 ## C. Dọn code
 
