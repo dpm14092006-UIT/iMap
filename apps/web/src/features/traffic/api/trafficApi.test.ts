@@ -59,4 +59,21 @@ describe('traffic report submission', () => {
       imagePath: expect.stringContaining('.png'),
     });
   });
+
+  it('encodes the report id in the clearance URL (review #16)', async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: {} }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetcher);
+    const api = new TrafficApiClient(new HttpClient({ baseUrl: 'https://api.test', timeoutMs: 1000 }));
+
+    await api.clearance('../admin?x=1#y', 'clear', 'token');
+
+    expect(String(fetcher.mock.calls[0]![0])).toBe(
+      'https://api.test/traffic-reports/..%2Fadmin%3Fx%3D1%23y/clearance',
+    );
+  });
 });

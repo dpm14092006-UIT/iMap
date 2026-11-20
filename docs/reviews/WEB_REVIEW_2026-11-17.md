@@ -36,28 +36,28 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
   _Gợi ý:_ trước khi `signOut`, gọi `delete_push_subscription` + `deleteRouteWatch(endpoint)`.
   _Ghi chú khi sửa:_ RPC `delete_push_subscription` chỉ cấp quyền cho `service_role` nên web không gọi được. Thay bằng xóa thẳng dòng của mình trong `push_subscriptions` (RLS `delete_self`; `route_watches` tự xóa theo `on delete cascade`) và hủy đăng ký push trong trình duyệt, chạy qua `AuthProvider.onBeforeSignOut` trước khi mất phiên.
 
-- [ ] **9. Lỗi Supabase khi ghi lịch sử bị bỏ qua** — `features/places/services/recentPlaces.ts:100`, `:115`
+- [x] **9. Lỗi Supabase khi ghi lịch sử bị bỏ qua** — `features/places/services/recentPlaces.ts:100`, `:115`
   `rpc()`/`.delete()` trả `{ error }` chứ không throw, nên `.catch()` ở nơi gọi không bao giờ chạy.
 
-- [ ] **10. Chọn điểm trên bản đồ bị kết quả cũ ghi đè** — `app/App.tsx:504`
+- [x] **10. Chọn điểm trên bản đồ bị kết quả cũ ghi đè** — `app/App.tsx:504`
   `placeFromPoint` (reverse geocode, timeout 45 s) không hủy/không đánh số request; chọn nhanh hai lần thì lần chậm về sau thắng.
 
-- [ ] **11. Mở lại hành trình nhiều điểm không chống kết quả cũ** — `app/App.tsx:799`
+- [x] **11. Mở lại hành trình nhiều điểm không chống kết quả cũ** — `app/App.tsx:799`
   Sau `await createPlan` luôn `setActiveRoute` + đóng panel, kể cả khi người dùng đã sang tuyến khác (khác với `planMultiStopRoute` có `multiPlanGeneration`).
 
-- [ ] **12. Mất timeout trên Safari cũ** — `shared/api/HttpClient.ts:83`
+- [x] **12. Mất timeout trên Safari cũ** — `shared/api/HttpClient.ts:83`
   Khi có `signal` mà trình duyệt chưa có `AbortSignal.any` (iOS < 17.4), timeout 45 s bị bỏ → request treo, UI quay mãi.
   _Gợi ý:_ tự gộp hai signal bằng một AbortController khi thiếu `AbortSignal.any`.
 
-- [ ] **13. Cache lịch sử không kiểm tra kiểu** — `features/places/services/recentPlaces.ts:61`
+- [x] **13. Cache lịch sử không kiểm tra kiểu** — `features/places/services/recentPlaces.ts:61`
   Phần tử thiếu `name`/`lat` trong localStorage làm `recentPlaceKey()` throw → crash app.
 
-- [ ] **14. Payload push từ service worker không được kiểm tra** — `app/App.tsx:691`
+- [x] **14. Payload push từ service worker không được kiểm tra** — `app/App.tsx:691`
   Dùng lại `parseRealtimeReport` (đang có trong `useTrafficReports.ts`) trước khi gọi `onRealtimeTrafficReport`.
 
-- [ ] **15. Lỗi khởi tạo MediaRecorder báo nhầm là thiếu quyền micro** — `features/place-assistant/hooks/useApiSpeechDraft.ts:112`
+- [x] **15. Lỗi khởi tạo MediaRecorder báo nhầm là thiếu quyền micro** — `features/place-assistant/hooks/useApiSpeechDraft.ts:112`
 
-- [ ] **16. Id báo cáo không encode trong URL** — `features/traffic/api/trafficApi.ts:40`
+- [x] **16. Id báo cáo không encode trong URL** — `features/traffic/api/trafficApi.ts:40`
   Dùng `encodeURIComponent(id)`.
 
 ## B. Hiệu năng

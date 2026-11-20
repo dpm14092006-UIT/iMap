@@ -705,6 +705,13 @@ const translations: Record<string, string> = {
     'The browser could not start speech recognition. You can type instead.',
   'Không ghi được âm thanh. Hãy thử lại hoặc nhập chữ.': 'Could not record audio. Try again or type instead.',
   'Voice chưa sẵn sàng.': 'Voice is not ready.',
+  'Trình duyệt này không ghi âm được (MediaRecorder lỗi). Hãy thử trình duyệt khác hoặc nhập chữ.':
+    "This browser can't record audio (MediaRecorder failed). Try another browser or type instead.",
+  'Chưa được cấp quyền micro. Hãy cho phép micro trong cài đặt trình duyệt (cần HTTPS).':
+    'Microphone permission was denied. Allow the microphone in your browser settings (HTTPS required).',
+  'Không tìm thấy micro trên thiết bị này.': 'No microphone was found on this device.',
+  'Micro đang được ứng dụng khác dùng. Hãy đóng ứng dụng đó rồi thử lại.':
+    'The microphone is in use by another app. Close it and try again.',
   'Chưa được cấp quyền micro hoặc không có thiết bị. Kiểm tra quyền micro và dùng HTTPS.':
     'Microphone access was denied or no device is available. Check microphone permissions and use HTTPS.',
   'Hãy nói từ 0,2 đến 15 giây.': 'Speak for 0.2 to 15 seconds.',

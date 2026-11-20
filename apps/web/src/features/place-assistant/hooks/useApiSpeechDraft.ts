@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { assistantApi } from '../api/assistantApi';
 import { recordingToWav } from '../services/voiceAudio';
+import { voiceStartErrorMessage, type VoiceStartStage } from '../services/voiceStartError';
 export function useApiSpeechDraft(onDraft: (text: string) => void, accessToken: string) {
   const [available, setAvailable] = useState(false),
     [listening, setListening] = useState(false),
@@ -57,6 +58,8 @@ export function useApiSpeechDraft(onDraft: (text: string) => void, accessToken: 
     busy.current = true;
     const version = ++generation.current;
     setError('');
+    // Biết lỗi xảy ra ở bước nào để báo đúng nguyên nhân (quyền micro hay bộ ghi âm).
+    let stage: VoiceStartStage = 'microphone';
     try {
       const media = await navigator.mediaDevices.getUserMedia({
         audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
@@ -67,6 +70,7 @@ export function useApiSpeechDraft(onDraft: (text: string) => void, accessToken: 
         return;
       }
       stream.current = media;
+      stage = 'recorder';
       const mimeType = ['audio/webm;codecs=opus', 'audio/mp4'].find((type) =>
         MediaRecorder.isTypeSupported(type),
       );
@@ -109,11 +113,11 @@ export function useApiSpeechDraft(onDraft: (text: string) => void, accessToken: 
       timer.current = setTimeout(() => {
         if (active.state === 'recording') active.stop();
       }, 15000);
-    } catch {
+    } catch (cause) {
       if (version === generation.current) {
         release();
         busy.current = false;
-        setError('Chưa được cấp quyền micro hoặc không có thiết bị. Kiểm tra quyền micro và dùng HTTPS.');
+        setError(voiceStartErrorMessage(cause, stage));
       }
     }
   };

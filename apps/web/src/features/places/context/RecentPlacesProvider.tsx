@@ -41,6 +41,12 @@ const RecentPlacesContext = createContext<RecentPlacesContextValue>({
 
 const repository = new RecentPlacesRepository();
 
+/**
+ * Đồng bộ lên tài khoản thất bại không chặn người dùng (bản trên máy vẫn còn và lần tải sau sẽ khớp lại),
+ * nhưng ghi ra console để còn biết mà sửa thay vì im lặng.
+ */
+const warnSyncFailure = (error: unknown) => console.warn('[recent-places]', error);
+
 /** 10 điểm đi + 10 điểm đến gần nhất của tài khoản: hiện ngay từ bản sao trên máy, đồng bộ với Supabase. */
 export function RecentPlacesProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -89,7 +95,7 @@ export function RecentPlacesProvider({ children }: { children: ReactNode }) {
         writeCachedRecentPlaces(userId, next);
         return next;
       });
-      void repository.record(kind, place).catch(() => undefined);
+      void repository.record(kind, place).catch(warnSyncFailure);
     },
     [userId],
   );
@@ -104,7 +110,7 @@ export function RecentPlacesProvider({ children }: { children: ReactNode }) {
         writeCachedRecentPlaces(userId, next);
         return next;
       });
-      void repository.remove(kind, place).catch(() => undefined);
+      void repository.remove(kind, place).catch(warnSyncFailure);
     },
     [userId],
   );

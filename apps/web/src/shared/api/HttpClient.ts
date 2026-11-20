@@ -1,4 +1,5 @@
 import { ApiError } from './ApiError';
+import { timeoutSignal } from './timeoutSignal';
 
 export type HttpClientOptions = {
   /** Tiền tố của mọi endpoint, ví dụ "/api". */
@@ -54,19 +55,32 @@ export class HttpClient {
     if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
     const payload = this.encodeBody(body, headers);
 
-    let response: Response;
+    // Hẹn giờ phủ cả lúc chờ header lẫn lúc đọc nội dung phản hồi (như AbortSignal.timeout trước đây):
+    // server gửi header rồi treo giữa chừng thì request vẫn dừng sau timeoutMs.
+    const timeout = timeoutSignal(this.options.timeoutMs, init.signal);
     try {
-      response = await fetch(`${this.options.baseUrl}${endpoint}`, {
-        ...init,
-        method,
-        headers,
-        body: payload,
-        signal: this.withTimeout(init.signal),
-      });
-    } catch (cause) {
-      throw this.toTransportError(cause, init.signal);
+      let response: Response;
+      try {
+        response = await fetch(`${this.options.baseUrl}${endpoint}`, {
+          ...init,
+          method,
+          headers,
+          body: payload,
+          signal: timeout.signal,
+        });
+      } catch (cause) {
+        throw this.toTransportError(cause, init.signal, timeout.timedOut());
+      }
+      try {
+        return await this.unwrap<T>(response);
+      } catch (cause) {
+        // Quá giờ khi đang đọc nội dung: báo TIMEOUT thay vì "phản hồi không hợp lệ".
+        if (timeout.timedOut()) throw this.toTransportError(cause, init.signal, true);
+        throw cause;
+      }
+    } finally {
+      timeout.dispose();
     }
-    return this.unwrap<T>(response);
   }
 
   private encodeBody(body: unknown, headers: Headers): BodyInit | undefined {
@@ -76,16 +90,14 @@ export class HttpClient {
     return JSON.stringify(body);
   }
 
-  private withTimeout(signal?: AbortSignal | null): AbortSignal | undefined {
-    if (typeof AbortSignal.timeout !== 'function') return signal ?? undefined;
-    const timeout = AbortSignal.timeout(this.options.timeoutMs);
-    if (!signal) return timeout;
-    return typeof AbortSignal.any === 'function' ? AbortSignal.any([signal, timeout]) : signal;
-  }
-
-  private toTransportError(cause: unknown, signal?: AbortSignal | null): unknown {
+  private toTransportError(
+    cause: unknown,
+    signal: AbortSignal | null | undefined,
+    timedOut: boolean,
+  ): unknown {
     if (signal?.aborted) return cause;
-    if (cause instanceof DOMException && cause.name === 'TimeoutError') {
+    // Trình duyệt cũ có thể báo AbortError chung chung khi quá giờ, nên dựa vào cờ timedOut.
+    if (timedOut || (cause instanceof DOMException && cause.name === 'TimeoutError')) {
       return new ApiError('Máy chủ phản hồi quá lâu. Hãy thử lại.', 0, 'TIMEOUT');
     }
     return new ApiError('Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.', 0, 'NETWORK');
