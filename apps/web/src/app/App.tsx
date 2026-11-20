@@ -879,19 +879,28 @@ export function App() {
   };
 
   // --- Trợ lý địa điểm (N2): thêm/bỏ điểm ghé vào tuyến đang hiển thị ---
-  const addAssistantStop = (candidate: RouteStopCandidate, expectedRouteId: string) => {
+  const addAssistantStop = async (candidate: RouteStopCandidate, expectedRouteId: string) => {
     if (!activeRoute || activeRoute.id !== expectedRouteId || activeRoute.stops.length !== 2) {
       showToast(t('Tuyến đã thay đổi. Hãy tìm lại điểm dừng.'));
       return;
     }
     const stop = placeFromStop(candidate.place);
-    setActiveRoute(
-      routePlanFromResult(
-        candidate.route,
-        [activeRoute.stops[0]!, stop, activeRoute.stops[1]!],
-        activeRoute.vehicle,
-      ),
-    );
+    const stops = [activeRoute.stops[0]!, stop, activeRoute.stops[1]!];
+    const { id: originalId, vehicle, objective } = activeRoute;
+    // Trợ lý luôn tính tuyến qua điểm ghé theo "nhanh nhất". Tuyến đang theo "ngắn nhất" thì tính lại
+    // đúng tiêu chí đó, thay vì dùng tuyến của trợ lý rồi gắn nhầm nhãn (trước đây còn reset về "time").
+    let plan: RoutePlan;
+    if (objective === 'time') {
+      plan = routePlanFromResult(candidate.route, stops, vehicle, objective);
+    } else {
+      const result = await routeApi.createPlan(stops, vehicle, objective);
+      if ('error' in result) {
+        showToast(t(result.error));
+        return;
+      }
+      plan = result;
+    }
+    setActiveRoute((current) => (current?.id === originalId ? plan : current));
     showToast(t('Đã thêm điểm ghé: {name}', { name: stop.name }));
   };
 
@@ -901,6 +910,8 @@ export function App() {
     const result = await routeApi.createPlan(
       [activeRoute.stops[0]!, activeRoute.stops[activeRoute.stops.length - 1]!],
       activeRoute.vehicle,
+      // Giữ tiêu chí của tuyến đang xem (trước đây mặc định "time").
+      activeRoute.objective,
     );
     if ('error' in result) {
       showToast(t(result.error));
