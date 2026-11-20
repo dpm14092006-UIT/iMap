@@ -29,7 +29,7 @@ export function toSavedRoute(plan: RoutePlan, options: SaveRouteOptions = {}): S
     vehicle: plan.vehicle,
     // Không lưu cả `plan` (hình học tuyến rất nặng): khi mở lại luôn tính lại bằng VietMap.
     objective: plan.objective,
-    avoidFerry: options.avoidFerry ?? false,
+    avoidFerry: options.avoidFerry ?? plan.avoidFerry ?? false,
     originId: first.id,
     originName: first.name,
     destinationId: last.id,

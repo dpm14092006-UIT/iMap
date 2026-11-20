@@ -27,14 +27,14 @@ export function useAssistantStops({ activeRoute, setActiveRoute, routeApi, showT
     }
     const stop = placeFromStop(candidate.place);
     const stops = [activeRoute.stops[0]!, stop, activeRoute.stops[1]!];
-    const { id: originalId, vehicle, objective } = activeRoute;
-    // Trợ lý luôn tính tuyến qua điểm ghé theo "nhanh nhất". Tuyến đang theo "ngắn nhất" thì tính lại
-    // đúng tiêu chí đó, thay vì dùng tuyến của trợ lý rồi gắn nhầm nhãn.
+    const { id: originalId, vehicle, objective, avoidFerry = false } = activeRoute;
+    // Trợ lý tính tuyến qua điểm ghé theo "nhanh nhất" và không tránh phà. Chỉ dùng lại tuyến đó khi tuyến
+    // đang xem cũng như vậy; còn lại tính lại đúng tiêu chí và tùy chọn tránh phà của tuyến đang xem.
     let plan: RoutePlan;
-    if (objective === 'time') {
+    if (objective === 'time' && !avoidFerry) {
       plan = routePlanFromResult(candidate.route, stops, vehicle, objective);
     } else {
-      const result = await routeApi.createPlan(stops, vehicle, objective);
+      const result = await routeApi.createPlan(stops, vehicle, objective, avoidFerry);
       if ('error' in result) {
         showToast(t(result.error));
         return;
@@ -51,6 +51,7 @@ export function useAssistantStops({ activeRoute, setActiveRoute, routeApi, showT
       [activeRoute.stops[0]!, activeRoute.stops[activeRoute.stops.length - 1]!],
       activeRoute.vehicle,
       activeRoute.objective,
+      activeRoute.avoidFerry ?? false,
     );
     if ('error' in result) {
       showToast(t(result.error));

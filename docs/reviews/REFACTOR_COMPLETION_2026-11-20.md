@@ -34,3 +34,14 @@ Sau commit cấu trúc `2c26e8c`, đã gỡ toàn bộ chế độ Demo/thuyết
 Dẫn đường chỉ dùng BrowserGpsSource. Adapter chặn callback đã xếp hàng sau clearWatch để vị trí/lỗi của chuyến cũ không ghi sang chuyến mới. Thêm 21 test cho adapter GPS và vòng đời chuyến đi; giữ kiểm tra chống tải dồn qua 350 lần camera di chuyển.
 
 Đã chạy lại toàn bộ verify và browser với native Geolocation API do Chromium cấp vị trí kiểm thử. URL `?demo=1` và storage cũ không bật lại Demo. Đã mở thêm bản cuối với tile thật: tải 35 tile, không có lỗi JavaScript và không còn nút Demo. API và benchmark thuật toán vẫn độc lập với giao diện đã gỡ. Các export/props bị xoá có lý do rõ trong manifest kiểm toán để không che giấu việc mất callback ngoài phạm vi này.
+
+## Đóng các lỗi chức năng còn mở (tối 20/11)
+
+| Mục | Sửa | Test bảo vệ |
+| --- | --- | --- |
+| **P1 SSRF Web Push** | Migration `0009_push_endpoint_allowlist.sql`: `is_allowed_push_endpoint()` chỉ nhận FCM, Mozilla, Apple, Windows qua HTTPS cổng 443; `save_push_subscription` dùng hàm này và dọn dòng đã lưu sai chính sách. API kiểm tra lại bằng `traffic/domain/pushEndpointPolicy.ts` ngay trước khi gửi, endpoint xấu bị xoá mà không phát request | 18 ca chính sách endpoint (IP nội bộ, metadata cloud, cổng lạ, userinfo, hậu tố giả…); notifier không gửi tới endpoint xấu. Regex SQL được đối chiếu cùng 18 ca, **chưa chạy trên Postgres thật** |
+| Timeout gửi push | Mỗi lần `sendNotification` có `timeout: 10_000` | Notifier test kiểm tra tham số |
+| Quota route-stops | `RouteStopsController` kiểm tra body → xin chỗ xử lý → trừ hạn mức ngay trước khi gọi use case; bỏ `requireFeatureQuota` chạy trước validation | Body sai và instance đầy không trừ lượt; hết lượt không gọi provider |
+| Trợ lý và tránh phà | `RoutePlan.avoidFerry`; `RouteApiClient.createPlan(..., avoidFerry)` gửi `avoid: ['ferry']`; trợ lý tính lại tuyến khi tuyến đang tránh phà thay vì dùng tuyến dựng sẵn; tuyến đã lưu lấy tùy chọn từ tuyến | Thêm/bỏ điểm ghé giữ tiêu chí và tránh phà; API client gửi đúng body |
+
+Còn mở: outbox/hàng đợi bền cho Web Push (hiện chỉ có timeout từng lần gửi và `Promise.race` 4 giây); tính lại tuyến khi dẫn đường (`/routes/reroute`) chưa nhận tùy chọn tránh phà.

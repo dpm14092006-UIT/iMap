@@ -103,17 +103,18 @@ export class RouteApiClient {
     stops: Place[],
     vehicle: TransportMode,
     objective: RouteObjective = 'time',
+    avoidFerry = false,
   ): Promise<RoutePlanResult> {
     if (stops.length < 2) return { error: 'Chọn ít nhất điểm đi và điểm đến.' };
     try {
-      const data = await this.http.post<RouteResult>(
-        '/routes/calculate',
-        requestBody(stops, vehicle, objective),
-      );
+      const data = await this.http.post<RouteResult>('/routes/calculate', {
+        ...requestBody(stops, vehicle, objective),
+        ...(avoidFerry ? { avoid: ['ferry'] } : {}),
+      });
       if (!Array.isArray(data?.coordinates) || data.coordinates.length < 2) {
         return { error: 'Dịch vụ chỉ đường trả về tuyến không hợp lệ.' };
       }
-      return routePlanFromResult(data, stops, vehicle, objective);
+      return routePlanFromResult(data, stops, vehicle, objective, avoidFerry);
     } catch (cause) {
       return toError(cause, 'Không kết nối được máy chủ chỉ đường. Hãy thử lại sau ít phút.');
     }
@@ -157,7 +158,7 @@ export class RouteApiClient {
         );
         return next === index;
       });
-      const routes = unique.map((path) => routePlanFromResult(path, stops, vehicle, objective));
+      const routes = unique.map((path) => routePlanFromResult(path, stops, vehicle, objective, avoidFerry));
       const comparison = data.comparison;
       if (
         comparisonSessionId &&
@@ -197,6 +198,7 @@ export function routePlanFromResult(
   stops: Place[],
   vehicle: TransportMode,
   objective: RouteObjective = 'time',
+  avoidFerry = false,
 ): RoutePlan {
   const leg = {
     nodes: stops.map((place) => place.id),
@@ -220,5 +222,6 @@ export function routePlanFromResult(
     ...(result.tollCostVnd === undefined ? {} : { tollCostVnd: result.tollCostVnd }),
     ...(result.variant === undefined ? {} : { variant: result.variant }),
     ...(result.congestion === undefined ? {} : { congestion: result.congestion }),
+    ...(avoidFerry ? { avoidFerry: true } : {}),
   };
 }

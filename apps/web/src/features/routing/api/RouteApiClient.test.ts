@@ -109,3 +109,46 @@ describe('RouteApiClient alternatives', () => {
     expect(request.points).toEqual(orderedStops.map(({ lat, lng }) => ({ lat, lng })));
   });
 });
+
+describe('RouteApiClient.createPlan', () => {
+  const path = {
+    source: 'vietmap',
+    distanceMeters: 5000,
+    durationSeconds: 600,
+    coordinates: [
+      [106, 10],
+      [106.1, 10.1],
+    ],
+    instructions: [],
+  };
+  const respond = () =>
+    vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: path }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+
+  it('gửi yêu cầu tránh phà và ghi tùy chọn vào tuyến trả về', async () => {
+    const fetcher = respond();
+    vi.stubGlobal('fetch', fetcher);
+    const plan = await new RouteApiClient(
+      new HttpClient({ baseUrl: 'https://api.test', timeoutMs: 1000 }),
+    ).createPlan(stops, 'car', 'distance', true);
+    expect(JSON.parse(String(fetcher.mock.calls[0]![1]!.body))).toMatchObject({
+      avoid: ['ferry'],
+      objective: 'distance',
+    });
+    expect(plan).toMatchObject({ avoidFerry: true, objective: 'distance' });
+  });
+
+  it('mặc định không tránh phà và không thêm trường avoidFerry', async () => {
+    const fetcher = respond();
+    vi.stubGlobal('fetch', fetcher);
+    const plan = await new RouteApiClient(
+      new HttpClient({ baseUrl: 'https://api.test', timeoutMs: 1000 }),
+    ).createPlan(stops, 'car');
+    expect(JSON.parse(String(fetcher.mock.calls[0]![1]!.body))).not.toHaveProperty('avoid');
+    expect(plan).not.toHaveProperty('avoidFerry');
+  });
+});

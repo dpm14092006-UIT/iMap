@@ -35,6 +35,8 @@ export type RoutePlan = {
   variant?: RouteVariant;
   /** Chỉ có khi hành trình nhiều điểm đã được sắp xếp lại thứ tự. */
   optimization?: RouteOptimization;
+  /** Tuyến được tính với tùy chọn tránh phà; mọi lần tính lại tuyến này (trợ lý thêm/bỏ điểm ghé…) phải giữ. */
+  avoidFerry?: boolean;
 };
 
 /** Kết quả sắp xếp thứ tự ghé: thuật toán đã dùng và chi phí trước/sau (giây hoặc mét). */
