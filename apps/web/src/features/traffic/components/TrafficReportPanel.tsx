@@ -9,6 +9,10 @@ import { Icon } from '../../../shared/components/Icon';
 import { trafficApi, trafficPhotos } from '../api/trafficApi';
 import { incidentLabels } from '../services/trafficPresentation';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
+import { SignedUrlCache } from '../services/SignedUrlCache';
+
+/** Link ảnh ký có hạn 10 phút (trafficPhotos.signedUrl); dùng lại trong 9 phút để không trả link sắp hết hạn. */
+const signedPhotoUrls = new SignedUrlCache((path) => trafficPhotos.signedUrl(path), 9 * 60_000);
 
 export type IncidentKind =
   'traffic_jam' | 'accident' | 'construction' | 'flood' | 'road_closure' | 'obstacle';
@@ -162,9 +166,15 @@ export function TrafficReportPanel({
     return () => URL.revokeObjectURL(url);
   }, [photo]);
 
+  // Chỉ chạy lại khi danh sách ảnh thật sự đổi (id + đường dẫn), không phải mỗi lần mảng incidents được tạo mới.
+  const recentPhotoKey = incidents
+    .slice(0, 8)
+    .filter((incident) => incident.imagePath)
+    .map((incident) => `${incident.id}\t${incident.imagePath}`)
+    .join('\n');
   useEffect(() => {
     let current = true;
-    const recentPhotos = incidents.slice(0, 8).filter((incident) => incident.imagePath);
+    const recentPhotos = recentPhotoKey ? recentPhotoKey.split('\n').map((line) => line.split('\t')) : [];
     if (!recentPhotos.length) {
       setPhotoUrls({});
       return () => {
@@ -172,9 +182,7 @@ export function TrafficReportPanel({
       };
     }
     void Promise.all(
-      recentPhotos.map(
-        async (incident) => [incident.id, await trafficPhotos.signedUrl(incident.imagePath!)] as const,
-      ),
+      recentPhotos.map(async ([id, imagePath]) => [id!, await signedPhotoUrls.get(imagePath!)] as const),
     )
       .then((entries) => {
         if (current)
@@ -190,7 +198,7 @@ export function TrafficReportPanel({
     return () => {
       current = false;
     };
-  }, [incidents]);
+  }, [recentPhotoKey]);
 
   useEffect(() => {
     let current = true;
