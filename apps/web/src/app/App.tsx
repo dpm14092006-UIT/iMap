@@ -63,6 +63,7 @@ import type {
   TrafficVehicleScope,
 } from '../features/traffic/components/TrafficReportPanel';
 import { useTrafficReports, type RealtimeTrafficReport } from '../features/traffic/hooks/useTrafficReports';
+import { parseRealtimeReport } from '../features/traffic/services/realtimeReport';
 import {
   incidentLabels,
   toIncidents,
@@ -691,8 +692,11 @@ export function App() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
     const onMessage = (event: MessageEvent) => {
-      const data = event.data as { type?: string; report?: RealtimeTrafficReport } | null;
-      if (data?.type === 'traffic_alert' && data.report) onRealtimeTrafficReport(data.report);
+      const data = event.data as { type?: unknown; report?: unknown } | null;
+      if (data?.type !== 'traffic_alert') return;
+      // Dữ liệu từ push là dữ liệu ngoài: kiểm tra trước khi dùng, giữ thêm số liệu cộng đồng (đã kiểm kiểu).
+      const report = parseRealtimeReport(data.report);
+      if (report) onRealtimeTrafficReport({ ...report, ...pickCommunityCounts(data.report as object) });
     };
     navigator.serviceWorker.addEventListener('message', onMessage);
     return () => navigator.serviceWorker.removeEventListener('message', onMessage);

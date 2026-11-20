@@ -52,7 +52,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 - [x] **13. Cache lịch sử không kiểm tra kiểu** — `features/places/services/recentPlaces.ts:61`
   Phần tử thiếu `name`/`lat` trong localStorage làm `recentPlaceKey()` throw → crash app.
 
-- [ ] **14. Payload push từ service worker không được kiểm tra** — `app/App.tsx:691`
+- [x] **14. Payload push từ service worker không được kiểm tra** — `app/App.tsx:691`
   Dùng lại `parseRealtimeReport` (đang có trong `useTrafficReports.ts`) trước khi gọi `onRealtimeTrafficReport`.
 
 - [ ] **15. Lỗi khởi tạo MediaRecorder báo nhầm là thiếu quyền micro** — `features/place-assistant/hooks/useApiSpeechDraft.ts:112`
