@@ -57,7 +57,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 
 - [ ] **15. Lỗi khởi tạo MediaRecorder báo nhầm là thiếu quyền micro** — `features/place-assistant/hooks/useApiSpeechDraft.ts:112`
 
-- [ ] **16. Id báo cáo không encode trong URL** — `features/traffic/api/trafficApi.ts:40`
+- [x] **16. Id báo cáo không encode trong URL** — `features/traffic/api/trafficApi.ts:40`
   Dùng `encodeURIComponent(id)`.
 
 ## B. Hiệu năng

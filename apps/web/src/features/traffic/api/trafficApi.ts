@@ -37,7 +37,12 @@ export class TrafficApiClient {
   }
 
   clearance(id: string, state: 'clear' | 'still_active', accessToken: string) {
-    return this.http.post<TrafficReportDto>(`/traffic-reports/${id}/clearance`, { state }, { accessToken });
+    // Encode id để ký tự lạ (/, ?, #) không đổi đường dẫn sang endpoint khác.
+    return this.http.post<TrafficReportDto>(
+      `/traffic-reports/${encodeURIComponent(id)}/clearance`,
+      { state },
+      { accessToken },
+    );
   }
 }
 
