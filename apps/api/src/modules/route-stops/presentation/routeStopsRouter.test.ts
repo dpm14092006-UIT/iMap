@@ -94,6 +94,19 @@ describe('route stop HTTP flow with controlled provider fixtures', () => {
     );
     expect((await post(url, { ...body, points: [...body.points, body.points[0]] })).status).toBe(400);
   });
+  it('does not charge quota for rejected bodies', async () => {
+    const url = await start();
+    const { rpc } = mockSupabaseMember();
+    for (let i = 0; i < 3; i++) {
+      expect((await post(url, { ...body, points: [{ lat: 100, lng: 106.7 }, body.points[1]] })).status).toBe(
+        400,
+      );
+    }
+    expect(rpc).not.toHaveBeenCalledWith('consume_user_feature_quota', expect.anything());
+    // Ba lượt đầu không bị trừ: vẫn đủ 5 lượt hợp lệ.
+    for (let i = 0; i < 5; i++) expect((await post(url, body)).status).toBe(200);
+    expect((await post(url, body)).status).toBe(429);
+  });
   it('limits repeated searches and supplies Retry-After', async () => {
     const url = await start();
     for (let i = 0; i < 5; i++) expect((await post(url, body)).status).toBe(200);
