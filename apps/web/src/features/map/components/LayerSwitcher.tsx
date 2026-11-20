@@ -61,14 +61,19 @@ export function LayerSwitcher({
   const titleId = useId();
   const base = layer === 'satellite' ? 'satellite' : 'street';
   const next = base === 'satellite' ? 'street' : 'satellite';
+  // Khi dẫn đường, trừ cột nút bản đồ và các khoảng cách đến mép màn hình.
+  const panelPosition =
+    align === 'right'
+      ? 'right-0 max-w-[calc(100vw-4.75rem)] max-md:max-w-[calc(100vw-4.5rem)] max-h-[calc(100dvh-var(--map-controls-bottom)-var(--layer-trigger-size)-1.25rem)] overflow-y-auto'
+      : 'left-0 max-w-[calc(100vw-32px)]';
 
   return (
     <Popover
       open={open}
       onClose={() => setOpen(false)}
       label={t('Lớp bản đồ')}
-      // max-w giữ hộp nằm trọn trong màn hình hẹp (16px lề mỗi bên).
-      panelClassName={`bottom-full mb-2 w-[272px] max-w-[calc(100vw-32px)] ${align === 'right' ? 'right-0' : 'left-0'}`}
+      className="[--layer-trigger-size:4rem] max-md:[--layer-trigger-size:2.75rem]"
+      panelClassName={`bottom-full mb-2 w-[272px] ${panelPosition}`}
       trigger={
         <button
           type="button"
@@ -76,7 +81,7 @@ export function LayerSwitcher({
           aria-label={t('Lớp bản đồ')}
           aria-expanded={open}
           aria-haspopup="dialog"
-          className={`group relative block h-16 w-16 max-md:h-11 max-md:w-11 overflow-hidden rounded-2xl shadow-glass dark:shadow-glass-dark ring-2 ring-white transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-indigo-400/40 active:scale-95 dark:ring-slate-700`}
+          className={`group relative block h-[var(--layer-trigger-size)] w-[var(--layer-trigger-size)] overflow-hidden rounded-2xl shadow-glass dark:shadow-glass-dark ring-2 ring-white transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-indigo-400/40 active:scale-95 dark:ring-slate-700`}
         >
           <LayerThumb kind={next} className="h-full w-full transition group-hover:scale-110" />
           <span

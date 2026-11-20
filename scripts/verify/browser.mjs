@@ -268,6 +268,40 @@ try {
   const before = requests.filter((p) => p === '/api/traffic-reports').length;
   assert.match(await page.getByRole('region', { name: 'Điều hướng chuyến đi' }).innerText(), /GPS trực tiếp/);
   assert.equal(await page.getByRole('button', { name: /Rẽ nhầm|Tạm dừng|Sự cố phía trước/ }).count(), 0);
+  for (const viewport of [
+    { width: 1440, height: 708 },
+    { width: 390, height: 844 },
+    { width: 320, height: 568 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const trigger = page.getByRole('button', { name: 'Lớp bản đồ', exact: true });
+    await trigger.click();
+    const dialog = page.getByRole('dialog', { name: 'Lớp bản đồ' });
+    await dialog.getByRole('button', { name: 'Vệ tinh', exact: true }).click();
+    assert.equal(
+      await dialog.getByRole('button', { name: 'Vệ tinh', exact: true }).getAttribute('aria-pressed'),
+      'true',
+    );
+    const box = await dialog.boundingBox();
+    assert.ok(
+      box &&
+        box.x >= 0 &&
+        box.x + box.width <= viewport.width &&
+        box.y >= 0 &&
+        box.y + box.height <= viewport.height,
+      `Map layer popover is clipped at ${viewport.width}×${viewport.height}: ${JSON.stringify(box)}`,
+    );
+    const incidents = dialog.getByRole('switch', { name: 'Sự cố cộng đồng' });
+    const wasChecked = await incidents.getAttribute('aria-checked');
+    await incidents.click();
+    assert.notEqual(await incidents.getAttribute('aria-checked'), wasChecked);
+    await incidents.click();
+    await dialog.getByRole('button', { name: 'Bản đồ', exact: true }).click();
+    await page.keyboard.press('Escape');
+    await dialog.waitFor({ state: 'hidden' });
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  console.log('✓ Navigation layer popover stays in view and its controls work on desktop and mobile');
   // Drive the browser's native Geolocation API, never a simulation in application code.
   for (let i = 1; i <= 4; i++) {
     await context.setGeolocation({

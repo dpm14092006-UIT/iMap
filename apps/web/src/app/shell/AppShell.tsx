@@ -62,7 +62,7 @@ export function AppShell({
           {bottomLeft}
         </div>
         <div
-          className={`absolute bottom-[calc(var(--shell-bottom)+56px)] right-3 z-20 flex items-end gap-2 transition-[bottom] duration-200 ${docked ? 'max-md:bottom-[calc(var(--shell-bottom)+34px)]' : ''} ${hideOnFullSheet}`}
+          className={`absolute bottom-[var(--map-controls-bottom)] right-3 z-20 flex items-end gap-2 [--map-controls-bottom:calc(var(--shell-bottom)+56px)] transition-[bottom] duration-200 ${docked ? 'max-md:[--map-controls-bottom:calc(var(--shell-bottom)+34px)]' : ''} ${hideOnFullSheet}`}
         >
           {bottomRight}
         </div>
