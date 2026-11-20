@@ -9,7 +9,7 @@ Vite → SpeechSynthesis / Web Audio (chỉ phát chỉ dẫn và cảnh báo)
 
 ## 1. API Express trên Vercel
 
-Import repo GitHub, chọn nhánh `dpm` cho bản tính năng này. Tạo project với **Root Directory = apps/api**, Framework Preset Express. Bật **Include source files outside of the Root Directory in the Build Step** vì API dùng `packages/shared` trong monorepo. Node22. Install `npm ci` tại workspace root (Vercel nhận npm workspaces qua lockfile ở root); Build Command từ `apps/api/vercel.json`: `npm run build -w @routetwin/shared`. Không chọn output directory `dist` như frontend. Express entry `src/app.ts` có default export, không tự listen. Timeout function 60 giây; AI10/15s, Overpass10s, tối đa5 route calls có thể vẫn timeout khi nhà cung cấp chậm.
+Import repo GitHub, chọn nhánh `main` cho bản tích hợp. Tạo project với **Root Directory = apps/api**, Framework Preset Express. Bật **Include source files outside of the Root Directory in the Build Step** vì API dùng `packages/shared` trong monorepo. Node22. Install `npm ci` tại workspace root (Vercel nhận npm workspaces qua lockfile ở root); Build Command từ `apps/api/vercel.json`: `npm run build -w @routetwin/shared`. Không chọn output directory `dist` như frontend. Express entry `src/app.ts` có default export, không tự listen. Timeout function 60 giây; AI10/15s, Overpass10s, tối đa5 route calls có thể vẫn timeout khi nhà cung cấp chậm.
 
 Đặt biến server (Production và Preview tùy nhu cầu):
 
@@ -42,7 +42,9 @@ VITE_SUPABASE_PUBLISHABLE_KEY=...
 
 `VITE_API_BASE_URL` phải có `/api`, không slash cuối. Frontend Vite đóng gói biến lúc build, đổi env cần redeploy. Local vẫn `/api`, Vite proxy đến4000. RouteApiClient đã dùng env này, không còn buộc `/api` cùng origin. Supabase public key là key public; tuyệt đối không dùng service_role key. Cập nhật API CORS_ORIGIN bằng origin web sau khi có domain. Preview domain phải được allowlist rõ ràng nếu cần thử.
 
-Nhánh `dpm` đã merge toàn bộ `main`, gồm trang `/login`, traffic AI và xác nhận cộng đồng; giữ trợ lý địa điểm, cấu hình Vercel và sửa migration của dpm. Có thể chọn `dpm` để deploy bản tích hợp. Cấu hình key của từng dịch vụ vẫn cần thiết.
+Nhánh `main` là bản tích hợp sau khi hợp nhất các nhánh chức năng và tái cấu trúc. Dùng `main` cho Production Branch của cả web và API. Cấu hình key của từng dịch vụ vẫn cần thiết.
+
+Chạy migration theo thứ tự `0001`–`0009` trên Supabase. Migration `0009_push_endpoint_allowlist.sql` giới hạn endpoint Web Push và dọn đăng ký không hợp lệ đã lưu trước đó; việc merge Git không tự áp dụng thay đổi SQL lên database.
 
 ## 4. Kiểm tra sau deploy
 

@@ -23,7 +23,7 @@ npm run dev -w @routetwin/api
 npm run dev -w @routetwin/web
 ```
 
-> Tạo `apps/api/.env` từ `.env.example` và `apps/web/.env` từ `.env.example`. Điền `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY` ở cả hai phía; thêm `VIETMAP_API_KEY` ở API để tính tuyến. Chạy đủ migration trong `supabase/migrations/` (`0001`–`0008`) trước khi dùng báo cáo. Ảnh báo cáo được tải trực tiếp lên bucket riêng tư theo quyền người dùng. Hỗ trợ Gemini trong biểu mẫu báo cáo là tùy chọn, mặc định tắt; chỉ bật sau khi cấu hình `GEMINI_API_KEY` và `GEMINI_TRAFFIC_AI_ENABLED=true`. **Không commit `.env`**.
+> Tạo `apps/api/.env` từ `.env.example` và `apps/web/.env` từ `.env.example`. Điền `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY` ở cả hai phía; thêm `VIETMAP_API_KEY` ở API để tính tuyến. Chạy đủ migration trong `supabase/migrations/` (`0001`–`0009`) trước khi dùng báo cáo. Ảnh báo cáo được tải trực tiếp lên bucket riêng tư theo quyền người dùng. Hỗ trợ Gemini trong biểu mẫu báo cáo là tùy chọn, mặc định tắt; chỉ bật sau khi cấu hình `GEMINI_API_KEY` và `GEMINI_TRAFFIC_AI_ENABLED=true`. **Không commit `.env`**.
 
 ## Kiểm tra
 
@@ -56,7 +56,7 @@ Backend **feature-first + Clean Architecture**:
 
 Frontend React dùng **function components + hooks**, không gượng ép OOP class cho UI. OOP đặt ở service/domain backend.
 
-Frontend chia theo feature (`map`, `places`, `explore`, `navigation`, `multi-stop`, `my-routes`, `traffic`, `notifications`, `place-assistant`, `auth`) để thành phần giao diện và hành vi ở gần nhau. Trong mỗi feature: `components/` (UI), `hooks/`, `api/` (gọi backend), `services/` (logic thuần, adapter trình duyệt), `domain/`, `context/`, `data/`, `utils/` — chỉ tạo thư mục khi có file. Chi tiết: [docs/architecture/FOLDER_TREE.md](docs/architecture/FOLDER_TREE.md). `app/` giữ composition/layout; `shared/` chỉ chứa thành phần dùng chung như icon và API client. Tailwind phụ trách bố cục và trạng thái responsive; CSS riêng giữ phần minh họa bản đồ SVG và quy tắc truy cập toàn cục.
+Frontend chia theo feature (`map`, `places`, `explore`, `routing`, `guidance`, `multi-stop`, `my-routes`, `traffic`, `notifications`, `place-assistant`, `auth`). Mỗi feature dùng `api/`, `components/`, `hooks/`, `domain/`, `services/` và `types.ts`; chỉ tạo thư mục khi có mã thực tế. `domain/` chứa logic thuần, `services/` chứa adapter trình duyệt/I/O. `app/flows/` điều phối các feature, `app/shell/` giữ khung ứng dụng; `shared/ui/` và `shared/styles/` cung cấp component và token màu dùng chung. Chi tiết: [docs/architecture/FOLDER_TREE.md](docs/architecture/FOLDER_TREE.md).
 
 ## API scaffold
 
