@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
-import type { TourAlgorithmChoice } from '../../../features/multi-stop/components/TourAlgorithmSelect';
+import { useEffect, useRef } from 'react';
+import type { Place } from '../../../features/places/types';
 import type { RouteApiClient } from '../../../features/routing/api/RouteApiClient';
 import type { RouteObjective, RoutePlan, TransportMode } from '../../../features/routing/types';
-import type { Place } from '../../../features/places/types';
 import { RequestGeneration } from '../../../shared/async/RequestGeneration';
 import type { FeatureKey } from '../../types';
 
@@ -11,8 +10,6 @@ type Options = {
   activePanel: FeatureKey | null;
   activeRoute: RoutePlan | null;
   setActiveRoute: (route: RoutePlan | null) => void;
-  /** Chế độ thuyết trình cho chọn thuật toán TSP; giao diện thường luôn để server tự chọn. */
-  demoEnabled: boolean;
   onPlanned: () => void;
   showToast: (message: string) => void;
   t: (text: string) => string;
@@ -23,9 +20,7 @@ type Options = {
  * Rời panel hoặc bắt đầu yêu cầu mới thì bỏ kết quả còn đang chờ, tránh vẽ đè tuyến của panel khác.
  */
 export function useMultiStopPlanner(options: Options) {
-  const { routeApi, activePanel, activeRoute, setActiveRoute, demoEnabled, onPlanned, showToast, t } =
-    options;
-  const [tourAlgorithm, setTourAlgorithm] = useState<TourAlgorithmChoice>('auto');
+  const { routeApi, activePanel, activeRoute, setActiveRoute, onPlanned, showToast, t } = options;
   const generation = useRef(new RequestGeneration());
 
   useEffect(() => {
@@ -51,7 +46,7 @@ export function useMultiStopPlanner(options: Options) {
       vehicle,
       objective,
       returnToStart,
-      demoEnabled ? tourAlgorithm : 'auto',
+      'auto',
     );
     if (!request.isCurrent()) return { error: t('Đã hủy hành trình cũ.') };
     if ('error' in result) return result;
@@ -69,8 +64,6 @@ export function useMultiStopPlanner(options: Options) {
   return {
     plan,
     reset,
-    tourAlgorithm,
-    setTourAlgorithm,
     /** Dùng chung bộ đếm cho mọi yêu cầu vẽ hành trình nhiều điểm (kể cả mở lại tuyến đã lưu). */
     beginRequest: () => generation.current.begin(),
   };

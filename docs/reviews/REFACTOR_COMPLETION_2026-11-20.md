@@ -26,3 +26,11 @@ Commit nền `a8db088` đã được xác minh và push trước khi tiếp tụ
 `npm run test:browser` dùng Vite riêng và Chromium thật: route không có alternatives, click tuyến/POI, GPS và heading, popup giao thông, overlay, đổi kích thước, nhãn mobile, huỷ/tạo lại map, form chỉ đường, mount panel, theme và không tràn ngang. API/tile trong script là fixture; không gọi provider trả phí. Lần kiểm tra ban đầu cũng đã tải tile OpenStreetMap thật trên trình duyệt.
 
 Giới hạn: chưa xác minh GPS/âm thanh trên thiết bị, Supabase RLS hoặc Web Push đầu cuối. Các phát hiện API ngoài sáu mục bàn giao (SSRF push, quota, outbox và tránh phà của trợ lý) vẫn được theo dõi trong báo cáo xác minh trước; không coi chúng là đã sửa trong đợt tổ chức giao diện này.
+
+## Bổ sung theo yêu cầu: xoá Demo
+
+Sau commit cấu trúc `2c26e8c`, đã gỡ toàn bộ chế độ Demo/thuyết trình khỏi web: toggle trên topbar, tham số/đọc storage, GPS chạy tự động, tạm dừng/rẽ nhầm, tạo sự cố giả, feature algorithm-lab, overlay thuật toán và bộ chọn TSP chỉ dành cho thuyết trình. Tên model báo cáo đổi từ DemoIncident thành TrafficIncident.
+
+Dẫn đường chỉ dùng BrowserGpsSource. Adapter chặn callback đã xếp hàng sau clearWatch để vị trí/lỗi của chuyến cũ không ghi sang chuyến mới. Thêm 21 test cho adapter GPS và vòng đời chuyến đi; giữ kiểm tra chống tải dồn qua 350 lần camera di chuyển.
+
+Đã chạy lại toàn bộ verify và browser với native Geolocation API do Chromium cấp vị trí kiểm thử. URL `?demo=1` và storage cũ không bật lại Demo. Đã mở thêm bản cuối với tile thật: tải 35 tile, không có lỗi JavaScript và không còn nút Demo. API và benchmark thuật toán vẫn độc lập với giao diện đã gỡ. Các export/props bị xoá có lý do rõ trong manifest kiểm toán để không che giấu việc mất callback ngoài phạm vi này.

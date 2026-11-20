@@ -14,7 +14,7 @@ export function metersPerDegreeLng(lat: number): number {
 
 /** Khoảng cách đường chim bay chính xác trên mặt cầu (haversine), mét. */
 export function haversineMeters(a: LatLng, b: LatLng): number {
-  // Keep the historical web radius so stored/demo geometry retains its exact distances.
+  // Keep the historical web radius so stored geometry retains its exact distances.
   return sharedHaversineMeters(a, b, EARTH_RADIUS_METERS);
 }
 

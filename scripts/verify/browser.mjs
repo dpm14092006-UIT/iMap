@@ -33,6 +33,8 @@ try {
   const context = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
     reducedMotion: 'reduce',
+    permissions: ['geolocation'],
+    geolocation: { latitude: 10.77, longitude: 106.69, accuracy: 5 },
   });
   // Fixture tiles keep CI independent of map-provider availability. Leaflet itself is never mocked.
   await context.route(/^https?:\/\//, async (route) => {
@@ -90,6 +92,7 @@ try {
     }
     return route.fulfill({ json: { data } });
   });
+  await context.addInitScript(() => window.localStorage.setItem('imap.demoMode', '1'));
   const page = await context.newPage();
   page.setDefaultTimeout(15000);
   page.on('pageerror', (error) => {
@@ -105,7 +108,9 @@ try {
   await page.goto(`http://127.0.0.1:${address.port}/?demo=1`);
   await page.getByRole('heading', { name: 'Chỉ đường', exact: true }).waitFor();
   await page.locator('.leaflet-tile-loaded').first().waitFor();
-  console.log('✓ App shell and Leaflet tile renderer');
+  assert.equal(await page.getByRole('button', { name: 'Demo', exact: true }).count(), 0);
+  assert.equal(await page.getByText('So sánh thuật toán', { exact: true }).count(), 0);
+  console.log('✓ Legacy demo URL/storage cannot enable removed UI; app and Leaflet render');
   await page.evaluate(async () => {
     const { LeafletMapController } = await import('/src/features/map/services/LeafletMapController.ts');
     const { routePlan } = await import('/src/testing/fixtures.ts');
@@ -233,15 +238,6 @@ try {
   assert.match(await page.locator('#qa-map .routetwin-route-label').innerText(), /min/);
   await page.evaluate(() => {
     const q = window.__qa;
-    q.c.setAlgorithmOverlay({
-      key: 'qa-algorithm',
-      paths: [
-        { algorithm: 'astar', points: q.route.legs[0].points },
-        { algorithm: 'dijkstra', points: q.route.legs[0].points },
-      ],
-      coverage: { south: 9.99, west: 105.99, north: 10.02, east: 106.02 },
-    });
-    q.c.setAlgorithmOverlay(null);
     q.c.destroy();
     const fresh = new q.LeafletMapController(q.el, { onMapClick: () => {} });
     fresh.destroy();
@@ -251,7 +247,7 @@ try {
   await page.evaluate(
     () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
   );
-  console.log('✓ Mobile route labels, inset fitting, algorithm overlays and destroy/remount lifecycle');
+  console.log('✓ Mobile route labels, inset fitting and destroy/remount lifecycle');
   await page.setViewportSize({ width: 1440, height: 1000 });
   for (const [label, value] of [
     ['Điểm xuất phát', 'QA Origin'],
@@ -270,12 +266,21 @@ try {
   await page.getByRole('region', { name: 'Điều hướng chuyến đi' }).waitFor();
   await page.locator('.routetwin-navigation-marker').waitFor();
   const before = requests.filter((p) => p === '/api/traffic-reports').length;
-  // Wait for several real demo GPS timer updates; unit tests cover the full 350-move request budget.
-  await page.waitForTimeout(3000);
+  assert.match(await page.getByRole('region', { name: 'Điều hướng chuyến đi' }).innerText(), /GPS trực tiếp/);
+  assert.equal(await page.getByRole('button', { name: /Rẽ nhầm|Tạm dừng|Sự cố phía trước/ }).count(), 0);
+  // Drive the browser's native Geolocation API, never a simulation in application code.
+  for (let i = 1; i <= 4; i++) {
+    await context.setGeolocation({
+      latitude: 10.77 + i * 0.00001,
+      longitude: 106.69 + i * 0.00001,
+      accuracy: 5,
+    });
+    await page.waitForTimeout(180);
+  }
   const after = requests.filter((p) => p === '/api/traffic-reports').length;
-  assert.ok(after - before <= 4, `Traffic fetch storm: ${after - before} requests in 3 seconds`);
+  assert.ok(after - before <= 4, `Traffic fetch storm: ${after - before} requests for four GPS fixes`);
   console.log(
-    `✓ Browser → HTTP client → route fixture → Demo guidance; traffic requests during GPS: ${after - before}`,
+    `✓ Browser → HTTP client → route fixture → native GPS guidance; traffic requests during GPS: ${after - before}`,
   );
   await page.goto(`http://127.0.0.1:${address.port}/`);
   await page.getByRole('heading', { name: 'Chỉ đường', exact: true }).waitFor();
@@ -309,8 +314,10 @@ try {
   console.log('✓ Split panels mount, mobile has no horizontal overflow, semantic tokens switch themes');
   if (artifacts) {
     await mkdir(artifacts, { recursive: true });
+    await page.waitForTimeout(200);
     await page.screenshot({ path: resolve(artifacts, 'traffic-mobile-dark.png'), fullPage: true });
     await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.waitForTimeout(200);
     await page.screenshot({ path: resolve(artifacts, 'traffic-desktop-dark.png'), fullPage: true });
   }
   assert.deepEqual(errors, [], `Browser errors: ${errors.join('; ')}`);

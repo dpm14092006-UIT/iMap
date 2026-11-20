@@ -61,7 +61,7 @@ describe('traffic fetch budget while following GPS', () => {
     expect(query!.minLat).toBeLessThan(next.minLat);
     expect(query!.maxLat).toBeGreaterThan(next.maxLat);
   });
-  it('reuses fetched coverage across 350 Demo camera movements', async () => {
+  it('reuses fetched coverage across 350 GPS camera movements', async () => {
     const { rerender } = renderHook((viewport) => useTrafficReports(null, null, viewport), {
       initialProps: bounds,
     });

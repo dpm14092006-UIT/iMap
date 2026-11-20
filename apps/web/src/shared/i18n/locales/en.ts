@@ -190,25 +190,12 @@ export const en: Record<string, string> = {
   'Chuyến đi đã hoàn tất': 'Trip complete',
   'Đang lấy vị trí GPS…': 'Getting GPS location…',
   'Thực hiện chỉ dẫn tiếp theo': 'Follow the next instruction',
-  'GPS giả lập (demo)': 'Simulated GPS (demo)',
-  'Đang ở chế độ Demo: xe giả chạy dọc tuyến, vẫn nhận cảnh báo kẹt xe thật. Bấm để tắt.':
-    'Demo mode on: a simulated car drives the route and you still get real traffic alerts. Click to turn off.',
-  'Bật chế độ Demo: thử tuyến ở nơi khác mà không cần di chuyển.':
-    'Turn on Demo mode: try a route somewhere else without moving.',
-  'Đã bật Demo: chọn tuyến bất kỳ rồi bấm Bắt đầu, xe giả sẽ chạy dọc tuyến và bạn vẫn nhận cảnh báo kẹt xe từ người dùng khác.':
-    'Demo on: pick any route and press Start. A simulated car drives it and you still get traffic alerts from other users.',
-  'Đã tắt Demo: dẫn đường dùng GPS thật.': 'Demo off: navigation uses real GPS.',
   'GPS trực tiếp': 'Live GPS',
   'Đang chờ tín hiệu GPS để đo tốc độ': 'Waiting for a GPS signal to measure speed',
   'Tốc độ GPS hiện tại: {speed} km/h': 'Current GPS speed: {speed} km/h',
   'Vị trí GPS đang cách xa tuyến. Tính lại từ vị trí hiện tại để tiếp tục.':
     'Your GPS location is far from the route. Recalculate from your current position to continue.',
   'Nguồn vị trí': 'Location source',
-  'Chế độ dẫn đường': 'Navigation mode',
-  '▶ Tiếp tục': '▶ Resume',
-  '⏸ Tạm dừng': '⏸ Pause',
-  '↪ Rẽ nhầm': '↪ Simulate wrong turn',
-  '⚠ Sự cố phía trước': '⚠ Incident ahead',
   'Đang tính lại…': 'Recalculating…',
   'Tính lại tuyến': 'Recalculate route',
   'Thử lại GPS': 'Retry GPS',
@@ -445,7 +432,6 @@ export const en: Record<string, string> = {
   'Đã đi vòng để tránh sự cố': 'Detoured to avoid the incident',
   'Không tìm được đường tránh sự cố, hãy chú ý':
     'No route could avoid the incident. Please proceed carefully.',
-  'Đường đóng (demo)': 'Road closed (demo)',
   'Đã gửi báo cáo; Supabase chưa cập nhật phân luồng, cảnh báo tạm áp dụng cho cả ô tô và xe máy.':
     'Report submitted. Supabase has not updated vehicle routing yet, so this alert temporarily applies to both cars and motorcycles.',
   'Đã thêm điểm ghé: {name}': 'Added stop: {name}',
@@ -641,7 +627,6 @@ export const en: Record<string, string> = {
   'Ứng dụng gặp sự cố khi hiển thị. Tải lại trang để tiếp tục; các tuyến đã lưu của bạn vẫn còn.':
     'The app had trouble displaying this page. Reload to continue; your saved routes are still available.',
   'Tải lại trang': 'Reload page',
-  'Tự động': 'Automatic',
   'Tai nạn': 'Crash',
   Ngập: 'Flooding',
   'Đường đóng': 'Road closure',
@@ -889,20 +874,6 @@ export const en: Record<string, string> = {
   'Gần đây': 'Recent',
   'Xóa {name} khỏi lịch sử': 'Remove {name} from history',
   'Xóa khỏi lịch sử': 'Remove from history',
-  // --- N1: chế độ thuyết trình (?demo=1) ---
-  'So sánh thuật toán': 'Algorithm comparison',
-  'Chế độ thuyết trình': 'Presentation mode',
-  'Dijkstra & A* trên đồ thị OSM trung tâm TP.HCM': 'Dijkstra & A* on the central Ho Chi Minh City OSM graph',
-  'Tiêu chí tối ưu': 'Optimization goal',
-  'Đang chạy thuật toán…': 'Running algorithms…',
-  'Chạy Dijkstra & A*': 'Run Dijkstra & A*',
-  'Thuật toán': 'Algorithm',
-  'Thời gian*': 'Time*',
-  'Node duyệt': 'Nodes visited',
-  'A* duyệt ít hơn {saving}% số node, cùng chi phí tối ưu.':
-    'A* visited {saving}% fewer nodes for the same optimal cost.',
-  'Điểm được gắn vào đường gần nhất (lệch {from} m / {to} m). *Thời gian ước tính khi đường thông thoáng, chưa tính kẹt xe. Dữ liệu © OpenStreetMap.':
-    'Points are snapped to the nearest road ({from} m / {to} m away). *Free-flow time estimate without congestion. Data © OpenStreetMap.',
   'Không chạy được thuật toán.': 'Could not run the algorithms.',
   'Điểm xuất phát nằm ngoài vùng dữ liệu bản đồ của thuật toán (trung tâm TP.HCM).':
     'The starting point is outside the algorithm map area (central Ho Chi Minh City).',
@@ -910,11 +881,4 @@ export const en: Record<string, string> = {
     'The destination is outside the algorithm map area (central Ho Chi Minh City).',
   'Không tìm được đường giữa hai điểm trong vùng dữ liệu.':
     'No path was found between the two points in the data area.',
-  'Chính xác (Held–Karp)': 'Exact (Held–Karp)',
-  'Nhanh (NN + 2-opt)': 'Fast (NN + 2-opt)',
-  'Thuật toán sắp xếp': 'Ordering algorithm',
-  'Chính xác: Held–Karp luôn ra thứ tự tối ưu. Nhanh: NN + 2-opt, gần đúng — dùng để so sánh.':
-    'Exact: Held–Karp always finds the optimal order. Fast: NN + 2-opt, approximate — for comparison.',
-  'Lần tối ưu vừa rồi: Held–Karp · tối ưu chính xác': 'Last run: Held–Karp · exact optimum',
-  'Lần tối ưu vừa rồi: NN + 2-opt · gần đúng': 'Last run: NN + 2-opt · approximate',
 };

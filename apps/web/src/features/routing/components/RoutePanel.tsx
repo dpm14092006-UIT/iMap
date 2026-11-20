@@ -29,7 +29,6 @@ export function RoutePanel({
   onPreviewRoute,
   isNavigating,
   onClose,
-  presentationSlot,
 }: RoutePanelProps) {
   const { t } = useI18n();
   const { origin, destination, vehicle, objective, avoidFerry, route, error } = directions;
@@ -128,8 +127,6 @@ export function RoutePanel({
         onPreviewRoute={onPreviewRoute}
         isNavigating={isNavigating}
       />
-
-      {presentationSlot}
 
       {!route && (
         <p className="mt-4 flex items-start gap-2 text-xs leading-5 text-ink-soft dark:text-slate-400">

@@ -52,13 +52,9 @@ describe('SpeedEstimator', () => {
     expect(estimator.update(fix({ lat: 10.77 + 250 / 111_320, timestampMs: 2_000 }))).toBeNull();
   });
 
-  it('smooths normal sample-to-sample variation and does not estimate simulated movement', () => {
+  it('smooths normal sample-to-sample variation', () => {
     const estimator = new SpeedEstimator();
     expect(estimator.update(fix({ speedMetersPerSecond: 10 }))).toBe(36);
     expect(estimator.update(fix({ speedMetersPerSecond: 14, timestampMs: 2_000 }))).toBe(43.2);
-
-    const demoEstimator = new SpeedEstimator();
-    demoEstimator.update(fix());
-    expect(demoEstimator.update(fix({ lat: 10.77 + 100 / 111_320, timestampMs: 2_000 }), false)).toBeNull();
   });
 });

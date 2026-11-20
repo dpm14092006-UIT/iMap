@@ -7,7 +7,7 @@ export type IncidentKind =
 export type IncidentSeverity = 'low' | 'medium' | 'high';
 
 /** Sự cố đã chuẩn hoá để hiển thị trong panel giao thông và trên bản đồ. */
-export type DemoIncident = {
+export type TrafficIncident = {
   id: string;
   type: IncidentKind;
   severity: IncidentSeverity;
@@ -24,7 +24,7 @@ export type DemoIncident = {
 };
 
 export type TrafficReportPanelProps = {
-  incidents: DemoIncident[];
+  incidents: TrafficIncident[];
   selectedPoint: { lat: number; lng: number } | null;
   isAuthenticated: boolean;
   accessToken: string | null;

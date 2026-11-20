@@ -7,6 +7,7 @@
  * phẳng -> đường tròn lớn) chỉ được lệch trong ngưỡng không ảnh hưởng tới dẫn đường.
  */
 import { describe, expect, it } from 'vitest';
+import { RoutePath } from '../../features/guidance/domain/RoutePath';
 import { approxDistanceMeters, bearingDegrees, haversineMeters, offsetByMeters } from './distance';
 import {
   closestPointOnPolyline,
@@ -19,7 +20,6 @@ import {
   segmentLengthMeters,
 } from './polyline';
 import type { Coordinate, LatLng } from './types';
-import { RoutePath } from '../../features/guidance/domain/RoutePath';
 
 // ---------------------------------------------------------------------------------------------
 // Đáp án chuẩn: chép nguyên văn từ mã cũ.
@@ -190,7 +190,7 @@ function oldGreatCircleBearing(from: LatLng, to: LatLng): number {
     Math.sin(r(from.lat)) * Math.cos(r(to.lat)) * Math.cos(r(to.lng - from.lng));
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
-/** navigation/domain/position/SimulatedGpsSource.ts — bearingDegrees và move (cũ, mặt phẳng). */
+/** Công thức hướng và dịch chuyển cũ trên mặt phẳng. */
 function oldPlanarBearing(a: LatLng, b: LatLng): number {
   const east = (b.lng - a.lng) * M * Math.cos((a.lat * Math.PI) / 180);
   const north = (b.lat - a.lat) * M;
@@ -313,7 +313,7 @@ describe('hồi quy gộp hình học: công thức giữ nguyên phải khớp'
     });
   });
 
-  it('bearingDegrees khớp useNavigationSession cũ; offsetByMeters khớp SimulatedGpsSource.move cũ', () => {
+  it('bearingDegrees khớp useNavigationSession cũ; offsetByMeters khớp công thức dịch chuyển cũ', () => {
     each((center) => {
       const a = jitter(center, 5_000);
       const b = jitter(center, 5_000);

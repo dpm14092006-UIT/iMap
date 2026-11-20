@@ -44,7 +44,7 @@ export class RoutePath {
     this.totalMeters = offset;
   }
 
-  /** Điểm nằm trên tuyến sau khi đi được `progressMeters` mét từ đầu tuyến (dùng cho chế độ demo). */
+  /** Điểm nằm trên tuyến sau khi đi được `progressMeters` mét từ đầu tuyến. */
   pointAt(progressMeters: number): LatLng {
     const last = this.segments[this.segments.length - 1];
     if (!last) return { lat: 0, lng: 0 };

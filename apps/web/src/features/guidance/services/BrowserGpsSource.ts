@@ -9,26 +9,28 @@ function toPositionError(error: GeolocationPositionError): PositionError {
   return { code: 'unavailable', message: 'Tín hiệu GPS tạm thời không ổn định.' };
 }
 
-/** Chế độ Thật: theo dõi GPS của thiết bị bằng navigator.geolocation.watchPosition. */
+/** Theo dõi GPS của thiết bị bằng navigator.geolocation.watchPosition. */
 export class BrowserGpsSource implements PositionSource {
-  readonly mode = 'real' as const;
+  private generation = 0;
   private watcherId: number | null = null;
 
   start(onFix: (fix: PositionFix) => void, onError: (error: PositionError) => void): void {
     this.stop();
+    const generation = this.generation;
     if (!navigator.geolocation) {
       onError({ code: 'unsupported', message: 'Thiết bị này không hỗ trợ định vị GPS.' });
       return;
     }
     this.watcherId = navigator.geolocation.watchPosition(
       (position) => {
+        if (generation !== this.generation) return;
         const heading = position.coords.heading;
         onFix({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
           accuracyMeters: position.coords.accuracy,
           headingDegrees:
-            typeof heading === 'number' && Number.isFinite(heading) ? (heading + 360) % 360 : null,
+            typeof heading === 'number' && Number.isFinite(heading) ? ((heading % 360) + 360) % 360 : null,
           speedMetersPerSecond:
             typeof position.coords.speed === 'number' &&
             Number.isFinite(position.coords.speed) &&
@@ -38,12 +40,15 @@ export class BrowserGpsSource implements PositionSource {
           timestampMs: Number.isFinite(position.timestamp) ? position.timestamp : Date.now(),
         });
       },
-      (error) => onError(toPositionError(error)),
+      (error) => {
+        if (generation === this.generation) onError(toPositionError(error));
+      },
       { enableHighAccuracy: true, maximumAge: 1000, timeout: 15_000 },
     );
   }
 
   stop(): void {
+    this.generation++;
     if (this.watcherId !== null && navigator.geolocation) navigator.geolocation.clearWatch(this.watcherId);
     this.watcherId = null;
   }

@@ -1,0 +1,9 @@
+{
+  "AlgorithmComparison": "User requested removal of the entire Demo/presentation feature on 2026-11-20.",
+  "TourAlgorithmSelect": "Presentation-only TSP selector removed; production optimization still uses auto.",
+  "MapView.algorithmOverlay": "Demo-only algorithm overlay removed with the presentation feature.",
+  "TopBar.demo": "User requested deletion of the Demo toggle and behavior.",
+  "NavigationBanner.demo": "Navigation now uses device GPS exclusively.",
+  "RoutePanel.presentationSlot": "Demo-only algorithm comparison removed.",
+  "MultiStopPanel.presentationSlot": "Demo-only algorithm selector removed."
+}

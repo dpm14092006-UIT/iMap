@@ -88,10 +88,10 @@ packages/shared/src/
 | Kiểu | Chủ sở hữu |
 | --- | --- |
 | `LatLng`, `Coordinate`, `Bounds` | `shared/geo/types.ts` |
-| `RoutePlan`, `RouteLeg`, `TransportMode`, `RouteObjective`, `AlgorithmOverlay` | `features/routing/types.ts` |
+| `RoutePlan`, `RouteLeg`, `TransportMode`, `RouteObjective` | `features/routing/types.ts` |
 | `MapLayer`, `DraftStops`, `MapOverlays` | `features/map/types.ts` |
 | `Place`, `PlaceSource` | `features/places/types.ts` |
-| `IncidentKind`, `DemoIncident`, `TrafficMapLayer` | `features/traffic/types.ts`, `features/traffic/domain/trafficMapLayer.ts` |
+| `IncidentKind`, `TrafficIncident`, `TrafficMapLayer` | `features/traffic/types.ts`, `features/traffic/domain/trafficMapLayer.ts` |
 | `FeatureKey` (panel đang mở) | `app/types.ts` |
 
 ## Phía web (`apps/web/src`)
@@ -121,7 +121,7 @@ N1 không truy cập DB traffic trực tiếp; N2 không sửa `MapView.tsx` tr�
 
 ## Ghi chú GPS và routing
 
-- Dijkstra/A* là **thuật toán đồ thị riêng** trên OSM một khu vực giới hạn (`/api/routes/pathfinding`), khác kết quả route từ VietMap; dùng ở chế độ thuyết trình để so sánh.
+- Dijkstra/A* là **thuật toán đồ thị riêng** trên OSM một khu vực giới hạn (`/api/routes/pathfinding`), khác kết quả route từ VietMap; được kiểm tra qua API/test/benchmark.
 - VietMap Route v4 tính đường theo hình học và hướng dẫn rẽ; VietMap Matrix cấp ma trận chi phí cho tối ưu nhiều điểm.
 - Tối ưu ghé nhiều điểm là bài toán TSP path/cycle tùy điểm đầu/cuối, ma trận có thể bất đối xứng: Held–Karp chính xác khi ít điểm, NN + 2-opt khi nhiều điểm (`algorithm: 'auto'`).
 - Gemini có thể gợi ý loại sự cố và ghi chú hoặc nội dung biển báo từ ảnh ngay trong form báo cáo. Tính năng mặc định tắt; người dùng phải xem lại và tự gửi, không tự xác nhận sự cố hay sửa tuyến.
@@ -129,9 +129,9 @@ N1 không truy cập DB traffic trực tiếp; N2 không sửa `MapView.tsx` tr�
 
 ## Ranh giới feature và vòng đời web
 
-`routing` sở hữu `RoutePlan`, phương án, chia sẻ và form chỉ đường. `guidance` sở hữu `NavigationStatus`, `RoutePath`, GPS, âm thanh và tiến độ dẫn đường. `algorithm-lab` chỉ phục vụ so sánh Dijkstra/A*. Các hook nối nhiều feature đặt ở `app/flows`, không import ngược `app` từ feature.
+`routing` sở hữu `RoutePlan`, phương án, chia sẻ và form chỉ đường. `guidance` sở hữu `NavigationStatus`, `RoutePath`, GPS, âm thanh và tiến độ dẫn đường. Các hook nối nhiều feature đặt ở `app/flows`, không import ngược `app` từ feature.
 
-`LeafletMapController` là Facade điều phối `BaseLayers`, `MapCamera`, `RouteLayer`, `TrafficLayers`, `PoiLayer`, `LocationLayer`, `FocusPin`, `AlgorithmLayer`. Các lớp sở hữu nhóm layer của mình; `destroy()` gỡ listener và map. Khi không có phương án phụ, tuyến chính vẫn được fit. Chuỗi không tin cậy trong tooltip/popup dùng text node.
+`LeafletMapController` là Facade điều phối `BaseLayers`, `MapCamera`, `RouteLayer`, `TrafficLayers`, `PoiLayer`, `LocationLayer`, `FocusPin`. Các lớp sở hữu nhóm layer của mình; `destroy()` gỡ listener và map. Khi không có phương án phụ, tuyến chính vẫn được fit. Chuỗi không tin cậy trong tooltip/popup dùng text node.
 
 Các panel chia form, bộ lọc và kết quả thành component riêng; hook sở hữu state và request. Kết quả tìm kiếm/AI phải bị huỷ khi đổi token, điểm hoặc ảnh. Tối ưu hành trình dùng `RequestGeneration` để kết quả trước reset/đổi tuỳ chọn/unmount không phục hồi dữ liệu cũ.
 
@@ -144,3 +144,6 @@ Quy ước token và control ở [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md). `app/styl
 `npm run verify -- --shuffle=1` chạy format, lint ranh giới, typecheck, audit export/props, unit test API/web/shared, xáo trộn thứ tự và build production. `npm run test:browser` mở Vite riêng và chạy Chromium với Leaflet thật trên desktop/mobile, fixture API/tile; không sử dụng provider trả phí. Cài browser bằng `npx playwright install chromium` (Linux CI dùng `--with-deps`). Biến `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` cho phép dùng browser đã có; `IMAP_BROWSER_ARTIFACTS` chỉ định thư mục screenshot tuỳ chọn.
 
 Test browser không thay thế xác minh GPS/âm thanh trên thiết bị, Supabase RLS, provider thật hoặc giao nhận Web Push. Không ghi các giới hạn đó thành kết quả đã đạt.
+
+
+Chức năng Demo/thuyết trình đã được gỡ theo yêu cầu: không còn GPS mô phỏng, sự cố giả, công tắc nguồn GPS, UI so sánh thuật toán hoặc nhánh `demo` từ URL/localStorage. Dẫn đường chỉ dùng `navigator.geolocation.watchPosition`. Browser test cấp vị trí bằng công cụ kiểm thử cho API geolocation thật; đó không phải mã mô phỏng trong ứng dụng. Backend và benchmark thuật toán dùng cho tính tuyến/tối ưu vẫn độc lập.

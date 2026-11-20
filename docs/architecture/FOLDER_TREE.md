@@ -20,7 +20,6 @@ iMap/
 │   │       ├── features/
 │   │       │   ├── routing/              Tuyến, phương án, chỉ đường, chia sẻ
 │   │       │   ├── guidance/             GPS, tiến độ, lệch tuyến, giọng nói
-│   │       │   ├── algorithm-lab/        So sánh Dijkstra/A* trên OSM
 │   │       │   ├── map/                  MapView, Leaflet Facade và các lớp vẽ
 │   │       │   ├── places/               Tìm kiếm, combobox, lịch sử địa điểm
 │   │       │   ├── explore/              POI quanh điểm/dọc tuyến

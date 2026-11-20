@@ -1,12 +1,11 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
-import { useShell } from '../../../shared/ui/shell';
-import { Icon } from '../../../shared/ui/Icon';
-import { useMediaQuery } from '../../../shared/hooks/useMediaQuery';
-import type { NavigationMode } from '../domain/position/PositionSource';
-import type { NavigationStatus } from '../types';
 import { formatDistanceMeters } from '../../../shared/format/units';
-import { formatInstructionText, maneuverArrow } from '../../routing/domain/maneuver';
+import { useMediaQuery } from '../../../shared/hooks/useMediaQuery';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
+import { Icon } from '../../../shared/ui/Icon';
+import { useShell } from '../../../shared/ui/shell';
+import { formatInstructionText, maneuverArrow } from '../../routing/domain/maneuver';
+import type { NavigationStatus } from '../types';
 
 type NavigationBannerProps = {
   status: NavigationStatus;
@@ -22,8 +21,6 @@ type NavigationBannerProps = {
   onReport: () => void;
   onStop: () => void;
   audio?: { enabled: boolean; supported: boolean; toggle: () => void };
-  /** Chế độ Demo (GPS giả) chỉ có khi mở app với ?demo=1. Không truyền thì banner như cũ. */
-  demo?: DemoControls;
   /** Người dùng đang tự kéo / zoom xem trước, bản đồ không bám vị trí. */
   followPaused?: boolean;
   /** Bám lại vị trí hiện tại. */
@@ -33,21 +30,6 @@ type NavigationBannerProps = {
   /** Đang mở bảng khác (vd. Báo cáo) ở đáy màn hình: banner lên đỉnh để không chồng nhau. */
   atTop?: boolean;
 };
-
-/** Điều khiển chế độ Thật / Demo trên banner. */
-export type DemoControls = {
-  mode: NavigationMode;
-  isPaused: boolean;
-  onModeChange: (mode: NavigationMode) => void;
-  onTogglePause: () => void;
-  onWrongTurn: () => void;
-  onIncidentAhead: () => void;
-};
-
-const modeOptions: { id: NavigationMode; label: string }[] = [
-  { id: 'real', label: 'Thật' },
-  { id: 'demo', label: 'Demo' },
-];
 
 const statusLabels: Partial<Record<NavigationStatus, string>> = {
   locating: 'ĐANG TÌM GPS',
@@ -71,7 +53,6 @@ export function NavigationBanner({
   onReport,
   onStop,
   audio,
-  demo,
   followPaused = false,
   onRecenter,
   onPreviewRoute,
@@ -191,7 +172,7 @@ export function NavigationBanner({
               {!offRoute && (
                 <p className="text-xs text-white/70">
                   {t('Còn {distance}', { distance: formatDistanceMeters(distanceRemainingMeters, language) })}{' '}
-                  · {t(demo?.mode === 'demo' ? 'GPS giả lập (demo)' : 'GPS trực tiếp')}
+                  · {t('GPS trực tiếp')}
                 </p>
               )}
             </div>
@@ -204,42 +185,7 @@ export function NavigationBanner({
           )}
         </div>
       </div>
-      {demo && (
-        <div className="space-y-2 border-t border-white/10 bg-black/15 px-4 py-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-[.08em] text-white/60">
-              {t('Nguồn vị trí')}
-            </span>
-            <div
-              className="flex rounded-lg bg-white/10 p-0.5"
-              role="group"
-              aria-label={t('Chế độ dẫn đường')}
-            >
-              {modeOptions.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  aria-pressed={demo.mode === option.id}
-                  onClick={() => demo.onModeChange(option.id)}
-                  className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 ${demo.mode === option.id ? 'bg-white text-indigo-700' : 'text-white/70 hover:text-white'}`}
-                >
-                  {t(option.label)}
-                </button>
-              ))}
-            </div>
-          </div>
-          {demo.mode === 'demo' && isGuiding && (
-            <div className="flex flex-wrap gap-1.5">
-              <DemoButton
-                label={t(demo.isPaused ? '▶ Tiếp tục' : '⏸ Tạm dừng')}
-                onClick={demo.onTogglePause}
-              />
-              <DemoButton label={t('↪ Rẽ nhầm')} onClick={demo.onWrongTurn} />
-              <DemoButton label={t('⚠ Sự cố phía trước')} onClick={demo.onIncidentAhead} />
-            </div>
-          )}
-        </div>
-      )}
+
       <div className="flex gap-2 border-t border-white/10 px-3 py-2.5">
         {(offRoute || status === 'error') && (
           <button
@@ -288,18 +234,5 @@ export function NavigationBanner({
         </button>
       </div>
     </section>
-  );
-}
-
-/** Nút nhỏ cho các thao tác của chế độ Demo. */
-function DemoButton({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="h-8 rounded-lg border border-white/15 bg-white/10 px-2.5 text-[11px] font-semibold text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-    >
-      {label}
-    </button>
   );
 }

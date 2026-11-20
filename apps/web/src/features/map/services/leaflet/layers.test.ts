@@ -2,9 +2,8 @@
 import * as L from 'leaflet';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { routePlan } from '../../../../testing/fixtures';
-import { toTrafficMapLayer } from '../../../traffic/domain/trafficMapLayer';
 import type { Poi } from '../../../explore/types';
-import { AlgorithmLayer } from './AlgorithmLayer';
+import { toTrafficMapLayer } from '../../../traffic/domain/trafficMapLayer';
 import { BaseLayers } from './BaseLayers';
 import { FocusPin } from './FocusPin';
 import { LifecycleCanvas } from './LifecycleCanvas';
@@ -59,30 +58,6 @@ const incident = {
   communityReporterCount: 3,
 };
 describe('Leaflet layers with real Leaflet objects', () => {
-  it('draws and clears algorithm paths, fitting once per overlay key', () => {
-    const layer = new AlgorithmLayer();
-    layer.group.addTo(map);
-    const overlay = {
-      key: 'a',
-      coverage: null,
-      paths: [{ algorithm: 'astar' as const, points: routePlan().legs[0]!.points }],
-    };
-    expect(layer.update(overlay)).toHaveLength(2);
-    expect(layer.group.getLayers()).toHaveLength(1);
-    expect(layer.update(overlay)).toBeNull();
-    expect(layer.update({ ...overlay, key: 'b' })).toHaveLength(2);
-    expect(layer.update(null)).toBeNull();
-    expect(layer.group.getLayers()).toHaveLength(0);
-  });
-  it('draws algorithm coverage while ignoring paths with fewer than two points', () => {
-    const layer = new AlgorithmLayer();
-    layer.update({
-      key: 'a',
-      coverage: { south: 10, west: 106, north: 11, east: 107 },
-      paths: [{ algorithm: 'dijkstra', points: [] }],
-    });
-    expect(layer.group.getLayers()).toHaveLength(1);
-  });
   it('updates a GPS marker without accumulating layers and removes it when GPS disappears', () => {
     const layer = new LocationLayer();
     layer.group.addTo(map);

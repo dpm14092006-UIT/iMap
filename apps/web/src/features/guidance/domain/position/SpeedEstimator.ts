@@ -24,7 +24,7 @@ export class SpeedEstimator {
     this.samplesKph = [];
   }
 
-  update(fix: PositionFix, allowDerivedSpeed = true): number | null {
+  update(fix: PositionFix): number | null {
     const location = { lat: fix.lat, lng: fix.lng };
     const accuracyMeters = fix.accuracyMeters;
     const timestampMs = fix.timestampMs;
@@ -39,7 +39,6 @@ export class SpeedEstimator {
 
     if (
       sampleKph === null &&
-      allowDerivedSpeed &&
       this.previousFix &&
       Number.isFinite(accuracyMeters) &&
       accuracyMeters >= 0 &&

@@ -1,4 +1,4 @@
-/** Một lần đo vị trí, dù từ GPS thật hay GPS giả lập. */
+/** Một lần đo vị trí GPS của thiết bị. */
 export type PositionFix = {
   lat: number;
   lng: number;
@@ -15,15 +15,8 @@ export type PositionFix = {
 export type PositionErrorCode = 'unsupported' | 'permission-denied' | 'timeout' | 'unavailable';
 export type PositionError = { code: PositionErrorCode; message: string };
 
-/** Hai chế độ dẫn đường: GPS thật của thiết bị, hoặc GPS giả để demo khi ngồi một chỗ. */
-export type NavigationMode = 'real' | 'demo';
-
-/**
- * Nguồn vị trí cho dẫn đường (Strategy pattern).
- * useNavigationSession chỉ biết interface này nên đổi Thật ↔ Demo không phải sửa engine dẫn đường.
- */
+/** Nguồn vị trí cho engine dẫn đường. */
 export interface PositionSource {
-  readonly mode: NavigationMode;
   start(onFix: (fix: PositionFix) => void, onError: (error: PositionError) => void): void;
   stop(): void;
 }

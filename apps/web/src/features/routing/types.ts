@@ -1,8 +1,6 @@
 import type { RouteCongestion, RouteInstruction, RouteVariant } from '@routetwin/shared';
-import type { Bounds, Coordinate } from '../../shared/geo/types';
+import type { Coordinate, LatLng } from '../../shared/geo/types';
 import type { Place } from '../places/types';
-import { type ReactNode } from 'react';
-import type { LatLng } from '../../shared/geo/types';
 import type { TrafficMapLayer } from '../traffic/domain/trafficMapLayer';
 import type { DirectionsController } from './hooks/useDirections';
 
@@ -46,15 +44,6 @@ export type RouteOptimization = {
   optimizedCost: number;
   objective: 'distance' | 'duration';
 };
-
-/** Tuyến do thuật toán tự cài đặt (Dijkstra / A*) tìm được, vẽ chồng lên bản đồ để so sánh (chế độ ?demo=1). */
-export type AlgorithmOverlay = {
-  /** Đổi giá trị này khi có kết quả mới để bản đồ tự zoom vừa tuyến. */
-  key: string;
-  paths: { algorithm: 'dijkstra' | 'astar'; points: Coordinate[] }[];
-  /** Vùng dữ liệu của đồ thị OSM. */
-  coverage: Bounds | null;
-};
 export type PickTarget = 'origin' | 'destination';
 export type RoutePanelProps = {
   getSearchFocus?: () => LatLng;
@@ -71,6 +60,4 @@ export type RoutePanelProps = {
   onPreviewRoute: (route: RoutePlan) => void;
   isNavigating: boolean;
   onClose: () => void;
-  /** Nội dung thêm ở cuối panel (chế độ thuyết trình ?demo=1: so sánh Dijkstra / A*). */
-  presentationSlot?: ReactNode;
 };

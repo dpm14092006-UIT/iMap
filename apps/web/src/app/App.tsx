@@ -7,6 +7,11 @@ import { AreaInsightCard, AreaInsightPill } from '../features/explore/components
 import { CategoryChips } from '../features/explore/components/CategoryChips';
 import { PoiResultsPanel } from '../features/explore/components/PoiResultsPanel';
 import { computeAreaInsight } from '../features/explore/domain/areaInsight';
+import { NavigationBanner } from '../features/guidance/components/NavigationBanner';
+import { Speedometer } from '../features/guidance/components/Speedometer';
+import { RoutePath } from '../features/guidance/domain/RoutePath';
+import { useNavigationAudio } from '../features/guidance/hooks/useNavigationAudio';
+import { useNavigationSession } from '../features/guidance/hooks/useNavigationSession';
 import { LayerSwitcher } from '../features/map/components/LayerSwitcher';
 import { MapControls } from '../features/map/components/MapControls';
 import { MapView } from '../features/map/components/MapView';
@@ -15,55 +20,38 @@ import { useCurrentLocation } from '../features/map/hooks/useCurrentLocation';
 import { useTimeBasedMapLayer } from '../features/map/hooks/useTimeBasedMapLayer';
 import type { LeafletMapController } from '../features/map/services/LeafletMapController';
 import type { DraftStops, MapOverlays } from '../features/map/types';
-import { TourAlgorithmSelect } from '../features/multi-stop/components/TourAlgorithmSelect';
 import { useSavedRoutes } from '../features/my-routes/hooks/useSavedRoutes';
-import { RouteApiClient } from '../features/routing/api/RouteApiClient';
-import { AlgorithmComparison } from '../features/algorithm-lab/components/AlgorithmComparison';
-import { NavigationBanner } from '../features/guidance/components/NavigationBanner';
-import { Speedometer } from '../features/guidance/components/Speedometer';
-import { RoutePath } from '../features/guidance/domain/RoutePath';
-import { useAlgorithmComparison } from '../features/algorithm-lab/hooks/useAlgorithmComparison';
-import { useDirections } from '../features/routing/hooks/useDirections';
-import { useNavigationAudio } from '../features/guidance/hooks/useNavigationAudio';
-import { useNavigationSession } from '../features/guidance/hooks/useNavigationSession';
-import type { RoutePlan } from '../features/routing/types';
-import { useDemoMode } from './hooks/useDemoMode';
 import { PushPermissionCard } from '../features/notifications/components/PushPermissionCard';
 import { placeFromStop } from '../features/place-assistant/domain/stopPlace';
 import { findPopularPlaceNear } from '../features/places/domain/nearbyPopularPlace';
+import { RouteApiClient } from '../features/routing/api/RouteApiClient';
+import { useDirections } from '../features/routing/hooks/useDirections';
+import type { RoutePlan } from '../features/routing/types';
 import { vietnamBounds } from '../features/traffic/api/trafficApi';
 import { RouteTrafficAlert } from '../features/traffic/components/RouteTrafficAlert';
 import { useTrafficReports } from '../features/traffic/hooks/useTrafficReports';
 import type { LatLng } from '../shared/geo/types';
 import { useI18n } from '../shared/i18n/I18nProvider';
 import { errorMessage } from '../shared/text/errorMessage';
-import { MapPickHint } from './shell/MapPickHint';
-import { PanelFallback } from './shell/PanelFallback';
-import { RouteSummaryPill } from './shell/RouteSummaryPill';
-import { StatusToast } from './shell/StatusToast';
-import { useAppUpdate } from './hooks/useAppUpdate';
-import { useAssistantStops } from './flows/routes/useAssistantStops';
-import { useDemoIncidents } from './flows/guidance/useDemoIncidents';
-import { useEndpointPicker } from './flows/routes/useEndpointPicker';
-import { useMapViewport } from './flows/workspace/useMapViewport';
-import { useMultiStopPlanner } from './flows/routes/useMultiStopPlanner';
+import { usePoiExplorer } from './flows/explore/usePoiExplorer';
 import { useNavigationFollow } from './flows/guidance/useNavigationFollow';
 import { useNavigationRerouting } from './flows/guidance/useNavigationRerouting';
-import { useNow } from './hooks/useNow';
-import { usePanelState } from './flows/workspace/usePanelState';
-import { usePlaceSelection } from './flows/workspace/usePlaceSelection';
-import { usePoiExplorer } from './flows/explore/usePoiExplorer';
-import { useRealtimeRouteReports } from './flows/traffic/useRealtimeRouteReports';
+import { useAssistantStops } from './flows/routes/useAssistantStops';
+import { useEndpointPicker } from './flows/routes/useEndpointPicker';
+import { useMultiStopPlanner } from './flows/routes/useMultiStopPlanner';
 import { useRecentRouteEndpoints } from './flows/routes/useRecentRouteEndpoints';
-import { useRouteAlerts } from './flows/traffic/useRouteAlerts';
 import { useSavedRouteActions } from './flows/routes/useSavedRouteActions';
 import { useSharedRouteLink } from './flows/routes/useSharedRouteLink';
-import { useToast } from './hooks/useToast';
+import { useRealtimeRouteReports } from './flows/traffic/useRealtimeRouteReports';
+import { useRouteAlerts } from './flows/traffic/useRouteAlerts';
 import { useTrafficOverview } from './flows/traffic/useTrafficOverview';
 import { useTrafficReporting } from './flows/traffic/useTrafficReporting';
-import { AppShell } from './shell/AppShell';
-import { SideDock } from './shell/SideDock';
-import { TopBar } from './shell/TopBar';
+import { useMapViewport } from './flows/workspace/useMapViewport';
+import { usePanelState } from './flows/workspace/usePanelState';
+import { usePlaceSelection } from './flows/workspace/usePlaceSelection';
+import { useAppUpdate } from './hooks/useAppUpdate';
+import { useNow } from './hooks/useNow';
+import { useToast } from './hooks/useToast';
 import {
   AuthPanel,
   MultiStopPanel,
@@ -73,6 +61,13 @@ import {
   SavedRoutesPanel,
   TrafficReportPanel,
 } from './lazyPanels';
+import { AppShell } from './shell/AppShell';
+import { MapPickHint } from './shell/MapPickHint';
+import { PanelFallback } from './shell/PanelFallback';
+import { RouteSummaryPill } from './shell/RouteSummaryPill';
+import { SideDock } from './shell/SideDock';
+import { StatusToast } from './shell/StatusToast';
+import { TopBar } from './shell/TopBar';
 import type { FeatureKey } from './types';
 
 /** Tâm Việt Nam, dùng khi bản đồ chưa sẵn sàng để trả tâm thật. */
@@ -82,7 +77,7 @@ const AREA_INSIGHT_REFRESH_MS = 5 * 60_000;
 /**
  * Khung ứng dụng: lắp bản đồ với các panel chức năng.
  * Trạng thái dùng chung (tuyến đang vẽ, panel đang mở, vị trí GPS) nằm ở đây; mỗi luồng điều phối
- * nhiều feature nằm trong một hook của `app/hooks`, logic riêng của từng chức năng nằm trong feature đó.
+ * nhiều feature nằm trong một hook của `app/flows`, logic riêng của từng chức năng nằm trong feature đó.
  */
 export function App() {
   const { t } = useI18n();
@@ -146,17 +141,9 @@ export function App() {
   );
   const directions = useDirections({ routeApi, activeRoute, onRouteChange: setActiveRoute });
   const reportVehicle = navigationRoute?.vehicle ?? activeRoute?.vehicle ?? directions.vehicle;
-  // Chế độ Demo (nút "Demo" trên thanh trên, hoặc ?demo=1): GPS giả, sự cố giả, so sánh thuật toán.
-  const { enabled: demoEnabled, setEnabled: setDemoEnabled } = useDemoMode();
-  const demoIncidents = useDemoIncidents({
-    navigationPath,
-    progressRatio: navigation.progressRatio,
-    isNavigationIdle,
-  });
   const { incidents, trafficLayer, routeIncidents } = useTrafficOverview({
     reports: traffic.reports,
     vehicle: reportVehicle,
-    demoIncidents: demoIncidents.demoIncidents,
     t,
   });
 
@@ -208,17 +195,11 @@ export function App() {
   });
   const { selectedPlace, selectedPoi, selectedMapPoint, setSelectedMapPoint } = selection;
   const picker = useEndpointPicker({ directions, locate, mapController, showToast, t });
-  const algorithmComparison = useAlgorithmComparison({
-    origin: directions.origin,
-    destination: directions.destination,
-    vehicle: directions.vehicle,
-  });
   const multiStop = useMultiStopPlanner({
     routeApi,
     activePanel,
     activeRoute,
     setActiveRoute,
-    demoEnabled,
     onPlanned: selection.clearPlace,
     showToast,
     t,
@@ -314,22 +295,8 @@ export function App() {
 
   const startNavigation = (route: RoutePlan) => {
     navigationAudio.begin();
-    // Bật Demo thì mặc định chạy GPS giả; đổi lại "Thật" ngay trên banner.
-    navigation.start(route, demoEnabled ? 'demo' : 'real');
+    navigation.start(route);
     openPanel(null);
-  };
-
-  const toggleDemo = () => {
-    const next = !demoEnabled;
-    setDemoEnabled(next);
-    if (!next && navigation.mode === 'demo') navigation.setMode('real');
-    showToast(
-      t(
-        next
-          ? 'Đã bật Demo: chọn tuyến bất kỳ rồi bấm Bắt đầu, xe giả sẽ chạy dọc tuyến và bạn vẫn nhận cảnh báo kẹt xe từ người dùng khác.'
-          : 'Đã tắt Demo: dẫn đường dùng GPS thật.',
-      ),
-    );
   };
 
   const previewRoute = (route: RoutePlan) => {
@@ -368,7 +335,6 @@ export function App() {
           overlays={overlays}
           pois={explorer.visiblePois}
           highlightedPoiId={explorer.highlightedId}
-          algorithmOverlay={demoEnabled && activePanel === 'directions' ? algorithmComparison.overlay : null}
           onMapClick={handleMapClick}
           onSelectRoute={directions.chooseRoute}
           onPoiClick={explorer.selectById}
@@ -397,7 +363,6 @@ export function App() {
             onUpdate={reloadForUpdate}
             onInfo={() => showToast(t('Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.'))}
             userEmail={user?.email ?? null}
-            demo={{ enabled: demoEnabled, onToggle: toggleDemo }}
             strip={
               explorer.alongRouteMode ? (
                 <AlongRouteSearch
@@ -465,7 +430,7 @@ export function App() {
       {!isNavigationIdle && navigationStatus !== 'arrived' && (
         <Speedometer
           speedKph={navigation.speedKph}
-          hasGpsFix={navigationStatus === 'navigating' && !navigation.error && navigation.mode === 'real'}
+          hasGpsFix={navigationStatus === 'navigating' && !navigation.error}
           belowBanner={activePanel !== null}
         />
       )}
@@ -483,7 +448,7 @@ export function App() {
         onRetry={() => {
           if (navigationRoute) {
             navigationAudio.begin();
-            navigation.start(navigationRoute, navigation.mode);
+            navigation.start(navigationRoute);
           }
         }}
         audio={navigationAudio}
@@ -493,18 +458,6 @@ export function App() {
         atTop={activePanel !== null}
         onRecenter={follow.recenter}
         onPreviewRoute={follow.previewRoute}
-        demo={
-          demoEnabled
-            ? {
-                mode: navigation.mode,
-                isPaused: navigation.isDemoPaused,
-                onModeChange: navigation.setMode,
-                onTogglePause: navigation.toggleDemoPause,
-                onWrongTurn: navigation.simulateWrongTurn,
-                onIncidentAhead: demoIncidents.addAhead,
-              }
-            : undefined
-        }
       />
 
       {pickTarget && <MapPickHint target={pickTarget} onCancel={() => setPickTarget(null)} />}
@@ -548,18 +501,6 @@ export function App() {
             }}
             onStartNavigation={startNavigation}
             onPreviewRoute={previewRoute}
-            presentationSlot={
-              demoEnabled ? (
-                <AlgorithmComparison
-                  comparison={algorithmComparison}
-                  canRun={Boolean(
-                    directions.origin &&
-                    directions.destination &&
-                    directions.origin.id !== directions.destination.id,
-                  )}
-                />
-              ) : undefined
-            }
             isNavigating={isNavigating}
             onUseMyLocation={() => void picker.useMyLocationAsOrigin()}
           />
@@ -579,15 +520,6 @@ export function App() {
             onPlanRoute={multiStop.plan}
             onReset={multiStop.reset}
             onSave={savedRouteActions.save}
-            presentationSlot={
-              demoEnabled ? (
-                <TourAlgorithmSelect
-                  value={multiStop.tourAlgorithm}
-                  onChange={multiStop.setTourAlgorithm}
-                  lastUsed={activeRoute?.optimization?.algorithm ?? null}
-                />
-              ) : undefined
-            }
           />
         </Suspense>
       )}

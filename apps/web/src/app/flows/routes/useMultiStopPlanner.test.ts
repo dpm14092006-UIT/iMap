@@ -27,7 +27,6 @@ function setup(wrapper?: ComponentType<PropsWithChildren>) {
         activePanel: panel,
         activeRoute: null,
         setActiveRoute: apply,
-        demoEnabled: false,
         onPlanned: planned,
         showToast: toast,
         t: (text) => text,

@@ -2,14 +2,13 @@ import * as L from 'leaflet';
 import type { LatLng } from '../../../shared/geo/types';
 import type { Language } from '../../../shared/i18n/translate';
 import type { Poi } from '../../explore/types';
-import type { AlgorithmOverlay, RoutePlan } from '../../routing/types';
+import type { RoutePlan } from '../../routing/types';
 import type { TrafficMapLayer } from '../../traffic/domain/trafficMapLayer';
 import type { DraftStops, MapLayer, MapOverlays } from '../types';
-import { AlgorithmLayer } from './leaflet/AlgorithmLayer';
-import { LifecycleCanvas } from './leaflet/LifecycleCanvas';
 import { BaseLayers } from './leaflet/BaseLayers';
 import { VIETNAM_CENTER } from './leaflet/drawing';
 import { FocusPin } from './leaflet/FocusPin';
+import { LifecycleCanvas } from './leaflet/LifecycleCanvas';
 import { LocationLayer } from './leaflet/LocationLayer';
 import { MapCamera, type FitInsets } from './leaflet/MapCamera';
 import { PoiLayer } from './leaflet/PoiLayer';
@@ -54,7 +53,6 @@ export class LeafletMapController {
   private readonly camera: MapCamera;
   private readonly routeLayer: RouteLayer;
   private readonly traffic: TrafficLayers;
-  private readonly algorithms = new AlgorithmLayer();
   private readonly pois: PoiLayer;
   private readonly location = new LocationLayer();
   private readonly focus: FocusPin;
@@ -85,10 +83,9 @@ export class LeafletMapController {
     this.pois = new PoiLayer(handlers.onPoiClick);
     this.focus = new FocusPin(this.map);
 
-    // Thứ tự thêm = thứ tự chồng: nền → quầng giao thông → tuyến thuật toán → tuyến → nhãn → đoạn sự cố
+    // Thứ tự thêm = thứ tự chồng: nền → quầng giao thông → tuyến → nhãn → đoạn sự cố
     // trên tuyến → marker sự cố → POI → vị trí hiện tại.
     this.traffic.halo.addTo(this.map);
-    this.algorithms.group.addTo(this.map);
     this.routeLayer.addRoutesTo(this.map);
     this.routeLayer.addLabelsTo(this.map);
     this.traffic.routeSections.addTo(this.map);
@@ -187,11 +184,6 @@ export class LeafletMapController {
   /** Zoom vừa khít một tuyến (nút "Xem trước"). */
   fitRoute(route: RoutePlan) {
     this.camera.fit(route.legs.flatMap((leg) => leg.points));
-  }
-  /** Vẽ tuyến Dijkstra / A* (null để xóa); tự zoom vừa khi có kết quả mới. */
-  setAlgorithmOverlay(overlay: AlgorithmOverlay | null) {
-    const points = this.algorithms.update(overlay);
-    if (points) this.camera.fit(points);
   }
   /** Báo vùng bị bảng chức năng chiếm (trái ở desktop, đáy ở mobile); null khi không có bảng. */
   setFitInsets(insets: FitInsets | null) {

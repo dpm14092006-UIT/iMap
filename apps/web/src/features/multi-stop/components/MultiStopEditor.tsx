@@ -9,7 +9,7 @@ import { MAX_STOPS } from '../domain/limits';
 import type { useMultiStopForm } from '../hooks/useMultiStopForm';
 import type { MultiStopPanelProps } from '../types';
 
-type Props = Pick<MultiStopPanelProps, 'getFocus' | 'presentationSlot'> & {
+type Props = Pick<MultiStopPanelProps, 'getFocus'> & {
   form: Pick<
     ReturnType<typeof useMultiStopForm>,
     | 'stops'
@@ -34,7 +34,7 @@ type Props = Pick<MultiStopPanelProps, 'getFocus' | 'presentationSlot'> & {
     | 'optimize'
   >;
 };
-export function MultiStopEditor({ getFocus, presentationSlot, form }: Props) {
+export function MultiStopEditor({ getFocus, form }: Props) {
   const {
     stops,
     setStops,
@@ -188,7 +188,7 @@ export function MultiStopEditor({ getFocus, presentationSlot, form }: Props) {
           value={query}
         />
       </div>
-      {presentationSlot}
+
       <div className="sticky bottom-0 z-20 -mx-5 bg-gradient-to-t from-white dark:from-slate-900 via-white/95 dark:via-slate-900/95 to-transparent px-5 pb-1 pt-3">
         <Button
           type="button"

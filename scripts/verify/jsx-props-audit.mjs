@@ -137,17 +137,22 @@ for (const file of walk(join(root, to))) {
   }
 }
 
+const intentionalRemovals = JSON.parse(
+  readFileSync(join(root, 'scripts/verify/intentional-ui-removals.json'), 'utf8'),
+);
 const problems = [];
 let checked = 0;
 for (const [component, props] of before) {
   const now = after.get(component);
   if (!now) {
+    if (intentionalRemovals[component]) continue;
     problems.push(`<${component}> không còn được dùng trong ${to}`);
     continue;
   }
   for (const prop of props) {
     checked++;
-    if (!now.has(prop)) problems.push(`<${component}> mất prop "${prop}"`);
+    if (!now.has(prop) && !intentionalRemovals[`${component}.${prop}`])
+      problems.push(`<${component}> mất prop "${prop}"`);
   }
 }
 console.log(`Đối chiếu ${before.size} component, ${checked} prop của ${base}:${from} với ${to}/**.tsx.`);

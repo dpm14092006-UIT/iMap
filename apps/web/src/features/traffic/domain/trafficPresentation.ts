@@ -1,8 +1,6 @@
-import type { TrafficReportDto } from '@routetwin/shared';
-import type { DemoIncident, IncidentKind } from '../types';
+import type { TrafficImageAnalysisDto, TrafficReportDto } from '@routetwin/shared';
+import type { IncidentKind, IncidentSeverity, TrafficIncident, TrafficVehicleScope } from '../types';
 import { toTrafficMapLayer, type TrafficMapLayer } from './trafficMapLayer';
-import type { TrafficImageAnalysisDto } from '@routetwin/shared';
-import type { IncidentSeverity, TrafficVehicleScope } from '../types';
 
 /** Tên hiển thị của từng loại sự cố (dùng chung cho panel, popup bản đồ). */
 export const incidentLabels: Record<IncidentKind, string> = {
@@ -15,7 +13,7 @@ export const incidentLabels: Record<IncidentKind, string> = {
 };
 
 /** Đổi báo cáo từ API sang dữ liệu hiển thị của panel giao thông. */
-export function toIncidents(reports: TrafficReportDto[]): DemoIncident[] {
+export function toIncidents(reports: TrafficReportDto[]): TrafficIncident[] {
   return reports.map((report) => ({
     id: report.id,
     type: report.incidentType,

@@ -1,19 +1,13 @@
-import type { NavigationStatus } from '../types';
-import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RouteInstruction } from '@routetwin/shared';
-import type { RoutePlan } from '../../routing/types';
-import { toLatLng, type LatLng } from '../../../shared/geo/types';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { bearingDegrees, haversineMeters } from '../../../shared/geo/distance';
+import { toLatLng, type LatLng } from '../../../shared/geo/types';
+import type { RoutePlan } from '../../routing/types';
 import { NavigationGuidanceEngine } from '../domain/NavigationGuidanceEngine';
-import type {
-  NavigationMode,
-  PositionError,
-  PositionFix,
-  PositionSource,
-} from '../domain/position/PositionSource';
+import type { PositionError, PositionFix, PositionSource } from '../domain/position/PositionSource';
 import { SpeedEstimator } from '../domain/position/SpeedEstimator';
-import { SimulatedGpsSource } from '../domain/position/SimulatedGpsSource';
 import { BrowserGpsSource } from '../services/BrowserGpsSource';
+import type { NavigationStatus } from '../types';
 
 export type NavigationSessionState = {
   status: NavigationStatus;
@@ -59,28 +53,11 @@ function initialRouteHeading(route: RoutePlan): number | null {
   return bearingDegrees(toLatLng(start), toLatLng(next));
 }
 
-/** Tạo nguồn vị trí theo chế độ: GPS thật, hoặc GPS giả chạy dọc tuyến (bắt đầu gần `startNear`). */
-function createPositionSource(
-  mode: NavigationMode,
-  route: RoutePlan,
-  startNear: LatLng | null,
-): PositionSource {
-  return mode === 'demo' ? new SimulatedGpsSource(route, startNear) : new BrowserGpsSource();
-}
-
-/**
- * Theo dõi vị trí chỉ trong thời gian người dùng chủ động chạy chuyến đi.
- * Vị trí lấy qua PositionSource nên có 2 chế độ chuyển qua lại được:
- * - real: GPS thật của thiết bị
- * - demo: GPS giả cho xe tự chạy dọc tuyến (thuyết trình, test khi ngồi một chỗ)
- */
+/** Track device GPS only during a journey explicitly started by the user. */
 export function useNavigationSession() {
   const [state, setState] = useState<NavigationSessionState>(idleState);
-  const [mode, setModeState] = useState<NavigationMode>('real');
-  const [isDemoPaused, setIsDemoPaused] = useState(false);
   const sourceRef = useRef<PositionSource | null>(null);
   const engineRef = useRef<NavigationGuidanceEngine | null>(null);
-  const routeRef = useRef<RoutePlan | null>(null);
   const progressRatioRef = useRef(0);
   const previousLocationRef = useRef<LatLng | null>(null);
   const headingRef = useRef<number | null>(null);
@@ -94,16 +71,14 @@ export function useNavigationSession() {
   const stop = useCallback(() => {
     stopSource();
     engineRef.current = null;
-    routeRef.current = null;
     progressRatioRef.current = 0;
     previousLocationRef.current = null;
     headingRef.current = null;
     speedEstimatorRef.current.reset();
-    setIsDemoPaused(false);
     setState(idleState);
   }, [stopSource]);
 
-  /** Mỗi lần có vị trí mới (từ GPS thật hay giả): hỏi engine chỉ dẫn tiếp theo, lệch tuyến, đã tới nơi chưa. */
+  /** Mỗi lần có vị trí GPS mới: hỏi engine chỉ dẫn tiếp theo, lệch tuyến, đã tới nơi chưa. */
   const handleFix = useCallback(
     (fix: PositionFix) => {
       const engine = engineRef.current;
@@ -116,7 +91,7 @@ export function useNavigationSession() {
           ? bearingDegrees(previousLocation, location)
           : null;
       const headingDegrees = fix.headingDegrees ?? derivedHeading ?? headingRef.current;
-      const speedKph = speedEstimatorRef.current.update(fix, sourceRef.current?.mode !== 'demo');
+      const speedKph = speedEstimatorRef.current.update(fix);
       previousLocationRef.current = location;
       headingRef.current = headingDegrees;
       const guidance = engine.evaluate(location, fix.accuracyMeters, progressRatioRef.current);
@@ -168,86 +143,34 @@ export function useNavigationSession() {
     [stopSource],
   );
 
-  /** Bật nguồn vị trí theo chế độ cho tuyến đang dẫn. */
-  const attachSource = useCallback(
-    (nextMode: NavigationMode, route: RoutePlan, startNear: LatLng | null) => {
-      stopSource();
-      speedEstimatorRef.current.reset();
-      const source = createPositionSource(nextMode, route, startNear);
-      sourceRef.current = source;
-      setModeState(nextMode);
-      setIsDemoPaused(false);
-      setState((current) => ({ ...current, speedKph: null }));
-      source.start(handleFix, handleError);
-    },
-    [stopSource, handleFix, handleError],
-  );
-
   const start = useCallback(
-    (route: RoutePlan, startMode: NavigationMode = 'real') => {
+    (route: RoutePlan) => {
+      stopSource();
       engineRef.current = new NavigationGuidanceEngine(route);
-      routeRef.current = route;
       progressRatioRef.current = 0;
       previousLocationRef.current = null;
       headingRef.current = initialRouteHeading(route);
       speedEstimatorRef.current.reset();
       setState({ ...idleState, status: 'locating', route, headingDegrees: headingRef.current });
-      attachSource(startMode, route, null);
+      const source = new BrowserGpsSource();
+      sourceRef.current = source;
+      source.start(handleFix, handleError);
     },
-    [attachSource],
-  );
-
-  /**
-   * Đổi Thật ↔ Demo giữa chuyến: giữ nguyên tuyến và tiến độ, chỉ đổi nguồn vị trí.
-   * Demo bắt đầu từ điểm trên tuyến gần vị trí hiện tại nhất.
-   */
-  const setMode = useCallback(
-    (nextMode: NavigationMode) => {
-      const route = routeRef.current;
-      if (!route || !engineRef.current) {
-        setModeState(nextMode);
-        return;
-      }
-      if (nextMode === sourceRef.current?.mode) return;
-      if (nextMode === 'real') setState((current) => ({ ...current, status: 'locating' }));
-      attachSource(nextMode, route, previousLocationRef.current);
-    },
-    [attachSource],
+    [stopSource, handleFix, handleError],
   );
 
   const updateRoute = useCallback((route: RoutePlan) => {
     engineRef.current = new NavigationGuidanceEngine(route);
-    routeRef.current = route;
     progressRatioRef.current = 0;
-    // GPS giả chạy tiếp theo tuyến mới (tuyến mới bắt đầu tại vị trí hiện tại).
-    if (sourceRef.current instanceof SimulatedGpsSource) sourceRef.current.followRoute(route);
     setState((current) => ({ ...current, route, offRoute: false, offRouteFixes: 0, progressRatio: 0 }));
-  }, []);
-
-  /** Điều khiển riêng của chế độ Demo. */
-  const toggleDemoPause = useCallback(() => {
-    const source = sourceRef.current;
-    if (!(source instanceof SimulatedGpsSource)) return;
-    source.setPaused(!source.isPaused);
-    setIsDemoPaused(source.isPaused);
-  }, []);
-
-  const simulateWrongTurn = useCallback(() => {
-    const source = sourceRef.current;
-    if (source instanceof SimulatedGpsSource) source.deviate();
   }, []);
 
   useEffect(() => stopSource, [stopSource]);
 
   return {
     ...state,
-    mode,
-    isDemoPaused,
     start,
     stop,
     updateRoute,
-    setMode,
-    toggleDemoPause,
-    simulateWrongTurn,
   };
 }
