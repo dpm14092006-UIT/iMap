@@ -39,6 +39,29 @@ export function pushRecentPlace(list: Place[], place: Place): Place[] {
   return [place, ...list.filter((item) => recentPlaceKey(item) !== key)].slice(0, MAX_RECENT_PLACES);
 }
 
+/** Một thao tác trên máy (thêm / xóa) cần áp lại sau khi tải danh sách từ server. */
+export type RecentPlaceEdit =
+  | { type: 'record'; kind: RecentPlaceKind; place: Place }
+  | { type: 'remove'; kind: RecentPlaceKind; key: string };
+
+/** Áp một thao tác lên danh sách lịch sử. */
+export function applyRecentPlaceEdit(places: RecentPlaces, edit: RecentPlaceEdit): RecentPlaces {
+  const list = places[edit.kind];
+  const next =
+    edit.type === 'record'
+      ? pushRecentPlace(list, edit.place)
+      : list.filter((item) => recentPlaceKey(item) !== edit.key);
+  return { ...places, [edit.kind]: next };
+}
+
+/**
+ * Danh sách server có thể về SAU khi người dùng vừa thêm/xóa trên máy (lúc đó server chưa ghi xong).
+ * Áp lại các thao tác đó theo thứ tự lên kết quả server để không mất mục vừa thêm hay hiện lại mục vừa xóa.
+ */
+export function mergeRemoteRecentPlaces(remote: RecentPlaces, pendingEdits: RecentPlaceEdit[]): RecentPlaces {
+  return pendingEdits.reduce(applyRecentPlaceEdit, remote);
+}
+
 function toPlace(row: DbRecentPlace): Place {
   return {
     id: `recent-${row.place_key}`,

@@ -4,6 +4,7 @@ import type { RoutePlan } from '../../map/types';
 import { rerouteApi } from '../../navigation/api/RerouteApiClient';
 import { routePlanFromResult } from '../../navigation/api/RouteApiClient';
 import { basicPlaceFromPoint } from '../../places/services/placeFromPoint';
+import { RerouteOfferMemory } from '../services/RerouteOfferMemory';
 import { routeHazardSection } from '../services/routeTraffic';
 import type { LatLng } from '../../places/types';
 import { playAlertFeedback, showLocalSystemNotification } from '../../notifications/services/alertFeedback';
@@ -34,12 +35,6 @@ export type RouteTrafficAlertState = {
   decision: 'pending' | 'accepted' | 'kept';
 };
 
-function roughDistanceMeters(a: LatLng, b: LatLng): number {
-  const east = (b.lng - a.lng) * 111_320 * Math.cos(((a.lat + b.lat) / 2) * (Math.PI / 180));
-  const north = (b.lat - a.lat) * 111_320;
-  return Math.hypot(east, north);
-}
-
 /** Hỏi đổi tuyến trong bao lâu; hết giờ thì giữ tuyến hiện tại. */
 export const REROUTE_DECISION_MS = 15_000;
 const CLOSE_AFTER_DECISION_MS = 4_000;
@@ -69,13 +64,8 @@ export function useRouteTrafficAlert(options: Options) {
   const [alert, setAlert] = useState<RouteTrafficAlertState | null>(null);
   const optionsRef = useRef(options);
   optionsRef.current = options;
-  /** Mỗi sự cố (hoặc cụm báo cáo trong 80 m) chỉ hỏi đổi tuyến một lần trong một chuyến. */
-  const offered = useRef(new Map<string, LatLng>());
-  const isOffered = (incident: RouteAlertIncident) =>
-    offered.current.has(incident.id) ||
-    [...offered.current.values()].some(
-      (point) => roughDistanceMeters(point, incident) <= AVOID_RADIUS_METERS,
-    );
+  /** Mỗi sự cố trên tuyến (hoặc cụm báo cáo trong 80 m) chỉ hỏi đổi tuyến một lần trong một chuyến. */
+  const offered = useRef(new RerouteOfferMemory(AVOID_RADIUS_METERS));
   const requestId = useRef(0);
 
   const close = useCallback(() => {
@@ -153,8 +143,9 @@ export function useRouteTrafficAlert(options: Options) {
       }
       const onRoute =
         (routeHazardSection(route, incident)?.distanceMeters ?? Infinity) <= AVOID_RADIUS_METERS;
-      const alreadyOffered = isOffered(incident);
-      offered.current.set(incident.id, { lat: incident.lat, lng: incident.lng });
+      const alreadyOffered = offered.current.has(incident);
+      // Chỉ nhớ sự cố trên tuyến; sự cố cạnh tuyến không được chặn việc hỏi đổi tuyến cho sự cố gần nó.
+      if (onRoute) offered.current.remember(incident);
       const id = ++requestId.current;
       const shouldOffer = onRoute && !alreadyOffered;
       setAlert({
@@ -213,5 +204,7 @@ export function useRouteTrafficAlert(options: Options) {
     close();
   }, [hasRoute, close]);
 
-  return { alert, trigger, accept, keep, close, wasOffered: isOffered };
+  const wasOffered = useCallback((incident: RouteAlertIncident) => offered.current.has(incident), []);
+
+  return { alert, trigger, accept, keep, close, wasOffered };
 }

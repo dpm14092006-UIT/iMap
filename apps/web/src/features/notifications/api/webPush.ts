@@ -115,6 +115,24 @@ export async function upsertRouteWatch(
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Khi đăng xuất: xóa đăng ký push hiện tại của trình duyệt này khỏi tài khoản (RLS cho phép xóa dòng của
+ * chính mình; route_watches tự xóa theo nhờ on delete cascade), rồi hủy đăng ký trong trình duyệt để máy
+ * dùng chung không còn nhận cảnh báo tuyến của người trước. Đăng nhập lại thì ensurePushSubscription đăng ký mới.
+ *
+ * Tự đọc đăng ký từ service worker thay vì nhận endpoint từ state của App, để chạy được cả ở trang /login
+ * (trang này không dựng App). Chỉ đọc đăng ký có sẵn, không đăng ký service worker mới.
+ */
+export async function deleteCurrentPushSubscription(): Promise<void> {
+  if (!('serviceWorker' in navigator)) return;
+  const registration = await navigator.serviceWorker.getRegistration(SERVICE_WORKER_URL);
+  const subscription = await registration?.pushManager.getSubscription();
+  if (!subscription) return;
+  const client = await getSupabaseClient();
+  if (client) await client.from('push_subscriptions').delete().eq('endpoint', subscription.endpoint);
+  await subscription.unsubscribe().catch(() => undefined);
+}
+
 export async function deleteRouteWatch(endpoint: string): Promise<void> {
   const client = await getSupabaseClient();
   if (!client) return;

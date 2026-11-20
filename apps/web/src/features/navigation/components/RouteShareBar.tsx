@@ -1,22 +1,21 @@
 import { useState } from 'react';
 import { Popover } from '../../../app/layout/Popover';
 import { Icon, type IconName } from '../../../shared/components/Icon';
-import type { TransportMode } from '../../map/types';
-import type { Place } from '../../places/types';
-import { buildRouteShareUrl } from '../services/routeShareLink';
+import { buildRouteShareUrl, type SharedRoute } from '../services/routeShareLink';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 
-type RouteShareBarProps = { origin: Place; destination: Place; vehicle: TransportMode };
+type RouteShareBarProps = { route: SharedRoute };
 
 const buttonClass =
   'inline-flex h-9 items-center gap-1.5 rounded-full bg-white/70 px-3 text-xs font-semibold text-ink ring-1 ring-black/10 transition hover:bg-white dark:hover:bg-slate-700/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 active:scale-95 dark:bg-white/5 dark:text-slate-100 dark:ring-white/15';
 
 /** Gửi tới điện thoại (hiện liên kết + hướng dẫn), sao chép liên kết và chia sẻ hệ thống. */
-export function RouteShareBar({ origin, destination, vehicle }: RouteShareBarProps) {
+export function RouteShareBar({ route }: RouteShareBarProps) {
+  const { origin, destination } = route;
   const { t } = useI18n();
   const [phoneOpen, setPhoneOpen] = useState(false);
   const [notice, setNotice] = useState('');
-  const link = () => buildRouteShareUrl({ origin, destination, vehicle }, window.location.href);
+  const link = () => buildRouteShareUrl(route, window.location.href);
   const canShare = typeof navigator.share === 'function';
 
   const copy = async () => {
