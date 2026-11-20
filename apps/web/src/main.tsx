@@ -4,6 +4,7 @@ import { App } from './app/App';
 import { scheduledMapLayer } from './features/map/hooks/useTimeBasedMapLayer';
 import { ErrorBoundary } from './app/components/ErrorBoundary';
 import { AuthProvider } from './features/auth/context/AuthProvider';
+import { PushSignOutCleanup } from './features/notifications/components/PushSignOutCleanup';
 import { RecentPlacesProvider } from './features/places/context/RecentPlacesProvider';
 import { I18nProvider, useI18n } from './shared/i18n/I18nProvider';
 import 'leaflet/dist/leaflet.css';
@@ -31,6 +32,8 @@ createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>
       <I18nProvider>
         <AuthProvider>
+          {/* Gỡ push khi đăng xuất, kể cả ở trang /login (không dựng App). */}
+          <PushSignOutCleanup />
           {isLoginPage ? (
             <Suspense fallback={<LoginLoading />}>
               <AuthPage />

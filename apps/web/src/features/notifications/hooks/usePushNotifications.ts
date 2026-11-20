@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../../auth/context/AuthProvider';
 import {
-  deletePushSubscription,
   ensurePushSubscription,
   getPushConfig,
   getServiceWorkerRegistration,
@@ -63,15 +61,6 @@ export function usePushNotifications(isAuthenticated: boolean) {
       active = false;
     };
   }, [supported, isAuthenticated]);
-
-  // Đăng xuất: gỡ đăng ký push của máy này trước khi mất phiên, nếu không server vẫn gửi cảnh báo
-  // tuyến của tài khoản cũ cho người dùng tiếp theo trên máy dùng chung.
-  const { onBeforeSignOut } = useAuth();
-  const endpoint = state.endpoint;
-  useEffect(() => {
-    if (!endpoint) return;
-    return onBeforeSignOut(() => deletePushSubscription(endpoint));
-  }, [endpoint, onBeforeSignOut]);
 
   /** Gọi từ một cú bấm của người dùng (trình duyệt bắt buộc). */
   const enable = useCallback(async () => {
