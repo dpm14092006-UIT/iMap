@@ -5,8 +5,8 @@
 import type { TrafficReportDto } from '@routetwin/shared';
 import { describe, expect, it } from 'vitest';
 import { toTrafficMapLayer } from './trafficMapLayer';
-import { toIncidents, toReportsMapLayer } from './trafficPresentation';
 import { alertCommunityInfo, buildTrafficOverview, type AvoidableIncident } from './trafficOverview';
+import { toIncidents, toReportsMapLayer } from './trafficPresentation';
 
 const t = (text: string) => `[en] ${text}`;
 

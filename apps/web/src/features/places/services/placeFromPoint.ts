@@ -1,5 +1,5 @@
-import { placeApi } from '../api/placeApi';
 import type { LatLng } from '../../../shared/geo/types';
+import { placeApi } from '../api/placeApi';
 import { basicPlaceFromPoint, type PointSource } from '../domain/pointPlace';
 import type { Place } from '../types';
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
+import { formatDistanceKm, formatDurationMinutes } from '../../../shared/format/units';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
 import { Icon } from '../../../shared/ui/Icon';
-import type { TrafficSeverity } from '../../traffic/domain/trafficMapLayer';
-import type { RoutePlan } from '../types';
 import {
   CONGESTION_COLORS,
   CONGESTION_LABELS,
@@ -9,9 +9,9 @@ import {
   formatCongestionLength,
   routeCongestionTone,
 } from '../../traffic/domain/routeCongestion';
-import { formatDistanceKm, formatDurationMinutes } from '../../../shared/format/units';
+import type { TrafficSeverity } from '../../traffic/domain/trafficMapLayer';
+import type { RoutePlan } from '../types';
 import { InstructionList } from './InstructionList';
-import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type RouteOptionCardProps = {
   route: RoutePlan;
@@ -95,12 +95,10 @@ export function RouteOptionCard({
       >
         <span className="flex items-baseline justify-between gap-2">
           <span className={`text-lg font-extrabold tracking-tight ${tone.text}`}>
-            {comparisonId && (
-              <span className="mr-1.5 text-xs text-slate-600 dark:text-slate-300">{comparisonId}</span>
-            )}
+            {comparisonId && <span className="mr-1.5 text-xs text-content-muted">{comparisonId}</span>}
             {formatDurationMinutes(route.durationMin, language)}
           </span>
-          <span className="text-sm font-semibold text-ink dark:text-slate-100">
+          <span className="text-sm font-semibold text-content">
             {formatDistanceKm(route.distanceKm, language)}
           </span>
         </span>

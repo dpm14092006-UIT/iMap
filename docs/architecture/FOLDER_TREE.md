@@ -3,70 +3,82 @@
 ```text
 iMap/
 ├── apps/
-│   ├── web/                              React + Vite + Tailwind
-│   │   ├── public/                       Service worker, icon, manifest
+│   ├── web/
+│   │   ├── public/                       Service worker, icons, manifest
 │   │   └── src/
-│   │       ├── main.tsx                  Entry point
-│   │       ├── app/                      Shell: App.tsx, layout/, components/, hooks/
+│   │       ├── main.tsx
+│   │       ├── app/
+│   │       │   ├── App.tsx                Lắp ghép các feature
+│   │       │   ├── flows/
+│   │       │   │   ├── workspace/         Panel, chọn điểm, phím tắt
+│   │       │   │   ├── guidance/          Dẫn đường, tính lại tuyến
+│   │       │   │   ├── traffic/           Báo cáo và cảnh báo
+│   │       │   │   ├── routes/            Chia sẻ, lưu, tối ưu
+│   │       │   │   └── explore/           Tìm quanh đây, trợ lý
+│   │       │   ├── shell/                AppShell, dock, topbar, toast
+│   │       │   └── styles/               Bố cục shell
 │   │       ├── features/
-│   │       │   ├── auth/                 Supabase Auth: context, form đăng nhập
-│   │       │   ├── map/                  Leaflet MapView, lớp nền, hợp đồng TrafficMapLayer
-│   │       │   ├── places/               Tìm kiếm VietMap, địa điểm gần đây
-│   │       │   ├── explore/              Tìm địa điểm quanh vị trí / dọc tuyến
-│   │       │   ├── navigation/           Chỉ đường, dẫn đường, GPS thật/giả, so sánh tuyến
-│   │       │   ├── multi-stop/           Lập kế hoạch nhiều điểm (Held–Karp, NN + 2-opt)
-│   │       │   ├── my-routes/            Tuyến đã lưu (localStorage)
-│   │       │   ├── traffic/              Báo cáo giao thông, ảnh, cảnh báo trên tuyến
+│   │       │   ├── routing/              Tuyến, phương án, chỉ đường, chia sẻ
+│   │       │   ├── guidance/             GPS, tiến độ, lệch tuyến, giọng nói
+│   │       │   ├── algorithm-lab/        So sánh Dijkstra/A* trên OSM
+│   │       │   ├── map/                  MapView, Leaflet Facade và các lớp vẽ
+│   │       │   ├── places/               Tìm kiếm, combobox, lịch sử địa điểm
+│   │       │   ├── explore/              POI quanh điểm/dọc tuyến
+│   │       │   ├── multi-stop/           Form tối ưu hành trình
+│   │       │   ├── my-routes/            Tuyến đã lưu, localStorage repository
+│   │       │   ├── traffic/              Báo cáo, ảnh, realtime, cảnh báo
+│   │       │   ├── place-assistant/      Tìm theo nhu cầu
 │   │       │   ├── notifications/        Web Push, theo dõi tuyến
-│   │       │   └── place-assistant/      Trợ lý địa điểm, nhập nhu cầu
-│   │       └── shared/                   api/ (HttpClient), components/, geo/, hooks/, i18n/, text/
-│   └── api/                              Express + TypeScript
-│       ├── data/osm/                     Đồ thị OSM trung tâm TP.HCM (Dijkstra/A*)
+│   │       │   └── auth/                 Supabase Auth và quyền truy cập
+│   │       ├── shared/
+│   │       │   ├── ui/                   Button, Input, Select, Textarea, Icon, SheetPanel, Popover
+│   │       │   ├── styles/               tokens.css, base.css, components.css
+│   │       │   ├── i18n/                 Provider, Translator, locales/en.ts
+│   │       │   └── api/ async/ format/ geo/ hooks/ text/
+│   │       └── testing/                  Fixture cho test
+│   └── api/
+│       ├── data/osm/                     Dữ liệu đồ thị OSM
 │       └── src/
-│           ├── main.ts                   Entry point
-│           ├── app.ts                    Express middleware và routes
-│           ├── composition-root.ts       Dependency injection
-│           ├── config/                   Đọc và kiểm tra biến môi trường
+│           ├── app.ts                    Entry Vercel
+│           ├── createApp.ts              Factory Express
+│           ├── main.ts                   Entry local
+│           ├── compositionRoot.ts        Khởi tạo và tiêm implementation
+│           ├── config/
 │           ├── modules/
-│           │   ├── places/               VietMap search, POI quanh/dọc tuyến
-│           │   ├── navigation/           VietMap Route, đồ thị OSM, Dijkstra/A*, reroute, so sánh tuyến
+│           │   ├── navigation/           Route, OSM, reroute, so sánh tuyến
 │           │   ├── optimization/         Matrix + chiến lược TSP
-│           │   ├── route-stops/          Tìm và chèn điểm ghé theo chi phí thật
-│           │   ├── traffic/              Báo cáo, xác minh cộng đồng, push
-│           │   └── my-routes/            Chỉ có README (API chưa triển khai)
-│           ├── shared/                   http/, errors/, supabase/, geo/, text/, async/
-│           └── testing/                  Helper dùng chung cho test
-├── packages/shared/src/                  DTO, Zod schemas, types; constants.ts là hằng số thuần
-├── supabase/
-│   ├── migrations/                       0001–0008, chạy theo thứ tự số
-│   ├── ops/                              SQL vận hành (cron hết hạn báo cáo)
-│   └── repairs/                          SQL sửa lỗi một lần cho DB đã chạy migration cũ
-├── scripts/                              benchmark/, osm/, voice/ (xem scripts/README.md)
-├── docs/                                 Tài liệu, mục lục ở docs/README.md
-├── assets/                               Ảnh/diagram có quyền sử dụng
-├── .github/workflows/ci.yml              format → lint → typecheck → test → build
-├── run.sh                                Chạy web + API trên Mac
-└── package.json                          npm workspaces
+│           │   ├── places/               Tìm địa điểm và POI
+│           │   ├── route-stops/          Tìm/chèn điểm ghé, trợ lý
+│           │   └── traffic/              Báo cáo, xác minh, push
+│           └── shared/ testing/
+├── packages/shared/
+│   ├── src/
+│   │   ├── schemas/                      DTO và Zod validation
+│   │   ├── geo/                          Haversine dùng chung web/API
+│   │   ├── text/                         Bỏ dấu và khoá tìm kiếm tiếng Việt
+│   │   └── constants.ts index.ts
+│   └── test/                             Test primitive, không đưa vào bản build
+├── supabase/                             migrations/, ops/, repairs/
+├── scripts/                              verify/, benchmark/, osm/…
+├── docs/                                 architecture/, features/, guides/, reviews/…
+└── .github/workflows/ci.yml
 ```
 
-## Quy ước thư mục trong một feature web
+## Khuôn feature web
 
-| Thư mục | Chứa gì |
-|---|---|
-| `components/` | Component React (`.tsx`) |
-| `hooks/` | Custom hook (`useXxx.ts`) |
-| `api/` | Hàm/class gọi backend qua `shared/api/HttpClient` |
-| `services/` | Logic thuần và adapter trình duyệt (GPS, storage, Leaflet) |
-| `domain/` | Mô hình nghiệp vụ không phụ thuộc React |
-| `context/` | React context provider |
-| `data/` | Dữ liệu tĩnh (danh mục, địa điểm mẫu) |
-| `utils/` | Hàm định dạng/hiển thị nhỏ |
-| `types.ts` | Kiểu dùng trong feature |
+| Vị trí | Trách nhiệm |
+| --- | --- |
+| `api/` | Adapter HTTP gọi backend qua `HttpClient` |
+| `components/` | Giao diện, sự kiện DOM, accessibility; panel chỉ lắp ghép các phần |
+| `hooks/` | State/effect React, điều phối và quyền sở hữu request |
+| `domain/` | Model, thuật toán, chuyển đổi và danh mục thuần; không React hoặc I/O |
+| `services/` | Adapter có trạng thái/I/O: Leaflet, GPS, âm thanh, localStorage, cache |
+| `types.ts` | Hợp đồng dữ liệu và props dùng trong feature |
+| `context/` | Provider khi thực sự cần chia sẻ state (`auth`, `places`) |
+| `styles/` | CSS riêng của adapter map; phần còn lại dùng utility/token chung |
 
-Test đặt cạnh file được test (`xxx.test.ts`). Chỉ tạo thư mục khi có file.
+Chỉ tạo thư mục khi có file. Không tạo `utils/`, `data/` hoặc thư mục rỗng để đủ khuôn. Test đặt cạnh mã chạy, trừ test package shared ở `test/` để không xuất vào `dist`.
 
-AI không có feature riêng: phân tích ảnh sự cố và biển báo nằm trong form Báo cáo giao thông. Backend xác thực token Supabase trong `shared/http`; chưa có module `auth` riêng. Các thư mục chỉ có README ghi rõ phạm vi là khung cho phần chưa triển khai, không phải mã chạy.
+Backend dùng `presentation → application → domain`; `application/ports` sở hữu interface I/O, `infrastructure` triển khai port. File TypeScript camelCase, lớp PascalCase, router `<module>Router.ts`.
 
-## Quy tắc module backend
-
-`domain` không phụ thuộc framework/SDK; `application` chứa use case và ports; `infrastructure` triển khai provider/repository; `presentation` xử lý HTTP và schema validation. Chỉ khởi tạo folder khi có mã thực tế cần đặt vào đó.
+API lưu tuyến cá nhân chưa triển khai; phạm vi và hướng phát triển nằm ở [MY_ROUTES.md](../features/MY_ROUTES.md), không giữ module README rỗng trong `src`.

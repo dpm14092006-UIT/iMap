@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import { act, cleanup, renderHook } from '@testing-library/react';
 import type { TrafficReportBounds, TrafficReportDto } from '@routetwin/shared';
+import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getSupabaseClient } from '../../auth/services/supabaseClient';
 import { deferred } from '../../../testing/fixtures';
+import { getSupabaseClient } from '../../auth/services/supabaseClient';
 import { trafficApi } from '../api/trafficApi';
 import { useTrafficReports } from './useTrafficReports';
 

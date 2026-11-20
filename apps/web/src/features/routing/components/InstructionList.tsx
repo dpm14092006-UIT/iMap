@@ -1,7 +1,7 @@
 import type { RouteInstruction } from '@routetwin/shared';
 import { formatDistanceMeters } from '../../../shared/format/units';
-import { formatInstructionText, maneuverArrow } from '../domain/maneuver';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
+import { formatInstructionText, maneuverArrow } from '../domain/maneuver';
 
 type InstructionListProps = { instructions: RouteInstruction[] };
 
@@ -18,7 +18,7 @@ export function InstructionList({ instructions }: InstructionListProps) {
       {instructions.map((step, index) => (
         <li
           key={`${index}-${step.streetName}`}
-          className="flex items-start gap-2 text-xs leading-5 text-slate-700 dark:text-slate-200"
+          className="flex items-start gap-2 text-xs leading-5 text-content-muted"
         >
           <span
             className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-100 text-xs font-bold text-brand-700 dark:bg-brand-500/25 dark:text-brand-200"
@@ -29,7 +29,7 @@ export function InstructionList({ instructions }: InstructionListProps) {
           <span className="min-w-0 flex-1">{formatInstructionText(step, language)}</span>
           {/* Bước cuối (đến nơi) có quãng đường 0 nên không cần hiển thị. */}
           {step.distanceMeters > 0 && (
-            <span className="shrink-0 text-slate-500 dark:text-slate-400">
+            <span className="shrink-0 text-content-subtle">
               {formatDistanceMeters(step.distanceMeters, language)}
             </span>
           )}

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { popularPlaces } from '../domain/popularPlaces';
 import type { LatLng } from '../../../shared/geo/types';
-import type { Place } from '../types';
-import { PlaceCombobox } from './PlaceCombobox';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import { useRecentPlaces } from '../context/RecentPlacesProvider';
+import { popularPlaces } from '../domain/popularPlaces';
 import type { RecentPlaceKind } from '../domain/recentPlaces';
+import type { Place } from '../types';
+import { PlaceCombobox } from './PlaceCombobox';
 
 type PlaceFieldProps = {
   /** Địa điểm đang được chọn (null khi người dùng đang gõ / chưa chọn). */
@@ -45,7 +45,7 @@ export function PlaceField({
       getFocus={getFocus}
       ariaLabel={t(ariaLabel)}
       icon={null}
-      inputClassName="h-[46px] bg-white dark:bg-slate-800 pl-3"
+      inputClassName="h-[46px] bg-surface pl-3"
       onChange={(value) => {
         setText(value);
         if (place) onChange(null);

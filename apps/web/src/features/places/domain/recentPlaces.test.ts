@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { readCachedRecentPlaces } from '../services/recentPlacesStore';
 import type { Place } from '../types';
 import {
   isMostRecentPlace,
@@ -9,7 +10,6 @@ import {
   recentPlaceKey,
   type RecentPlaces,
 } from './recentPlaces';
-import { readCachedRecentPlaces } from '../services/recentPlacesStore';
 
 const place = (index: number): Place => ({
   id: `p${index}`,

@@ -96,7 +96,7 @@ export function PoiResultsPanel({
               {t('Cập nhật kết quả khi di chuyển bản đồ')}
             </label>
           )}
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">{t('Nguồn: VietMap')}</p>
+          <p className="text-[11px] text-content-subtle">{t('Nguồn: VietMap')}</p>
         </div>
       }
     >
@@ -139,7 +139,7 @@ export function PoiResultsPanel({
       {status === 'ready' && pois.length === 0 && (
         <div className="rounded-2xl bg-black/[.04] px-3 py-6 text-center dark:bg-white/5">
           <Icon name="search" size={22} className="mx-auto text-slate-400 dark:text-slate-500" />
-          <p className="mt-2 text-sm font-semibold text-ink dark:text-white">
+          <p className="mt-2 text-sm font-semibold text-content">
             {t('Không thấy {term} trong {radius} {where}', {
               term: quoted,
               radius: formatRadius(search.radiusM, language),

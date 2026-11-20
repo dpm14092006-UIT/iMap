@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { toTrafficMapLayer } from './trafficMapLayer';
 import type { RoutePlan } from '../../routing/types';
 import { routeTrafficSeverity } from './routeTraffic';
+import { toTrafficMapLayer } from './trafficMapLayer';
 
 const route = {
   vehicle: 'car',

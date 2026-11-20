@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Icon } from '../../../shared/ui/Icon';
-import { useI18n } from '../../../shared/i18n/I18nProvider';
 import { formatDistanceKm, formatDurationMinutes } from '../../../shared/format/units';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
+import { Button } from '../../../shared/ui/Button';
+import { Icon } from '../../../shared/ui/Icon';
 import { REROUTE_DECISION_MS, type RouteTrafficAlertState } from '../hooks/useRouteTrafficAlert';
 
 type Props = {
@@ -103,10 +104,7 @@ export function RouteTrafficAlert({
         </p>
 
         {offer.status === 'computing' && (
-          <p
-            className="mt-3 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"
-            role="status"
-          >
+          <p className="mt-3 flex items-center gap-2 text-sm text-content-muted" role="status">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
             {t('Đang tìm đường khác tránh sự cố…')}
           </p>
@@ -120,7 +118,7 @@ export function RouteTrafficAlert({
                 distance: formatDistanceKm(offer.plan.distanceKm, language === 'en' ? 'en' : 'vi'),
               })}
             </p>
-            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-0.5 text-xs text-content-subtle">
               {Math.abs(offer.deltaMin) < 1
                 ? t('Thời gian gần bằng tuyến hiện tại (chưa tính thời gian kẹt).')
                 : offer.deltaMin < 0
@@ -133,13 +131,13 @@ export function RouteTrafficAlert({
             </p>
             <p className="mt-3 text-sm font-semibold">{t('Đổi sang đường này?')}</p>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <button
+              <Button
                 type="button"
                 onClick={onAccept}
                 className="h-11 rounded-2xl bg-brand-gradient text-sm font-bold text-white shadow-md transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
               >
                 {t('Có, đổi tuyến')}
-              </button>
+              </Button>
               <button
                 type="button"
                 onClick={onKeep}
@@ -169,17 +167,17 @@ export function RouteTrafficAlert({
           </p>
         )}
         {decision === 'kept' && (
-          <p className="mt-3 text-sm text-slate-600 dark:text-slate-300" role="status">
+          <p className="mt-3 text-sm text-content-muted" role="status">
             {t('Giữ tuyến hiện tại. Hãy chú ý khi đi qua đoạn này.')}
           </p>
         )}
         {decision === 'pending' && offer.status === 'none' && (
-          <p className="mt-3 text-sm text-slate-600 dark:text-slate-300" role="status">
+          <p className="mt-3 text-sm text-content-muted" role="status">
             {t('Không có đường khác tốt hơn để tránh sự cố. Hãy chú ý khi đi qua đoạn này.')}
           </p>
         )}
         {decision === 'pending' && offer.status === 'clear' && (
-          <p className="mt-3 text-sm text-slate-600 dark:text-slate-300" role="status">
+          <p className="mt-3 text-sm text-content-muted" role="status">
             {t(
               'Sự cố ở sát tuyến nhưng tuyến của bạn không đi qua đúng chỗ đó. Cứ đi tiếp và chú ý quan sát.',
             )}

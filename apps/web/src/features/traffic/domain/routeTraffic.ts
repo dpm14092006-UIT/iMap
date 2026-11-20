@@ -1,11 +1,11 @@
-import type { RoutePlan } from '../../routing/types';
-import type { Coordinate, LatLng } from '../../../shared/geo/types';
 import {
   closestPointOnPolyline,
   pathLengthMeters,
   pointAtDistance,
   segmentLengthMeters,
 } from '../../../shared/geo/polyline';
+import type { Coordinate, LatLng } from '../../../shared/geo/types';
+import type { RoutePlan } from '../../routing/types';
 import type { TrafficMapLayer, TrafficSeverity } from './trafficMapLayer';
 
 export const ROUTE_ALERT_CORRIDOR_METERS = 180;

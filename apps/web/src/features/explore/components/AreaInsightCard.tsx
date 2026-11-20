@@ -117,7 +117,7 @@ export function AreaInsightCard({ insight, onOpenTraffic }: AreaInsightCardProps
         />
         <span className="sr-only">{t('Mở bảng Giao thông')}</span>
       </button>
-      <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+      <p className="mt-2 text-[11px] text-content-subtle">
         {t('Thời tiết minh họa · Giao thông ước tính từ giờ cao điểm và báo cáo cộng đồng')}
       </p>
     </section>

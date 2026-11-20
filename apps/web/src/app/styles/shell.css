@@ -1,0 +1,36 @@
+/* Chiều cao thanh tab đáy (chỉ có trên mobile) và vùng đáy bị bảng kéo chiếm. */
+
+main {
+  --tab-h: 0px;
+  --sheet-h: 0px;
+  --shell-bottom: calc(var(--tab-h) + var(--sheet-h));
+}
+
+@media (max-width: 767px) {
+  main {
+    --tab-h: calc(64px + env(safe-area-inset-bottom));
+  }
+  /* Bảng kéo lên nấc đầy che chỗ hàng chip: ẩn hàng chip, chỉ giữ ô tìm kiếm. */
+  main[data-sheet='full'] [data-topbar-strip] {
+    display: none;
+  }
+  /* Lúc dẫn đường thanh tab ẩn đi, banner chỉ dẫn nằm sát đáy thay chỗ. */
+  main:has(> [data-nav-banner]) {
+    --tab-h: 0px;
+  }
+}
+
+.route-connector {
+  position: absolute;
+  z-index: 0;
+  left: 15px;
+  top: 28px;
+  bottom: 28px;
+  border-left: 2px dotted #a5b4fc;
+}
+
+.dark .routetwin-route-marker span,
+.dark .routetwin-poi-marker span,
+.dark .routetwin-incident-marker {
+  border-color: #e2e8f0;
+}

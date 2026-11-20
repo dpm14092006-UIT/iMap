@@ -1,11 +1,12 @@
-import { SheetPanel } from '../../../shared/ui/SheetPanel';
-import { Icon } from '../../../shared/ui/Icon';
-import { poiMetaFor } from '../../explore/domain/poiCatalog';
 import { formatDistanceMeters } from '../../../shared/format/units';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
+import { Button } from '../../../shared/ui/Button';
+import { Icon } from '../../../shared/ui/Icon';
+import { SheetPanel } from '../../../shared/ui/SheetPanel';
+import { poiMetaFor } from '../../explore/domain/poiCatalog';
 import type { Poi } from '../../explore/types';
 import { formatCoordinates } from '../domain/pointPlace';
 import type { Place, PlaceSource } from '../types';
-import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type PlacePanelProps = {
   place: Place;
@@ -36,18 +37,16 @@ export function PlacePanel({ place, poi, onClose, onDirections }: PlacePanelProp
           <Icon name="globe" size={13} />
           {t(place.category)}
         </span>
-        <h3 className="relative mt-4 text-[20px] font-bold tracking-tight text-ink dark:text-slate-100">
-          {place.name}
-        </h3>
-        <p className="relative mt-1 flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+        <h3 className="relative mt-4 text-[20px] font-bold tracking-tight text-content">{place.name}</h3>
+        <p className="relative mt-1 flex items-center gap-1.5 text-[11px] font-medium text-content-muted">
           <Icon name="pin" size={14} />
           {place.address}
         </p>
       </div>
       {poi && (
-        <div className="mt-4 rounded-xl border border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-slate-800/60 px-3 py-3 text-[12px] text-slate-700 dark:text-slate-200">
+        <div className="mt-4 rounded-xl border border-line/60 bg-slate-50/80 dark:bg-slate-800/60 px-3 py-3 text-[12px] text-content-muted">
           <p className="font-semibold">{t(poiMetaFor(poi.category).label)}</p>
-          <p className="mt-1.5 text-slate-600 dark:text-slate-300">
+          <p className="mt-1.5 text-content-muted">
             {poi.distanceFromCenterM === undefined
               ? t('Cách tuyến {distance} · {detour}', {
                   distance: formatDistanceMeters(poi.distanceFromRouteM, language),
@@ -62,11 +61,9 @@ export function PlacePanel({ place, poi, onClose, onDirections }: PlacePanelProp
           </p>
         </div>
       )}
-      <div className="mt-4 rounded-xl border border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-slate-800/60 px-3 py-3">
-        <p className="text-[11px] font-bold uppercase tracking-[.08em] text-slate-500 dark:text-slate-400">
-          {t('Tọa độ')}
-        </p>
-        <p className="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-300">
+      <div className="mt-4 rounded-xl border border-line/60 bg-slate-50/80 dark:bg-slate-800/60 px-3 py-3">
+        <p className="text-[11px] font-bold uppercase tracking-[.08em] text-content-subtle">{t('Tọa độ')}</p>
+        <p className="mt-1 text-[11px] leading-5 text-content-muted">
           {formatCoordinates(place)}
           <br />
           {t(sourceLabels[place.source])}
@@ -76,20 +73,20 @@ export function PlacePanel({ place, poi, onClose, onDirections }: PlacePanelProp
         href={`https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lng}#map=17/${place.lat}/${place.lng}`}
         target="_blank"
         rel="noreferrer"
-        className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/60 text-[11px] font-semibold text-slate-700 dark:text-slate-200 transition hover:border-brand-200 dark:hover:border-indigo-300/30 hover:text-brand-700 dark:hover:text-indigo-300"
+        className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface text-[11px] font-semibold text-content-muted transition hover:border-brand-200 dark:hover:border-indigo-300/30 hover:text-brand-700 dark:hover:text-indigo-300"
       >
         <Icon name="arrow-up-right" size={15} />
         {t('Mở địa điểm trên OpenStreetMap')}
       </a>
-      <button
+      <Button
         type="button"
         onClick={() => onDirections(place)}
         className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 text-xs font-bold text-white transition hover:bg-brand-700"
       >
         <Icon name="directions" size={17} />
         {t('Tìm đường đến đây')}
-      </button>
-      <p className="mt-3 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+      </Button>
+      <p className="mt-3 text-[11px] leading-4 text-content-subtle">
         {t('Nguồn địa điểm được ghi rõ theo từng kết quả ở trên.')}
       </p>
     </SheetPanel>

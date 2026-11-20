@@ -203,7 +203,7 @@ export function SheetPanel({
                 {t(eyebrow)}
               </p>
             )}
-            <h2 className="truncate text-base font-bold leading-tight tracking-tight text-ink dark:text-slate-100">
+            <h2 className="truncate text-base font-bold leading-tight tracking-tight text-content">
               {t(title)}
             </h2>
           </div>

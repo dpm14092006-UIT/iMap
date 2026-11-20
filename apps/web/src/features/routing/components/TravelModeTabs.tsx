@@ -1,8 +1,8 @@
-import { Icon, type IconName } from '../../../shared/ui/Icon';
-import type { TransportMode } from '../types';
-import type { ModeDurations } from '../hooks/useModeDurations';
 import { formatDurationShort } from '../../../shared/format/units';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
+import { Icon, type IconName } from '../../../shared/ui/Icon';
+import type { ModeDurations } from '../hooks/useModeDurations';
+import type { TransportMode } from '../types';
 
 type TravelModeTabsProps = {
   vehicle: TransportMode;

@@ -1,5 +1,6 @@
 import type { OptimizeRouteRequest } from '@routetwin/shared';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
+import { Select } from '../../../shared/ui/Input';
 
 /** Lựa chọn thuật toán sắp xếp điểm ghé gửi lên POST /api/routes/optimize. */
 export type TourAlgorithmChoice = OptimizeRouteRequest['algorithm'];
@@ -34,10 +35,10 @@ export function TourAlgorithmSelect({ value, onChange, lastUsed }: TourAlgorithm
         {t('Chế độ thuyết trình')}
       </p>
       <label className="block">
-        <span className="mb-1.5 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+        <span className="mb-1.5 block text-[11px] font-semibold text-content-muted">
           {t('Thuật toán sắp xếp')}
         </span>
-        <select
+        <Select
           value={value}
           onChange={(event) => onChange(event.target.value as TourAlgorithmChoice)}
           className="h-10 w-full rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-ink outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100 dark:border-white/10 dark:bg-slate-800/60 dark:text-slate-100"
@@ -47,9 +48,9 @@ export function TourAlgorithmSelect({ value, onChange, lastUsed }: TourAlgorithm
               {t(option.label)}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
-      <p className="mt-1.5 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+      <p className="mt-1.5 text-[11px] leading-4 text-content-subtle">
         {t('Chính xác: Held–Karp luôn ra thứ tự tối ưu. Nhanh: NN + 2-opt, gần đúng — dùng để so sánh.')}
       </p>
       {lastUsed && (

@@ -80,7 +80,7 @@ export function PoiCard({
       >
         <PoiTile poi={poi} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-bold text-ink dark:text-white">{poi.name}</span>
+          <span className="block truncate text-sm font-bold text-content">{poi.name}</span>
           <span className="mt-0.5 block text-xs font-semibold" style={{ color: meta.color }}>
             {t(meta.label)}
           </span>

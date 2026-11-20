@@ -36,13 +36,13 @@ export function AlgorithmComparison({ comparison, canRun }: AlgorithmComparisonP
       </p>
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-[12px] font-bold text-ink dark:text-slate-100">{t('So sánh thuật toán')}</p>
-          <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+          <p className="text-[12px] font-bold text-content">{t('So sánh thuật toán')}</p>
+          <p className="mt-0.5 text-[11px] text-content-subtle">
             {t('Dijkstra & A* trên đồ thị OSM trung tâm TP.HCM')}
           </p>
         </div>
         <div
-          className="flex rounded-lg bg-white dark:bg-slate-800/60 p-0.5 shadow-sm"
+          className="flex rounded-lg bg-surface p-0.5 shadow-sm"
           role="group"
           aria-label={t('Tiêu chí tối ưu')}
         >
@@ -52,7 +52,7 @@ export function AlgorithmComparison({ comparison, canRun }: AlgorithmComparisonP
               type="button"
               aria-pressed={objective === item.id}
               onClick={() => comparison.setObjective(item.id)}
-              className={`rounded-md px-2 py-1 text-[11px] font-semibold transition ${objective === item.id ? 'bg-brand-50 dark:bg-indigo-400/10 text-brand-700 dark:text-indigo-300' : 'text-slate-500 dark:text-slate-400 hover:text-ink dark:hover:text-slate-100'}`}
+              className={`rounded-md px-2 py-1 text-[11px] font-semibold transition ${objective === item.id ? 'bg-brand-50 dark:bg-indigo-400/10 text-brand-700 dark:text-indigo-300' : 'text-content-subtle hover:text-ink dark:hover:text-slate-100'}`}
             >
               {t(item.label)}
             </button>
@@ -64,7 +64,7 @@ export function AlgorithmComparison({ comparison, canRun }: AlgorithmComparisonP
         type="button"
         disabled={!canRun || isLoading}
         onClick={() => void comparison.run()}
-        className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-brand-200 dark:border-indigo-300/25 bg-white dark:bg-slate-800/60 text-[11px] font-bold text-brand-700 dark:text-indigo-300 transition hover:bg-brand-50 dark:hover:bg-white/10 disabled:cursor-not-allowed disabled:border-slate-200 dark:disabled:border-white/10 disabled:text-slate-400 dark:disabled:text-slate-500"
+        className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-brand-200 dark:border-indigo-300/25 bg-surface text-[11px] font-bold text-brand-700 dark:text-indigo-300 transition hover:bg-brand-50 dark:hover:bg-white/10 disabled:cursor-not-allowed disabled:border-slate-200 dark:disabled:border-white/10 disabled:text-slate-400 dark:disabled:text-slate-500"
       >
         {isLoading ? (
           <span
@@ -88,8 +88,8 @@ export function AlgorithmComparison({ comparison, canRun }: AlgorithmComparisonP
 
       {result && (
         <div className="mt-3" aria-live="polite">
-          <table className="w-full text-left text-[11px] text-slate-700 dark:text-slate-200">
-            <thead className="text-slate-500 dark:text-slate-400">
+          <table className="w-full text-left text-[11px] text-content-muted">
+            <thead className="text-content-subtle">
               <tr>
                 <th className="py-1 font-semibold">{t('Thuật toán')}</th>
                 <th className="font-semibold">{t('Quãng đường')}</th>
@@ -100,8 +100,8 @@ export function AlgorithmComparison({ comparison, canRun }: AlgorithmComparisonP
             </thead>
             <tbody>
               {result.runs.map((run) => (
-                <tr key={run.algorithm} className="border-t border-slate-200 dark:border-white/10">
-                  <td className="py-1.5 font-bold text-ink dark:text-slate-100">
+                <tr key={run.algorithm} className="border-t border-line">
+                  <td className="py-1.5 font-bold text-content">
                     <span
                       className={`mr-1.5 inline-block h-2 w-3 rounded-sm align-middle ${run.algorithm === 'astar' ? 'bg-orange-500' : 'bg-violet-500'}`}
                       aria-hidden="true"
@@ -121,7 +121,7 @@ export function AlgorithmComparison({ comparison, canRun }: AlgorithmComparisonP
               {t('A* duyệt ít hơn {saving}% số node, cùng chi phí tối ưu.', { saving })}
             </p>
           )}
-          <p className="mt-2 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-[11px] leading-4 text-content-subtle">
             {t(
               'Điểm được gắn vào đường gần nhất (lệch {from} m / {to} m). *Thời gian ước tính khi đường thông thoáng, chưa tính kẹt xe. Dữ liệu © OpenStreetMap.',
               { from: result.snappedFrom.offsetMeters, to: result.snappedTo.offsetMeters },

@@ -6,3 +6,5 @@ export * from './schemas/route-stops.js';
 export * from './schemas/pathfinding.js';
 export * from './schemas/reroute.js';
 export * from './schemas/route-comparison.js';
+export * from './geo/haversine.js';
+export * from './text/vietnamese.js';

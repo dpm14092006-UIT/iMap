@@ -6,6 +6,7 @@ import type { AlgorithmOverlay, RoutePlan } from '../../routing/types';
 import type { TrafficMapLayer } from '../../traffic/domain/trafficMapLayer';
 import type { DraftStops, MapLayer, MapOverlays } from '../types';
 import { AlgorithmLayer } from './leaflet/AlgorithmLayer';
+import { LifecycleCanvas } from './leaflet/LifecycleCanvas';
 import { BaseLayers } from './leaflet/BaseLayers';
 import { VIETNAM_CENTER } from './leaflet/drawing';
 import { FocusPin } from './leaflet/FocusPin';
@@ -48,6 +49,7 @@ type MapControllerData = {
 export class LeafletMapController {
   private language: Language = 'vi';
   private readonly map: L.Map;
+  private readonly renderer = new LifecycleCanvas();
   private readonly base: BaseLayers;
   private readonly camera: MapCamera;
   private readonly routeLayer: RouteLayer;
@@ -65,10 +67,12 @@ export class LeafletMapController {
   private lastTrafficMapLayer: TrafficMapLayer | null = null;
 
   constructor(container: HTMLElement, handlers: MapControllerHandlers) {
-    this.map = L.map(container, { zoomControl: false, preferCanvas: true, attributionControl: true }).setView(
-      VIETNAM_CENTER,
-      5,
-    );
+    this.map = L.map(container, {
+      zoomControl: false,
+      preferCanvas: true,
+      renderer: this.renderer,
+      attributionControl: true,
+    }).setView(VIETNAM_CENTER, 5);
     // Dock nằm đè góc trái nên ghi công và thước tỉ lệ đặt ở góc dưới phải.
     this.map.attributionControl.setPosition('bottomright');
     L.control.scale({ imperial: false, position: 'bottomright' }).addTo(this.map);
@@ -140,7 +144,10 @@ export class LeafletMapController {
 
     // Chỉ tự zoom vừa tuyến khi có tuyến MỚI, tránh giật bản đồ mỗi lần render.
     if (data.route && (data.route.id !== this.lastRouteId || routeOptionsKey !== this.lastRouteOptionsKey)) {
-      const routes = !data.isNavigating && data.route.kind === 'route' ? data.routeOptions : [data.route];
+      const routes =
+        !data.isNavigating && data.route.kind === 'route' && data.routeOptions.length
+          ? data.routeOptions
+          : [data.route];
       const coordinates = routes.flatMap((route) => route.legs.flatMap((leg) => leg.points));
       if (coordinates.length) this.camera.fit(coordinates);
     }
@@ -198,7 +205,15 @@ export class LeafletMapController {
     this.map.invalidateSize({ pan: false });
   }
   destroy() {
+    this.renderer.dispose();
     this.routeLayer.destroy();
+    // Remove vector paths while their renderer is still alive. Map.remove() may otherwise
+    // remove Canvas first, then schedule a path redraw after Canvas has deleted its context.
+    const paths: L.Path[] = [];
+    this.map.eachLayer((layer) => {
+      if (layer instanceof L.Path) paths.push(layer);
+    });
+    paths.forEach((layer) => layer.remove());
     this.map.remove();
   }
 

@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TrafficReportBounds, TrafficReportDto, TrafficReportInput } from '@routetwin/shared';
-import { trafficApi, trafficPhotos, vietnamBounds } from '../api/trafficApi';
-import { getSupabaseClient } from '../../auth/services/supabaseClient';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { debounce } from '../../../shared/async/debounce';
+import { getSupabaseClient } from '../../auth/services/supabaseClient';
+import { trafficApi, trafficPhotos, vietnamBounds } from '../api/trafficApi';
 import { parseRealtimeReport, type RealtimeTrafficReport } from '../domain/realtimeReport';
 import { canQueryTraffic, containsTrafficBounds, trafficQueryBounds } from '../domain/trafficQueryBounds';
 

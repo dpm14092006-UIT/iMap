@@ -5,6 +5,24 @@ export default {
   theme: {
     extend: {
       colors: {
+        surface: {
+          DEFAULT: 'rgb(var(--surface) / <alpha-value>)',
+          muted: 'rgb(var(--surface-muted) / <alpha-value>)',
+          raised: 'rgb(var(--surface-raised) / <alpha-value>)',
+        },
+        content: {
+          DEFAULT: 'rgb(var(--content) / <alpha-value>)',
+          muted: 'rgb(var(--content-muted) / <alpha-value>)',
+          subtle: 'rgb(var(--content-subtle) / <alpha-value>)',
+        },
+        line: 'rgb(var(--line) / <alpha-value>)',
+        primary: {
+          DEFAULT: 'rgb(var(--primary) / <alpha-value>)',
+          hover: 'rgb(var(--primary-hover) / <alpha-value>)',
+        },
+        'on-primary': 'rgb(var(--on-primary) / <alpha-value>)',
+        focus: 'rgb(var(--focus) / <alpha-value>)',
+        danger: 'rgb(var(--danger) / <alpha-value>)',
         brand: {
           50: '#eef2ff',
           100: '#e0e7ff',

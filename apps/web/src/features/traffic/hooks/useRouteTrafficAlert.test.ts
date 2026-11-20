@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
+import type { RerouteResult } from '@routetwin/shared';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RerouteResult } from '@routetwin/shared';
-import { rerouteApi } from '../../guidance/api/RerouteApiClient';
 import { deferred, routePlan, routeResult } from '../../../testing/fixtures';
+import { rerouteApi } from '../../guidance/api/RerouteApiClient';
 import { REROUTE_DECISION_MS, useRouteTrafficAlert } from './useRouteTrafficAlert';
 
 vi.mock('../../guidance/api/RerouteApiClient', () => ({ rerouteApi: { reroute: vi.fn() } }));

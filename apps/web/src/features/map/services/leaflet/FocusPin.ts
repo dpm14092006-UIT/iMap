@@ -10,7 +10,7 @@ export class FocusPin {
   constructor(private readonly map: L.Map) {}
 
   show(place: Place | null) {
-    const key = place ? `${place.lat},${place.lng}` : '';
+    const key = place ? `${place.id}:${place.lat},${place.lng}:${place.name}` : '';
     if (key === this.lastKey) return;
     this.lastKey = key;
     this.marker?.remove();

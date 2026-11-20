@@ -33,6 +33,7 @@ export class RouteLayer {
   private readonly labels = L.layerGroup();
   private lastLabels: { routes: RoutePlan[]; selected: RoutePlan } | null = null;
   private readonly mobileQuery = window.matchMedia(MOBILE_QUERY);
+  private readonly onZoomEnd = () => this.separateRouteLabels();
   private readonly onMobileChange = () => this.redrawLabels();
 
   constructor(
@@ -41,7 +42,7 @@ export class RouteLayer {
     private readonly onSelectRoute?: (routeId: string) => void,
   ) {
     this.mobileQuery.addEventListener('change', this.onMobileChange);
-    map.on('zoomend', () => this.separateRouteLabels());
+    map.on('zoomend', this.onZoomEnd);
   }
 
   /** Thêm vào bản đồ (thứ tự thêm quyết định lớp nào nằm trên). */
@@ -83,6 +84,8 @@ export class RouteLayer {
 
   destroy() {
     this.mobileQuery.removeEventListener('change', this.onMobileChange);
+    this.map.off('zoomend', this.onZoomEnd);
+    this.clear();
   }
 
   private drawRoute(route: RoutePlan, isNavigating: boolean, showCongestion = false) {

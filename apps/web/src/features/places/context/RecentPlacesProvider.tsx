@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from 'react';
 import { useAuth } from '../../auth/context/AuthProvider';
-import type { Place } from '../types';
 import {
   applyRecentPlaceEdit,
   emptyRecentPlaces,
@@ -26,6 +25,7 @@ import {
   RecentPlacesRepository,
   writeCachedRecentPlaces,
 } from '../services/recentPlacesStore';
+import type { Place } from '../types';
 
 type RecentPlacesContextValue = {
   /** Chỉ có khi đã đăng nhập bằng tài khoản thật. */

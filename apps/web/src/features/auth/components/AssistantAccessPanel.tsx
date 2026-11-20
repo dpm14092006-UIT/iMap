@@ -12,7 +12,7 @@ export function AssistantAccessPanel({ loading, onClose }: { loading: boolean; o
       onClose={onClose}
     >
       {loading ? (
-        <p role="status" className="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+        <p role="status" className="py-6 text-center text-xs text-content-subtle">
           {t('Đang kiểm tra tài khoản…')}
         </p>
       ) : (
@@ -20,13 +20,13 @@ export function AssistantAccessPanel({ loading, onClose }: { loading: boolean; o
           <div className="mb-4 grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 dark:bg-indigo-400/10 text-brand-600 dark:text-indigo-300">
             <Icon name="sparkles" size={23} />
           </div>
-          <h2 className="text-lg font-bold tracking-tight text-ink dark:text-slate-100">
+          <h2 className="text-lg font-bold tracking-tight text-content">
             {t('Đăng nhập để dùng trợ lý AI')}
           </h2>
-          <p className="mt-2 text-xs leading-6 text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-xs leading-6 text-content-subtle">
             {t('Tạo tài khoản và đăng nhập để mở các tính năng dành cho thành viên.')}
           </p>
-          <ul className="my-5 space-y-3 text-xs text-slate-600 dark:text-slate-300">
+          <ul className="my-5 space-y-3 text-xs text-content-muted">
             {[t('Tìm địa điểm theo nhu cầu bằng AI'), t('Gợi ý điểm dừng dọc tuyến đang đi')].map((label) => (
               <li key={label} className="flex items-center gap-2">
                 <Icon name="check" size={15} className="shrink-0 text-brand-600 dark:text-indigo-300" />
@@ -40,7 +40,7 @@ export function AssistantAccessPanel({ loading, onClose }: { loading: boolean; o
           >
             {t('Đăng nhập / Đăng ký')}
           </a>
-          <p className="mt-4 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
+          <p className="mt-4 text-[11px] leading-5 text-content-subtle">
             {t('Bạn vẫn có thể xem bản đồ, tìm địa chỉ và chỉ đường mà không cần tài khoản.')}
           </p>
         </div>

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
-import type { RouteObjective, RoutePlan, TransportMode } from '../types';
 import type { Place } from '../../places/types';
 import type { DirectionsComparison, RouteApiClient } from '../api/RouteApiClient';
+import type { RouteObjective, RoutePlan, TransportMode } from '../types';
 
 type UseDirectionsOptions = {
   routeApi: RouteApiClient;

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Popover } from '../../../shared/ui/Popover';
-import { Icon } from '../../../shared/ui/Icon';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
+import { Icon } from '../../../shared/ui/Icon';
+import { Input } from '../../../shared/ui/Input';
+import { Popover } from '../../../shared/ui/Popover';
 
 type DepartureMode = 'now' | 'depart' | 'arrive';
 
@@ -90,7 +91,7 @@ export function DepartureSelect({ durationMin }: DepartureSelectProps) {
         {mode !== 'now' && (
           <label className="mt-2 block text-[11px] font-semibold text-ink-soft dark:text-slate-300">
             {t('Giờ')}
-            <input
+            <Input
               type="time"
               value={time}
               onChange={(event) => event.target.value && setTime(event.target.value)}

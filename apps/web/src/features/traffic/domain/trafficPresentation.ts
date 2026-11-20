@@ -1,6 +1,8 @@
 import type { TrafficReportDto } from '@routetwin/shared';
-import { toTrafficMapLayer, type TrafficMapLayer } from './trafficMapLayer';
 import type { DemoIncident, IncidentKind } from '../types';
+import { toTrafficMapLayer, type TrafficMapLayer } from './trafficMapLayer';
+import type { TrafficImageAnalysisDto } from '@routetwin/shared';
+import type { IncidentSeverity, TrafficVehicleScope } from '../types';
 
 /** Tên hiển thị của từng loại sự cố (dùng chung cho panel, popup bản đồ). */
 export const incidentLabels: Record<IncidentKind, string> = {
@@ -51,3 +53,30 @@ export function toReportsMapLayer(reports: TrafficReportDto[]): TrafficMapLayer 
     })),
   );
 }
+export const severityOptions: { id: IncidentSeverity; label: string; color: string }[] = [
+  { id: 'low', label: 'Nhẹ', color: 'bg-emerald-500' },
+  { id: 'medium', label: 'Vừa', color: 'bg-amber-500' },
+  { id: 'high', label: 'Nặng', color: 'bg-red-500' },
+];
+export const vehicleScopeLabels: Record<TrafficVehicleScope, string> = {
+  motorcycle: 'Xe máy',
+  car: 'Ô tô',
+  both: 'Cả hai',
+};
+export const incidentOptions: {
+  id: IncidentKind;
+  label: string;
+  icon: 'traffic' | 'car' | 'road' | 'globe' | 'close-circle' | 'layers';
+}[] = [
+  { id: 'traffic_jam', label: incidentLabels.traffic_jam, icon: 'traffic' },
+  { id: 'accident', label: incidentLabels.accident, icon: 'car' },
+  { id: 'construction', label: incidentLabels.construction, icon: 'road' },
+  { id: 'flood', label: incidentLabels.flood, icon: 'globe' },
+  { id: 'road_closure', label: incidentLabels.road_closure, icon: 'close-circle' },
+  { id: 'obstacle', label: incidentLabels.obstacle, icon: 'layers' },
+];
+export const confidenceLabels: Record<TrafficImageAnalysisDto['confidence'], string> = {
+  high: 'cao',
+  medium: 'vừa',
+  low: 'thấp',
+};

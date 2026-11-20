@@ -1,6 +1,6 @@
 import type { CongestionLevel, RouteCongestion } from '@routetwin/shared';
-import type { Coordinate } from '../../../shared/geo/types';
 import { segmentLengthMeters } from '../../../shared/geo/polyline';
+import type { Coordinate } from '../../../shared/geo/types';
 import type { RoutePlan } from '../../routing/types';
 
 /** Một đoạn polyline cùng mức ùn tắc, sẵn sàng để vẽ. */

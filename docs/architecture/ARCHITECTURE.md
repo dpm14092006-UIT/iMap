@@ -11,13 +11,14 @@ Phụ thuộc chỉ đi **vào trong**; ESLint (`no-restricted-imports` trong `e
 | API `modules/*/domain` | `@routetwin/shared`, `shared` | application, infrastructure, presentation, `express` |
 | API `modules/*/infrastructure` | port + domain để cài đặt | presentation |
 | API `shared` | — | `modules` |
-| API `composition-root.ts` | mọi implementation | — |
+| API `compositionRoot.ts` | mọi implementation | — |
 | Web `app` | features, `shared` | — |
 | Web `features/*` | feature khác (kiểu, service), `shared` | `app` |
-| Web `features/*/domain` | `shared/geo`, kiểu của feature | React, `components`, `hooks`, `api` |
+| Web `features/*/domain` | `shared/geo`, kiểu của feature | React, `components`, `hooks`, `api`, `services` |
+| Web `features/*/{api,services}` | domain, types, shared | React, components, hooks, app |
 | Web `shared` | — | `features`, `app` |
 
-`Controller` không viết SQL và không gọi trực tiếp VietMap. `UseCase` chỉ gọi interface (port). Implementation cụ thể chỉ xuất hiện ở `composition-root.ts`.
+`Controller` không viết SQL và không gọi trực tiếp VietMap. `UseCase` chỉ gọi interface (port). Implementation cụ thể chỉ xuất hiện ở `compositionRoot.ts`.
 
 ```mermaid
 flowchart TB
@@ -41,7 +42,7 @@ flowchart TB
 - **Repository**: `TrafficReportRepository` → `SupabaseTrafficReportRepository`; `SavedRouteRepository` → `LocalStorageSavedRouteRepository` (web).
 - **Adapter**: `PlaceSearchProvider` → `VietmapPlaceSearchProvider`; `RouteProvider` → `VietmapRouteProvider`; `TrafficImageAnalyzer` → `GeminiTrafficImageAnalyzer`; `RouteComparisonSnapshots` → `SignedRouteComparison`; `FeatureQuota` → `SupabaseUserFeatureQuota`.
 - **Strategy**: `OptimizationStrategy` (`ExactTourStrategy` Held–Karp / `TwoOptStrategy` NN + 2-opt); `ShortestPathSolver` (`DijkstraSolver` / `AStarSolver` trên khung `GraphSearchSolver`).
-- **Dependency Injection bằng constructor**, wiring tại `composition-root.ts`.
+- **Dependency Injection bằng constructor**, wiring tại `compositionRoot.ts`.
 - **DTO + Zod** (`packages/shared/src/schemas`): đầu vào HTTP được kiểm tra ở biên, không phải domain entity.
 
 ## Cấu trúc thư mục
@@ -49,9 +50,9 @@ flowchart TB
 ```text
 apps/api/src/
   app.ts                  # entry Vercel: export default createApp()
-  create-app.ts           # factory Express (header, CORS, router, lỗi)
+  createApp.ts           # factory Express (header, CORS, router, lỗi)
   main.ts                 # chạy local: createApp().listen()
-  composition-root.ts     # nơi duy nhất biết implementation cụ thể
+  compositionRoot.ts     # nơi duy nhất biết implementation cụ thể
   config/                 # env đã kiểm tra bằng Zod
   modules/<feature>/
     domain/               # thuật toán, quy tắc thuần (+ port domain sở hữu)
@@ -64,18 +65,22 @@ apps/api/src/
 apps/web/src/
   app/
     App.tsx               # chỉ lắp ghép bản đồ, panel và các hook điều phối
-    hooks/                # điều phối nhiều feature (dẫn đường + giao thông, POI, tuyến đã lưu…)
-    components/ layout/   # khung ứng dụng, thanh trên, dock
+    flows/                # workspace/, guidance/, traffic/, routes/, explore/
+    shell/                # khung ứng dụng, thanh trên, dock
+    styles/               # CSS bố cục shell
     lazyPanels.ts types.ts
   features/<feature>/
     components/ hooks/ api/ services/
-    domain/               # chỉ khi có nghiệp vụ độc lập UI (navigation)
+    domain/               # logic/danh mục thuần; không React hoặc I/O
     types.ts              # model mà feature sở hữu
   shared/
-    ui/                   # SheetPanel, Popover, Icon, shell context
+    ui/                   # Button, Input/Select/Textarea, SheetPanel, Popover, Icon
+    styles/               # token màu, nền, trạng thái control
     geo/                  # types, distance, polyline: primitive hình học duy nhất
     format/ async/ api/ i18n/ hooks/ text/
-packages/shared/src/schemas/   # DTO + validation dùng chung web/API
+packages/shared/src/
+  schemas/                # DTO + Zod validation
+  geo/ text/              # haversine và xử lý dấu tiếng Việt dùng chung
 ```
 
 ### Model thuộc về đâu (web)
@@ -83,10 +88,10 @@ packages/shared/src/schemas/   # DTO + validation dùng chung web/API
 | Kiểu | Chủ sở hữu |
 | --- | --- |
 | `LatLng`, `Coordinate`, `Bounds` | `shared/geo/types.ts` |
-| `RoutePlan`, `RouteLeg`, `TransportMode`, `RouteObjective`, `AlgorithmOverlay` | `features/navigation/types.ts` |
+| `RoutePlan`, `RouteLeg`, `TransportMode`, `RouteObjective`, `AlgorithmOverlay` | `features/routing/types.ts` |
 | `MapLayer`, `DraftStops`, `MapOverlays` | `features/map/types.ts` |
 | `Place`, `PlaceSource` | `features/places/types.ts` |
-| `IncidentKind`, `DemoIncident`, `TrafficMapLayer` | `features/traffic/types.ts`, `features/traffic/services/trafficMapLayer.ts` |
+| `IncidentKind`, `DemoIncident`, `TrafficMapLayer` | `features/traffic/types.ts`, `features/traffic/domain/trafficMapLayer.ts` |
 | `FeatureKey` (panel đang mở) | `app/types.ts` |
 
 ## Phía web (`apps/web/src`)
@@ -95,12 +100,12 @@ packages/shared/src/schemas/   # DTO + validation dùng chung web/API
 | --- | --- | --- |
 | Truyền tải | `HttpClient`, `ApiError`, `timeoutSignal` | Gọi HTTP duy nhất: bóc phong bì `{ data }`, timeout cả lúc đọc body, lỗi tiếng Việt |
 | API client | `PlaceApiClient`, `TrafficApiClient`, `RouteApiClient`, … | Mỗi module backend một client, nhận `HttpClient` qua constructor |
-| Lưu trữ | `SavedRouteRepository` ← `LocalStorageSavedRouteRepository`; `RecentPlacesRepository` | Ẩn nơi lưu; đổi cài đặt không sửa hook |
+| Lưu trữ | `SavedRouteRepository` ← `LocalStorageSavedRouteRepository`; `recentPlacesStore` | Ẩn nơi lưu; đổi cài đặt không sửa hook |
 | Hình học | `shared/geo/distance.ts`, `shared/geo/polyline.ts` | Haversine, xấp xỉ phẳng, hướng, chiếu điểm lên đoạn/đường gấp khúc — mọi feature dùng chung |
 | Miền dẫn đường | `RoutePath`, `NavigationGuidanceEngine`, `IncidentAheadDetector`, `SpeedEstimator` | Tiến độ, lệch tuyến, sự cố phía trước; có test, không biết React |
 | Bất đồng bộ | `RequestSequence` (theo kênh), `RequestGeneration` (một luồng), `debounce`, `whenIdle` | Bỏ kết quả cũ về muộn, gom tải lại |
 | Bản đồ | `LeafletMapController` | Adapter bọc Leaflet; React chỉ gọi method public |
-| Điều phối | `app/hooks/use*` | Mỗi hook một luồng nghiệp vụ nhiều feature; `App.tsx` chỉ lắp ghép |
+| Điều phối | `app/flows/*/use*` | Mỗi hook một luồng nghiệp vụ nhiều feature; `App.tsx` chỉ lắp ghép |
 
 Quy tắc: component không gọi `fetch` hay `localStorage` trực tiếp; hook nhận lớp qua tham số (mặc định là bản dùng chung) để thay bằng bản giả khi test.
 
@@ -112,11 +117,30 @@ Hạ tầng dùng chung ở `shared/http`: `SessionAuthenticator` (xác thực),
 
 ## Hợp đồng module UI
 
-N1 không truy cập DB traffic trực tiếp; N2 không sửa `MapView.tsx` trực tiếp. N2 cung cấp `useTrafficReports` và `TrafficReportPanel`; N1 render `TrafficMapLayer` (`features/traffic/services/trafficMapLayer.ts`) qua interface chung.
+N1 không truy cập DB traffic trực tiếp; N2 không sửa `MapView.tsx` trực tiếp. N2 cung cấp `useTrafficReports` và `TrafficReportPanel`; N1 render `TrafficMapLayer` (`features/traffic/domain/trafficMapLayer.ts`) qua interface chung.
 
 ## Ghi chú GPS và routing
 
 - Dijkstra/A* là **thuật toán đồ thị riêng** trên OSM một khu vực giới hạn (`/api/routes/pathfinding`), khác kết quả route từ VietMap; dùng ở chế độ thuyết trình để so sánh.
 - VietMap Route v4 tính đường theo hình học và hướng dẫn rẽ; VietMap Matrix cấp ma trận chi phí cho tối ưu nhiều điểm.
 - Tối ưu ghé nhiều điểm là bài toán TSP path/cycle tùy điểm đầu/cuối, ma trận có thể bất đối xứng: Held–Karp chính xác khi ít điểm, NN + 2-opt khi nhiều điểm (`algorithm: 'auto'`).
-- Gemini có thể gợi ý loại/mức độ sự cố hoặc nội dung biển báo từ ảnh ngay trong form báo cáo. Tính năng mặc định tắt; người dùng phải xem lại và tự gửi, không tự xác nhận sự cố hay sửa tuyến.
+- Gemini có thể gợi ý loại sự cố và ghi chú hoặc nội dung biển báo từ ảnh ngay trong form báo cáo. Tính năng mặc định tắt; người dùng phải xem lại và tự gửi, không tự xác nhận sự cố hay sửa tuyến.
+
+
+## Ranh giới feature và vòng đời web
+
+`routing` sở hữu `RoutePlan`, phương án, chia sẻ và form chỉ đường. `guidance` sở hữu `NavigationStatus`, `RoutePath`, GPS, âm thanh và tiến độ dẫn đường. `algorithm-lab` chỉ phục vụ so sánh Dijkstra/A*. Các hook nối nhiều feature đặt ở `app/flows`, không import ngược `app` từ feature.
+
+`LeafletMapController` là Facade điều phối `BaseLayers`, `MapCamera`, `RouteLayer`, `TrafficLayers`, `PoiLayer`, `LocationLayer`, `FocusPin`, `AlgorithmLayer`. Các lớp sở hữu nhóm layer của mình; `destroy()` gỡ listener và map. Khi không có phương án phụ, tuyến chính vẫn được fit. Chuỗi không tin cậy trong tooltip/popup dùng text node.
+
+Các panel chia form, bộ lọc và kết quả thành component riêng; hook sở hữu state và request. Kết quả tìm kiếm/AI phải bị huỷ khi đổi token, điểm hoặc ảnh. Tối ưu hành trình dùng `RequestGeneration` để kết quả trước reset/đổi tuỳ chọn/unmount không phục hồi dữ liệu cũ.
+
+Công thức haversine ở `packages/shared/src/geo/haversine.ts`; API dùng bán kính trung bình 6.371.008,8 m, wrapper web giữ bán kính lịch sử 6.371.000 m để kết quả hình học không thay đổi. `stripDiacritics` giữ hoa/thường; `foldVietnamese` tạo khoá tìm kiếm viết thường và trim. Không sao chép lại công thức vào feature.
+
+## Giao diện và kiểm tra
+
+Quy ước token và control ở [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md). `app/styles.css` chỉ nhập CSS theo phạm vi và các lớp Tailwind; không dùng selector dò chuỗi `class` để ép màu tối.
+
+`npm run verify -- --shuffle=1` chạy format, lint ranh giới, typecheck, audit export/props, unit test API/web/shared, xáo trộn thứ tự và build production. `npm run test:browser` mở Vite riêng và chạy Chromium với Leaflet thật trên desktop/mobile, fixture API/tile; không sử dụng provider trả phí. Cài browser bằng `npx playwright install chromium` (Linux CI dùng `--with-deps`). Biến `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` cho phép dùng browser đã có; `IMAP_BROWSER_ARTIFACTS` chỉ định thư mục screenshot tuỳ chọn.
+
+Test browser không thay thế xác minh GPS/âm thanh trên thiết bị, Supabase RLS, provider thật hoặc giao nhận Web Push. Không ghi các giới hạn đó thành kết quả đã đạt.

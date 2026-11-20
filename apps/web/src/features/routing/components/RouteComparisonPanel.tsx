@@ -2,6 +2,7 @@ import type { CompareRoutesRequest, RouteComparisonResult, RoutePreferenceGoal }
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ApiError } from '../../../shared/api/ApiError';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
+import { Input } from '../../../shared/ui/Input';
 import { useAuth } from '../../auth/context/AuthProvider';
 import type { DirectionsComparison, RouteApiClient } from '../api/RouteApiClient';
 
@@ -96,12 +97,12 @@ export function RouteComparisonPanel({
 
   return (
     <details className="mb-3 rounded-2xl border border-slate-200 bg-white/60 px-3 py-2 text-xs dark:border-white/15 dark:bg-white/5">
-      <summary className="cursor-pointer py-1 text-sm font-bold text-ink dark:text-white">
+      <summary className="cursor-pointer py-1 text-sm font-bold text-content">
         {t('So sánh và giải thích tuyến')}
       </summary>
       <div className="mt-2 space-y-3">
         <table className="w-full text-right tabular-nums">
-          <thead className="text-slate-600 dark:text-slate-300">
+          <thead className="text-content-muted">
             <tr>
               <th scope="col" className="pb-1 text-left">
                 {t('Tuyến')}
@@ -119,7 +120,7 @@ export function RouteComparisonPanel({
           </thead>
           <tbody>
             {snapshot.routes.map((route) => (
-              <tr key={route.id} className="border-t border-slate-200 dark:border-white/10">
+              <tr key={route.id} className="border-t border-line">
                 <th scope="row" className="py-1.5 text-left">
                   {route.id}
                 </th>
@@ -146,7 +147,7 @@ export function RouteComparisonPanel({
         <form onSubmit={submitText} className="space-y-1.5">
           <label className="block font-semibold">
             {t('Nhập ưu tiên của bạn')}
-            <input
+            <Input
               className="mt-1 block min-h-10 w-full rounded-lg border border-slate-300 bg-white px-2 text-base text-ink dark:border-white/20 dark:bg-slate-900 dark:text-white"
               value={text}
               maxLength={240}
@@ -155,12 +156,12 @@ export function RouteComparisonPanel({
             />
           </label>
           {canUseAi && (
-            <p className="text-slate-600 dark:text-slate-300">
+            <p className="text-content-muted">
               {t('Câu nhập được gửi tới dịch vụ AI. Tránh nhập thông tin cá nhân.')}
             </p>
           )}
           {snapshot.aiAvailable && !canUseAi && (
-            <p className="text-slate-600 dark:text-slate-300">
+            <p className="text-content-muted">
               {t('Đăng nhập để AI đọc ưu tiên. Khách dùng quy tắc có sẵn.')}
             </p>
           )}
@@ -195,7 +196,7 @@ export function RouteComparisonPanel({
               )}
               {result.evidence.length > 0 && result.recommendedId !== result.baselineId && (
                 <p>
-                  {t('So với tuyến nhanh nhất {route}', { route: result.baselineId })}{' '}
+                  {t('So với tuyến nhanh nhất {route}', { route: result.baselineId })}
                   {result.evidence
                     .map(
                       ({ id, delta }) =>
@@ -206,7 +207,7 @@ export function RouteComparisonPanel({
                     .join(' · ')}
                 </p>
               )}
-              <p className="text-slate-600 dark:text-slate-300">
+              <p className="text-content-muted">
                 {t(
                   result.source === 'ai'
                     ? 'AI đọc ưu tiên. Số liệu từ VietMap.'

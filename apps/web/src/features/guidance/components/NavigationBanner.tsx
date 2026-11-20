@@ -246,7 +246,7 @@ export function NavigationBanner({
             type="button"
             onClick={offRoute ? onRecalculate : onRetry}
             disabled={offRoute ? !canRecalculate || isRecalculating : false}
-            className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-white dark:bg-slate-800/60 px-3 text-xs font-bold text-indigo-900 dark:text-indigo-200 transition hover:bg-indigo-50 dark:hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-300 disabled:bg-white/40 dark:disabled:bg-slate-800/30"
+            className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-surface px-3 text-xs font-bold text-indigo-900 dark:text-indigo-200 transition hover:bg-indigo-50 dark:hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-300 disabled:bg-white/40 dark:disabled:bg-slate-800/30"
           >
             {isRecalculating ? (
               <span

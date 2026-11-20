@@ -40,7 +40,7 @@ curl http://localhost:4000/api/health
 
 - **N1 – Navigation & Optimization**: `apps/web/src/features/map|places|navigation|multi-stop|my-routes`, `apps/api/src/modules/places|navigation|optimization|my-routes`, thuật toán và graph OSM. Sở hữu `MapView`.
 - **N2 – Traffic & Data**: `apps/web/src/features/traffic|auth`, `apps/api/src/modules/traffic|auth`, `supabase/`, API middleware, migrations/RLS/Realtime.
-- **Cả hai**: `packages/shared`, `.github`, `docs/`, `apps/api/src/composition-root.ts` và hợp đồng `TrafficMapLayer`. Mọi thay đổi shared phải qua PR review.
+- **Cả hai**: `packages/shared`, `.github`, `docs/`, `apps/api/src/compositionRoot.ts` và hợp đồng `TrafficMapLayer`. Mọi thay đổi shared phải qua PR review.
 
 ## Cấu trúc OOP
 
@@ -50,7 +50,7 @@ Backend **feature-first + Clean Architecture**:
 - **application**: use cases, port (interface) cho repositories/providers; chỉ phụ thuộc domain/ports.
 - **infrastructure**: triển khai ports bằng Vietmap, OSM và Supabase.
 - **presentation**: Express controller/route + schema validation.
-- **composition-root.ts**: nơi tạo object và inject dependencies vào constructor.
+- **compositionRoot.ts**: nơi tạo object và inject dependencies vào constructor.
 
 Đường đi request: `Route -> Controller -> UseCase -> Interface (port) -> Adapter`. Domain không biết API key, HTTP hay SQL.
 

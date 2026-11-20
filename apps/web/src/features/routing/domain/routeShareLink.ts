@@ -1,6 +1,6 @@
-import type { RouteObjective, TransportMode } from '../types';
 import { formatCoordinates } from '../../places/domain/pointPlace';
 import type { Place } from '../../places/types';
+import type { RouteObjective, TransportMode } from '../types';
 
 export type SharedRoute = {
   origin: Place;

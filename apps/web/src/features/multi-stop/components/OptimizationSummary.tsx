@@ -1,7 +1,7 @@
-import type { RouteOptimization } from '../../routing/types';
 import { formatDistanceMeters, formatDurationMinutes } from '../../../shared/format/units';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import { type Language } from '../../../shared/i18n/translate';
+import type { RouteOptimization } from '../../routing/types';
 
 /** Đổi chi phí ma trận (giây hoặc mét) sang chữ dễ đọc. */
 function formatCost(cost: number, objective: RouteOptimization['objective'], language: Language): string {
@@ -30,7 +30,7 @@ export function OptimizationSummary({ optimization }: { optimization: RouteOptim
     originalCost !== null && originalCost > 0 ? Math.round(100 * (1 - optimizedCost / originalCost)) : null;
 
   return (
-    <div className="mt-2 rounded-lg bg-white/80 dark:bg-slate-800/60 px-2.5 py-2 text-[11px] leading-4 text-slate-600 dark:text-slate-300">
+    <div className="mt-2 rounded-lg bg-white/80 dark:bg-slate-800/60 px-2.5 py-2 text-[11px] leading-4 text-content-muted">
       {saving === null ? (
         <p>
           {t('Thứ tự bạn nhập không đi được; đã tìm thứ tự hợp lệ ({cost}).', {

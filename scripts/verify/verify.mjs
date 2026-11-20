@@ -96,6 +96,7 @@ const rounds = [
     id: 'test',
     title: 'Vòng 4 · Unit test',
     steps: () => [
+      run('vitest shared', bin('vitest'), ['run'], join(root, 'packages/shared')),
       run('vitest api', bin('vitest'), ['run'], join(root, 'apps/api')),
       run('vitest web', bin('vitest'), ['run'], join(root, 'apps/web')),
     ],
@@ -106,12 +107,12 @@ const rounds = [
     steps: () =>
       Array.from({ length: shuffleRounds }, (_, index) => {
         const seed = String(1000 + index * 7919);
-        return ['api', 'web'].map((app) =>
+        return ['api', 'web', 'shared'].map((app) =>
           run(
             `vitest ${app} --sequence.shuffle seed=${seed}`,
             bin('vitest'),
             ['run', '--sequence.shuffle', `--sequence.seed=${seed}`],
-            join(root, `apps/${app}`),
+            join(root, app === 'shared' ? 'packages/shared' : `apps/${app}`),
           ),
         );
       }).flat(),

@@ -106,18 +106,18 @@ function RouteIllustration() {
           </linearGradient>
         </defs>
       </svg>
-      <div className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 dark:border-white/10 dark:bg-slate-900/90 px-3 py-2 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+      <div className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 dark:border-white/10 dark:bg-slate-900/90 px-3 py-2 text-[11px] font-medium text-content-muted">
         <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
         {t('Mỗi hành trình, một kết nối.')}
       </div>
       <div className="absolute bottom-9 left-8 right-8">
-        <span className="mb-4 grid h-10 w-10 place-items-center rounded-2xl bg-white dark:bg-slate-800 text-brand-600 dark:text-indigo-300">
+        <span className="mb-4 grid h-10 w-10 place-items-center rounded-2xl bg-surface text-brand-600 dark:text-indigo-300">
           <Icon name="route" size={22} />
         </span>
-        <p className="max-w-[260px] text-[29px] font-semibold leading-tight tracking-[-.04em] text-ink dark:text-slate-100">
+        <p className="max-w-[260px] text-[29px] font-semibold leading-tight tracking-[-.04em] text-content">
           {t('Đi đâu tiếp theo?')}
         </p>
-        <p className="mt-3 max-w-[250px] text-[13px] leading-6 text-slate-500 dark:text-slate-400">
+        <p className="mt-3 max-w-[250px] text-[13px] leading-6 text-content-subtle">
           {t('Tìm đường, lưu hành trình và cập nhật giao thông cùng cộng đồng iMap.')}
         </p>
       </div>
@@ -170,7 +170,7 @@ export function AuthPage() {
               </select>
               <a
                 href="/"
-                className="inline-flex items-center gap-2 rounded-lg px-2 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 transition hover:text-brand-700 dark:hover:text-indigo-300"
+                className="inline-flex items-center gap-2 rounded-lg px-2 py-2 text-xs font-medium text-content-subtle transition hover:text-brand-700 dark:hover:text-indigo-300"
               >
                 <span aria-hidden="true">←</span> {t('Về bản đồ')}
               </a>
@@ -185,7 +185,7 @@ export function AuthPage() {
                 <AccountForm showHeading />
                 <a
                   href="/"
-                  className="mt-6 flex min-h-10 items-center justify-center gap-1.5 rounded-lg text-xs font-medium text-slate-500 dark:text-slate-400 transition hover:text-brand-700 dark:hover:text-indigo-300"
+                  className="mt-6 flex min-h-10 items-center justify-center gap-1.5 rounded-lg text-xs font-medium text-content-subtle transition hover:text-brand-700 dark:hover:text-indigo-300"
                 >
                   {t('Khám phá bản đồ trước')}
                   <Icon name="arrow-up-right" size={14} />

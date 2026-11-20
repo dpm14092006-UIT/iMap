@@ -1,3 +1,4 @@
+import { haversineMeters as sharedHaversineMeters } from '@routetwin/shared';
 import type { LatLng } from './types';
 
 /** Số mét trên một độ vĩ độ (gần như không đổi trên toàn cầu). */
@@ -13,12 +14,8 @@ export function metersPerDegreeLng(lat: number): number {
 
 /** Khoảng cách đường chim bay chính xác trên mặt cầu (haversine), mét. */
 export function haversineMeters(a: LatLng, b: LatLng): number {
-  const latDelta = toRadians(b.lat - a.lat);
-  const lngDelta = toRadians(b.lng - a.lng);
-  const haversine =
-    Math.sin(latDelta / 2) ** 2 +
-    Math.cos(toRadians(a.lat)) * Math.cos(toRadians(b.lat)) * Math.sin(lngDelta / 2) ** 2;
-  return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(Math.min(1, haversine)));
+  // Keep the historical web radius so stored/demo geometry retains its exact distances.
+  return sharedHaversineMeters(a, b, EARTH_RADIUS_METERS);
 }
 
 /**

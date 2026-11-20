@@ -1,5 +1,6 @@
 /** English translations for user-facing Vietnamese copy. Unlisted strings remain Vietnamese. */
 export const en: Record<string, string> = {
+  'Tính năng phân tích ảnh hiện chưa khả dụng.': 'Image analysis is currently unavailable.',
   'Nhập nhu cầu': 'Type a request',
   'Nhu cầu của bạn': 'Your request',
   'Nhập nhu cầu rồi bấm Tìm. Trợ lý sẽ hỏi lại nếu yêu cầu chưa rõ.':

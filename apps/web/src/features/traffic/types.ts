@@ -22,3 +22,24 @@ export type DemoIncident = {
   communityReporterCount?: number;
   communityUpdatedAt?: string;
 };
+
+export type TrafficReportPanelProps = {
+  incidents: DemoIncident[];
+  selectedPoint: { lat: number; lng: number } | null;
+  isAuthenticated: boolean;
+  accessToken: string | null;
+  defaultVehicle: Exclude<TrafficVehicleScope, 'both'>;
+  loading: boolean;
+  error: string;
+  onClose: () => void;
+  onSignIn: () => void;
+  onReport: (
+    type: IncidentKind,
+    severity: IncidentSeverity,
+    vehicleScope: TrafficVehicleScope,
+    point: { lat: number; lng: number },
+    note: string,
+    photo: File | null,
+  ) => Promise<void>;
+  onClearance: (id: string, state: 'clear' | 'still_active') => Promise<void>;
+};

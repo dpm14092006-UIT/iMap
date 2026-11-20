@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { SignedUrlCache } from './SignedUrlCache';
 import { deferred } from '../../../testing/fixtures';
+import { SignedUrlCache } from './SignedUrlCache';
 
 describe('SignedUrlCache (review #18)', () => {
   it.each(['empty', 'error'] as const)(

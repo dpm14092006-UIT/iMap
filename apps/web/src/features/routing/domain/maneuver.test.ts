@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
 import type { RouteInstruction } from '@routetwin/shared';
+import { describe, expect, it } from 'vitest';
 import { formatInstructionText } from './maneuver';
 
 const instruction = (sign: number, streetName = ''): RouteInstruction => ({

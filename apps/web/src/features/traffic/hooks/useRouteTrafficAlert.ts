@@ -1,13 +1,13 @@
 import type { RerouteStrategy } from '@routetwin/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { RoutePlan } from '../../routing/types';
+import type { LatLng } from '../../../shared/geo/types';
 import { rerouteApi } from '../../guidance/api/RerouteApiClient';
-import { routePlanFromResult } from '../../routing/api/RouteApiClient';
+import { playAlertFeedback, showLocalSystemNotification } from '../../notifications/services/alertFeedback';
 import { basicPlaceFromPoint } from '../../places/domain/pointPlace';
+import { routePlanFromResult } from '../../routing/api/RouteApiClient';
+import type { RoutePlan } from '../../routing/types';
 import { RerouteOfferMemory } from '../domain/RerouteOfferMemory';
 import { routeHazardSection } from '../domain/routeTraffic';
-import type { LatLng } from '../../../shared/geo/types';
-import { playAlertFeedback, showLocalSystemNotification } from '../../notifications/services/alertFeedback';
 
 /** Sự cố trên tuyến cần cảnh báo (từ Realtime, Web Push hoặc phát hiện phía trước khi dẫn đường). */
 export type RouteAlertIncident = LatLng & {

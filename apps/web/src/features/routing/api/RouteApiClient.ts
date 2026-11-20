@@ -9,8 +9,8 @@ import type {
 import { ApiError } from '../../../shared/api/ApiError';
 import type { HttpClient, RequestOptions } from '../../../shared/api/HttpClient';
 import { httpClient } from '../../../shared/api/HttpClient';
-import type { RouteObjective, RoutePlan, TransportMode } from '../types';
 import type { Place } from '../../places/types';
+import type { RouteObjective, RoutePlan, TransportMode } from '../types';
 
 /** Kết quả gọi API tuyến đường: tuyến hợp lệ hoặc thông báo lỗi để hiển thị cho người dùng. */
 export type RoutePlanResult = RoutePlan | { error: string };

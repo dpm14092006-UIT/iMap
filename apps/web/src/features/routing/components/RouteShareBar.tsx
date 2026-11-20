@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Popover } from '../../../shared/ui/Popover';
-import { Icon, type IconName } from '../../../shared/ui/Icon';
-import { buildRouteShareUrl, type SharedRoute } from '../domain/routeShareLink';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
+import { Button } from '../../../shared/ui/Button';
+import { Icon, type IconName } from '../../../shared/ui/Icon';
+import { Input } from '../../../shared/ui/Input';
+import { Popover } from '../../../shared/ui/Popover';
+import { buildRouteShareUrl, type SharedRoute } from '../domain/routeShareLink';
 
 type RouteShareBarProps = { route: SharedRoute };
 
@@ -63,27 +65,27 @@ export function RouteShareBar({ route }: RouteShareBarProps) {
             </button>
           }
         >
-          <p className="text-xs font-bold text-ink dark:text-white">{t('Mở tuyến này trên điện thoại')}</p>
+          <p className="text-xs font-bold text-content">{t('Mở tuyến này trên điện thoại')}</p>
           <p className="mt-1 text-xs leading-5 text-ink-soft dark:text-slate-300">
             {t(
               'Sao chép liên kết dưới đây rồi gửi cho chính bạn qua Zalo, Messenger hoặc email, sau đó mở trên điện thoại.',
             )}
           </p>
-          <input
+          <Input
             readOnly
             value={link()}
             aria-label={t('Liên kết tuyến đường')}
             onFocus={(event) => event.target.select()}
             className="mt-2 h-10 w-full rounded-xl bg-white/80 px-3 text-xs text-ink ring-1 ring-black/10 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-slate-800 dark:text-slate-100 dark:ring-white/10 dark:focus:ring-indigo-400"
           />
-          <button
+          <Button
             type="button"
             onClick={() => void copy()}
             className="mt-2 flex h-9 w-full items-center justify-center gap-1.5 rounded-full bg-brand-gradient text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40"
           >
             <Icon name="link" size={14} />
             {t('Sao chép liên kết')}
-          </button>
+          </Button>
         </Popover>
         {action('link', t('Sao chép liên kết'), () => void copy())}
         {canShare && action('share', t('Chia sẻ'), () => void share())}
