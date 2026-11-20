@@ -6,7 +6,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 
 ## A. Lỗi logic (ưu tiên sửa trước)
 
-- [ ] **1. Sự cố cạnh tuyến chặn gợi ý đổi tuyến** — `features/traffic/hooks/useRouteTrafficAlert.ts:157`
+- [x] **1. Sự cố cạnh tuyến chặn gợi ý đổi tuyến** — `features/traffic/hooks/useRouteTrafficAlert.ts:157`
   `trigger()` ghi mọi sự cố vào `offered`, kể cả sự cố *không* nằm trên tuyến (offer `clear`); `isOffered()` lại so khớp bán kính 80 m. Một báo cáo cách tuyến 150 m đến trước sẽ khiến báo cáo *trên* tuyến cách nó 60 m không bao giờ được tính đường tránh.
   _Gợi ý:_ chỉ ghi vào `offered` khi `onRoute`.
 
