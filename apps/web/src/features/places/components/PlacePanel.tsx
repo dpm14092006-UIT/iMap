@@ -1,9 +1,9 @@
-import { SheetPanel } from '../../../app/layout/SheetPanel';
-import { Icon } from '../../../shared/components/Icon';
-import { poiMetaFor } from '../../explore/data/poiCatalog';
-import { formatDistanceMeters } from '../../navigation/utils/format';
+import { SheetPanel } from '../../../shared/ui/SheetPanel';
+import { Icon } from '../../../shared/ui/Icon';
+import { poiMetaFor } from '../../explore/domain/poiCatalog';
+import { formatDistanceMeters } from '../../../shared/format/units';
 import type { Poi } from '../../explore/types';
-import { formatCoordinates } from '../services/placeFromPoint';
+import { formatCoordinates } from '../domain/pointPlace';
 import type { Place, PlaceSource } from '../types';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 

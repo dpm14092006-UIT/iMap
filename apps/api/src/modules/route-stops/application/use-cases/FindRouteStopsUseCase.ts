@@ -6,11 +6,11 @@ import {
   type RouteStopResponse,
   type StopCategory,
 } from '@routetwin/shared';
-import type { RouteProvider } from '../../../navigation/domain/ports/RouteProvider.js';
+import type { RouteProvider } from '../../../navigation/application/ports/RouteProvider.js';
 import { AppError } from '../../../../shared/errors/AppError.js';
 import type { StopIntentParser } from '../ports/StopIntentParser.js';
 import type { StopPlaceProvider } from '../ports/StopPlaceProvider.js';
-import { distanceMeters, projectOnRoute, routeBounds } from '../../domain/route-geometry.js';
+import { distanceMeters, projectOnRoute, routeBounds } from '../../domain/routeGeometry.js';
 const CORRIDOR_METERS = 1500;
 const MAX_ROUTED_CANDIDATES = 4;
 const criticalRouteCodes = new Set([

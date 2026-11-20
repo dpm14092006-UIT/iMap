@@ -1,9 +1,9 @@
 import type { KeyboardEvent } from 'react';
-import { SheetPanel } from '../../../app/layout/SheetPanel';
-import { Icon } from '../../../shared/components/Icon';
-import { poiMetaFor, termLabel } from '../data/poiCatalog';
+import { SheetPanel } from '../../../shared/ui/SheetPanel';
+import { Icon } from '../../../shared/ui/Icon';
+import { poiMetaFor, termLabel } from '../domain/poiCatalog';
 import type { PoiMode, PoiSearchController } from '../hooks/usePoiSearch';
-import { formatRadius } from '../services/poiOptions';
+import { formatRadius } from '../domain/poiOptions';
 import type { Poi, PoiSearchTerm } from '../types';
 import { PoiCard } from './PoiCard';
 import { PoiFilters } from './PoiFilters';

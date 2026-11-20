@@ -1,4 +1,4 @@
-import { Icon, type IconName } from '../../../shared/components/Icon';
+import { Icon, type IconName } from '../../../shared/ui/Icon';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type MapControlsProps = {

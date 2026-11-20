@@ -1,5 +1,5 @@
-import { SheetPanel } from '../../../app/layout/SheetPanel';
-import { Icon } from '../../../shared/components/Icon';
+import { SheetPanel } from '../../../shared/ui/SheetPanel';
+import { Icon } from '../../../shared/ui/Icon';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 export function AssistantAccessPanel({ loading, onClose }: { loading: boolean; onClose: () => void }) {

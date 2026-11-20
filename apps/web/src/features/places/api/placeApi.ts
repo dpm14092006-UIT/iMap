@@ -1,7 +1,8 @@
 import type { PlaceSuggestion } from '@routetwin/shared';
 import type { HttpClient } from '../../../shared/api/HttpClient';
 import { httpClient } from '../../../shared/api/HttpClient';
-import type { LatLng, Place, PlaceSearchSuggestion } from '../types';
+import type { LatLng } from '../../../shared/geo/types';
+import type { Place, PlaceSearchSuggestion } from '../types';
 
 /** Client gọi module `places` của backend (VietMap). */
 class PlaceApiClient {

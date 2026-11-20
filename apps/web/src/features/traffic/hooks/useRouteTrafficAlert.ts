@@ -1,12 +1,12 @@
 import type { RerouteStrategy } from '@routetwin/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { RoutePlan } from '../../map/types';
-import { rerouteApi } from '../../navigation/api/RerouteApiClient';
-import { routePlanFromResult } from '../../navigation/api/RouteApiClient';
-import { basicPlaceFromPoint } from '../../places/services/placeFromPoint';
-import { RerouteOfferMemory } from '../services/RerouteOfferMemory';
-import { routeHazardSection } from '../services/routeTraffic';
-import type { LatLng } from '../../places/types';
+import type { RoutePlan } from '../../routing/types';
+import { rerouteApi } from '../../guidance/api/RerouteApiClient';
+import { routePlanFromResult } from '../../routing/api/RouteApiClient';
+import { basicPlaceFromPoint } from '../../places/domain/pointPlace';
+import { RerouteOfferMemory } from '../domain/RerouteOfferMemory';
+import { routeHazardSection } from '../domain/routeTraffic';
+import type { LatLng } from '../../../shared/geo/types';
 import { playAlertFeedback, showLocalSystemNotification } from '../../notifications/services/alertFeedback';
 
 /** Sự cố trên tuyến cần cảnh báo (từ Realtime, Web Push hoặc phát hiện phía trước khi dẫn đường). */
@@ -63,16 +63,23 @@ type Options = {
  */
 export function useRouteTrafficAlert(options: Options) {
   const [alert, setAlert] = useState<RouteTrafficAlertState | null>(null);
+  const alertRef = useRef(alert);
+  alertRef.current = alert;
+  const alertRouteId = useRef<string | null>(null);
   const optionsRef = useRef(options);
   optionsRef.current = options;
   /** Mỗi sự cố trên tuyến (hoặc cụm báo cáo trong 80 m) chỉ hỏi đổi tuyến một lần trong một chuyến. */
   const offered = useRef(new RerouteOfferMemory(AVOID_RADIUS_METERS));
   const requestId = useRef(0);
 
-  const close = useCallback(() => {
+  const invalidateRequest = useCallback(() => {
     requestId.current++;
-    setAlert(null);
+    alertRef.current = null;
   }, []);
+  const close = useCallback(() => {
+    invalidateRequest();
+    setAlert(null);
+  }, [invalidateRequest]);
 
   const computeOffer = useCallback(async (incident: RouteAlertIncident, id: number) => {
     const { route, isNavigating, location, nextStopIndex, remainingMinutes, otherIncidents } =
@@ -94,7 +101,7 @@ export function useRouteTrafficAlert(options: Options) {
           ...otherIncidents.slice(0, 29).map(({ lat, lng }) => ({ lat, lng, radiusMeters: 60 })),
         ],
       });
-      if (requestId.current !== id) return;
+      if (requestId.current !== id || optionsRef.current.route?.id !== route.id) return;
       if (result.strategy === 'unavoidable' || result.blockedCount > 0) {
         setAlert((current) => (current ? { ...current, offer: { status: 'none' } } : current));
         return;
@@ -117,7 +124,7 @@ export function useRouteTrafficAlert(options: Options) {
           : current,
       );
     } catch (error) {
-      if (requestId.current !== id) return;
+      if (requestId.current !== id || optionsRef.current.route?.id !== route.id) return;
       setAlert((current) =>
         current
           ? {
@@ -137,6 +144,7 @@ export function useRouteTrafficAlert(options: Options) {
     (incident: RouteAlertIncident, distanceAheadMeters: number | null) => {
       const { route, pushActive, notificationText } = optionsRef.current;
       if (!route) return;
+      alertRouteId.current = route.id;
       playAlertFeedback(optionsRef.current.soundEnabled?.() ?? true);
       if (document.visibilityState !== 'visible' && !pushActive) {
         const text = notificationText(incident);
@@ -160,19 +168,23 @@ export function useRouteTrafficAlert(options: Options) {
     [computeOffer],
   );
 
-  const alertRef = useRef(alert);
-  alertRef.current = alert;
   const accept = useCallback(() => {
     const current = alertRef.current;
     if (!current || current.offer.status !== 'ready' || current.decision !== 'pending') return;
+    if (alertRouteId.current !== optionsRef.current.route?.id || Date.now() >= current.offer.deadline) return;
+    const accepted: RouteTrafficAlertState = { ...current, decision: 'accepted' };
+    // Lock the decision before notifying the parent; React may batch multiple button actions.
+    alertRef.current = accepted;
+    setAlert(accepted);
     optionsRef.current.onAccept(current.offer.plan);
-    setAlert({ ...current, decision: 'accepted' });
   }, []);
 
   const keep = useCallback(() => {
-    setAlert((current) =>
-      current && current.decision === 'pending' ? { ...current, decision: 'kept' } : current,
-    );
+    const current = alertRef.current;
+    if (!current || current.decision !== 'pending') return;
+    const kept: RouteTrafficAlertState = { ...current, decision: 'kept' };
+    alertRef.current = kept;
+    setAlert(kept);
   }, []);
 
   // Hết 15 giây chưa chọn thì giữ tuyến hiện tại.
@@ -197,13 +209,13 @@ export function useRouteTrafficAlert(options: Options) {
     return () => window.clearTimeout(timer);
   }, [settled, close]);
 
-  // Không còn tuyến (dừng dẫn đường / đóng tuyến) thì bỏ cảnh báo và quên các sự cố đã hỏi.
-  const hasRoute = Boolean(options.route);
+  // A route change starts a fresh scope, including a direct A -> B switch without a null render.
+  const routeId = options.route?.id;
   useEffect(() => {
-    if (hasRoute) return;
     offered.current.clear();
     close();
-  }, [hasRoute, close]);
+    return invalidateRequest;
+  }, [routeId, close, invalidateRequest]);
 
   const wasOffered = useCallback((incident: RouteAlertIncident) => offered.current.has(incident), []);
 

@@ -6,14 +6,14 @@ import {
   trafficReportIdSchema,
   trafficReportInputSchema,
 } from '@routetwin/shared';
-import type { AuthenticatedRequest } from '../../../shared/http/authenticated-request.js';
+import type { AuthenticatedRequest } from '../../../shared/http/authenticatedRequest.js';
 import { AppError } from '../../../shared/errors/AppError.js';
 import type { CreateTrafficReportUseCase } from '../application/use-cases/CreateTrafficReportUseCase.js';
 import type { ListTrafficReportsUseCase } from '../application/use-cases/ListTrafficReportsUseCase.js';
 import type { UpdateRoadClearanceUseCase } from '../application/use-cases/UpdateRoadClearanceUseCase.js';
 import type { AnalyzeTrafficImageUseCase } from '../application/use-cases/AnalyzeTrafficImageUseCase.js';
 import type { TrafficImageMimeType } from '../application/ports/TrafficImageAnalyzer.js';
-import { getBearerToken } from '../../../shared/http/request-context.js';
+import { getBearerToken } from '../../../shared/http/requestContext.js';
 
 const maxTrafficImageBytes = 5 * 1024 * 1024;
 const allowedImageMimeTypes = new Set<TrafficImageMimeType>(['image/jpeg', 'image/png', 'image/webp']);

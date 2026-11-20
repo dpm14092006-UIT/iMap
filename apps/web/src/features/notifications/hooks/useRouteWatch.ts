@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import type { RoutePlan } from '../../map/types';
-import type { LatLng } from '../../places/types';
+import type { RoutePlan } from '../../routing/types';
+import type { LatLng } from '../../../shared/geo/types';
 import { deleteRouteWatch, upsertRouteWatch } from '../api/webPush';
 
 /** Làm mới tuyến + vị trí trên server mỗi bao lâu khi đang dẫn đường (server hết hạn sau 20 phút). */

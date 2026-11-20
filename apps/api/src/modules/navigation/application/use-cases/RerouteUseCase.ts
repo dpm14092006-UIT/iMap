@@ -5,7 +5,7 @@ import {
   type RerouteResult,
   type RouteResult,
 } from '@routetwin/shared';
-import type { AlternativeRouteProvider } from '../../domain/ports/AlternativeRouteProvider.js';
+import type { AlternativeRouteProvider } from '../ports/AlternativeRouteProvider.js';
 import { detourPoints, nearestSegment, routePassesNear } from '../../domain/reroute/routeGeometry.js';
 
 /** Điểm vòng tránh cách sự cố thêm bao nhiêu mét ngoài bán kính của nó. */

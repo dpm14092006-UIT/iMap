@@ -7,6 +7,7 @@ import {
 } from '@routetwin/shared';
 import { z } from 'zod';
 import { AppError } from '../../../../shared/errors/AppError.js';
+import type { RouteComparisonSnapshots } from '../../application/ports/RouteComparisonSnapshots.js';
 
 const snapshotTtlMs = 10 * 60_000;
 const payloadSchema = z.object({
@@ -14,7 +15,7 @@ const payloadSchema = z.object({
   routes: z.tuple([routeComparisonFactSchema], routeComparisonFactSchema),
 });
 
-export class SignedRouteComparison {
+export class SignedRouteComparison implements RouteComparisonSnapshots {
   constructor(private readonly key: string) {}
 
   sign(result: RouteResult, sessionId: string, aiAvailable: boolean): RouteComparisonSnapshot | undefined {

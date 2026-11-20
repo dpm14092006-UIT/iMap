@@ -2,7 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
 import { scheduledMapLayer } from './features/map/hooks/useTimeBasedMapLayer';
-import { ErrorBoundary } from './app/components/ErrorBoundary';
+import { ErrorBoundary } from './app/shell/ErrorBoundary';
 import { AuthProvider } from './features/auth/context/AuthProvider';
 import { PushSignOutCleanup } from './features/notifications/components/PushSignOutCleanup';
 import { RecentPlacesProvider } from './features/places/context/RecentPlacesProvider';

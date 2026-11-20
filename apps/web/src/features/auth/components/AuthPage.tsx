@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Icon } from '../../../shared/components/Icon';
+import { Icon } from '../../../shared/ui/Icon';
 import { useTimeBasedMapLayer } from '../../map/hooks/useTimeBasedMapLayer';
 import { AccountForm } from './AccountForm';
 import { useI18n } from '../../../shared/i18n/I18nProvider';

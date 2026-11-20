@@ -7,8 +7,8 @@ import {
   type StopCategory,
   type StopPlace,
 } from '@routetwin/shared';
-import { SheetPanel } from '../../../app/layout/SheetPanel';
-import type { RoutePlan } from '../../map/types';
+import { SheetPanel } from '../../../shared/ui/SheetPanel';
+import type { RoutePlan } from '../../routing/types';
 import { assistantApi } from '../api/assistantApi';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 type Point = { lat: number; lng: number };

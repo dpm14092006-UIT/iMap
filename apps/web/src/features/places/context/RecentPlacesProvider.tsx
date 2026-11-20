@@ -13,16 +13,19 @@ import type { Place } from '../types';
 import {
   applyRecentPlaceEdit,
   emptyRecentPlaces,
+  isMostRecentPlace,
   isRecordablePlace,
   mergeRemoteRecentPlaces,
-  readCachedRecentPlaces,
-  RecentPlacesRepository,
   recentPlaceKey,
-  writeCachedRecentPlaces,
   type RecentPlaceEdit,
   type RecentPlaceKind,
   type RecentPlaces,
-} from '../services/recentPlaces';
+} from '../domain/recentPlaces';
+import {
+  readCachedRecentPlaces,
+  RecentPlacesRepository,
+  writeCachedRecentPlaces,
+} from '../services/recentPlacesStore';
 
 type RecentPlacesContextValue = {
   /** Chỉ có khi đã đăng nhập bằng tài khoản thật. */
@@ -57,6 +60,9 @@ export function RecentPlacesProvider({ children }: { children: ReactNode }) {
    * Khi kết quả server về sẽ áp lại các thao tác này thay vì ghi đè chúng.
    */
   const pendingEdits = useRef<RecentPlaceEdit[] | null>(null);
+  /** Danh sách mới nhất, đọc được trong callback mà không cần đưa `places` vào dependency. */
+  const placesRef = useRef(places);
+  placesRef.current = places;
 
   useEffect(() => {
     if (!userId) {
@@ -87,10 +93,12 @@ export function RecentPlacesProvider({ children }: { children: ReactNode }) {
   const record = useCallback(
     (kind: RecentPlaceKind, place: Place | null | undefined) => {
       if (!userId || !isRecordablePlace(place)) return;
+      // Đã đứng đầu danh sách thì không đổi gì: bỏ qua luôn, không gọi RPC lên server.
+      if (isMostRecentPlace(placesRef.current[kind], place)) return;
       const edit: RecentPlaceEdit = { type: 'record', kind, place };
       pendingEdits.current?.push(edit);
       setPlaces((current) => {
-        if (current[kind][0] && recentPlaceKey(current[kind][0]) === recentPlaceKey(place)) return current;
+        if (isMostRecentPlace(current[kind], place)) return current;
         const next = applyRecentPlaceEdit(current, edit);
         writeCachedRecentPlaces(userId, next);
         return next;

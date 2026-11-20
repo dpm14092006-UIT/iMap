@@ -1,4 +1,4 @@
-import { Icon } from '../../../shared/components/Icon';
+import { Icon } from '../../../shared/ui/Icon';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type Props = {

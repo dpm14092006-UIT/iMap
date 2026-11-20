@@ -1,216 +1,91 @@
-import type { RouteStopCandidate, StopPlace, TrafficReportBounds } from '@routetwin/shared';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { TrafficReportBounds } from '@routetwin/shared';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AssistantAccessPanel } from '../features/auth/components/AssistantAccessPanel';
 import { useAuth } from '../features/auth/context/AuthProvider';
 import { AlongRouteSearch } from '../features/explore/components/AlongRouteSearch';
 import { AreaInsightCard, AreaInsightPill } from '../features/explore/components/AreaInsightCard';
-import { poiCatalog, poiMetaFor, sameTerm, termFromText } from '../features/explore/data/poiCatalog';
 import { CategoryChips } from '../features/explore/components/CategoryChips';
 import { PoiResultsPanel } from '../features/explore/components/PoiResultsPanel';
-import { usePoiSearch } from '../features/explore/hooks/usePoiSearch';
-import { computeAreaInsight } from '../features/explore/services/areaInsight';
-import { ApiPoiProvider } from '../features/explore/api/apiPoiProvider';
-import { radiusForZoom, ALONG_ROUTE_RADIUS_M } from '../features/explore/services/poiOptions';
-import type { Poi, PoiSearchTerm } from '../features/explore/types';
+import { computeAreaInsight } from '../features/explore/domain/areaInsight';
 import { LayerSwitcher } from '../features/map/components/LayerSwitcher';
 import { MapControls } from '../features/map/components/MapControls';
 import { MapView } from '../features/map/components/MapView';
+import { TrafficLegend } from '../features/map/components/TrafficLegend';
 import { useCurrentLocation } from '../features/map/hooks/useCurrentLocation';
 import { useTimeBasedMapLayer } from '../features/map/hooks/useTimeBasedMapLayer';
 import type { LeafletMapController } from '../features/map/services/LeafletMapController';
-import type {
-  DraftStops,
-  FeatureKey,
-  MapOverlays,
-  RouteObjective,
-  RoutePlan,
-  TransportMode,
-} from '../features/map/types';
-import { useSavedRoutes, type SaveRouteOptions } from '../features/my-routes/hooks/useSavedRoutes';
-import { savedRouteDirectionsQuery, savedRouteStops } from '../features/my-routes/services/savedRouteQuery';
-import type { SavedRoute } from '../features/my-routes/types';
-import { NavigationBanner } from '../features/navigation/components/NavigationBanner';
-import { Speedometer } from '../features/navigation/components/Speedometer';
-import type { PickTarget } from '../features/navigation/components/RoutePanel';
-import { TrafficLegend } from '../features/map/components/TrafficLegend';
-import { useDirections } from '../features/navigation/hooks/useDirections';
-import { useNavigationSession } from '../features/navigation/hooks/useNavigationSession';
-import { useNavigationAudio } from '../features/navigation/hooks/useNavigationAudio';
-import { RouteApiClient, routePlanFromResult } from '../features/navigation/api/RouteApiClient';
-import { parseRouteShareLink } from '../features/navigation/services/routeShareLink';
-import { rerouteApi } from '../features/navigation/api/RerouteApiClient';
-import {
-  IncidentAheadDetector,
-  type RouteIncident,
-} from '../features/navigation/domain/IncidentAheadDetector';
-import { RoutePath } from '../features/navigation/domain/RoutePath';
-import { useDemoMode } from '../features/navigation/utils/demoMode';
-import { AlgorithmComparison } from '../features/navigation/components/AlgorithmComparison';
-import { useAlgorithmComparison } from '../features/navigation/hooks/useAlgorithmComparison';
-import {
-  TourAlgorithmSelect,
-  type TourAlgorithmChoice,
-} from '../features/multi-stop/components/TourAlgorithmSelect';
-import { toTrafficMapLayer } from '../features/map/services/trafficMapLayer';
-import type { RerouteStrategy } from '@routetwin/shared';
-import { formatDistanceKm, formatDurationMinutes } from '../features/navigation/utils/format';
-import { popularPlaces } from '../features/places/data/popularPlaces';
-import { basicPlaceFromPoint, placeFromPoint } from '../features/places/services/placeFromPoint';
-import type { LatLng, Place } from '../features/places/types';
-import { vietnamBounds } from '../features/traffic/api/trafficApi';
-import type {
-  IncidentKind,
-  IncidentSeverity,
-  TrafficVehicleScope,
-} from '../features/traffic/components/TrafficReportPanel';
-import { useTrafficReports, type RealtimeTrafficReport } from '../features/traffic/hooks/useTrafficReports';
-import { RequestSequence } from '../shared/async/RequestSequence';
-import { parseRealtimeReport } from '../features/traffic/services/realtimeReport';
-import {
-  incidentLabels,
-  toIncidents,
-  toReportsMapLayer,
-} from '../features/traffic/services/trafficPresentation';
-import {
-  ROUTE_ALERT_CORRIDOR_METERS,
-  shouldNotifyTrafficReportOnRoute,
-} from '../features/traffic/services/routeTraffic';
-import { useRouteTrafficAlert } from '../features/traffic/hooks/useRouteTrafficAlert';
-import { RouteTrafficAlert } from '../features/traffic/components/RouteTrafficAlert';
-import { usePushNotifications } from '../features/notifications/hooks/usePushNotifications';
-import { useRecentPlaces } from '../features/places/context/RecentPlacesProvider';
-import { useRouteWatch } from '../features/notifications/hooks/useRouteWatch';
+import type { DraftStops, MapOverlays } from '../features/map/types';
+import { TourAlgorithmSelect } from '../features/multi-stop/components/TourAlgorithmSelect';
+import { useSavedRoutes } from '../features/my-routes/hooks/useSavedRoutes';
+import { RouteApiClient } from '../features/routing/api/RouteApiClient';
+import { AlgorithmComparison } from '../features/algorithm-lab/components/AlgorithmComparison';
+import { NavigationBanner } from '../features/guidance/components/NavigationBanner';
+import { Speedometer } from '../features/guidance/components/Speedometer';
+import { RoutePath } from '../features/guidance/domain/RoutePath';
+import { useAlgorithmComparison } from '../features/algorithm-lab/hooks/useAlgorithmComparison';
+import { useDirections } from '../features/routing/hooks/useDirections';
+import { useNavigationAudio } from '../features/guidance/hooks/useNavigationAudio';
+import { useNavigationSession } from '../features/guidance/hooks/useNavigationSession';
+import type { RoutePlan } from '../features/routing/types';
+import { useDemoMode } from './hooks/useDemoMode';
 import { PushPermissionCard } from '../features/notifications/components/PushPermissionCard';
-import { Icon } from '../shared/components/Icon';
+import { placeFromStop } from '../features/place-assistant/domain/stopPlace';
+import { findPopularPlaceNear } from '../features/places/domain/nearbyPopularPlace';
+import { vietnamBounds } from '../features/traffic/api/trafficApi';
+import { RouteTrafficAlert } from '../features/traffic/components/RouteTrafficAlert';
+import { useTrafficReports } from '../features/traffic/hooks/useTrafficReports';
+import type { LatLng } from '../shared/geo/types';
 import { useI18n } from '../shared/i18n/I18nProvider';
-import { progressAlongPath } from '../shared/geo/path';
-import { PanelFallback } from './components/PanelFallback';
+import { errorMessage } from '../shared/text/errorMessage';
+import { MapPickHint } from './shell/MapPickHint';
+import { PanelFallback } from './shell/PanelFallback';
+import { RouteSummaryPill } from './shell/RouteSummaryPill';
+import { StatusToast } from './shell/StatusToast';
 import { useAppUpdate } from './hooks/useAppUpdate';
+import { useAssistantStops } from './flows/routes/useAssistantStops';
+import { useDemoIncidents } from './flows/guidance/useDemoIncidents';
+import { useEndpointPicker } from './flows/routes/useEndpointPicker';
+import { useMapViewport } from './flows/workspace/useMapViewport';
+import { useMultiStopPlanner } from './flows/routes/useMultiStopPlanner';
+import { useNavigationFollow } from './flows/guidance/useNavigationFollow';
+import { useNavigationRerouting } from './flows/guidance/useNavigationRerouting';
 import { useNow } from './hooks/useNow';
+import { usePanelState } from './flows/workspace/usePanelState';
+import { usePlaceSelection } from './flows/workspace/usePlaceSelection';
+import { usePoiExplorer } from './flows/explore/usePoiExplorer';
+import { useRealtimeRouteReports } from './flows/traffic/useRealtimeRouteReports';
+import { useRecentRouteEndpoints } from './flows/routes/useRecentRouteEndpoints';
+import { useRouteAlerts } from './flows/traffic/useRouteAlerts';
+import { useSavedRouteActions } from './flows/routes/useSavedRouteActions';
+import { useSharedRouteLink } from './flows/routes/useSharedRouteLink';
 import { useToast } from './hooks/useToast';
-import { AppShell, type SheetState } from './layout/AppShell';
-import { SideDock } from './layout/SideDock';
-import { TopBar } from './layout/TopBar';
+import { useTrafficOverview } from './flows/traffic/useTrafficOverview';
+import { useTrafficReporting } from './flows/traffic/useTrafficReporting';
+import { AppShell } from './shell/AppShell';
+import { SideDock } from './shell/SideDock';
+import { TopBar } from './shell/TopBar';
+import {
+  AuthPanel,
+  MultiStopPanel,
+  PlaceAssistantPanel,
+  PlacePanel,
+  RoutePanel,
+  SavedRoutesPanel,
+  TrafficReportPanel,
+} from './lazyPanels';
+import type { FeatureKey } from './types';
 
-// Các panel chỉ tải mã khi người dùng mở, để lần tải đầu chỉ gồm bản đồ và thanh công cụ.
-const PlaceAssistantPanel = lazy(() =>
-  import('../features/place-assistant/components/PlaceAssistantPanel').then((module) => ({
-    default: module.PlaceAssistantPanel,
-  })),
-);
-const AuthPanel = lazy(() =>
-  import('../features/auth/components/AuthPanel').then((module) => ({ default: module.AuthPanel })),
-);
-const RoutePanel = lazy(() =>
-  import('../features/navigation/components/RoutePanel').then((module) => ({ default: module.RoutePanel })),
-);
-const MultiStopPanel = lazy(() =>
-  import('../features/multi-stop/components/MultiStopPanel').then((module) => ({
-    default: module.MultiStopPanel,
-  })),
-);
-const SavedRoutesPanel = lazy(() =>
-  import('../features/my-routes/components/SavedRoutesPanel').then((module) => ({
-    default: module.SavedRoutesPanel,
-  })),
-);
-const PlacePanel = lazy(() =>
-  import('../features/places/components/PlacePanel').then((module) => ({ default: module.PlacePanel })),
-);
-const TrafficReportPanel = lazy(() =>
-  import('../features/traffic/components/TrafficReportPanel').then((module) => ({
-    default: module.TrafficReportPanel,
-  })),
-);
-
-/** Khoảng cách (độ) tối đa để coi một click là "chọn" địa điểm gợi ý gần đó (~200 m). */
-const PLACE_CLICK_TOLERANCE = 0.002;
 /** Tâm Việt Nam, dùng khi bản đồ chưa sẵn sàng để trả tâm thật. */
 const VIETNAM_CENTER: LatLng = { lat: 16, lng: 108 };
-/** Khi bản đồ đang xem toàn quốc, khám phá quanh đây mặc định ở trung tâm TP.HCM. */
-const DEFAULT_EXPLORE_CENTER: LatLng = { lat: 10.7769, lng: 106.7009 };
-/** Dưới mức zoom này thì chưa đủ gần để khám phá quanh đây. */
-const MIN_EXPLORE_ZOOM = 11;
-const NO_POIS: Poi[] = [];
-
-/** Thông báo cho người dùng biết tuyến mới được chọn thế nào (kết quả của /routes/reroute). */
-const rerouteStrategyLabels: Record<RerouteStrategy, string> = {
-  direct: 'Đã tính lại tuyến từ vị trí hiện tại',
-  alternative: 'Đã chuyển sang tuyến thay thế để tránh sự cố',
-  detour: 'Đã đi vòng để tránh sự cố',
-  unavoidable: 'Không tìm được đường tránh sự cố, hãy chú ý',
-};
-
-/** Lệch tuyến liên tiếp bao nhiêu lần đo GPS thì tự tính lại, và tối thiểu cách nhau bao lâu. */
-const OFF_ROUTE_FIXES_BEFORE_REROUTE = 3;
-const AUTO_REROUTE_INTERVAL_MS = 20_000;
-
-/** Đổi địa điểm do trợ lý (N2) gợi ý sang kiểu Place dùng chung. */
-function placeFromStop(place: StopPlace): Place {
-  return {
-    id: place.id,
-    name: place.name,
-    address: place.address,
-    category: place.category,
-    lat: place.lat,
-    lng: place.lng,
-    source: 'osm',
-  };
-}
-
-/** Địa điểm thật (POI) dưới dạng Place dùng chung cho chi tiết, chỉ đường và điểm dừng. */
-function placeFromPoi(poi: Poi): Place {
-  return {
-    id: poi.id,
-    name: poi.name,
-    address: poi.address,
-    category: poiMetaFor(poi.category).label,
-    lat: poi.lat,
-    lng: poi.lng,
-    source: 'poi',
-  };
-}
-
-/** Địa điểm gợi ý gần điểm click nhất, hoặc null nếu không có điểm nào đủ gần. */
-function findPlaceNear(point: LatLng): Place | null {
-  return (
-    popularPlaces.find(
-      (place) =>
-        Math.abs(place.lat - point.lat) < PLACE_CLICK_TOLERANCE &&
-        Math.abs(place.lng - point.lng) < PLACE_CLICK_TOLERANCE,
-    ) ?? null
-  );
-}
-
-/** Số liệu cộng đồng đi kèm báo cáo (có trong Web Push, không có trong Realtime). */
-function pickCommunityCounts(report: object) {
-  const value = report as {
-    communityReportCount?: unknown;
-    communityReporterCount?: unknown;
-    communityUpdatedAt?: unknown;
-  };
-  return {
-    ...(typeof value.communityReportCount === 'number'
-      ? { communityReportCount: value.communityReportCount }
-      : {}),
-    ...(typeof value.communityReporterCount === 'number'
-      ? { communityReporterCount: value.communityReporterCount }
-      : {}),
-    ...(typeof value.communityUpdatedAt === 'string' ? { communityUpdatedAt: value.communityUpdatedAt } : {}),
-  };
-}
-
-function errorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback;
-}
+const AREA_INSIGHT_REFRESH_MS = 5 * 60_000;
 
 /**
- * Khung ứng dụng: ghép bản đồ với các panel chức năng.
- * Trạng thái dùng chung (tuyến đang vẽ, panel đang mở, vị trí GPS) nằm ở đây;
- * logic riêng của từng chức năng nằm trong hook/component của feature tương ứng.
+ * Khung ứng dụng: lắp bản đồ với các panel chức năng.
+ * Trạng thái dùng chung (tuyến đang vẽ, panel đang mở, vị trí GPS) nằm ở đây; mỗi luồng điều phối
+ * nhiều feature nằm trong một hook của `app/hooks`, logic riêng của từng chức năng nằm trong feature đó.
  */
 export function App() {
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const routeApi = useMemo(() => new RouteApiClient(), []);
   const mapController = useRef<LeafletMapController | null>(null);
   const getMapCenter = useCallback(() => mapController.current?.getCenter() ?? VIETNAM_CENTER, []);
@@ -221,26 +96,13 @@ export function App() {
   const { layer, setLayer, isDark } = useTimeBasedMapLayer(); // tối tự động 18:00–06:00
   const savedRoutes = useSavedRoutes();
   const { updateAvailable, reloadForUpdate } = useAppUpdate();
+  const now = useNow(AREA_INSIGHT_REFRESH_MS);
 
-  const [activePanel, setActivePanel] = useState<FeatureKey | null>(() =>
-    // Điện thoại mở vào bản đồ trống cho thoáng (trừ link chia sẻ tuyến); desktop/tablet mở sẵn chỉ đường.
-    window.matchMedia('(max-width: 767px)').matches && !parseRouteShareLink(window.location.search)
-      ? null
-      : 'directions',
-  );
-  const [hasOpenedMulti, setHasOpenedMulti] = useState(false);
-  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
-  const [selectedMapPoint, setSelectedMapPoint] = useState<LatLng | null>(null);
+  const panels = usePanelState();
+  const { activePanel, openPanel, closePanel, pickTarget, setPickTarget } = panels;
   const [activeRoute, setActiveRoute] = useState<RoutePlan | null>(null);
-  const [pickTarget, setPickTarget] = useState<PickTarget | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
   const [trafficBounds, setTrafficBounds] = useState<TrafficReportBounds>(vietnamBounds);
   const [overlays, setOverlays] = useState<MapOverlays>({ traffic: true, incidents: true, terrain: false });
-  const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
-  const [highlightedPoiId, setHighlightedPoiId] = useState<string | null>(null);
-  const poiProvider = useMemo(() => new ApiPoiProvider(), []);
-  const now = useNow(5 * 60_000);
 
   // --- Dẫn đường theo GPS ---
   const navigation = useNavigationSession();
@@ -249,181 +111,153 @@ export function App() {
     route: navigationRoute,
     location: navigationLocation,
     displayLocation: navigationDisplayLocation,
-    headingDegrees: navigationHeadingDegrees,
-    nextStopIndex,
-    offRoute,
-    offRouteFixes,
-    start: startNavigationSession,
     stop: stopNavigation,
     updateRoute: updateNavigationRoute,
   } = navigation;
-  /** Gán sau khi đã có hình học tuyến đang dẫn; Realtime và Web Push đều đi qua đây. */
-  const routeAlertTriggerRef = useRef<((report: RealtimeTrafficReport) => void) | null>(null);
-  const notifiedRealtimeReports = useRef(new Map<string, number>());
-  const onRealtimeTrafficReport = useCallback(
-    (report: RealtimeTrafficReport) => {
-      const route = navigationRoute ?? activeRoute;
-      if (!route || !shouldNotifyTrafficReportOnRoute(route, report)) return;
-
-      const version = report.version ?? 1;
-      if ((notifiedRealtimeReports.current.get(report.id) ?? 0) >= version) return;
-      notifiedRealtimeReports.current.set(report.id, version);
-      if (notifiedRealtimeReports.current.size > 120) {
-        const oldestId = notifiedRealtimeReports.current.keys().next().value;
-        if (oldestId) notifiedRealtimeReports.current.delete(oldestId);
-      }
-
-      // Banner lớn + kêu/rung + hỏi đổi tuyến (xem useRouteTrafficAlert bên dưới).
-      routeAlertTriggerRef.current?.(report);
-    },
-    [activeRoute, navigationRoute],
-  );
   const isNavigationIdle = navigationStatus === 'idle';
   const isNavigating = navigationStatus === 'navigating' || navigationStatus === 'locating';
-  const isNavigationMarkerVisible = navigationStatus !== 'idle' && navigationStatus !== 'error';
-  // Mũi tên dẫn đường vẽ ở vị trí đã hút về tuyến; vị trí GPS thô vẫn dùng cho tính lại tuyến và báo cáo.
-  const mapLocation = isNavigationIdle ? currentLocation : navigationDisplayLocation;
-  const [isRecalculatingNavigation, setIsRecalculatingNavigation] = useState(false);
-  const lastAutomaticRerouteAt = useRef(0);
-  // Giữ id tuyến đang dẫn trong ref để bỏ kết quả tính lại nếu chuyến đi đã đổi trong lúc chờ API.
-  const navigationRouteIdRef = useRef<string | null>(null);
-  navigationRouteIdRef.current = navigationRoute?.id ?? null;
-
+  const navigationPath = useMemo(
+    () => (navigationRoute ? new RoutePath(navigationRoute.legs) : null),
+    [navigationRoute],
+  );
+  const follow = useNavigationFollow(mapController, {
+    status: navigationStatus,
+    route: navigationRoute,
+    displayLocation: navigationDisplayLocation,
+  });
   // Tuyến trên bản đồ bị thay bằng tuyến khác thì dừng chuyến đang dẫn.
   useEffect(() => {
     if (navigationRoute && !isNavigationIdle && activeRoute?.id !== navigationRoute.id) stopNavigation();
   }, [activeRoute?.id, navigationRoute, isNavigationIdle, stopNavigation]);
-
-  // Bản đồ bám theo vị trí GPS trong lúc dẫn đường; người dùng tự kéo / zoom thì tạm ngừng bám
-  // để xem trước hành trình, bấm "Về vị trí" để bám lại.
-  const [followPaused, setFollowPaused] = useState(false);
-  useEffect(() => {
-    if (isNavigationIdle) {
-      setFollowPaused(false);
-      return;
-    }
-    return mapController.current?.onUserGesture(() => setFollowPaused(true));
-  }, [isNavigationIdle]);
-  useEffect(() => {
-    if (
-      !followPaused &&
-      navigationDisplayLocation &&
-      (navigationStatus === 'navigating' || navigationStatus === 'arrived')
-    ) {
-      mapController.current?.followLocation(navigationDisplayLocation);
-    }
-  }, [navigationDisplayLocation, navigationStatus, followPaused]);
-  const recenterNavigation = useCallback(() => {
-    setFollowPaused(false);
-    if (navigationDisplayLocation) mapController.current?.followLocation(navigationDisplayLocation);
-  }, [navigationDisplayLocation]);
-  /** Nút bản đồ (zoom, toàn Việt Nam) lúc dẫn đường cũng là xem trước: thôi bám vị trí. */
-  const pauseFollowIfNavigating = () => {
-    if (!isNavigationIdle) setFollowPaused(true);
+  /** Đổi sang tuyến mới (tính lại / tránh sự cố): cập nhật cả bản đồ và chuyến đang dẫn. */
+  const applyRouteChange = (plan: RoutePlan) => {
+    setActiveRoute(plan);
+    if (navigationRoute) updateNavigationRoute(plan);
   };
-  const previewNavigationRoute = useCallback(() => {
-    if (!navigationRoute) return;
-    setFollowPaused(true);
-    mapController.current?.fitRoute(navigationRoute);
-  }, [navigationRoute]);
 
-  // --- Giao thông (N2): báo cáo lấy từ API; bản đồ nhận qua hợp đồng TrafficMapLayer. ---
-  const {
-    reports,
-    error: trafficError,
-    loading: trafficLoading,
-    create: createTrafficReport,
-    clearance: updateClearance,
-  } = useTrafficReports(
+  // --- Giao thông: báo cáo từ API + Realtime; bản đồ nhận qua hợp đồng TrafficMapLayer ---
+  const realtime = useRealtimeRouteReports(navigationRoute ?? activeRoute);
+  const traffic = useTrafficReports(
     accessToken,
     user?.id ?? null,
     trafficBounds,
     activePanel === 'traffic' || Boolean(navigationRoute ?? activeRoute),
-    onRealtimeTrafficReport,
+    realtime.onRealtimeTrafficReport,
   );
   const directions = useDirections({ routeApi, activeRoute, onRouteChange: setActiveRoute });
   const reportVehicle = navigationRoute?.vehicle ?? activeRoute?.vehicle ?? directions.vehicle;
-  const visibleReports = useMemo(
-    () => reports.filter((report) => report.vehicleScope === 'both' || report.vehicleScope === reportVehicle),
-    [reports, reportVehicle],
-  );
-  const incidents = useMemo(() => toIncidents(visibleReports), [visibleReports]);
-  const reportsLayer = useMemo(() => {
-    const layer = toReportsMapLayer(visibleReports);
-    return {
-      ...layer,
-      features: layer.features.map((feature) => ({
-        ...feature,
-        properties: { ...feature.properties, title: t(feature.properties.title) },
-      })),
-    };
-  }, [visibleReports, t]);
-  // Chế độ Demo (nút "Demo" trên thanh trên, hoặc ?demo=1): sự cố giả chỉ nằm trên máy này,
-  // vẽ chung với sự cố thật để thấy tuyến mới né chỗ nào.
+  // Chế độ Demo (nút "Demo" trên thanh trên, hoặc ?demo=1): GPS giả, sự cố giả, so sánh thuật toán.
   const { enabled: demoEnabled, setEnabled: setDemoEnabled } = useDemoMode();
-  const toggleDemo = () => {
-    const next = !demoEnabled;
-    setDemoEnabled(next);
-    if (!next && navigation.mode === 'demo') navigation.setMode('real');
-    showToast(
-      t(
-        next
-          ? 'Đã bật Demo: chọn tuyến bất kỳ rồi bấm Bắt đầu, xe giả sẽ chạy dọc tuyến và bạn vẫn nhận cảnh báo kẹt xe từ người dùng khác.'
-          : 'Đã tắt Demo: dẫn đường dùng GPS thật.',
-      ),
-    );
-  };
-  // Chế độ thuyết trình: so sánh Dijkstra / A* (panel Chỉ đường) và chọn thuật toán TSP (panel Nhiều điểm).
+  const demoIncidents = useDemoIncidents({
+    navigationPath,
+    progressRatio: navigation.progressRatio,
+    isNavigationIdle,
+  });
+  const { incidents, trafficLayer, routeIncidents } = useTrafficOverview({
+    reports: traffic.reports,
+    vehicle: reportVehicle,
+    demoIncidents: demoIncidents.demoIncidents,
+    t,
+  });
+
+  const rerouting = useNavigationRerouting({
+    navigation,
+    routeIncidents,
+    onRerouted: applyRouteChange,
+    showToast,
+    t,
+  });
+  const alerts = useRouteAlerts({
+    navigation,
+    navigationPath,
+    activeRoute,
+    reports: traffic.reports,
+    trafficLayer,
+    routeIncidents,
+    isRecalculating: rerouting.isRecalculating,
+    isAuthenticated,
+    onAcceptPlan: applyRouteChange,
+    soundEnabled: () => navigationAudio.enabled,
+    setReportHandler: realtime.setHandler,
+    t,
+  });
+  const { routeAlert } = alerts;
+  const navigationAudio = useNavigationAudio({
+    routeId: navigationRoute?.id ?? activeRoute?.id ?? null,
+    status: navigationStatus,
+    offRoute: navigation.offRoute,
+    instruction: navigation.nextInstruction,
+    instructionIndex: navigation.nextInstruction
+      ? (navigationRoute?.legs.flatMap((leg) => leg.instructions ?? []).indexOf(navigation.nextInstruction) ??
+        -1)
+      : -1,
+    distanceMeters: navigation.distanceToInstructionMeters,
+    alert: routeAlert.alert,
+  });
+  useRecentRouteEndpoints(activeRoute);
+
+  // --- Bản đồ, panel và địa điểm đang chọn ---
+  const routeFitActive =
+    Boolean(activeRoute) && isNavigationIdle && (activePanel === 'directions' || activePanel === 'multi');
+  const viewport = useMapViewport(mapController, routeFitActive);
+  const selection = usePlaceSelection({
+    openPanel,
+    focusAfterPanel: viewport.focusAfterPanel,
+    directions,
+    currentLocation,
+  });
+  const { selectedPlace, selectedPoi, selectedMapPoint, setSelectedMapPoint } = selection;
+  const picker = useEndpointPicker({ directions, locate, mapController, showToast, t });
   const algorithmComparison = useAlgorithmComparison({
     origin: directions.origin,
     destination: directions.destination,
     vehicle: directions.vehicle,
   });
-  const [tourAlgorithm, setTourAlgorithm] = useState<TourAlgorithmChoice>('auto');
-  const [demoIncidents, setDemoIncidents] = useState<RouteIncident[]>([]);
-  const trafficLayer = useMemo(
-    () =>
-      demoIncidents.length === 0
-        ? reportsLayer
-        : {
-            ...reportsLayer,
-            features: [
-              ...reportsLayer.features,
-              ...toTrafficMapLayer(
-                demoIncidents.map((incident) => ({
-                  id: incident.id,
-                  incidentType: 'road_closure',
-                  severity: 'high' as const,
-                  vehicleScope: 'both' as const,
-                  title: incident.title,
-                  lat: incident.lat,
-                  lng: incident.lng,
-                })),
-              ).features.map((feature) => ({
-                ...feature,
-                properties: { ...feature.properties, title: t(feature.properties.title) },
-              })),
-            ],
-          },
-    [reportsLayer, demoIncidents, t],
-  );
-  // Sự cố cần tránh khi dẫn đường: đang hoạt động, mức độ từ "Vừa" trở lên (gồm cả sự cố giả của demo).
-  const routeIncidents = useMemo<RouteIncident[]>(
-    () =>
-      trafficLayer.features
-        .filter((feature) => feature.properties.status === 'active' && feature.properties.severity !== 'low')
-        .map((feature) => ({
-          id: feature.properties.id,
-          title: feature.properties.title,
-          lng: feature.geometry.coordinates[0]!,
-          lat: feature.geometry.coordinates[1]!,
-        })),
-    [trafficLayer],
-  );
-  const routeOptionsForMap = useMemo(
-    () => (activePanel === 'directions' && directions.route ? directions.routeOptions : []),
-    [activePanel, directions.route, directions.routeOptions],
-  );
+  const multiStop = useMultiStopPlanner({
+    routeApi,
+    activePanel,
+    activeRoute,
+    setActiveRoute,
+    demoEnabled,
+    onPlanned: selection.clearPlace,
+    showToast,
+    t,
+  });
+  const savedRouteActions = useSavedRouteActions({
+    savedRoutes,
+    directions,
+    multiStop,
+    routeApi,
+    setActiveRoute,
+    openPanel,
+    showToast,
+    t,
+  });
+  const assistantStops = useAssistantStops({ activeRoute, setActiveRoute, routeApi, showToast, t });
+  const reporting = useTrafficReporting({
+    accessToken,
+    createReport: traffic.create,
+    updateClearance: traffic.clearance,
+    openSignIn: () => panels.setAuthOpen(true),
+    onReported: () => setSelectedMapPoint(null),
+    mapController,
+    showToast,
+    t,
+  });
+  const explorer = usePoiExplorer({
+    trafficBounds,
+    activeRoute,
+    activePanel,
+    openPanel,
+    selection,
+    directions,
+    currentLocation,
+    mapController,
+    getMapCenter,
+    showToast,
+    t,
+  });
+  useSharedRouteLink(directions);
 
   // Marker A/B cho điểm đã chọn nhưng chưa tính tuyến (chỉ khi panel chỉ đường đang mở).
   const draftStops = useMemo<DraftStops>(
@@ -438,109 +272,33 @@ export function App() {
           },
     [activePanel, directions.origin, directions.destination, selectedPlace, selectedPoi],
   );
+  const routeOptionsForMap = useMemo(
+    () => (activePanel === 'directions' && directions.route ? directions.routeOptions : []),
+    [activePanel, directions.route, directions.routeOptions],
+  );
+  const areaInsight = useMemo(() => computeAreaInsight(incidents.length, now), [incidents.length, now]);
 
-  // Rời panel nhiều điểm thì bỏ kết quả tối ưu còn đang chờ, tránh vẽ đè tuyến của panel khác.
-  const multiPlanGeneration = useRef(0);
-  useEffect(() => {
-    if (activePanel && activePanel !== 'multi') multiPlanGeneration.current++;
-  }, [activePanel]);
-
-  // Nhấn Esc để thoát chế độ chọn điểm trên bản đồ.
-  useEffect(() => {
-    if (!pickTarget) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      event.preventDefault(); // để panel không đóng theo cùng phím Esc
-      setPickTarget(null);
-    };
-    window.addEventListener('keydown', onKeyDown, true);
-    return () => window.removeEventListener('keydown', onKeyDown, true);
-  }, [pickTarget]);
-
-  const openPanel = (key: FeatureKey | null) => {
-    setActivePanel(key);
-    if (key === 'multi') setHasOpenedMulti(true);
-    setPickTarget(null);
-  };
-  const closePanel = () => openPanel(null);
-
+  // --- Hành động của người dùng ---
   const selectFeature = (key: FeatureKey) => {
-    setSelectedPlace(null);
-    setSelectedPoi(null);
+    selection.clearPlace();
     openPanel(key);
     if (key === 'traffic') setSelectedMapPoint(null);
   };
-
-  // Bay tới điểm khi bảng vừa mở đã báo chiều cao (handleSheetChange), để điểm không nằm khuất sau
-  // bảng trên điện thoại. Bảng đã mở sẵn (chiều cao không đổi) thì bay luôn; phòng hờ sau 400 ms.
-  const pendingFocus = useRef<{ point: LatLng; zoom: number | undefined } | null>(null);
-  const sheetOpenRef = useRef(false);
-  const flushFocus = useCallback(() => {
-    const pending = pendingFocus.current;
-    pendingFocus.current = null;
-    if (pending) mapController.current?.flyTo(pending.point, pending.zoom);
-  }, []);
-  const focusAfterPanel = (point: LatLng, zoom?: number) => {
-    pendingFocus.current = { point, zoom };
-    if (sheetOpenRef.current) flushFocus();
-    else window.setTimeout(flushFocus, 400);
-  };
-
-  const openPlace = (place: Place, poi: Poi | null = null) => {
-    setSelectedPlace(place);
-    setSelectedPoi(poi);
-    openPanel('place');
-    focusAfterPanel(place);
-  };
-
-  /** "Tìm đường đến đây" từ panel chi tiết: điểm đến = địa điểm, điểm đi = GPS nếu đã định vị. */
-  const openDirections = (place: Place) => {
-    if (currentLocation) directions.setOrigin(basicPlaceFromPoint(currentLocation, 'gps'));
-    directions.setDestination(place);
-    setSelectedPlace(null);
-    setSelectedPoi(null);
-    openPanel('directions');
-  };
-
-  /** Đánh số các lần đặt điểm đi/đến bằng tra địa chỉ, để kết quả về chậm không ghi đè lựa chọn mới hơn. */
-  const endpointRequests = useRef(new RequestSequence<PickTarget>());
-  /** Điểm đi/đến hiện tại, đọc được sau `await` (closure chỉ giữ giá trị cũ). */
-  const currentEndpoints = useRef({ origin: directions.origin, destination: directions.destination });
-  currentEndpoints.current = { origin: directions.origin, destination: directions.destination };
-  /**
-   * Bắt đầu tra địa chỉ cho điểm đi/đến; hàm trả về cho biết kết quả còn được ghi hay không:
-   * chỉ khi đây vẫn là yêu cầu mới nhất VÀ trong lúc chờ người dùng chưa tự chọn điểm khác
-   * (gõ tìm, đảo chiều…) — những cách đó không đi qua bộ đánh số.
-   */
-  const beginEndpointLookup = (target: PickTarget) => {
-    const requestId = endpointRequests.current.next(target);
-    const before = currentEndpoints.current[target];
-    return () =>
-      endpointRequests.current.isLatest(target, requestId) && currentEndpoints.current[target] === before;
-  };
+  const openTrafficPanel = () => selectFeature('traffic');
 
   /** Click bản đồ: tùy panel đang mở mà xử lý khác nhau. */
-  const handleMapClick = async (point: LatLng) => {
-    // 1. Đang chọn điểm đi/đến trên bản đồ.
+  const handleMapClick = (point: LatLng) => {
     if (pickTarget) {
-      const target = pickTarget;
       setPickTarget(null);
-      const stillWanted = beginEndpointLookup(target);
-      const place = await placeFromPoint(point, 'map');
-      // Tra địa chỉ có thể mất vài giây: nếu đã chọn lại điểm này thì bỏ kết quả cũ.
-      if (!stillWanted()) return;
-      if (target === 'origin') directions.setOrigin(place);
-      else directions.setDestination(place);
+      void picker.pickPoint(pickTarget, point);
       return;
     }
-    // 2. Panel giao thông / trợ lý địa điểm: chọn vị trí.
     if (activePanel === 'traffic' || activePanel === 'assistant') {
       setSelectedMapPoint(point);
       return;
     }
-    // 3. Mặc định: click gần địa điểm gợi ý thì mở chi tiết địa điểm đó.
-    const nearby = findPlaceNear(point);
-    if (nearby && !activeRoute) openPlace(nearby);
+    const nearby = findPopularPlaceNear(point);
+    if (nearby && !activeRoute) selection.openPlace(nearby);
   };
 
   /** Nút định vị trên thanh công cụ bản đồ. */
@@ -554,603 +312,66 @@ export function App() {
     }
   };
 
-  /** Nút "Vị trí của tôi" trong panel chỉ đường: đặt GPS làm điểm xuất phát. */
-  const setOriginFromGps = async () => {
-    setIsLocating(true);
-    try {
-      const stillWanted = beginEndpointLookup('origin');
-      const fix = await locate();
-      const place = await placeFromPoint(fix.point, 'gps');
-      if (stillWanted()) directions.setOrigin(place);
-      mapController.current?.flyTo(fix.point, 15);
-    } catch (error) {
-      showToast(t(errorMessage(error, 'Không lấy được vị trí.')));
-    } finally {
-      setIsLocating(false);
-    }
-  };
-
   const startNavigation = (route: RoutePlan) => {
     navigationAudio.begin();
-    // Mở app với ?demo=1 thì mặc định chạy GPS giả; đổi lại "Thật" ngay trên banner.
-    startNavigationSession(route, demoEnabled ? 'demo' : 'real');
+    // Bật Demo thì mặc định chạy GPS giả; đổi lại "Thật" ngay trên banner.
+    navigation.start(route, demoEnabled ? 'demo' : 'real');
     openPanel(null);
   };
 
-  /** Tính lại tuyến từ vị trí GPS hiện tại tới các điểm còn lại (tự động khi lệch tuyến, hoặc bấm nút). */
-  const recalculateNavigation = useCallback(
-    /** @param reason lý do hiển thị cho người dùng (vd. "Ngập đường phía trước 500 m") */
-    async (automatic = false, reason?: string) => {
-      if (!navigationRoute || !navigationLocation || isRecalculatingNavigation) return;
-      const route = navigationRoute;
-      const remainingStops = route.stops.slice(nextStopIndex);
-      const destinationStops = remainingStops.length ? remainingStops : route.stops.slice(-1);
-      if (!destinationStops.length) return;
-
-      setIsRecalculatingNavigation(true);
-      let plan: RoutePlan;
-      let strategy: RerouteStrategy;
-      try {
-        // /routes/reroute: tính từ vị trí hiện tại và cố gắng tránh mọi sự cố đang biết.
-        const result = await rerouteApi.reroute({
-          from: navigationLocation,
-          stops: destinationStops.map(({ lat, lng }) => ({ lat, lng })),
-          vehicle: route.vehicle,
-          objective: route.objective === 'distance' ? 'distance' : 'duration',
-          avoid: routeIncidents.slice(0, 30).map(({ lat, lng }) => ({
-            lat,
-            lng,
-            radiusMeters: IncidentAheadDetector.INCIDENT_RADIUS_METERS,
-          })),
-        });
-        plan = routePlanFromResult(
-          result.route,
-          [basicPlaceFromPoint(navigationLocation, 'gps'), ...destinationStops],
-          route.vehicle,
-          route.objective,
-        );
-        strategy = result.strategy;
-      } catch (error) {
-        if (!automatic || reason) showToast(t(errorMessage(error, 'Không tính lại được tuyến.')));
-        return;
-      } finally {
-        setIsRecalculatingNavigation(false);
-      }
-      if (navigationRouteIdRef.current !== route.id) return;
-      setActiveRoute(plan);
-      updateNavigationRoute(plan);
-      if (reason || !automatic || strategy !== 'direct') {
-        showToast(`${reason ? `${reason} · ` : ''}${t(rerouteStrategyLabels[strategy])}`);
-      }
-    },
-    [
-      navigationRoute,
-      navigationLocation,
-      nextStopIndex,
-      updateNavigationRoute,
-      isRecalculatingNavigation,
-      routeIncidents,
-      showToast,
-      t,
-    ],
-  );
-
-  // Sự cố chặn đường phía trước (trong 1,5 km) thì tính lại tuyến ngay, không đợi tới nơi mới lệch tuyến.
-  const incidentDetector = useRef(new IncidentAheadDetector());
-  const navigationPath = useMemo(
-    () => (navigationRoute ? new RoutePath(navigationRoute.legs) : null),
-    [navigationRoute],
-  );
-  useEffect(() => {
-    if (!isNavigationIdle) return;
-    incidentDetector.current.reset();
-    setDemoIncidents([]); // kết thúc chuyến thì xóa sự cố giả
-  }, [isNavigationIdle]);
-
-  /** Demo: đặt một "đường đóng" giả ở phía trước xe 600 m để xem app tự né. */
-  const addDemoIncidentAhead = () => {
-    if (!navigationPath) return;
-    const progressMeters = navigation.progressRatio * navigationPath.totalMeters;
-    const point = navigationPath.pointAt(Math.min(navigationPath.totalMeters - 50, progressMeters + 600));
-    setDemoIncidents((current) => [
-      ...current,
-      { id: `demo-${Date.now()}`, title: 'Đường đóng (demo)', ...point },
-    ]);
-  };
-  // --- Lịch sử 10 điểm đi / điểm đến gần nhất (tài khoản đã đăng nhập) ---
-  const recentPlaces = useRecentPlaces();
-  const recordRecentPlace = recentPlaces.record;
-  useEffect(() => {
-    if (!activeRoute || activeRoute.stops.length < 2) return;
-    recordRecentPlace('origin', activeRoute.stops[0]);
-    recordRecentPlace('destination', activeRoute.stops[activeRoute.stops.length - 1]);
-  }, [activeRoute, recordRecentPlace]);
-
-  // --- Cảnh báo sự cố trên tuyến: kêu/rung + banner lớn + hỏi Có/Không đổi sang đường khác ---
-  const push = usePushNotifications(isAuthenticated);
-  const alertRoute = navigationRoute ?? activeRoute;
-  useRouteWatch(push.endpoint, alertRoute, Boolean(navigationRoute) && !isNavigationIdle, navigationLocation);
-  const routeAlert = useRouteTrafficAlert({
-    route: alertRoute,
-    isNavigating: Boolean(navigationRoute) && isNavigating,
-    location: navigationLocation,
-    nextStopIndex,
-    remainingMinutes: navigationRoute
-      ? navigationRoute.durationMin * Math.max(0, 1 - navigation.progressRatio)
-      : (activeRoute?.durationMin ?? null),
-    otherIncidents: routeIncidents,
-    pushActive: Boolean(push.endpoint),
-    soundEnabled: () => navigationAudio.enabled,
-    onAccept: (plan) => {
-      setActiveRoute(plan);
-      if (navigationRoute) updateNavigationRoute(plan);
-    },
-    notificationText: (incident) => ({
-      title: t('{incident} trên tuyến của bạn', { incident: t(incident.title) }),
-      body: t('Mở để xem đường khác tránh sự cố.'),
-    }),
-  });
-  const navigationAudio = useNavigationAudio({
-    routeId: navigationRoute?.id ?? activeRoute?.id ?? null,
-    status: navigationStatus,
-    offRoute,
-    instruction: navigation.nextInstruction,
-    instructionIndex: navigation.nextInstruction
-      ? (navigationRoute?.legs.flatMap((leg) => leg.instructions ?? []).indexOf(navigation.nextInstruction) ??
-        -1)
-      : -1,
-    distanceMeters: navigation.distanceToInstructionMeters,
-    alert: routeAlert.alert,
-  });
-  const triggerRouteAlert = routeAlert.trigger;
-  routeAlertTriggerRef.current = (report) => {
-    // Đang dẫn đường: chỉ báo sự cố còn ở phía trước, kèm khoảng cách dọc tuyến.
-    let distanceAheadMeters: number | null = null;
-    if (navigationPath && navigationRoute && !isNavigationIdle) {
-      const progressMeters = navigation.progressRatio * navigationPath.totalMeters;
-      const match = navigationPath.closest(report, progressMeters - 30);
-      if (!match || match.distance > ROUTE_ALERT_CORRIDOR_METERS) return;
-      distanceAheadMeters = Math.max(0, match.progress - progressMeters);
-      incidentDetector.current.markHandled(report.id);
-    }
-    triggerRouteAlert(
-      {
-        id: report.id,
-        lat: report.lat,
-        lng: report.lng,
-        severity: report.severity,
-        title: incidentLabels[report.incidentType as IncidentKind] ?? 'Sự cố giao thông',
-        // Web Push gửi kèm số liệu cộng đồng; Realtime thì lấy từ danh sách báo cáo khi tải lại.
-        ...pickCommunityCounts(report),
-      },
-      distanceAheadMeters,
-    );
-  };
-  // Service worker chuyển Web Push (và cú bấm vào thông báo) cho app đang mở.
-  useEffect(() => {
-    if (!('serviceWorker' in navigator)) return;
-    const onMessage = (event: MessageEvent) => {
-      const data = event.data as { type?: unknown; report?: unknown } | null;
-      if (data?.type !== 'traffic_alert') return;
-      // Dữ liệu từ push là dữ liệu ngoài: kiểm tra trước khi dùng, giữ thêm số liệu cộng đồng (đã kiểm kiểu).
-      const report = parseRealtimeReport(data.report);
-      if (report) onRealtimeTrafficReport({ ...report, ...pickCommunityCounts(data.report as object) });
-    };
-    navigator.serviceWorker.addEventListener('message', onMessage);
-    return () => navigator.serviceWorker.removeEventListener('message', onMessage);
-  }, [onRealtimeTrafficReport]);
-  const [pushCardDismissed, setPushCardDismissed] = useState(() => {
-    try {
-      return localStorage.getItem('imap.pushCardDismissed') === '1';
-    } catch {
-      return false;
-    }
-  });
-  const dismissPushCard = () => {
-    setPushCardDismissed(true);
-    try {
-      localStorage.setItem('imap.pushCardDismissed', '1');
-    } catch {
-      // Trình duyệt chặn lưu trữ: chỉ ẩn trong phiên này.
-    }
-  };
-  const showPushCard =
-    Boolean(alertRoute) &&
-    !pushCardDismissed &&
-    !routeAlert.alert &&
-    push.supported &&
-    push.serverEnabled &&
-    push.permission !== 'denied' &&
-    !push.endpoint;
-  const alertedReport = routeAlert.alert
-    ? reports.find((report) => report.id === routeAlert.alert!.incident.id)
-    : null;
-
-  // Sự cố đã biết nằm phía trước (trong 1,5 km) khi dẫn đường: cũng hỏi đổi tuyến thay vì tự đổi.
-  useEffect(() => {
-    if (navigationStatus !== 'navigating' || !navigationPath || isRecalculatingNavigation) return;
-    const progressMeters = navigation.progressRatio * navigationPath.totalMeters;
-    const ahead = incidentDetector.current.findAhead(navigationPath, progressMeters, routeIncidents);
-    if (!ahead) return;
-    incidentDetector.current.markHandled(ahead.incident.id); // chỉ xử lý mỗi sự cố một lần
-    const severity =
-      trafficLayer.features.find((feature) => feature.properties.id === ahead.incident.id)?.properties
-        .severity ?? 'high';
-    triggerRouteAlert(
-      {
-        id: ahead.incident.id,
-        lat: ahead.incident.lat,
-        lng: ahead.incident.lng,
-        title: ahead.incident.title,
-        severity,
-      },
-      ahead.distanceAheadMeters,
-    );
-  }, [
-    navigationStatus,
-    navigationPath,
-    navigation.progressRatio,
-    routeIncidents,
-    isRecalculatingNavigation,
-    trafficLayer,
-    triggerRouteAlert,
-  ]);
-
-  // Lệch tuyến đủ lâu thì tự tính lại, nhưng không dồn dập hơn AUTO_REROUTE_INTERVAL_MS.
-  useEffect(() => {
-    if (!offRoute || offRouteFixes < OFF_ROUTE_FIXES_BEFORE_REROUTE || isRecalculatingNavigation) return;
-    const now = Date.now();
-    if (now - lastAutomaticRerouteAt.current < AUTO_REROUTE_INTERVAL_MS) return;
-    lastAutomaticRerouteAt.current = now;
-    void recalculateNavigation(true);
-  }, [offRoute, offRouteFixes, isRecalculatingNavigation, recalculateNavigation]);
-
-  // --- Tuyến đã lưu ---
-  const savePlan = (plan: RoutePlan, options?: SaveRouteOptions) => {
-    // save() trả về false khi trình duyệt chặn hoặc hết bộ nhớ: báo thật, không báo "đã lưu".
+  const toggleDemo = () => {
+    const next = !demoEnabled;
+    setDemoEnabled(next);
+    if (!next && navigation.mode === 'demo') navigation.setMode('real');
     showToast(
-      savedRoutes.save(plan, options)
-        ? t('Đã lưu hành trình trên thiết bị này')
-        : t('Không lưu được: bộ nhớ trình duyệt đầy hoặc bị chặn. Hành trình sẽ mất khi tải lại trang.'),
+      t(
+        next
+          ? 'Đã bật Demo: chọn tuyến bất kỳ rồi bấm Bắt đầu, xe giả sẽ chạy dọc tuyến và bạn vẫn nhận cảnh báo kẹt xe từ người dùng khác.'
+          : 'Đã tắt Demo: dẫn đường dùng GPS thật.',
+      ),
     );
   };
-
-  const deleteSavedRoute = (id: string) => {
-    savedRoutes.remove(id);
-    showToast(t('Đã xóa hành trình đã lưu'));
-  };
-
-  const openSavedRoute = async (saved: SavedRoute) => {
-    const stops = savedRouteStops(saved);
-    if (stops.length < 2) {
-      showToast(t('Không thể mở lại hành trình này.'));
-      return;
-    }
-
-    // Tuyến chỉ đường: mở trong panel để xem chỉ dẫn và đổi xe được.
-    // Khôi phục đủ điểm ghé, tiêu chí và "tránh phà" như lúc lưu (trước đây bị reset về mặc định).
-    const query = saved.kind === 'route' ? savedRouteDirectionsQuery(saved) : null;
-    if (query) {
-      openPanel('directions');
-      const result = await directions.open(query);
-      if (result) showToast(t('Đã tính lại tuyến đã lưu bằng VietMap'));
-      return;
-    }
-
-    // Tuyến nhiều điểm: tính lại và chỉ hiển thị trên bản đồ.
-    // Dùng chung bộ đếm với planMultiStopRoute: mở tuyến khác, sang panel khác hay lập hành trình mới
-    // trong lúc chờ thì bỏ kết quả này, không vẽ đè và không đóng panel người dùng đang dùng.
-    const requestId = ++multiPlanGeneration.current;
-    setActiveRoute(null);
-    const result = await routeApi.createPlan(stops, saved.vehicle, saved.objective ?? 'time');
-    if (requestId !== multiPlanGeneration.current) return;
-    if ('error' in result) {
-      showToast(t(result.error));
-      return;
-    }
-    setActiveRoute(result);
-    openPanel(null);
-    showToast(t('Đã tính lại hành trình đã lưu bằng VietMap'));
-  };
-
-  // --- Hành trình nhiều điểm ---
-  const planMultiStopRoute = async (
-    start: Place,
-    stops: Place[],
-    vehicle: TransportMode,
-    objective: RouteObjective,
-    returnToStart: boolean,
-  ): Promise<RoutePlan | { error: string }> => {
-    const requestId = ++multiPlanGeneration.current;
-    setActiveRoute(null);
-    const result = await routeApi.createOptimizedPlan(
-      [start, ...stops],
-      vehicle,
-      objective,
-      returnToStart,
-      demoEnabled ? tourAlgorithm : 'auto', // giao diện thường luôn để server tự chọn
-    );
-    if (requestId !== multiPlanGeneration.current) return { error: t('Đã hủy hành trình cũ.') };
-    if ('error' in result) return result;
-    setActiveRoute(result);
-    setSelectedPlace(null);
-    showToast(t('Đã tối ưu thứ tự ghé theo đường đi VietMap'));
-    return result;
-  };
-
-  const resetMultiStopRoute = (planId?: string) => {
-    multiPlanGeneration.current++;
-    if (activeRoute?.id === planId) setActiveRoute(null);
-  };
-
-  // --- Giao thông (N2): gửi và xác minh báo cáo qua API, yêu cầu đăng nhập ---
-  /** Chưa đăng nhập thì mở bảng đăng nhập và báo lỗi cho panel giao thông hiển thị. */
-  const requireSignIn = (message: string) => {
-    if (accessToken) return;
-    setAuthOpen(true);
-    throw new Error(message);
-  };
-  const reportIncident = async (
-    type: IncidentKind,
-    severity: IncidentSeverity,
-    vehicleScope: TrafficVehicleScope,
-    point: LatLng,
-    note: string,
-    photo: File | null,
-  ) => {
-    requireSignIn(t('Đăng nhập để gửi báo cáo.'));
-    const report = await createTrafficReport(
-      {
-        incidentType: type,
-        severity,
-        vehicleScope,
-        lat: point.lat,
-        lng: point.lng,
-        ...(note ? { note } : {}),
-      },
-      photo ?? undefined,
-    );
-    setSelectedMapPoint(null);
-    mapController.current?.flyTo(point, 15);
-    showToast(
-      report.vehicleScope === vehicleScope
-        ? t('Đã đồng bộ báo cáo giao thông')
-        : t('Đã gửi báo cáo; Supabase chưa cập nhật phân luồng, cảnh báo tạm áp dụng cho cả ô tô và xe máy.'),
-    );
-  };
-
-  const verifyIncident = async (id: string, state: 'clear' | 'still_active') => {
-    requireSignIn(t('Đăng nhập để xác minh báo cáo.'));
-    await updateClearance(id, state);
-  };
-
-  // --- Trợ lý địa điểm (N2): thêm/bỏ điểm ghé vào tuyến đang hiển thị ---
-  const addAssistantStop = async (candidate: RouteStopCandidate, expectedRouteId: string) => {
-    if (!activeRoute || activeRoute.id !== expectedRouteId || activeRoute.stops.length !== 2) {
-      showToast(t('Tuyến đã thay đổi. Hãy tìm lại điểm dừng.'));
-      return;
-    }
-    const stop = placeFromStop(candidate.place);
-    const stops = [activeRoute.stops[0]!, stop, activeRoute.stops[1]!];
-    const { id: originalId, vehicle, objective } = activeRoute;
-    // Trợ lý luôn tính tuyến qua điểm ghé theo "nhanh nhất". Tuyến đang theo "ngắn nhất" thì tính lại
-    // đúng tiêu chí đó, thay vì dùng tuyến của trợ lý rồi gắn nhầm nhãn (trước đây còn reset về "time").
-    let plan: RoutePlan;
-    if (objective === 'time') {
-      plan = routePlanFromResult(candidate.route, stops, vehicle, objective);
-    } else {
-      const result = await routeApi.createPlan(stops, vehicle, objective);
-      if ('error' in result) {
-        showToast(t(result.error));
-        return;
-      }
-      plan = result;
-    }
-    setActiveRoute((current) => (current?.id === originalId ? plan : current));
-    showToast(t('Đã thêm điểm ghé: {name}', { name: stop.name }));
-  };
-
-  const removeAssistantStop = async () => {
-    if (!activeRoute || activeRoute.stops.length < 3) return;
-    const originalId = activeRoute.id;
-    const result = await routeApi.createPlan(
-      [activeRoute.stops[0]!, activeRoute.stops[activeRoute.stops.length - 1]!],
-      activeRoute.vehicle,
-      // Giữ tiêu chí của tuyến đang xem (trước đây mặc định "time").
-      activeRoute.objective,
-    );
-    if ('error' in result) {
-      showToast(t(result.error));
-      return;
-    }
-    setActiveRoute((current) => (current?.id === originalId ? result : current));
-  };
-
-  // --- Khám phá quanh đây / tìm dọc tuyến (địa điểm thật qua PoiProvider -> backend -> VietMap) ---
-  const mapCenterForPoi = useMemo<LatLng>(
-    () => ({
-      lat: (trafficBounds.minLat + trafficBounds.maxLat) / 2,
-      lng: (trafficBounds.minLng + trafficBounds.maxLng) / 2,
-    }),
-    [trafficBounds],
-  );
-  const routePath = useMemo(
-    () => (activeRoute ? activeRoute.legs.flatMap((leg) => leg.points) : null),
-    [activeRoute],
-  );
-  const poi = usePoiSearch({ provider: poiProvider, mapCenter: mapCenterForPoi, routePath });
-  const poiVisible =
-    poi.request !== null && (activePanel === 'poi' || (activePanel === 'place' && selectedPoi !== null));
-  const visiblePois = poiVisible ? poi.pois : NO_POIS;
-
-  // Có kết quả cho lượt tìm mới (đổi loại / từ khóa) thì thu bản đồ vừa các ghim gần nhất, chừa chỗ
-  // cho bảng kết quả. Kéo bản đồ / đổi bán kính không thu lại để khỏi giật bản đồ của người dùng.
-  const fittedPoiRequest = useRef<unknown>(null);
-  useEffect(() => {
-    const request = poi.request;
-    if (!poiVisible || request?.mode !== 'nearby' || poi.status !== 'ready' || poi.pois.length === 0) return;
-    if (fittedPoiRequest.current === request) return;
-    fittedPoiRequest.current = request;
-    mapController.current?.fitPoints(poi.pois.slice(0, 8));
-  }, [poiVisible, poi.request, poi.status, poi.pois]);
-
-  /** Bỏ lượt tìm POI hiện tại (ghim và highlight), không đổi panel. */
-  const dismissPoi = () => {
-    poi.close();
-    setHighlightedPoiId(null);
-  };
-  const closePoi = () => {
-    dismissPoi();
-    if (activePanel === 'poi') closePanel();
-  };
-
-  const startPoiSearch = (mode: 'nearby' | 'alongRoute', term: PoiSearchTerm) => {
-    // Bấm lại chip đang chọn thì đóng; gõ lại cùng từ khóa thì tìm lại.
-    if (term.category && poiVisible && poi.request?.mode === mode && sameTerm(poi.request.term, term)) {
-      closePoi();
-      return;
-    }
-    let anchor = getMapCenter();
-    let zoom = mapController.current?.getZoom() ?? 0;
-    if (mode === 'nearby' && zoom < MIN_EXPLORE_ZOOM) {
-      anchor = currentLocation ?? DEFAULT_EXPLORE_CENTER;
-      zoom = 14;
-      mapController.current?.flyTo(anchor, zoom);
-      showToast(t('Đang khám phá quanh TP.HCM. Hãy phóng to bản đồ tới khu vực bạn muốn.'));
-    }
-    const radiusM = mode === 'alongRoute' ? ALONG_ROUTE_RADIUS_M : radiusForZoom(zoom);
-    poi.open({ mode, term }, anchor, radiusM);
-    setSelectedPlace(null);
-    setSelectedPoi(null);
-    openPanel('poi');
-  };
-
-  const selectPoi = (item: Poi) => {
-    openPlace(placeFromPoi(item), item);
-  };
-  const closePlacePanel = () => {
-    setSelectedPoi(null);
-    if (poi.request) openPanel('poi');
-    else closePanel();
-  };
-
-  const directionsToPoi = (item: Poi) => {
-    dismissPoi();
-    openDirections(placeFromPoi(item));
-  };
-
-  /** Các điểm ghé đã chọn trong panel chỉ đường (bỏ ô còn trống). */
-  const waypointPlaces = () =>
-    directions.waypoints.flatMap((waypoint) => (waypoint.place ? [waypoint.place] : []));
-
-  /** Chèn POI làm điểm ghé giữa điểm đi và đến (theo vị trí dọc tuyến), tính lại tuyến rồi về panel chỉ đường. */
-  const addPoiStop = async (item: Poi) => {
-    const { origin, destination, route } = directions;
-    if (!origin || !destination || !route) return;
-    const path = route.legs.flatMap((leg) => leg.points);
-    const stop = placeFromPoi(item);
-    const via = [...waypointPlaces(), stop]
-      .filter((place, index, all) => all.findIndex((other) => other.id === place.id) === index)
-      .sort((a, b) => progressAlongPath(path, a) - progressAlongPath(path, b));
-    dismissPoi();
-    openPanel('directions');
-    const result = await directions.open({
-      origin,
-      destination,
-      vehicle: directions.vehicle,
-      via,
-      objective: directions.objective,
-      avoidFerry: directions.avoidFerry,
-    });
-    if (result) showToast(t('Đã thêm điểm dừng: {name}', { name: item.name }));
-  };
-
-  const toggleSavedPoi = (item: Poi) => {
-    poi.toggleSaved(item.id);
-    showToast(poi.savedIds.has(item.id) ? t('Đã bỏ lưu địa điểm') : t('Đã lưu {name}', { name: item.name }));
-  };
-
-  // Bảng chức năng đổi kích thước (đổi nấc kéo, mở/đóng panel): báo cho bản đồ và zoom lại tuyến
-  // vừa phần bản đồ còn nhìn thấy. Chỉ zoom lại khi đã dừng kéo (inset khác null) và đang xem tuyến.
-  const routeFitActive =
-    Boolean(activeRoute) && isNavigationIdle && (activePanel === 'directions' || activePanel === 'multi');
-  const routeFitActiveRef = useRef(routeFitActive);
-  routeFitActiveRef.current = routeFitActive;
-  const lastSheetInset = useRef<SheetState['inset']>(null);
-  const sheetFitTimer = useRef<number | undefined>(undefined);
-  const handleSheetChange = useCallback(
-    (sheet: SheetState) => {
-      const controller = mapController.current;
-      if (!controller) return;
-      controller.setFitInsets(sheet.inset);
-      sheetOpenRef.current = sheet.inset !== null;
-      if (sheet.inset) flushFocus();
-      const previous = lastSheetInset.current;
-      if (!sheet.inset) return;
-      lastSheetInset.current = sheet.inset;
-      if (previous && previous.left === sheet.inset.left && previous.bottom === sheet.inset.bottom) return;
-      window.clearTimeout(sheetFitTimer.current);
-      // Đợi hết hiệu ứng đổi chiều cao (200ms) rồi mới zoom lại.
-      sheetFitTimer.current = window.setTimeout(() => {
-        if (routeFitActiveRef.current) mapController.current?.refit();
-      }, 260);
-    },
-    [flushFocus],
-  );
-  useEffect(() => () => window.clearTimeout(sheetFitTimer.current), []);
 
   const previewRoute = (route: RoutePlan) => {
     directions.chooseRoute(route.id);
     mapController.current?.fitRoute(route);
   };
 
-  // Liên kết chia sẻ ?from=…&to=…&mode=…(&via=…&by=…&ferry=…) tự điền tuyến và tính khi tải trang.
-  const sharedRoute = useMemo(() => parseRouteShareLink(window.location.search), []);
-  const sharedRouteApplied = useRef(false);
-  useEffect(() => {
-    if (!sharedRoute || sharedRouteApplied.current) return;
-    sharedRouteApplied.current = true;
-    void directions.open(sharedRoute);
-  }, [sharedRoute, directions]);
+  const reportFromNavigation = () => {
+    const point = navigationLocation ?? currentLocation;
+    setSelectedMapPoint(point);
+    openPanel('traffic');
+    if (point) viewport.focusAfterPanel(point, 16);
+    else showToast(t('Đang chờ GPS để gắn báo cáo vào vị trí hiện tại.'));
+  };
 
-  const areaInsight = useMemo(() => computeAreaInsight(incidents.length, now), [incidents.length, now]);
-  const openTrafficPanel = () => selectFeature('traffic');
-
-  const routeSummary = activeRoute
-    ? `${formatDistanceKm(activeRoute.distanceKm, language)} · ${formatDurationMinutes(activeRoute.durationMin, language)}`
-    : '';
-  const showRouteSummary = Boolean(activeRoute) && isNavigationIdle && activePanel !== 'directions';
   const canUseAssistant = !authLoading && isAuthenticated;
-  const panelOpen = activePanel !== null || authOpen;
-  const alongRouteMode =
-    Boolean(activeRoute) && (activePanel === 'directions' || poi.request?.mode === 'alongRoute');
-  const activeCategory = poiVisible && poi.request ? (poi.request.term.category ?? null) : null;
+  const { panelOpen } = panels;
+  const layerSwitcherProps = { layer, overlays, onLayerChange: setLayer, onOverlaysChange: setOverlays };
 
   return (
     <AppShell
       dark={isDark}
-      onSheetChange={handleSheetChange}
+      onSheetChange={viewport.handleSheetChange}
       panelOpen={panelOpen && isNavigationIdle}
       map={
         <MapView
           controllerRef={mapController}
           onBoundsChange={setTrafficBounds}
-          currentLocation={mapLocation}
+          // Mũi tên dẫn đường vẽ ở vị trí đã hút về tuyến; vị trí GPS thô vẫn dùng cho tính lại tuyến và báo cáo.
+          currentLocation={isNavigationIdle ? currentLocation : navigationDisplayLocation}
           draftStops={draftStops}
-          headingDegrees={navigationHeadingDegrees}
+          headingDegrees={navigation.headingDegrees}
           isPicking={pickTarget !== null}
-          isNavigating={isNavigationMarkerVisible}
+          isNavigating={navigationStatus !== 'idle' && navigationStatus !== 'error'}
           layer={layer}
           overlays={overlays}
-          pois={visiblePois}
-          highlightedPoiId={highlightedPoiId}
+          pois={explorer.visiblePois}
+          highlightedPoiId={explorer.highlightedId}
           algorithmOverlay={demoEnabled && activePanel === 'directions' ? algorithmComparison.overlay : null}
-          onMapClick={(point) => void handleMapClick(point)}
+          onMapClick={handleMapClick}
           onSelectRoute={directions.chooseRoute}
-          onPoiClick={(id) => {
-            const item = poi.pois.find((candidate) => candidate.id === id);
-            if (item) selectPoi(item);
-          }}
+          onPoiClick={explorer.selectById}
           route={activeRoute}
           routeOptions={routeOptionsForMap}
           trafficLayer={trafficLayer}
@@ -1170,40 +391,23 @@ export function App() {
         isNavigationIdle && (
           <TopBar
             getFocus={getMapCenter}
-            onSelectPlace={openPlace}
-            buildSearchAction={(text) => {
-              // Một ô tìm kiếm cho cả hai việc: dòng đầu tìm theo loại/từ khóa quanh đây hoặc dọc tuyến.
-              const term = termFromText(text);
-              if (!term) return null;
-              const mode = alongRouteMode ? 'alongRoute' : 'nearby';
-              const what = term.category
-                ? t(poiCatalog[term.category].label).toLowerCase()
-                : `“${term.query}”`;
-              return {
-                label: t('Tìm {what} {where}', {
-                  what,
-                  where: t(alongRouteMode ? 'dọc tuyến' : 'quanh đây'),
-                }),
-                icon: term.category ? poiCatalog[term.category].icon : 'search',
-                preferred: Boolean(term.category),
-                onRun: () => startPoiSearch(mode, term),
-              };
-            }}
+            onSelectPlace={(place) => selection.openPlace(place)}
+            buildSearchAction={explorer.buildSearchAction}
             updateAvailable={updateAvailable}
             onUpdate={reloadForUpdate}
             onInfo={() => showToast(t('Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.'))}
             userEmail={user?.email ?? null}
             demo={{ enabled: demoEnabled, onToggle: toggleDemo }}
             strip={
-              alongRouteMode ? (
+              explorer.alongRouteMode ? (
                 <AlongRouteSearch
-                  active={poi.request?.mode === 'alongRoute' ? activeCategory : null}
-                  onSelect={(term) => startPoiSearch('alongRoute', term)}
+                  active={explorer.search.request?.mode === 'alongRoute' ? explorer.activeCategory : null}
+                  onSelect={(term) => explorer.start('alongRoute', term)}
                 />
               ) : (
                 <CategoryChips
-                  active={poi.request?.mode === 'nearby' ? activeCategory : null}
-                  onSelect={(term) => startPoiSearch('nearby', term)}
+                  active={explorer.search.request?.mode === 'nearby' ? explorer.activeCategory : null}
+                  onSelect={(term) => explorer.start('nearby', term)}
                 />
               )
             }
@@ -1217,14 +421,7 @@ export function App() {
               <TrafficLegend onHide={() => setOverlays((current) => ({ ...current, traffic: false }))} />
             </div>
           )}
-          {isNavigationIdle && (
-            <LayerSwitcher
-              layer={layer}
-              overlays={overlays}
-              onLayerChange={setLayer}
-              onOverlaysChange={setOverlays}
-            />
-          )}
+          {isNavigationIdle && <LayerSwitcher {...layerSwitcherProps} />}
           {isNavigationIdle && !panelOpen && (
             <div className="md:hidden">
               <AreaInsightPill insight={areaInsight} onOpenTraffic={openTrafficPanel} />
@@ -1234,28 +431,20 @@ export function App() {
       }
       bottomRight={
         <>
-          {!isNavigationIdle && (
-            <LayerSwitcher
-              align="right"
-              layer={layer}
-              overlays={overlays}
-              onLayerChange={setLayer}
-              onOverlaysChange={setOverlays}
-            />
-          )}
+          {!isNavigationIdle && <LayerSwitcher align="right" {...layerSwitcherProps} />}
           <MapControls
             showZoom={!isNavigationIdle}
             onShowVietnam={() => {
-              pauseFollowIfNavigating();
+              follow.pauseIfNavigating();
               mapController.current?.showVietnam();
             }}
-            onLocate={() => (isNavigationIdle ? void locateOnMap() : recenterNavigation())}
+            onLocate={() => (isNavigationIdle ? void locateOnMap() : follow.recenter())}
             onZoomIn={() => {
-              pauseFollowIfNavigating();
+              follow.pauseIfNavigating();
               mapController.current?.zoomIn();
             }}
             onZoomOut={() => {
-              pauseFollowIfNavigating();
+              follow.pauseIfNavigating();
               mapController.current?.zoomOut();
             }}
           />
@@ -1269,15 +458,8 @@ export function App() {
         </div>
       )}
 
-      {/* Tóm tắt tuyến đang hiển thị khi panel chỉ đường đã đóng (nhiều điểm, tuyến đã lưu…). */}
-      {showRouteSummary && (
-        <div className="absolute right-3 top-[68px] z-10 flex items-center gap-2 rounded-full bg-white/90 px-3 py-2 text-xs font-semibold text-ink shadow-glass dark:shadow-glass-dark ring-1 ring-black/5 backdrop-blur-xl max-md:top-[112px] dark:bg-slate-900/85 dark:text-slate-100 dark:ring-white/10">
-          <Icon name="route" size={14} className="text-brand-600 dark:text-indigo-300" />
-          {routeSummary}
-          <span className="rounded-full bg-amber-100 dark:bg-amber-400/15 px-2 py-0.5 text-[11px] text-amber-800 dark:text-amber-200">
-            {t('Ước tính')}
-          </span>
-        </div>
+      {activeRoute && isNavigationIdle && activePanel !== 'directions' && (
+        <RouteSummaryPill route={activeRoute} />
       )}
 
       {!isNavigationIdle && navigationStatus !== 'arrived' && (
@@ -1293,30 +475,24 @@ export function App() {
         instruction={navigation.nextInstruction}
         distanceToInstructionMeters={navigation.distanceToInstructionMeters}
         distanceRemainingMeters={navigation.distanceRemainingMeters}
-        offRoute={offRoute}
+        offRoute={navigation.offRoute}
         error={navigation.error}
         canRecalculate={Boolean(navigationRoute && navigationLocation)}
-        isRecalculating={isRecalculatingNavigation}
-        onRecalculate={() => void recalculateNavigation()}
+        isRecalculating={rerouting.isRecalculating}
+        onRecalculate={() => void rerouting.recalculate()}
         onRetry={() => {
           if (navigationRoute) {
             navigationAudio.begin();
-            startNavigationSession(navigationRoute, navigation.mode);
+            navigation.start(navigationRoute, navigation.mode);
           }
         }}
         audio={navigationAudio}
-        onReport={() => {
-          const point = navigationLocation ?? currentLocation;
-          setSelectedMapPoint(point);
-          openPanel('traffic');
-          if (point) focusAfterPanel(point, 16);
-          else showToast(t('Đang chờ GPS để gắn báo cáo vào vị trí hiện tại.'));
-        }}
+        onReport={reportFromNavigation}
         onStop={stopNavigation}
-        followPaused={followPaused}
+        followPaused={follow.followPaused}
         atTop={activePanel !== null}
-        onRecenter={recenterNavigation}
-        onPreviewRoute={previewNavigationRoute}
+        onRecenter={follow.recenter}
+        onPreviewRoute={follow.previewRoute}
         demo={
           demoEnabled
             ? {
@@ -1325,31 +501,13 @@ export function App() {
                 onModeChange: navigation.setMode,
                 onTogglePause: navigation.toggleDemoPause,
                 onWrongTurn: navigation.simulateWrongTurn,
-                onIncidentAhead: addDemoIncidentAhead,
+                onIncidentAhead: demoIncidents.addAhead,
               }
             : undefined
         }
       />
 
-      {/* Hướng dẫn khi đang chọn điểm trên bản đồ. */}
-      {pickTarget && (
-        <div
-          className="absolute left-1/2 top-[76px] z-[85] flex -translate-x-1/2 items-center gap-3 rounded-full bg-slate-900/90 py-2 pl-4 pr-2 text-xs font-semibold text-white shadow-glass dark:shadow-glass-dark ring-1 ring-white/15 backdrop-blur-xl max-md:top-[116px]"
-          role="status"
-        >
-          <Icon name="pin" size={15} className="text-teal-300" />
-          {t('Chạm vào bản đồ để chọn {target}', {
-            target: t(pickTarget === 'origin' ? 'điểm đi' : 'điểm đến'),
-          })}
-          <button
-            type="button"
-            onClick={() => setPickTarget(null)}
-            className="rounded-full bg-white/15 px-3 py-1 text-xs hover:bg-white/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-300"
-          >
-            {t('Hủy')}
-          </button>
-        </div>
-      )}
+      {pickTarget && <MapPickHint target={pickTarget} onCancel={() => setPickTarget(null)} />}
 
       {activePanel === 'assistant' &&
         (canUseAssistant && user && accessToken ? (
@@ -1362,9 +520,9 @@ export function App() {
               getMapCenter={getMapCenter}
               onClose={closePanel}
               onFocus={(place) => mapController.current?.flyTo(place)}
-              onDirections={(place) => openDirections(placeFromStop(place))}
-              onAddStop={addAssistantStop}
-              onRemoveStop={() => void removeAssistantStop()}
+              onDirections={(place) => selection.openDirections(placeFromStop(place))}
+              onAddStop={assistantStops.add}
+              onRemoveStop={() => void assistantStops.remove()}
             />
           </Suspense>
         ) : (
@@ -1377,13 +535,16 @@ export function App() {
             getSearchFocus={getMapCenter}
             directions={directions}
             trafficLayer={trafficLayer}
-            isLocating={isLocating}
+            isLocating={picker.isLocating}
             pickTarget={pickTarget}
             onClose={closePanel}
             onPickOnMap={(target) => setPickTarget((current) => (current === target ? null : target))}
             onSave={() => {
               if (directions.route)
-                savePlan(directions.route, { avoidFerry: directions.avoidFerry, panel: 'directions' });
+                savedRouteActions.save(directions.route, {
+                  avoidFerry: directions.avoidFerry,
+                  panel: 'directions',
+                });
             }}
             onStartNavigation={startNavigation}
             onPreviewRoute={previewRoute}
@@ -1400,13 +561,13 @@ export function App() {
               ) : undefined
             }
             isNavigating={isNavigating}
-            onUseMyLocation={() => void setOriginFromGps()}
+            onUseMyLocation={() => void picker.useMyLocationAsOrigin()}
           />
         </Suspense>
       )}
 
       {/* Panel nhiều điểm được giữ lại (ẩn) sau lần mở đầu để không mất danh sách điểm đang soạn. */}
-      {hasOpenedMulti && (
+      {panels.hasOpenedMulti && (
         <Suspense fallback={null}>
           <MultiStopPanel
             isActive={activePanel === 'multi'}
@@ -1415,14 +576,14 @@ export function App() {
             isNavigating={isNavigating}
             getFocus={getMapCenter}
             onClose={closePanel}
-            onPlanRoute={planMultiStopRoute}
-            onReset={resetMultiStopRoute}
-            onSave={savePlan}
+            onPlanRoute={multiStop.plan}
+            onReset={multiStop.reset}
+            onSave={savedRouteActions.save}
             presentationSlot={
               demoEnabled ? (
                 <TourAlgorithmSelect
-                  value={tourAlgorithm}
-                  onChange={setTourAlgorithm}
+                  value={multiStop.tourAlgorithm}
+                  onChange={multiStop.setTourAlgorithm}
                   lastUsed={activeRoute?.optimization?.algorithm ?? null}
                 />
               ) : undefined
@@ -1431,27 +592,27 @@ export function App() {
         </Suspense>
       )}
 
-      {activePanel === 'poi' && poi.request && (
+      {activePanel === 'poi' && explorer.search.request && (
         <PoiResultsPanel
-          term={poi.request.term}
-          mode={poi.request.mode}
-          search={poi}
-          highlightedId={highlightedPoiId}
-          canAddStop={poi.request.mode === 'alongRoute' && Boolean(directions.route)}
-          onHover={setHighlightedPoiId}
-          onSelect={selectPoi}
-          onDirections={directionsToPoi}
-          onToggleSave={toggleSavedPoi}
-          onAddStop={(item) => void addPoiStop(item)}
-          {...(poi.request.mode === 'alongRoute'
+          term={explorer.search.request.term}
+          mode={explorer.search.request.mode}
+          search={explorer.search}
+          highlightedId={explorer.highlightedId}
+          canAddStop={explorer.search.request.mode === 'alongRoute' && Boolean(directions.route)}
+          onHover={explorer.setHighlightedId}
+          onSelect={explorer.select}
+          onDirections={explorer.directionsTo}
+          onToggleSave={explorer.toggleSaved}
+          onAddStop={(item) => void explorer.addStop(item)}
+          {...(explorer.search.request.mode === 'alongRoute'
             ? {
                 onBack: () => {
-                  dismissPoi();
+                  explorer.dismiss();
                   openPanel('directions');
                 },
               }
             : {})}
-          onClose={closePoi}
+          onClose={explorer.close}
         />
       )}
 
@@ -1463,12 +624,12 @@ export function App() {
             isAuthenticated={isAuthenticated}
             accessToken={accessToken}
             defaultVehicle={reportVehicle}
-            loading={trafficLoading}
-            error={trafficError}
+            loading={traffic.loading}
+            error={traffic.error}
             onClose={closePanel}
-            onSignIn={() => setAuthOpen(true)}
-            onReport={reportIncident}
-            onClearance={verifyIncident}
+            onSignIn={() => panels.setAuthOpen(true)}
+            onReport={reporting.report}
+            onClearance={reporting.verify}
           />
         </Suspense>
       )}
@@ -1478,15 +639,15 @@ export function App() {
           <SavedRoutesPanel
             routes={savedRoutes.routes}
             onClose={closePanel}
-            onDelete={deleteSavedRoute}
-            onOpen={(route) => void openSavedRoute(route)}
+            onDelete={savedRouteActions.remove}
+            onOpen={(route) => void savedRouteActions.open(route)}
           />
         </Suspense>
       )}
 
-      {authOpen && (
+      {panels.authOpen && (
         <Suspense fallback={<PanelFallback label={t('Đang mở tài khoản…')} />}>
-          <AuthPanel onClose={() => setAuthOpen(false)} />
+          <AuthPanel onClose={() => panels.setAuthOpen(false)} />
         </Suspense>
       )}
 
@@ -1495,30 +656,16 @@ export function App() {
           <PlacePanel
             place={selectedPlace}
             poi={selectedPoi}
-            onClose={closePlacePanel}
-            onDirections={openDirections}
+            onClose={explorer.closePlacePanel}
+            onDirections={selection.openDirections}
           />
         </Suspense>
       )}
 
-      {routeAlert.alert && (
+      {routeAlert.alert && alerts.alertCommunity && (
         <RouteTrafficAlert
           alert={routeAlert.alert}
-          community={{
-            reportCount: Math.max(
-              1,
-              alertedReport?.communityReportCount ?? routeAlert.alert.incident.communityReportCount ?? 1,
-            ),
-            reporterCount: Math.max(
-              1,
-              alertedReport?.communityReporterCount ?? routeAlert.alert.incident.communityReporterCount ?? 1,
-            ),
-            updatedAt:
-              alertedReport?.communityUpdatedAt ??
-              alertedReport?.createdAt ??
-              routeAlert.alert.incident.communityUpdatedAt ??
-              null,
-          }}
+          community={alerts.alertCommunity}
           onAccept={routeAlert.accept}
           onKeep={routeAlert.keep}
           belowNavigationBanner={!isNavigationIdle && activePanel !== null}
@@ -1526,34 +673,25 @@ export function App() {
         />
       )}
 
-      {showPushCard && (
+      {alerts.pushCard.visible && (
         <PushPermissionCard
-          busy={push.busy}
-          error={push.error}
+          busy={alerts.push.busy}
+          error={alerts.push.error}
           isAuthenticated={isAuthenticated}
           onEnable={() => {
-            void push.enable().then((enabled) => {
+            void alerts.push.enable().then((enabled) => {
               if (enabled) {
-                setPushCardDismissed(true);
+                alerts.pushCard.hide();
                 showToast(t('Đã bật thông báo cảnh báo giao thông trên tuyến'));
               }
             });
           }}
-          onDismiss={dismissPushCard}
-          onSignIn={() => requireSignIn(t('Đăng nhập để nhận thông báo kẹt xe trên tuyến.'))}
+          onDismiss={alerts.pushCard.dismiss}
+          onSignIn={() => reporting.requireSignIn(t('Đăng nhập để nhận thông báo kẹt xe trên tuyến.'))}
         />
       )}
 
-      {toast && (
-        <div
-          className="toast-message absolute left-1/2 top-[76px] z-[90] flex -translate-x-1/2 items-center gap-2 rounded-full bg-slate-900/90 px-4 py-2.5 text-center text-xs font-semibold text-white shadow-glass dark:shadow-glass-dark ring-1 ring-white/15 backdrop-blur-xl max-md:top-[116px]"
-          role="status"
-          aria-live="polite"
-        >
-          <Icon name="check" size={15} className="shrink-0 text-teal-300" />
-          {toast}
-        </div>
-      )}
+      {toast && <StatusToast message={toast} />}
     </AppShell>
   );
 }

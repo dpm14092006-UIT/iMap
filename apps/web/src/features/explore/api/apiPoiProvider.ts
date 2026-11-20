@@ -1,10 +1,9 @@
 import type { AlongRoutePoiRequest } from '@routetwin/shared';
 import type { HttpClient } from '../../../shared/api/HttpClient';
 import { httpClient } from '../../../shared/api/HttpClient';
-import type { Coordinate } from '../../map/types';
-import type { LatLng } from '../../places/types';
+import type { Coordinate, LatLng } from '../../../shared/geo/types';
 import type { Poi, PoiProvider, PoiSearchTerm } from '../types';
-import { simplifyPath } from '../services/simplifyPath';
+import { simplifyPath } from '../domain/simplifyPath';
 
 /** Chỉ gửi trường có giá trị để body/query không chứa `undefined`. */
 function termFields(term: PoiSearchTerm): {

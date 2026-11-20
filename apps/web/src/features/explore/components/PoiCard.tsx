@@ -1,6 +1,6 @@
-import { Icon } from '../../../shared/components/Icon';
-import { formatDistanceMeters } from '../../navigation/utils/format';
-import { poiMetaFor } from '../data/poiCatalog';
+import { Icon } from '../../../shared/ui/Icon';
+import { formatDistanceMeters } from '../../../shared/format/units';
+import { poiMetaFor } from '../domain/poiCatalog';
 import type { Poi } from '../types';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 

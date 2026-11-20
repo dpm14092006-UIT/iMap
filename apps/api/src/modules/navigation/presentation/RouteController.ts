@@ -1,14 +1,13 @@
 import type { NextFunction, Request, Response } from 'express';
 import { routeRequestSchema } from '@routetwin/shared';
-import { getRequestId } from '../../../shared/http/request-context.js';
+import { getRequestId } from '../../../shared/http/requestContext.js';
 import type { CalculateRouteUseCase } from '../application/use-cases/CalculateRouteUseCase.js';
-
-import type { RouteComparisonController } from './RouteComparisonController.js';
+import type { CompareRoutesUseCase } from '../application/use-cases/CompareRoutesUseCase.js';
 
 export class RouteController {
   constructor(
     private readonly calculateRoute: CalculateRouteUseCase,
-    private readonly comparisons?: RouteComparisonController,
+    private readonly comparisons?: CompareRoutesUseCase,
   ) {}
 
   calculate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

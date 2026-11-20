@@ -17,7 +17,8 @@
     "format:check": "prettier --check .",
     "osm:import": "tsx scripts/osm/import-osm.ts",
     "benchmark:pathfinding": "tsx scripts/benchmark/benchmark-pathfinding.ts",
-    "benchmark:tsp": "tsx scripts/benchmark/benchmark-tsp.ts"
+    "benchmark:tsp": "tsx scripts/benchmark/benchmark-tsp.ts",
+    "verify": "node scripts/verify/verify.mjs"
   },
   "engines": {
     "node": ">=20.19"

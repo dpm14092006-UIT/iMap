@@ -1,0 +1,3 @@
+{
+  "Geodesy": "Gộp vào shared/geo/distance.ts (haversineMeters) và shared/geo/polyline.ts (projectOntoSegment); xem scripts/verify/geometry-regression trong shared/geo/geometry.regression.test.ts."
+}

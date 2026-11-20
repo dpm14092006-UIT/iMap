@@ -21,8 +21,5 @@ export type Place = {
   source: PlaceSource;
 };
 
-/** Tọa độ đơn giản theo định dạng JSON của dự án: {lat, lng}. */
-export type LatLng = { lat: number; lng: number };
-
 /** A suggestion may need one details request before it can be used as a route point. */
 export type PlaceSearchSuggestion = Omit<Place, 'lat' | 'lng'> & { lat?: number; lng?: number };

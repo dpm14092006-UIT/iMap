@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { popularPlaces } from '../data/popularPlaces';
-import type { LatLng, Place } from '../types';
+import { popularPlaces } from '../domain/popularPlaces';
+import type { LatLng } from '../../../shared/geo/types';
+import type { Place } from '../types';
 import { PlaceCombobox } from './PlaceCombobox';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import { useRecentPlaces } from '../context/RecentPlacesProvider';
-import type { RecentPlaceKind } from '../services/recentPlaces';
+import type { RecentPlaceKind } from '../domain/recentPlaces';
 
 type PlaceFieldProps = {
   /** Địa điểm đang được chọn (null khi người dùng đang gõ / chưa chọn). */

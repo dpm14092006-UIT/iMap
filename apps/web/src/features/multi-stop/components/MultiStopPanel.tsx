@@ -1,11 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { SheetPanel } from '../../../app/layout/SheetPanel';
-import { Icon } from '../../../shared/components/Icon';
-import { popularPlaces } from '../../places/data/popularPlaces';
-import type { RouteObjective, RoutePlan, TransportMode } from '../../map/types';
-import type { LatLng, Place } from '../../places/types';
+import { SheetPanel } from '../../../shared/ui/SheetPanel';
+import { Icon } from '../../../shared/ui/Icon';
+import { popularPlaces } from '../../places/domain/popularPlaces';
+import type { RouteObjective, RoutePlan, TransportMode } from '../../routing/types';
+import type { LatLng } from '../../../shared/geo/types';
+import type { Place } from '../../places/types';
 import { PlaceCombobox } from '../../places/components/PlaceCombobox';
-import { MAX_STOPS } from '../utils/algorithms';
+import { MAX_STOPS } from '../domain/limits';
 import { OptimizationSummary } from './OptimizationSummary';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 

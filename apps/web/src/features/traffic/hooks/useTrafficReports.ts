@@ -2,9 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TrafficReportBounds, TrafficReportDto, TrafficReportInput } from '@routetwin/shared';
 import { trafficApi, trafficPhotos, vietnamBounds } from '../api/trafficApi';
 import { getSupabaseClient } from '../../auth/services/supabaseClient';
-import { parseRealtimeReport, type RealtimeTrafficReport } from '../services/realtimeReport';
+import { debounce } from '../../../shared/async/debounce';
+import { parseRealtimeReport, type RealtimeTrafficReport } from '../domain/realtimeReport';
+import { canQueryTraffic, containsTrafficBounds, trafficQueryBounds } from '../domain/trafficQueryBounds';
 
-export type { RealtimeTrafficReport } from '../services/realtimeReport';
+export type { RealtimeTrafficReport } from '../domain/realtimeReport';
+
+/** Gom các sự kiện realtime đến dồn dập trong khoảng này (ms) thành một lần tải lại danh sách. */
+const REALTIME_REFRESH_DEBOUNCE_MS = 500;
 
 export function useTrafficReports(
   accessToken: string | null,
@@ -16,10 +21,21 @@ export function useTrafficReports(
   const [reports, setReports] = useState<TrafficReportDto[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [searchBounds, setSearchBounds] = useState(bounds);
+  const [searchBounds, setSearchBounds] = useState(() => trafficQueryBounds(bounds));
+  const viewportRef = useRef(bounds);
+  viewportRef.current = bounds;
+  // The RPC returns at most 200 rows. A full buffer must fall back to the visible area,
+  // otherwise reports outside the screen could crowd out reports inside it.
+  const denseCoverage = useRef<TrafficReportBounds | null>(null);
   const { minLat, minLng, maxLat, maxLng } = bounds;
   useEffect(() => {
-    const timer = window.setTimeout(() => setSearchBounds({ minLat, minLng, maxLat, maxLng }), 350);
+    const timer = window.setTimeout(() => {
+      const viewport = { minLat, minLng, maxLat, maxLng };
+      const dense = denseCoverage.current;
+      const inDenseArea = dense !== null && containsTrafficBounds(dense, viewport);
+      if (!inDenseArea) denseCoverage.current = null;
+      setSearchBounds((current) => trafficQueryBounds(viewport, current, !inDenseArea));
+    }, 350);
     return () => window.clearTimeout(timer);
   }, [minLat, minLng, maxLat, maxLng]);
   const latestRequest = useRef(0);
@@ -31,7 +47,7 @@ export function useTrafficReports(
   const refresh = useCallback(async () => {
     const requestId = ++latestRequest.current;
     setLoading(true);
-    if (searchBounds.maxLat - searchBounds.minLat > 2 || searchBounds.maxLng - searchBounds.minLng > 2) {
+    if (!canQueryTraffic(searchBounds)) {
       setReports([]);
       setError('Phóng to khu vực cần xem để tải báo cáo giao thông.');
       setLoading(false);
@@ -40,6 +56,20 @@ export function useTrafficReports(
     try {
       const nextReports = await trafficApi.list(accessToken ?? undefined, searchBounds);
       if (requestId !== latestRequest.current) return;
+      const viewport = viewportRef.current;
+      const isBuffered = Object.entries(viewport).some(
+        ([key, value]) => value !== searchBounds[key as keyof TrafficReportBounds],
+      );
+      if (
+        nextReports.length >= 200 &&
+        canQueryTraffic(viewport) &&
+        containsTrafficBounds(searchBounds, viewport) &&
+        isBuffered
+      ) {
+        denseCoverage.current = searchBounds;
+        setSearchBounds({ ...viewport });
+        return;
+      }
       setReports(nextReports);
       setError('');
     } catch (cause) {
@@ -63,6 +93,9 @@ export function useTrafficReports(
     if (!realtimeEnabled) return;
     let active = true;
     let removeChannel: (() => void) | undefined;
+    // Mỗi sự kiện từng tải lại toàn bộ báo cáo trong khung bản đồ; nhiều người cùng báo/xác nhận thì
+    // gọi API liên tục. Gom các sự kiện trong REALTIME_REFRESH_DEBOUNCE_MS thành một lần tải.
+    const scheduleRefresh = debounce(() => void refreshRef.current(), REALTIME_REFRESH_DEBOUNCE_MS);
     void getSupabaseClient()
       .then((client) => {
         if (!active || !client) return;
@@ -70,8 +103,9 @@ export function useTrafficReports(
           .channel('traffic:reports', { config: { private: false } })
           .on('broadcast', { event: 'traffic_report_changed' }, (message) => {
             const report = parseRealtimeReport(message.payload);
+            // Cảnh báo trên tuyến vẫn báo ngay; chỉ việc tải lại danh sách được gom.
             if (report) onRealtimeReportRef.current?.(report);
-            void refreshRef.current();
+            scheduleRefresh();
           })
           .subscribe((status) => {
             if (status === 'SUBSCRIBED') void refreshRef.current();
@@ -83,6 +117,7 @@ export function useTrafficReports(
       .catch(() => undefined);
     return () => {
       active = false;
+      scheduleRefresh.cancel();
       removeChannel?.();
     };
   }, [realtimeEnabled]);

@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
-import { Popover } from '../../../app/layout/Popover';
-import { Icon } from '../../../shared/components/Icon';
+import { Popover } from '../../../shared/ui/Popover';
+import { Icon } from '../../../shared/ui/Icon';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import type { MapLayer, MapOverlays } from '../types';
 

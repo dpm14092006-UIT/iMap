@@ -1,6 +1,6 @@
 import type { StopCategory } from '@routetwin/shared';
 import { stopIntentSchema } from '@routetwin/shared';
-import { stripDiacritics } from '../../../../shared/text/strip-diacritics.js';
+import { stripDiacritics } from '../../../../shared/text/stripDiacritics.js';
 import type { StopIntentParser } from '../../application/ports/StopIntentParser.js';
 const categoryPatterns: [StopCategory, RegExp][] = [
   ['fuel', /\b(xang|tram nhien lieu|fuel|petrol|gas station|gasoline|low on gas|out of gas|need gas)\b/],

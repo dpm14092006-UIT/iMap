@@ -1,8 +1,8 @@
 import type { PoiCategory } from '@routetwin/shared';
 import { mapWithConcurrency } from '../../../../shared/async/mapWithConcurrency.js';
-import { normalizeText, type LatLng } from '../../domain/poi-geometry.js';
-import { matchesQueryName } from '../../domain/poi-relevance.js';
-import { categoryFromCodes, poiCategorySearchTerms } from '../poi-category-catalog.js';
+import { normalizeText, type LatLng } from '../../domain/poiGeometry.js';
+import { matchesQueryName } from '../../domain/poiRelevance.js';
+import { categoryFromCodes, poiCategorySearchTerms } from '../../domain/poiCategoryCatalog.js';
 import type { PoiCandidate, PoiSearchProvider } from '../ports/PoiSearchProvider.js';
 
 const SEARCH_CONCURRENCY = 4;

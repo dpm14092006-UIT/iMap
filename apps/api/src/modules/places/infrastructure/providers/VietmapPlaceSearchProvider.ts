@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { PlaceSuggestion } from '@routetwin/shared';
-import { stripDiacritics } from '../../../../shared/text/strip-diacritics.js';
+import { stripDiacritics } from '../../../../shared/text/stripDiacritics.js';
 import type { GeoFocus, PlaceSearchProvider } from '../../application/ports/PlaceSearchProvider.js';
 import {
   invalidPlaceResponse,

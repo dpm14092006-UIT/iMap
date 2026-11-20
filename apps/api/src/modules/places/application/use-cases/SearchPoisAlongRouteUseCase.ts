@@ -1,13 +1,8 @@
 import type { AlongRoutePoiRequest, PoiResult } from '@routetwin/shared';
-import {
-  detourMinutes,
-  projectOnPath,
-  sampleAlongPath,
-  type LatLngTuple,
-} from '../../domain/poi-geometry.js';
+import { detourMinutes, projectOnPath, sampleAlongPath, type LatLngTuple } from '../../domain/poiGeometry.js';
 import { PoiLookup } from '../services/PoiLookup.js';
 import type { PoiSearchProvider } from '../ports/PoiSearchProvider.js';
-import { dedupeByCoordinates } from './poi-result.js';
+import { dedupeByCoordinates } from '../poiResult.js';
 
 /** Tìm địa điểm thật dọc theo một tuyến: lấy mẫu điểm, tìm quanh từng điểm, rồi tính vị trí/độ lệch so với tuyến. */
 export class SearchPoisAlongRouteUseCase {

@@ -9,7 +9,8 @@ import {
   type ReactNode,
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
-import { runSignOutTasks, type SignOutTask } from '../services/signOutTasks';
+import { whenIdle } from '../../../shared/async/whenIdle';
+import { runSignOutTasks, type SignOutTask } from '../domain/signOutTasks';
 import { getSupabaseClient, supabaseConfigured } from '../services/supabaseClient';
 
 type AuthContextValue = {
@@ -27,6 +28,11 @@ type AuthContextValue = {
   onBeforeSignOut: (task: SignOutTask) => () => void;
 };
 
+/** Chờ tối đa bao lâu (ms) trước khi tải SDK Supabase khi mở trang chính. */
+const AUTH_INIT_MAX_DELAY_MS = 1200;
+
+const isLoginPage = () => window.location.pathname.replace(/\/+$/, '') === '/login';
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -36,38 +42,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
+    let receivedAuthEvent = false;
     let unsubscribe: (() => void) | undefined;
-    const timer = window.setTimeout(
-      () => {
-        void (async () => {
-          try {
-            const client = await getSupabaseClient();
-            if (!active || !client) return;
-            const {
-              data: { subscription },
-            } = client.auth.onAuthStateChange((_event, nextSession) => {
-              setSession(nextSession);
-              if (nextSession?.access_token)
-                void client.realtime.setAuth(nextSession.access_token).catch(() => undefined);
-            });
-            unsubscribe = () => subscription.unsubscribe();
-            const { data } = await client.auth.getSession();
+    const init = () => {
+      void (async () => {
+        try {
+          const client = await getSupabaseClient();
+          if (!active || !client) return;
+          const {
+            data: { subscription },
+          } = client.auth.onAuthStateChange((_event, nextSession) => {
             if (!active) return;
-            setSession(data.session);
-            if (data.session?.access_token)
-              void client.realtime.setAuth(data.session.access_token).catch(() => undefined);
-          } catch {
-            if (active) setSession(null);
-          } finally {
-            if (active) setLoading(false);
-          }
-        })();
-      },
-      supabaseConfigured ? 1200 : 0,
-    );
+            receivedAuthEvent = true;
+            setSession(nextSession);
+            setLoading(false);
+            if (nextSession?.access_token)
+              void client.realtime.setAuth(nextSession.access_token).catch(() => undefined);
+          });
+          unsubscribe = () => subscription.unsubscribe();
+          const { data } = await client.auth.getSession();
+          if (!active || receivedAuthEvent) return;
+          setSession(data.session);
+          if (data.session?.access_token)
+            void client.realtime.setAuth(data.session.access_token).catch(() => undefined);
+        } catch {
+          if (active && !receivedAuthEvent) setSession(null);
+        } finally {
+          if (active) setLoading(false);
+        }
+      })();
+    };
+    // SDK Supabase khá nặng: tải khi trình duyệt rảnh sau khi vẽ bản đồ (thường chỉ vài chục ms),
+    // chậm nhất AUTH_INIT_MAX_DELAY_MS, thay vì luôn chờ cứng 1,2 giây. Trang /login thì tải ngay.
+    let cancelInit = () => {};
+    if (supabaseConfigured && !isLoginPage()) cancelInit = whenIdle(init, AUTH_INIT_MAX_DELAY_MS);
+    else init();
     return () => {
       active = false;
-      window.clearTimeout(timer);
+      cancelInit();
       unsubscribe?.();
     };
   }, []);

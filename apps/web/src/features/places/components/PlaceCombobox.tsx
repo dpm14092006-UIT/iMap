@@ -1,9 +1,10 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type Ref } from 'react';
-import { Icon, type IconName } from '../../../shared/components/Icon';
+import { Icon, type IconName } from '../../../shared/ui/Icon';
 import { MIN_QUERY_LENGTH, usePlaceSearch } from '../hooks/usePlaceSearch';
 import { foldVietnamese } from '../../../shared/text/foldVietnamese';
 import { placeApi } from '../api/placeApi';
-import type { LatLng, Place, PlaceSearchSuggestion } from '../types';
+import type { LatLng } from '../../../shared/geo/types';
+import type { Place, PlaceSearchSuggestion } from '../types';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 /** Hai địa điểm coi là trùng nếu cùng tên và cách nhau rất gần (~400 m). */

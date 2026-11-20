@@ -1,6 +1,7 @@
-import type { RouteOptimization } from '../../map/types';
-import { formatDistanceMeters, formatDurationMinutes } from '../../navigation/utils/format';
-import { useI18n, type Language } from '../../../shared/i18n/I18nProvider';
+import type { RouteOptimization } from '../../routing/types';
+import { formatDistanceMeters, formatDurationMinutes } from '../../../shared/format/units';
+import { useI18n } from '../../../shared/i18n/I18nProvider';
+import { type Language } from '../../../shared/i18n/translate';
 
 /** Đổi chi phí ma trận (giây hoặc mét) sang chữ dễ đọc. */
 function formatCost(cost: number, objective: RouteOptimization['objective'], language: Language): string {

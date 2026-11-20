@@ -1,4 +1,4 @@
-import { SheetPanel } from '../../../app/layout/SheetPanel';
+import { SheetPanel } from '../../../shared/ui/SheetPanel';
 import { useAuth } from '../context/AuthProvider';
 import { AccountForm } from './AccountForm';
 import { useI18n } from '../../../shared/i18n/I18nProvider';

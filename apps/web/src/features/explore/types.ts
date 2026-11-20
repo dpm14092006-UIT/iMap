@@ -1,6 +1,5 @@
 import type { PoiCategory, PoiResult } from '@routetwin/shared';
-import type { Coordinate } from '../map/types';
-import type { LatLng } from '../places/types';
+import type { Coordinate, LatLng } from '../../shared/geo/types';
 
 export type { PoiCategory };
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Icon } from '../../../shared/components/Icon';
+import { Icon } from '../../../shared/ui/Icon';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
-import { formatDistanceKm, formatDurationMinutes } from '../../navigation/utils/format';
+import { formatDistanceKm, formatDurationMinutes } from '../../../shared/format/units';
 import { REROUTE_DECISION_MS, type RouteTrafficAlertState } from '../hooks/useRouteTrafficAlert';
 
 type Props = {

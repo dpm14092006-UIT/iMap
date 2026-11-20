@@ -1,10 +1,11 @@
 import type { TrafficReportBounds } from '@routetwin/shared';
 import { useEffect, useRef, type MutableRefObject } from 'react';
 import type { Poi } from '../../explore/types';
-import type { LatLng } from '../../places/types';
-import type { TrafficMapLayer } from '../services/trafficMapLayer';
+import type { LatLng } from '../../../shared/geo/types';
+import type { TrafficMapLayer } from '../../traffic/domain/trafficMapLayer';
 import { LeafletMapController } from '../services/LeafletMapController';
-import type { DraftStops, MapLayer, MapOverlays, RoutePlan, AlgorithmOverlay } from '../types';
+import type { DraftStops, MapLayer, MapOverlays } from '../types';
+import type { AlgorithmOverlay, RoutePlan } from '../../routing/types';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 type MapViewProps = {

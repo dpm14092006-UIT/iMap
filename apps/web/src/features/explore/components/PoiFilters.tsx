@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
-import { Popover } from '../../../app/layout/Popover';
-import { Icon } from '../../../shared/components/Icon';
-import { formatRadius, poiRadiusOptions, poiSortLabels, poiSortsByMode } from '../services/poiOptions';
+import { Popover } from '../../../shared/ui/Popover';
+import { Icon } from '../../../shared/ui/Icon';
+import { formatRadius, poiRadiusOptions, poiSortLabels, poiSortsByMode } from '../domain/poiOptions';
 import type { PoiSort } from '../types';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 

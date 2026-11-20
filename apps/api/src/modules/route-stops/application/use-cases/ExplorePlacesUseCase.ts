@@ -7,7 +7,7 @@ import {
 import type { StopIntentParser } from '../ports/StopIntentParser.js';
 import type { StopPlaceProvider } from '../ports/StopPlaceProvider.js';
 import type { FindRouteStopsUseCase } from './FindRouteStopsUseCase.js';
-import { distanceMeters, routeBounds } from '../../domain/route-geometry.js';
+import { distanceMeters, routeBounds } from '../../domain/routeGeometry.js';
 import { AppError } from '../../../../shared/errors/AppError.js';
 export class ExplorePlacesUseCase {
   constructor(

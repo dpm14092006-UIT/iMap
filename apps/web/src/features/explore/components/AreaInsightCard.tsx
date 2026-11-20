@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Icon } from '../../../shared/components/Icon';
-import type { AreaInsight, TrafficLevel } from '../services/areaInsight';
+import { Icon } from '../../../shared/ui/Icon';
+import type { AreaInsight, TrafficLevel } from '../domain/areaInsight';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 
 const STORAGE_KEY = 'imap.areaInsight.collapsed';
