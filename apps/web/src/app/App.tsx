@@ -63,6 +63,7 @@ import type {
   TrafficVehicleScope,
 } from '../features/traffic/components/TrafficReportPanel';
 import { useTrafficReports, type RealtimeTrafficReport } from '../features/traffic/hooks/useTrafficReports';
+import { recentPlaceKey } from '../features/places/services/recentPlaces';
 import { RequestSequence } from '../shared/async/RequestSequence';
 import { parseRealtimeReport } from '../features/traffic/services/realtimeReport';
 import {
@@ -658,11 +659,25 @@ export function App() {
   // --- Lịch sử 10 điểm đi / điểm đến gần nhất (tài khoản đã đăng nhập) ---
   const recentPlaces = useRecentPlaces();
   const recordRecentPlace = recentPlaces.record;
+  const recentPlacesEnabled = recentPlaces.enabled;
+  // Chỉ ghi khi điểm đi/đến thật sự đổi; chọn phương án khác hay tính lại cùng tuyến thì không ghi lại.
+  const recordedEndpoints = useRef('');
   useEffect(() => {
+    // Chưa đăng nhập (hoặc vừa đăng xuất) thì chưa ghi và quên tuyến đã ghi, để tài khoản đăng nhập sau
+    // vẫn được ghi tuyến đang xem.
+    if (!recentPlacesEnabled) {
+      recordedEndpoints.current = '';
+      return;
+    }
     if (!activeRoute || activeRoute.stops.length < 2) return;
-    recordRecentPlace('origin', activeRoute.stops[0]);
-    recordRecentPlace('destination', activeRoute.stops[activeRoute.stops.length - 1]);
-  }, [activeRoute, recordRecentPlace]);
+    const origin = activeRoute.stops[0]!;
+    const destination = activeRoute.stops[activeRoute.stops.length - 1]!;
+    const endpoints = `${recentPlaceKey(origin)}→${recentPlaceKey(destination)}`;
+    if (endpoints === recordedEndpoints.current) return;
+    recordedEndpoints.current = endpoints;
+    recordRecentPlace('origin', origin);
+    recordRecentPlace('destination', destination);
+  }, [activeRoute, recordRecentPlace, recentPlacesEnabled]);
 
   // --- Cảnh báo sự cố trên tuyến: kêu/rung + banner lớn + hỏi Có/Không đổi sang đường khác ---
   const push = usePushNotifications(isAuthenticated);

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Place } from '../types';
 import {
+  isMostRecentPlace,
   isRecordablePlace,
   MAX_RECENT_PLACES,
   mergeRemoteRecentPlaces,
@@ -71,5 +72,12 @@ describe('recent places', () => {
     expect(places.origin.map((item) => item.name)).toEqual(['Điểm 1']);
     expect(places.destination).toEqual([]);
     expect(() => places.origin.map(recentPlaceKey)).not.toThrow();
+  });
+
+  it('knows when a place is already the most recent one, so recording it again is skipped (review #19)', () => {
+    const list = [place(1), place(2)];
+    expect(isMostRecentPlace(list, { ...place(1), id: 'same-place-other-id' })).toBe(true);
+    expect(isMostRecentPlace(list, place(2))).toBe(false);
+    expect(isMostRecentPlace([], place(1))).toBe(false);
   });
 });
