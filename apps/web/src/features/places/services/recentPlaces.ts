@@ -76,14 +76,40 @@ function toPlace(row: DbRecentPlace): Place {
 
 const cacheKey = (userId: string) => `imap.recentPlaces.${userId}`;
 
+/**
+ * Kiểm tra một phần tử đọc từ localStorage (có thể hỏng hoặc từ bản app cũ).
+ * Thiếu tên hay tọa độ thì bỏ, vì recentPlaceKey() sẽ ném lỗi và làm sập app.
+ */
+function cachedPlace(value: unknown): Place | null {
+  if (!value || typeof value !== 'object') return null;
+  const item = value as Partial<Record<keyof Place, unknown>>;
+  if (typeof item.name !== 'string' || !item.name.trim()) return null;
+  if (typeof item.lat !== 'number' || !Number.isFinite(item.lat)) return null;
+  if (typeof item.lng !== 'number' || !Number.isFinite(item.lng)) return null;
+  return {
+    id: typeof item.id === 'string' ? item.id : `recent-${item.lat},${item.lng}`,
+    name: item.name,
+    address: typeof item.address === 'string' ? item.address : '',
+    category: typeof item.category === 'string' ? item.category : '',
+    lat: item.lat,
+    lng: item.lng,
+    source: placeSources.includes(item.source as PlaceSource) ? (item.source as PlaceSource) : 'map',
+  };
+}
+
+function cachedList(value: unknown): Place[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map(cachedPlace)
+    .filter((place): place is Place => place !== null)
+    .slice(0, MAX_RECENT_PLACES);
+}
+
 export function readCachedRecentPlaces(userId: string): RecentPlaces {
   try {
     const raw = localStorage.getItem(cacheKey(userId));
-    const parsed = raw ? (JSON.parse(raw) as Partial<RecentPlaces>) : null;
-    return {
-      origin: Array.isArray(parsed?.origin) ? parsed.origin.slice(0, MAX_RECENT_PLACES) : [],
-      destination: Array.isArray(parsed?.destination) ? parsed.destination.slice(0, MAX_RECENT_PLACES) : [],
-    };
+    const parsed = raw ? (JSON.parse(raw) as Partial<Record<RecentPlaceKind, unknown>> | null) : null;
+    return { origin: cachedList(parsed?.origin), destination: cachedList(parsed?.destination) };
   } catch {
     return emptyRecentPlaces();
   }

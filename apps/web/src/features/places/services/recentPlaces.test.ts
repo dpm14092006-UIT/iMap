@@ -1,10 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Place } from '../types';
 import {
   isRecordablePlace,
   MAX_RECENT_PLACES,
   mergeRemoteRecentPlaces,
   pushRecentPlace,
+  readCachedRecentPlaces,
   recentPlaceKey,
   type RecentPlaces,
 } from './recentPlaces';
@@ -18,6 +19,8 @@ const place = (index: number): Place => ({
   lng: 106,
   source: 'vietmap',
 });
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe('recent places', () => {
   it('keeps the 10 most recent places, newest first, without duplicates', () => {
@@ -56,5 +59,17 @@ describe('recent places', () => {
       { type: 'remove', kind: 'origin', key: recentPlaceKey(place(3)) },
     ]);
     expect(merged.origin.map((item) => item.name)).toEqual(['Điểm 1']);
+  });
+
+  it('ignores broken cached items instead of crashing (review #13)', () => {
+    const cached = JSON.stringify({
+      origin: [place(1), { name: 'Thiếu tọa độ' }, null, 'rác', { lat: 10, lng: 106 }],
+      destination: { not: 'an array' },
+    });
+    vi.stubGlobal('localStorage', { getItem: () => cached });
+    const places = readCachedRecentPlaces('user');
+    expect(places.origin.map((item) => item.name)).toEqual(['Điểm 1']);
+    expect(places.destination).toEqual([]);
+    expect(() => places.origin.map(recentPlaceKey)).not.toThrow();
   });
 });

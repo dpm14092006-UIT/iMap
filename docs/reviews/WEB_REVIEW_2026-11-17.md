@@ -49,7 +49,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
   Khi có `signal` mà trình duyệt chưa có `AbortSignal.any` (iOS < 17.4), timeout 45 s bị bỏ → request treo, UI quay mãi.
   _Gợi ý:_ tự gộp hai signal bằng một AbortController khi thiếu `AbortSignal.any`.
 
-- [ ] **13. Cache lịch sử không kiểm tra kiểu** — `features/places/services/recentPlaces.ts:61`
+- [x] **13. Cache lịch sử không kiểm tra kiểu** — `features/places/services/recentPlaces.ts:61`
   Phần tử thiếu `name`/`lat` trong localStorage làm `recentPlaceKey()` throw → crash app.
 
 - [ ] **14. Payload push từ service worker không được kiểm tra** — `app/App.tsx:691`
