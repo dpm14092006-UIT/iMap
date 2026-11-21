@@ -76,7 +76,7 @@ export function Speedometer({ speedKph, hasGpsFix, belowBanner = false }: Speedo
   return (
     <div
       data-speedometer=""
-      className={`speedometer pointer-events-none absolute right-3 z-30 ${belowBanner ? 'speedometer--below-banner' : ''}`}
+      className={`speedometer pointer-events-none absolute right-3 z-[15] ${belowBanner ? 'speedometer--below-banner' : ''}`}
       role="img"
       aria-label={label}
     >
