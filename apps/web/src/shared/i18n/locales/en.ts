@@ -627,6 +627,11 @@ export const en: Record<string, string> = {
   'Ứng dụng gặp sự cố khi hiển thị. Tải lại trang để tiếp tục; các tuyến đã lưu của bạn vẫn còn.':
     'The app had trouble displaying this page. Reload to continue; your saved routes are still available.',
   'Tải lại trang': 'Reload page',
+  'Chi tiết lỗi': 'Error details',
+  'Chụp màn hình hoặc sao chép nội dung này gửi cho nhóm phát triển.':
+    'Take a screenshot or copy this text and send it to the developers.',
+  'Sao chép chi tiết lỗi': 'Copy error details',
+  'Đã sao chép': 'Copied',
   'Tai nạn': 'Crash',
   Ngập: 'Flooding',
   'Đường đóng': 'Road closure',
