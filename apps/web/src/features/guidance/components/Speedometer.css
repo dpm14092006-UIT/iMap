@@ -1,5 +1,9 @@
+/*
+ * z-[15] (trong Speedometer.tsx): trên bản đồ (z-0) nhưng dưới cụm nút bản đồ (z-20), để bảng "Lớp"
+ * mở ra nằm trên đồng hồ thay vì bị đồng hồ che.
+ */
 .speedometer {
-  --speedometer-size: 140px;
+  --speedometer-size: 112px;
   --speedometer-muted: #6e7d8b;
   --speedometer-track: #e9edf2;
   --speedometer-tick: #d5dde5;
@@ -72,9 +76,9 @@
 }
 .speedometer__unit {
   display: block;
-  margin-top: 2px;
+  margin-top: 1px;
   color: var(--speedometer-muted);
-  font-size: 11px;
+  font-size: calc(var(--speedometer-size) * 0.085);
   letter-spacing: 0.03em;
 }
 .speedometer__signal {
@@ -107,8 +111,9 @@
   }
 }
 @media (max-width: 767px) {
+  /* Điện thoại: nhỏ gọn để không che bản đồ và các bảng nổi. */
   .speedometer {
-    --speedometer-size: 128px;
+    --speedometer-size: 92px;
   }
   .speedometer--below-banner {
     top: var(--sheet-top-inset, 12px);
