@@ -1,8 +1,11 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { scheduledMapLayer } from '../../features/map/hooks/useTimeBasedMapLayer';
 import { readLanguage, translate } from '../../shared/i18n/translate';
+import { formatErrorReport } from './errorReport';
 
-type ErrorBoundaryState = { failed: boolean };
+declare const __APP_BUILD_VERSION__: string;
+
+type ErrorBoundaryState = { failed: boolean; report: string; copied: boolean };
 const t = (message: string) => {
   try {
     return translate(readLanguage(window.localStorage), message);
@@ -13,15 +16,33 @@ const t = (message: string) => {
 
 /** Chặn lỗi render để người dùng thấy lời nhắn và nút tải lại thay vì màn hình trắng. */
 export class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { failed: false };
+  state: ErrorBoundaryState = { failed: false, report: '', copied: false };
 
-  static getDerivedStateFromError(): ErrorBoundaryState {
+  static getDerivedStateFromError(): Partial<ErrorBoundaryState> {
     return { failed: true };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('Lỗi giao diện chưa được xử lý', error, info.componentStack);
+    // Hiện chi tiết lỗi trên màn hình: người dùng chụp hoặc sao chép gửi lại, không cần mở Console.
+    this.setState({
+      report: formatErrorReport(error, info.componentStack, {
+        appVersion: typeof __APP_BUILD_VERSION__ === 'string' ? __APP_BUILD_VERSION__ : 'dev',
+        path: window.location.pathname,
+        userAgent: navigator.userAgent,
+        time: new Date(),
+      }),
+    });
   }
+
+  private copyReport = async () => {
+    try {
+      await navigator.clipboard.writeText(this.state.report);
+      this.setState({ copied: true });
+    } catch {
+      // Trình duyệt chặn clipboard: người dùng vẫn chọn chữ trong khung để sao chép tay hoặc chụp màn hình.
+    }
+  };
 
   render() {
     if (!this.state.failed) return this.props.children;
@@ -45,6 +66,26 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBound
             >
               {t('Tải lại trang')}
             </button>
+            {this.state.report && (
+              <details className="mt-6 text-left">
+                <summary className="cursor-pointer text-center text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  {t('Chi tiết lỗi')}
+                </summary>
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  {t('Chụp màn hình hoặc sao chép nội dung này gửi cho nhóm phát triển.')}
+                </p>
+                <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-slate-200/70 p-3 text-left text-[11px] leading-4 text-slate-800 select-text dark:bg-slate-800 dark:text-slate-200">
+                  {this.state.report}
+                </pre>
+                <button
+                  type="button"
+                  onClick={() => void this.copyReport()}
+                  className="mt-2 min-h-9 w-full rounded-lg text-xs font-semibold text-brand-700 ring-1 ring-brand-300 transition hover:bg-brand-50 dark:text-brand-200 dark:ring-indigo-300/40 dark:hover:bg-white/5"
+                >
+                  {this.state.copied ? t('Đã sao chép') : t('Sao chép chi tiết lỗi')}
+                </button>
+              </details>
+            )}
           </div>
         </main>
       </div>
