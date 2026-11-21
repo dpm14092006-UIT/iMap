@@ -24,15 +24,18 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBound
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('Lỗi giao diện chưa được xử lý', error, info.componentStack);
-    // Hiện chi tiết lỗi trên màn hình: người dùng chụp hoặc sao chép gửi lại, không cần mở Console.
-    this.setState({
-      report: formatErrorReport(error, info.componentStack, {
-        appVersion: typeof __APP_BUILD_VERSION__ === 'string' ? __APP_BUILD_VERSION__ : 'dev',
-        path: window.location.pathname,
-        userAgent: navigator.userAgent,
-        time: new Date(),
-      }),
-    });
+    try {
+      this.setState({
+        report: formatErrorReport(error, info.componentStack, {
+          appVersion: typeof __APP_BUILD_VERSION__ === 'string' ? __APP_BUILD_VERSION__ : 'dev',
+          path: window.location.pathname,
+          userAgent: navigator.userAgent,
+          time: new Date(),
+        }),
+      });
+    } catch {
+      // Giữ màn hình tải lại nếu không đọc được chi tiết của giá trị bị ném.
+    }
   }
 
   private copyReport = async () => {

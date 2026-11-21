@@ -29,11 +29,14 @@ export function formatErrorReport(
 ): string {
   const name = error instanceof Error ? error.name : typeof error;
   const message = error instanceof Error ? error.message : String(error);
-  const stack = error instanceof Error ? firstLines(error.stack, MAX_STACK_LINES + 1).slice(1) : [];
+  const heading = message ? `${name}: ${message}` : name;
+  const stack = error instanceof Error && typeof error.stack === 'string' ? error.stack : '';
+  // V8 prefixes its stack with the error heading. Safari starts directly with the first frame.
+  const frames = stack === heading || stack.startsWith(`${heading}\n`) ? stack.slice(heading.length) : stack;
   const components = firstLines(componentStack, MAX_COMPONENT_LINES);
   return [
-    `${name}: ${message}`,
-    ...stack.map((line) => `  ${line}`),
+    heading,
+    ...firstLines(frames, MAX_STACK_LINES).map((line) => `  ${line}`),
     ...(components.length ? ['Component:', ...components.map((line) => `  ${line}`)] : []),
     `Phiên bản: ${context.appVersion}`,
     `Trang: ${context.path}`,

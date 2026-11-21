@@ -32,4 +32,19 @@ describe('ErrorBoundary', () => {
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('TypeError'));
     expect(await screen.findByRole('button', { name: 'Đã sao chép' })).toBeTruthy();
   });
+
+  it('vẫn hiện nút tải lại khi không đọc được chi tiết lỗi', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    function BrokenWithoutMessage(): never {
+      throw Object.create(null);
+    }
+
+    render(
+      <ErrorBoundary>
+        <BrokenWithoutMessage />
+      </ErrorBoundary>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Tải lại trang' })).toBeTruthy();
+  });
 });
