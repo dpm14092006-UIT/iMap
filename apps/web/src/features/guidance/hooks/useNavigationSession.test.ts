@@ -30,6 +30,44 @@ describe('device GPS navigation session', () => {
     expect(result.current.status).toBe('navigating');
     expect(result.current.location).toEqual({ lat: 10, lng: 106 });
   });
+  it('keeps waiting for a reliable fix even if the first fix lands at the destination', () => {
+    const { result } = renderHook(useNavigationSession);
+    act(() => result.current.start(routePlan()));
+    act(() => gps.fix(0, 10.01, 106.01, { accuracy: 300 }));
+
+    expect(result.current.status).toBe('locating');
+    expect(result.current.location).toBeNull();
+    expect(result.current.displayLocation).toBeNull();
+    expect(gps.cleared).toHaveLength(0);
+
+    act(() => gps.fix(0));
+    expect(result.current.status).toBe('navigating');
+    expect(result.current.error).toBe('');
+  });
+  it('keeps the last arrow on a poor fix and withholds a GPS origin for rerouting', () => {
+    const { result } = renderHook(useNavigationSession);
+    act(() => result.current.start(routePlan()));
+    act(() => gps.fix(0, 10.001, 106.003, { heading: 90, speed: 10 }));
+    const offRoute = result.current;
+    expect(offRoute.offRoute).toBe(true);
+
+    act(() => gps.fix(0, 10.01, 106.01, { accuracy: 300, heading: 180, speed: 50 }));
+    expect(result.current).toMatchObject({
+      status: 'navigating',
+      displayLocation: offRoute.displayLocation,
+      headingDegrees: offRoute.headingDegrees,
+      progressRatio: offRoute.progressRatio,
+      offRoute: true,
+      offRouteFixes: offRoute.offRouteFixes,
+      location: null,
+      speedKph: null,
+    });
+
+    act(() => gps.fix(0, 10.002, 106.002));
+    expect(result.current.location).toEqual({ lat: 10.002, lng: 106.002 });
+    expect(result.current.offRoute).toBe(false);
+    expect(result.current.error).toBe('');
+  });
   it('stops GPS and ignores already queued callbacks after ending a journey', () => {
     const { result } = renderHook(useNavigationSession);
     act(() => result.current.start(routePlan()));

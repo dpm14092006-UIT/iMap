@@ -123,12 +123,12 @@ export function useNavigationRerouting({ navigation, routeIncidents, onRerouted,
 
   // Lệch tuyến đủ lâu thì tự tính lại, nhưng không dồn dập hơn AUTO_REROUTE_INTERVAL_MS.
   useEffect(() => {
-    if (!offRoute || offRouteFixes < OFF_ROUTE_FIXES_BEFORE_REROUTE || isRecalculating) return;
+    if (!location || !offRoute || offRouteFixes < OFF_ROUTE_FIXES_BEFORE_REROUTE || isRecalculating) return;
     const now = Date.now();
     if (now - lastAutomaticRerouteAt.current < AUTO_REROUTE_INTERVAL_MS) return;
     lastAutomaticRerouteAt.current = now;
     void recalculate(true);
-  }, [offRoute, offRouteFixes, isRecalculating, recalculate]);
+  }, [location, offRoute, offRouteFixes, isRecalculating, recalculate]);
 
   return { isRecalculating, recalculate };
 }
