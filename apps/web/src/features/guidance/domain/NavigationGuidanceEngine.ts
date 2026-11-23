@@ -75,8 +75,10 @@ export class NavigationGuidanceEngine {
     const backtrackAllowance = Math.max(60, geometryTotal * 0.025);
     const anywhere = this.path.closest(point);
     const forward = this.path.closest(point, expectedProgress - backtrackAllowance);
+    const offRouteThreshold = NavigationGuidanceEngine.offRouteThreshold(accuracyMeters);
     const nearest =
       forward &&
+      forward.distance <= offRouteThreshold &&
       (!anywhere ||
         forward.distance <= anywhere.distance + NavigationGuidanceEngine.FORWARD_PREFERENCE_METERS)
         ? forward
@@ -88,7 +90,7 @@ export class NavigationGuidanceEngine {
     const progressRatio = this.routeMeters > 0 ? progressMeters / this.routeMeters : 0;
     const distanceRemainingMeters = Math.max(0, this.routeMeters - progressMeters);
     const { nextInstruction, distanceToInstructionMeters } = this.findNextInstruction(progressMeters);
-    const offRoute = distanceFromRoute > NavigationGuidanceEngine.offRouteThreshold(accuracyMeters);
+    const offRoute = distanceFromRoute > offRouteThreshold;
     const displayLocation = !offRoute && nearest ? this.path.pointAt(nearest.progress) : point;
 
     return {

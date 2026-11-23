@@ -82,6 +82,21 @@ describe('NavigationGuidanceEngine', () => {
     expect(engine.evaluate({ lat: 10.0005, lng: 106.02 }, 10, 0).offRoute).toBe(true);
   });
 
+  it('không báo lệch khi GPS nằm trên nhánh trước của một tuyến vòng lại', () => {
+    const route = eastwardRoute();
+    route.legs[0]!.points = [
+      [10, 106.01],
+      [10, 106.02],
+      [10.0006, 106.02],
+      [10.0006, 106.01],
+    ];
+    const point = { lat: 10, lng: 106.015 };
+    const guidance = new NavigationGuidanceEngine(route).evaluate(point, 5, 0.7);
+
+    expect(guidance.offRoute).toBe(false);
+    expect(guidance.progressRatio).toBeCloseTo(0.24, 2);
+  });
+
   it('GPS rất kém không nới ngưỡng quá 120 m', () => {
     // ~167 m lệch với sai số 300 m: ngưỡng cũ là 450 m nên không bao giờ phát hiện được.
     expect(engine.evaluate({ lat: 10.0015, lng: 106.02 }, 300, 0).offRoute).toBe(true);

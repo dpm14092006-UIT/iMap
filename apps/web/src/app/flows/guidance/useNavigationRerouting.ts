@@ -49,7 +49,8 @@ export function useNavigationRerouting({ navigation, routeIncidents, onRerouted,
   useEffect(() => {
     const requests = generation.current;
     inFlight.current = false;
-    lastAutomaticRerouteAt.current = 0;
+    // Một lần tính lại tạo id tuyến mới, nhưng vẫn thuộc chuyến đi đang dẫn.
+    if (!routeId) lastAutomaticRerouteAt.current = 0;
     setIsRecalculating(false);
     return () => {
       requests.invalidate();

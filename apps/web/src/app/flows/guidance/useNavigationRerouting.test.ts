@@ -63,6 +63,36 @@ describe('navigation rerouting giữ tùy chọn tuyến', () => {
 });
 
 describe('navigation rerouting concurrency', () => {
+  it('keeps the automatic reroute cooldown after replacing the route in the same trip', async () => {
+    const clock = vi.spyOn(Date, 'now');
+    clock.mockReturnValue(60_000);
+    vi.mocked(rerouteApi.reroute).mockResolvedValue(response());
+    try {
+      const { navigation, rerender, onRerouted } = setup();
+      const offRoute = { ...navigation, offRoute: true, offRouteFixes: 3 };
+
+      await act(async () => rerender(offRoute));
+      expect(rerouteApi.reroute).toHaveBeenCalledOnce();
+
+      clock.mockReturnValue(61_000);
+      const replacement = onRerouted.mock.calls[0]![0];
+      rerender({ ...navigation, route: replacement });
+      await act(async () => rerender({ ...offRoute, route: replacement }));
+      expect(rerouteApi.reroute).toHaveBeenCalledOnce();
+
+      clock.mockReturnValue(80_000);
+      await act(async () => rerender({ ...offRoute, route: replacement, offRouteFixes: 4 }));
+      expect(rerouteApi.reroute).toHaveBeenCalledTimes(2);
+
+      clock.mockReturnValue(81_000);
+      rerender({ ...navigation, route: null, status: 'idle' });
+      await act(async () => rerender({ ...offRoute, route: routePlan('another-trip') }));
+      expect(rerouteApi.reroute).toHaveBeenCalledTimes(3);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
   it('starts only one paid request for two calls before a render', async () => {
     const pending = deferred<RerouteResult>();
     vi.mocked(rerouteApi.reroute).mockReturnValue(pending.promise);
