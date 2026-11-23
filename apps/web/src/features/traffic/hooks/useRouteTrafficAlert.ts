@@ -37,7 +37,8 @@ export type RouteTrafficAlertState = {
 
 /** Hỏi đổi tuyến trong bao lâu; hết giờ thì giữ tuyến hiện tại. */
 export const REROUTE_DECISION_MS = 15_000;
-const CLOSE_AFTER_DECISION_MS = 4_000;
+/** Banner tự đóng sau bao lâu (ms) khi đã chọn xong, không có đường khác hoặc lỗi. */
+const CLOSE_AFTER_SETTLED_MS = 8_000;
 /** Bán kính tránh quanh sự cố vừa báo cáo (mét). */
 const AVOID_RADIUS_METERS = 80;
 
@@ -213,7 +214,7 @@ export function useRouteTrafficAlert(options: Options) {
       alert.offer.status === 'error');
   useEffect(() => {
     if (!settled) return;
-    const timer = window.setTimeout(close, CLOSE_AFTER_DECISION_MS * 2);
+    const timer = window.setTimeout(close, CLOSE_AFTER_SETTLED_MS);
     return () => window.clearTimeout(timer);
   }, [settled, close]);
 

@@ -78,7 +78,7 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 - [ ] **23. Phép chiếu điểm lên tuyến viết 3 lần** — `features/traffic/services/routeTraffic.ts:36` vs `shared/geo/path.ts` vs `navigation/domain/RoutePath.ts`. Gộp về một chỗ.
 - [ ] **24. Haversine/khoảng cách viết lại nhiều nơi** — `navigation/domain/position/SpeedEstimator.ts:17`, `traffic/hooks/useRouteTrafficAlert.ts:37`. Dùng `Geodesy.distanceMeters`.
 - [ ] **25. `bearingDegrees` hai bản khác công thức** — `navigation/hooks/useNavigationSession.ts:50` và `navigation/domain/position/SimulatedGpsSource.ts:30`. Đưa vào `Geodesy`.
-- [ ] **26. Hằng số đặt tên sai giá trị thật** — `traffic/hooks/useRouteTrafficAlert.ts:204` (`CLOSE_AFTER_DECISION_MS * 2`).
+- [x] **26. Hằng số đặt tên sai giá trị thật** — `traffic/hooks/useRouteTrafficAlert.ts:204` (`CLOSE_AFTER_DECISION_MS * 2`).
 - [ ] **27. Comment `isSamePlace` nói có so khoảng cách ~400 m nhưng code không so** — `places/components/PlaceCombobox.tsx:10`.
 - [ ] **28. `App.tsx` gần 1.500 dòng** — `app/App.tsx:207`. Tách phần dẫn đường + cảnh báo + reroute ra hook riêng (vd. `useNavigationController`); nhiều lỗi mục 5, 6, 10, 11 đến từ logic dựng tuyến bị chép nhiều nơi trong file này.
 
