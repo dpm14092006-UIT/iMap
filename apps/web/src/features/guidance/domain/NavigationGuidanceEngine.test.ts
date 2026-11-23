@@ -97,9 +97,14 @@ describe('NavigationGuidanceEngine', () => {
     expect(guidance.progressRatio).toBeCloseTo(0.24, 2);
   });
 
-  it('GPS rất kém không nới ngưỡng quá 120 m', () => {
-    // ~167 m lệch với sai số 300 m: ngưỡng cũ là 450 m nên không bao giờ phát hiện được.
-    expect(engine.evaluate({ lat: 10.0015, lng: 106.02 }, 300, 0).offRoute).toBe(true);
+  it('GPS kém nhưng còn tin được không nới ngưỡng quá 120 m', () => {
+    // ~133 m lệch với sai số 100 m: 100 × 1,5 = 150 m nhưng bị kẹp về 120 m nên vẫn phát hiện được.
+    expect(engine.evaluate({ lat: 10.0012, lng: 106.02 }, 100, 0).offRoute).toBe(true);
+    // Sai số lớn hơn 100 m thì mẫu không được dùng để kết luận (issue #10).
+    expect(engine.evaluate({ lat: 10.0015, lng: 106.02 }, 300, 0)).toMatchObject({
+      reliable: false,
+      offRoute: false,
+    });
     expect(NavigationGuidanceEngine.offRouteThreshold(300)).toBe(
       NavigationGuidanceEngine.MAX_OFF_ROUTE_METERS,
     );
@@ -132,6 +137,39 @@ describe('NavigationGuidanceEngine', () => {
     } finally {
       closest.mockRestore();
     }
+  });
+
+  it('issue #10: một mẫu GPS kém nhảy sang nhánh song song không làm lệch tiến độ và báo lệch tuyến giả', () => {
+    // Tuyến đi ra rồi quay về trên hai nhánh song song cách nhau ~55,6 m.
+    const route = eastwardRoute();
+    route.legs[0]!.points = [
+      [10, 106],
+      [10, 106.02],
+      [10.0005, 106.02],
+      [10.0005, 106],
+    ];
+    const loop = new NavigationGuidanceEngine(route);
+    let progress = 0;
+    const step = (lat: number, lng: number, accuracy: number) => {
+      const guidance = loop.evaluate({ lat, lng }, accuracy, progress);
+      progress = guidance.progressRatio;
+      return guidance;
+    };
+
+    const before = step(10, 106.01, 8);
+    expect(before.progressRatio).toBeCloseTo(0.247, 2);
+
+    // GPS kém (sai số 300 m) nhảy sang nhánh về: không đáng tin, tiến độ giữ nguyên thay vì nhảy lên ~75%.
+    const jump = step(10.0005, 106.01, 300);
+    expect(jump.reliable).toBe(false);
+    expect(jump.progressRatio).toBeCloseTo(before.progressRatio, 6);
+    expect(jump.arrived).toBe(false);
+
+    // GPS tốt trở lại, xe vẫn trên nhánh đi: không báo lệch, tiến độ tiếp tục từ chỗ cũ.
+    const after = [106.0101, 106.0102, 106.0103].map((lng) => step(10, lng, 8));
+    expect(after.map((guidance) => guidance.offRoute)).toEqual([false, false, false]);
+    expect(after.at(-1)!.progressRatio).toBeGreaterThan(before.progressRatio);
+    expect(after.at(-1)!.progressRatio).toBeLessThan(0.3);
   });
 
   it('tới điểm cuối: đã đến nơi', () => {

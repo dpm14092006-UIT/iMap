@@ -70,6 +70,9 @@ export class NavigationGuidanceEngine {
   }
 
   evaluate(point: LatLng, accuracyMeters: number, previousProgressRatio: number): Guidance {
+    if (accuracyMeters > NavigationGuidanceEngine.UNRELIABLE_ACCURACY_METERS) {
+      return this.holdProgress(previousProgressRatio);
+    }
     const geometryTotal = this.path.totalMeters;
     const expectedProgress = previousProgressRatio * geometryTotal;
     const backtrackAllowance = Math.max(60, geometryTotal * 0.025);
@@ -99,10 +102,34 @@ export class NavigationGuidanceEngine {
       distanceRemainingMeters,
       progressRatio,
       offRoute,
-      reliable: accuracyMeters <= NavigationGuidanceEngine.UNRELIABLE_ACCURACY_METERS,
+      reliable: true,
       displayLocation,
       nextStopIndex: this.findNextStopIndex(geometryProgress),
       arrived: !offRoute && this.hasArrived(point, progressRatio, distanceRemainingMeters),
+    };
+  }
+
+  /**
+   * Mẫu GPS quá kém (issue #10): không dùng nó để khớp vị trí trên tuyến. Nếu khớp, một mẫu nhảy sang nhánh
+   * song song của tuyến vòng lại sẽ kéo tiến độ sang nhánh đó, và các mẫu GPS tốt sau bị khớp sai nhánh
+   * → báo lệch tuyến giả rồi tự tính lại dù xe vẫn đúng đường. Giữ nguyên tiến độ, chỉ dẫn và mũi tên
+   * của lần trước; không kết luận lệch tuyến hay đã đến nơi cho tới khi có mẫu đáng tin.
+   */
+  private holdProgress(previousProgressRatio: number): Guidance {
+    const progressRatio = Math.min(1, Math.max(0, previousProgressRatio));
+    const progressMeters = progressRatio * this.routeMeters;
+    const geometryProgress = progressRatio * this.path.totalMeters;
+    const { nextInstruction, distanceToInstructionMeters } = this.findNextInstruction(progressMeters);
+    return {
+      nextInstruction,
+      distanceToInstructionMeters,
+      distanceRemainingMeters: Math.max(0, this.routeMeters - progressMeters),
+      progressRatio,
+      offRoute: false,
+      reliable: false,
+      displayLocation: this.path.pointAt(geometryProgress),
+      nextStopIndex: this.findNextStopIndex(geometryProgress),
+      arrived: false,
     };
   }
 
