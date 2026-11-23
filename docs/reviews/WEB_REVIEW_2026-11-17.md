@@ -75,12 +75,17 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 
 ## C. Dọn code
 
-- [ ] **23. Phép chiếu điểm lên tuyến viết 3 lần** — `features/traffic/services/routeTraffic.ts:36` vs `shared/geo/path.ts` vs `navigation/domain/RoutePath.ts`. Gộp về một chỗ.
-- [ ] **24. Haversine/khoảng cách viết lại nhiều nơi** — `navigation/domain/position/SpeedEstimator.ts:17`, `traffic/hooks/useRouteTrafficAlert.ts:37`. Dùng `Geodesy.distanceMeters`.
-- [ ] **25. `bearingDegrees` hai bản khác công thức** — `navigation/hooks/useNavigationSession.ts:50` và `navigation/domain/position/SimulatedGpsSource.ts:30`. Đưa vào `Geodesy`.
+- [x] **23. Phép chiếu điểm lên tuyến viết 3 lần** — `features/traffic/services/routeTraffic.ts:36` vs `shared/geo/path.ts` vs `navigation/domain/RoutePath.ts`. Gộp về một chỗ.
+  _Ghi chú khi đối chiếu (23/11):_ Đã xử lý trong refactor `a8db088` (N2): phép chiếu dùng chung `projectOntoSegment` ở `shared/geo/polyline.ts`; `RoutePath` và `routeTraffic` đều gọi hàm này.
+- [x] **24. Haversine/khoảng cách viết lại nhiều nơi** — `navigation/domain/position/SpeedEstimator.ts:17`, `traffic/hooks/useRouteTrafficAlert.ts:37`. Dùng `Geodesy.distanceMeters`.
+  _Ghi chú khi đối chiếu (23/11):_ Đã xử lý trong refactor `a8db088` (N2): khoảng cách dùng chung `haversineMeters` / `approxDistanceMeters` ở `shared/geo/distance.ts` (bọc bản trong `packages/shared`).
+- [x] **25. `bearingDegrees` hai bản khác công thức** — `navigation/hooks/useNavigationSession.ts:50` và `navigation/domain/position/SimulatedGpsSource.ts:30`. Đưa vào `Geodesy`.
+  _Ghi chú khi đối chiếu (23/11):_ Đã xử lý: còn một bản `bearingDegrees` ở `shared/geo/distance.ts` (`a8db088`); bản trong `SimulatedGpsSource` bị bỏ cùng chế độ demo (`42bc0a5`).
 - [x] **26. Hằng số đặt tên sai giá trị thật** — `traffic/hooks/useRouteTrafficAlert.ts:204` (`CLOSE_AFTER_DECISION_MS * 2`).
-- [ ] **27. Comment `isSamePlace` nói có so khoảng cách ~400 m nhưng code không so** — `places/components/PlaceCombobox.tsx:10`.
-- [ ] **28. `App.tsx` gần 1.500 dòng** — `app/App.tsx:207`. Tách phần dẫn đường + cảnh báo + reroute ra hook riêng (vd. `useNavigationController`); nhiều lỗi mục 5, 6, 10, 11 đến từ logic dựng tuyến bị chép nhiều nơi trong file này.
+- [x] **27. Comment `isSamePlace` nói có so khoảng cách ~400 m nhưng code không so** — `places/components/PlaceCombobox.tsx:10`.
+  _Ghi chú khi đối chiếu (23/11):_ Đã xử lý trong refactor `2c26e8c` (N2): `isSamePlace` chuyển sang `places/domain/sameSuggestion.ts`, chú thích mới khớp với code (so id hoặc tên + địa chỉ).
+- [x] **28. `App.tsx` gần 1.500 dòng** — `app/App.tsx:207`. Tách phần dẫn đường + cảnh báo + reroute ra hook riêng (vd. `useNavigationController`); nhiều lỗi mục 5, 6, 10, 11 đến từ logic dựng tuyến bị chép nhiều nơi trong file này.
+  _Ghi chú khi đối chiếu (23/11):_ Đã xử lý trong refactor `a8db088`/`42bc0a5` (N2): `App.tsx` còn ~630 dòng, luồng điều phối tách sang `app/flows/*`.
 
 ## Kiểm tra sau khi sửa
 
