@@ -31,10 +31,11 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
   Kết quả `repository.list()` về sau `record()` sẽ ghi đè state và cache.
   _Gợi ý:_ gộp remote với các mục local mới hơn, hoặc bỏ qua kết quả list nếu đã có record trong lúc chờ.
 
-- [x] **8. Đăng xuất vẫn nhận push** — `features/notifications/hooks/usePushNotifications.ts:51`, `hooks/useRouteWatch.ts:49`
+- [ ] **8. Đăng xuất vẫn nhận push** — `features/notifications/hooks/usePushNotifications.ts:51`, `hooks/useRouteWatch.ts:49`
   Khi đăng xuất chỉ xóa endpoint ở state; đăng ký push và `route_watches` trên server vẫn còn → máy dùng chung tiếp tục nhận cảnh báo tuyến của người trước.
   _Gợi ý:_ trước khi `signOut`, gọi `delete_push_subscription` + `deleteRouteWatch(endpoint)`.
   _Ghi chú khi sửa:_ RPC `delete_push_subscription` chỉ cấp quyền cho `service_role` nên web không gọi được. Thay bằng xóa thẳng dòng của mình trong `push_subscriptions` (RLS `delete_self`; `route_watches` tự xóa theo `on delete cascade`) và hủy đăng ký push trong trình duyệt, chạy qua `AuthProvider.onBeforeSignOut` trước khi mất phiên.
+  _Còn thiếu:_ khi cả xóa đăng ký ở Supabase và hủy đăng ký trong trình duyệt thất bại, thông báo cũ vẫn có thể tới máy dùng chung. Theo dõi ở [#19](https://github.com/dpm14092006-UIT/iMap/issues/19).
 
 - [x] **9. Lỗi Supabase khi ghi lịch sử bị bỏ qua** — `features/places/services/recentPlaces.ts:100`, `:115`
   `rpc()`/`.delete()` trả `{ error }` chứ không throw, nên `.catch()` ở nơi gọi không bao giờ chạy.
@@ -64,8 +65,9 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 
 - [x] **17. Mỗi sự kiện realtime tải lại toàn bộ báo cáo** — `features/traffic/hooks/useTrafficReports.ts:108`
   Gom các sự kiện (debounce ~500 ms) trước khi `refresh()`.
-- [x] **18. Ký lại link ảnh mỗi lần danh sách báo cáo đổi** — `features/traffic/components/TrafficReportPanel.tsx:165`
+- [ ] **18. Ký lại link ảnh mỗi lần danh sách báo cáo đổi** — `features/traffic/components/TrafficReportPanel.tsx:165`
   Chỉ ký ảnh mới (cache theo `imagePath`), không phụ thuộc identity của mảng `incidents`.
+  _Còn thiếu:_ bảng mở lâu vẫn giữ link đã hết hạn nếu danh sách ảnh không đổi. Theo dõi ở [#19](https://github.com/dpm14092006-UIT/iMap/issues/19).
 - [x] **19. Gọi 2 RPC lịch sử mỗi lần đổi tuyến** — `app/App.tsx:633` + `RecentPlacesProvider.tsx:68`
   Bỏ qua RPC khi điểm đã đứng đầu danh sách; không ghi lại khi chỉ đổi phương án/tính lại tuyến.
 - [x] **20. Tính lại vị trí các điểm dừng mỗi lần có GPS** — `features/navigation/domain/NavigationGuidanceEngine.ts:120`
