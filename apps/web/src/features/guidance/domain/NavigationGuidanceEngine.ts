@@ -70,7 +70,9 @@ export class NavigationGuidanceEngine {
   }
 
   evaluate(point: LatLng, accuracyMeters: number, previousProgressRatio: number): Guidance {
-    if (accuracyMeters > NavigationGuidanceEngine.UNRELIABLE_ACCURACY_METERS) {
+    const reliable =
+      accuracyMeters >= 0 && accuracyMeters <= NavigationGuidanceEngine.UNRELIABLE_ACCURACY_METERS;
+    if (!reliable) {
       return this.holdProgress(previousProgressRatio);
     }
     const geometryTotal = this.path.totalMeters;

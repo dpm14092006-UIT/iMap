@@ -71,6 +71,8 @@ describe('navigation rerouting concurrency', () => {
       const { navigation, rerender, onRerouted } = setup();
       const offRoute = { ...navigation, offRoute: true, offRouteFixes: 3 };
 
+      await act(async () => rerender({ ...offRoute, location: null }));
+      expect(rerouteApi.reroute).not.toHaveBeenCalled();
       await act(async () => rerender(offRoute));
       expect(rerouteApi.reroute).toHaveBeenCalledOnce();
 

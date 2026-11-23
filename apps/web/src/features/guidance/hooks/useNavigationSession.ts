@@ -12,7 +12,7 @@ import type { NavigationStatus } from '../types';
 export type NavigationSessionState = {
   status: NavigationStatus;
   route: RoutePlan | null;
-  /** Vị trí GPS thô: dùng cho tính lại tuyến, gắn báo cáo… */
+  /** Vị trí GPS thô đủ tin cậy, dùng cho tính lại tuyến và gắn báo cáo. */
   location: LatLng | null;
   /** Vị trí vẽ mũi tên trên bản đồ (đã hút về tuyến khi còn đúng tuyến). */
   displayLocation: LatLng | null;
@@ -84,6 +84,18 @@ export function useNavigationSession() {
       const engine = engineRef.current;
       if (!engine) return;
       const location = { lat: fix.lat, lng: fix.lng };
+      const guidance = engine.evaluate(location, fix.accuracyMeters, progressRatioRef.current);
+      if (!guidance.reliable) {
+        // Giữ chỉ dẫn và mũi tên cuối cùng, chờ GPS tốt trước khi cung cấp điểm đi cho tính lại tuyến.
+        const error = 'Tín hiệu GPS tạm thời không ổn định.';
+        speedEstimatorRef.current.reset();
+        setState((current) =>
+          current.location === null && current.speedKph === null && current.error === error
+            ? current
+            : { ...current, location: null, speedKph: null, error },
+        );
+        return;
+      }
       const previousLocation = previousLocationRef.current;
       const movementMeters = previousLocation ? haversineMeters(previousLocation, location) : 0;
       const derivedHeading =
@@ -94,17 +106,10 @@ export function useNavigationSession() {
       const speedKph = speedEstimatorRef.current.update(fix);
       previousLocationRef.current = location;
       headingRef.current = headingDegrees;
-      const guidance = engine.evaluate(location, fix.accuracyMeters, progressRatioRef.current);
       progressRatioRef.current = guidance.progressRatio;
       setState((current) => {
-        // GPS quá kém: giữ nguyên kết luận lệch/đúng tuyến của lần trước, không đếm thêm.
-        const offRoute = guidance.arrived ? false : guidance.reliable ? guidance.offRoute : current.offRoute;
-        const offRouteFixes =
-          guidance.arrived || !offRoute
-            ? 0
-            : guidance.reliable
-              ? current.offRouteFixes + 1
-              : current.offRouteFixes;
+        const offRoute = !guidance.arrived && guidance.offRoute;
+        const offRouteFixes = offRoute ? current.offRouteFixes + 1 : 0;
         return {
           ...current,
           status: guidance.arrived ? 'arrived' : 'navigating',
