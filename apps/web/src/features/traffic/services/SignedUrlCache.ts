@@ -12,7 +12,7 @@ export class SignedUrlCache {
   constructor(
     private readonly sign: (path: string) => Promise<string | null>,
     private readonly reuseMs: number,
-    private readonly now: () => number = Date.now,
+    private readonly now: () => number = () => Date.now(),
   ) {}
 
   get(path: string): Promise<string | null> {
@@ -33,5 +33,18 @@ export class SignedUrlCache {
     );
     this.entries.set(path, { url, expiresAt: this.now() + this.reuseMs });
     return url;
+  }
+
+  /**
+   * Thời điểm (ms) link sớm nhất trong `paths` hết hạn dùng lại; null nếu không có link nào đang nhớ.
+   * Màn hình mở lâu hẹn giờ tới lúc này để gọi lại `get` và nhận link mới thay vì giữ link đã chết.
+   */
+  refreshAt(paths: Iterable<string>): number | null {
+    let earliest: number | null = null;
+    for (const path of paths) {
+      const expiresAt = this.entries.get(path)?.expiresAt;
+      if (expiresAt !== undefined && (earliest === null || expiresAt < earliest)) earliest = expiresAt;
+    }
+    return earliest;
   }
 }

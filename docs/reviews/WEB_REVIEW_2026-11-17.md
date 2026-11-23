@@ -66,9 +66,10 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 
 - [x] **17. Mỗi sự kiện realtime tải lại toàn bộ báo cáo** — `features/traffic/hooks/useTrafficReports.ts:108`
   Gom các sự kiện (debounce ~500 ms) trước khi `refresh()`.
-- [ ] **18. Ký lại link ảnh mỗi lần danh sách báo cáo đổi** — `features/traffic/components/TrafficReportPanel.tsx:165`
+- [x] **18. Ký lại link ảnh mỗi lần danh sách báo cáo đổi** — `features/traffic/components/TrafficReportPanel.tsx:165`
   Chỉ ký ảnh mới (cache theo `imagePath`), không phụ thuộc identity của mảng `incidents`.
-  _Còn thiếu:_ bảng mở lâu vẫn giữ link đã hết hạn nếu danh sách ảnh không đổi. Theo dõi ở [#19](https://github.com/dpm14092006-UIT/iMap/issues/19).
+  _Còn thiếu (đã xử lý ở #19):_ bảng mở lâu vẫn giữ link đã hết hạn nếu danh sách ảnh không đổi. Theo dõi ở [#19](https://github.com/dpm14092006-UIT/iMap/issues/19).
+  _Ghi chú khi sửa (#19):_ `SignedUrlCache.refreshAt` cho biết link sớm nhất hết hạn dùng lại lúc nào; hook hẹn giờ tới mốc đó (9 phút, trước hạn 10 phút của Supabase) để ký lại các link đã hết hạn, link còn hạn vẫn lấy từ cache.
 - [x] **19. Gọi 2 RPC lịch sử mỗi lần đổi tuyến** — `app/App.tsx:633` + `RecentPlacesProvider.tsx:68`
   Bỏ qua RPC khi điểm đã đứng đầu danh sách; không ghi lại khi chỉ đổi phương án/tính lại tuyến.
 - [x] **20. Tính lại vị trí các điểm dừng mỗi lần có GPS** — `features/navigation/domain/NavigationGuidanceEngine.ts:120`

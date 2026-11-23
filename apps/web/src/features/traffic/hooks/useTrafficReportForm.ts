@@ -5,7 +5,10 @@ import { trafficApi, trafficPhotos } from '../api/trafficApi';
 import { photoError } from '../domain/photoValidation';
 import { SignedUrlCache } from '../services/SignedUrlCache';
 import type { IncidentKind, IncidentSeverity, TrafficReportPanelProps, TrafficVehicleScope } from '../types';
+/** Link ảnh Supabase có hạn 10 phút; dùng lại tối đa 9 phút để không đưa ra link sắp chết. */
 const signedPhotoUrls = new SignedUrlCache((path) => trafficPhotos.signedUrl(path), 9 * 60_000);
+/** Khoảng chờ tối thiểu (ms) giữa hai lần làm mới link ảnh, tránh lặp liên tục nếu đồng hồ lệch. */
+const MIN_PHOTO_REFRESH_MS = 1_000;
 export function useTrafficReportForm({
   incidents,
   selectedPoint,
@@ -25,6 +28,8 @@ export function useTrafficReportForm({
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState('');
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+  /** Tăng lên khi link ảnh đang hiện sắp hết hạn, để ký lại dù danh sách ảnh không đổi. */
+  const [photoUrlGeneration, setPhotoUrlGeneration] = useState(0);
   const [aiStatus, setAiStatus] = useState<'checking' | 'ready' | 'unavailable'>('checking');
   const [imageAnalysis, setImageAnalysis] = useState<TrafficImageAnalysisDto | null>(null);
   const [analysisTask, setAnalysisTask] = useState<TrafficImageAnalysisTask | null>(null);
@@ -60,6 +65,7 @@ export function useTrafficReportForm({
 
   useEffect(() => {
     let current = true;
+    let refreshTimer: number | undefined;
     const recentPhotos = recentPhotoKey ? recentPhotoKey.split('\n').map((line) => line.split('\t')) : [];
     if (!recentPhotos.length) {
       setPhotoUrls({});
@@ -71,11 +77,18 @@ export function useTrafficReportForm({
       recentPhotos.map(async ([id, imagePath]) => [id!, await signedPhotoUrls.get(imagePath!)] as const),
     )
       .then((entries) => {
-        if (current)
-          setPhotoUrls(
-            Object.fromEntries(
-              entries.filter((entry): entry is readonly [string, string] => Boolean(entry[1])),
-            ),
+        if (!current) return;
+        setPhotoUrls(
+          Object.fromEntries(
+            entries.filter((entry): entry is readonly [string, string] => Boolean(entry[1])),
+          ),
+        );
+        // Bảng mở lâu mà danh sách không đổi thì effect không tự chạy lại: hẹn giờ ký lại trước khi link chết.
+        const refreshAt = signedPhotoUrls.refreshAt(recentPhotos.map(([, imagePath]) => imagePath!));
+        if (refreshAt !== null)
+          refreshTimer = window.setTimeout(
+            () => setPhotoUrlGeneration((generation) => generation + 1),
+            Math.max(MIN_PHOTO_REFRESH_MS, refreshAt - Date.now()),
           );
       })
       .catch(() => {
@@ -83,8 +96,9 @@ export function useTrafficReportForm({
       });
     return () => {
       current = false;
+      window.clearTimeout(refreshTimer);
     };
-  }, [recentPhotoKey]);
+  }, [recentPhotoKey, photoUrlGeneration]);
 
   useEffect(() => {
     let current = true;

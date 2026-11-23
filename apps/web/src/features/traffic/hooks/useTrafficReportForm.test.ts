@@ -3,7 +3,7 @@ import type { TrafficImageAnalysisDto } from '@routetwin/shared';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { deferred } from '../../../testing/fixtures';
-import { trafficApi } from '../api/trafficApi';
+import { trafficApi, trafficPhotos } from '../api/trafficApi';
 import type { TrafficReportPanelProps } from '../types';
 import { useTrafficReportForm } from './useTrafficReportForm';
 vi.mock('../api/trafficApi', () => ({
@@ -150,5 +150,34 @@ describe('traffic photo/report form', () => {
     expect(result.current.note).toBe('Keep me');
     expect(result.current.actionError).toBe('offline');
     expect(result.current.busy).toBe(false);
+  });
+});
+
+describe('link ảnh báo cáo (issue #19, mục 18)', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('bảng mở quá hạn link: tự ký lại, cập nhật danh sách bình thường thì không ký lại', async () => {
+    vi.useFakeTimers();
+    let signed = 0;
+    vi.mocked(trafficPhotos.signedUrl)
+      .mockReset()
+      .mockImplementation(async (path) => `https://signed/${path}?v=${++signed}`);
+    const incidents = () =>
+      [{ id: 'r1', imagePath: 'reports/expiry-test.jpg' }] as TrafficReportPanelProps['incidents'];
+    const view = setup({ incidents: incidents() });
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(view.result.current.photoUrls.r1).toBe('https://signed/reports/expiry-test.jpg?v=1');
+
+    // Realtime gửi lại cùng danh sách (mảng mới, cùng id và đường dẫn): dùng lại link trong cache.
+    await act(async () => {
+      view.rerender({ ...view.props, incidents: incidents() });
+      await vi.advanceTimersByTimeAsync(60_000);
+    });
+    expect(trafficPhotos.signedUrl).toHaveBeenCalledOnce();
+
+    // Giữ bảng mở 11 phút (link Supabase chỉ có hạn 10 phút), danh sách không đổi.
+    await act(() => vi.advanceTimersByTimeAsync(10 * 60_000));
+    expect(trafficPhotos.signedUrl).toHaveBeenCalledTimes(2);
+    expect(view.result.current.photoUrls.r1).toBe('https://signed/reports/expiry-test.jpg?v=2');
   });
 });
