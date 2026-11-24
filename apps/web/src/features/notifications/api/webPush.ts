@@ -2,6 +2,7 @@ import { httpClient } from '../../../shared/api/HttpClient';
 import { getSupabaseClient } from '../../auth/services/supabaseClient';
 import type { Coordinate, LatLng } from '../../../shared/geo/types';
 import type { TransportMode } from '../../routing/types';
+import { blockPushEndpoint, clearBlockedPushEndpoint } from '../services/blockedPushEndpoint';
 import { pendingPushCleanup } from '../services/pendingPushCleanup';
 
 type PushConfig = { enabled: boolean; publicKey: string | null };
@@ -88,8 +89,9 @@ export async function ensurePushSubscription(): Promise<string | null> {
   });
   if (error) throw new Error('Không lưu được đăng ký thông báo. Hãy thử lại sau.');
   // Server đã chuyển endpoint này sang tài khoản hiện tại (và xóa tuyến theo dõi của chủ cũ):
-  // không còn gì của tài khoản trước cần dọn nữa.
+  // không còn gì của tài khoản trước cần dọn nữa, và service worker được hiện cảnh báo trở lại.
   pendingPushCleanup.clear();
+  await clearBlockedPushEndpoint();
   return json.endpoint;
 }
 
@@ -121,7 +123,8 @@ export async function upsertRouteWatch(
 
 /**
  * Khi đăng xuất: gỡ đăng ký push của trình duyệt này để máy dùng chung không còn nhận cảnh báo tuyến của
- * người trước. Hai việc chạy song song, chỉ cần một việc thành công là đủ:
+ * người trước. Trước hết báo service worker bỏ qua push tới endpoint này (có hiệu lực ngay cả khi các bước
+ * sau lỗi). Sau đó hai việc chạy song song, chỉ cần một việc thành công là đủ:
  * - xóa dòng của mình trong `push_subscriptions` (RLS cho phép; route_watches tự xóa theo on delete cascade)
  *   → server không còn gửi tới endpoint này;
  * - hủy đăng ký trong trình duyệt (không được thì gỡ luôn service worker) → endpoint chết hẳn.
@@ -139,6 +142,7 @@ export async function deleteCurrentPushSubscription(): Promise<void> {
   const { endpoint } = subscription;
   // Ghi nhớ trước: tab bị đóng giữa chừng thì lần mở sau vẫn dọn tiếp.
   pendingPushCleanup.remember(endpoint);
+  await blockPushEndpoint(endpoint);
   const [removedOnServer, stoppedInBrowser] = await Promise.all([
     removeServerSubscription(endpoint),
     stopBrowserPush(registration, subscription),

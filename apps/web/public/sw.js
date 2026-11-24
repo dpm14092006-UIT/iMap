@@ -1,4 +1,4 @@
-/* global self, URL */
+/* global self, URL, caches */
 /* Service worker chỉ dùng cho Web Push cảnh báo giao thông trên tuyến. Không cache, không chặn fetch. */
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
@@ -11,12 +11,40 @@ function parsePayload(event) {
   }
 }
 
+/*
+ * Endpoint của tài khoản đã đăng xuất (trang ghi vào Cache Storage khi đăng xuất, xóa khi tài khoản mới
+ * bật thông báo). GIỮ KHỚP với src/features/notifications/services/blockedPushEndpoint.ts.
+ */
+const PUSH_STATE_CACHE = 'imap-push-state';
+const BLOCKED_ENDPOINT_KEY = '/__imap/push-blocked-endpoint';
+
+/** Push này tới đăng ký của tài khoản đã đăng xuất: không được hiện hay chuyển cho tab. */
+async function isBlockedSubscription() {
+  try {
+    const cache = await caches.open(PUSH_STATE_CACHE);
+    const stored = await cache.match(BLOCKED_ENDPOINT_KEY);
+    if (!stored) return false;
+    const blocked = await stored.text();
+    const subscription = await self.registration.pushManager.getSubscription();
+    return Boolean(blocked) && (!subscription || subscription.endpoint === blocked);
+  } catch {
+    return false;
+  }
+}
+
 self.addEventListener('push', (event) => {
   const payload = parsePayload(event);
   if (!payload || payload.type !== 'traffic_report' || !payload.report) return;
 
   event.waitUntil(
     (async () => {
+      // Máy dùng chung: lần đăng xuất trước chưa gỡ được đăng ký thì bỏ qua cảnh báo của tài khoản cũ
+      // và thử hủy đăng ký thêm lần nữa (dù trang đang đóng).
+      if (await isBlockedSubscription()) {
+        const subscription = await self.registration.pushManager.getSubscription().catch(() => null);
+        await subscription?.unsubscribe().catch(() => false);
+        return;
+      }
       const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       // Báo cho mọi tab đang mở để app hiện banner + hỏi đổi tuyến ngay.
       for (const client of windows) client.postMessage({ type: 'traffic_alert', report: payload.report });
