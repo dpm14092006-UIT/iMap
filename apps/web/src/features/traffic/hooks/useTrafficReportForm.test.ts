@@ -180,4 +180,72 @@ describe('link ảnh báo cáo (issue #19, mục 18)', () => {
     expect(trafficPhotos.signedUrl).toHaveBeenCalledTimes(2);
     expect(view.result.current.photoUrls.r1).toBe('https://signed/reports/expiry-test.jpg?v=2');
   });
+
+  it('gia hạn gặp lúc mất mạng (ký ra null) rồi mạng hồi phục: ảnh tự hiện lại dù danh sách không đổi (issue #21)', async () => {
+    vi.useFakeTimers();
+    const path = 'reports/offline-then-online.jpg';
+    const results: (string | null)[] = ['https://signed/v1', null, null];
+    vi.mocked(trafficPhotos.signedUrl)
+      .mockReset()
+      .mockImplementation(async () => (results.length ? results.shift()! : 'https://signed/v2'));
+    const view = setup({
+      incidents: [{ id: 'r1', imagePath: path }] as TrafficReportPanelProps['incidents'],
+    });
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(view.result.current.photoUrls.r1).toBe('https://signed/v1');
+
+    // Mốc tự gia hạn (9 phút): mất mạng, Supabase trả null.
+    await act(() => vi.advanceTimersByTimeAsync(9 * 60_000));
+    expect(view.result.current.photoUrls.r1).toBeUndefined();
+
+    // Vẫn mất mạng ở lần thử lại kế tiếp, rồi mạng hồi phục: ảnh trở lại mà không cần danh sách đổi.
+    // Mô phỏng tối đa 30 phút, mỗi nhịp 30 giây.
+    for (let step = 0; step < 60 && !view.result.current.photoUrls.r1; step++) {
+      await act(() => vi.advanceTimersByTimeAsync(30_000));
+    }
+    expect(view.result.current.photoUrls.r1).toBe('https://signed/v2');
+    // Thử lại có giới hạn nhịp: không ký dồn dập trong lúc mất mạng.
+    expect(vi.mocked(trafficPhotos.signedUrl).mock.calls.length).toBeLessThanOrEqual(6);
+  });
+
+  it('trình duyệt báo có mạng lại: ký lại ngay ảnh lỗi, không chờ hết lượt thử lại', async () => {
+    vi.useFakeTimers();
+    const results: (string | null)[] = [null];
+    vi.mocked(trafficPhotos.signedUrl)
+      .mockReset()
+      .mockImplementation(async () => (results.length ? results.shift()! : 'https://signed/online'));
+    const view = setup({
+      incidents: [
+        { id: 'r1', imagePath: 'reports/online-event.jpg' },
+      ] as TrafficReportPanelProps['incidents'],
+    });
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(view.result.current.photoUrls.r1).toBeUndefined();
+
+    await act(async () => {
+      window.dispatchEvent(new Event('online'));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(view.result.current.photoUrls.r1).toBe('https://signed/online');
+  });
+
+  it('một ảnh ký lỗi (throw) không làm mất các ảnh còn lại', async () => {
+    vi.mocked(trafficPhotos.signedUrl)
+      .mockReset()
+      .mockImplementation(async (path) => {
+        if (path.includes('broken')) throw new Error('Failed to fetch');
+        return `https://signed/${path}`;
+      });
+    const view = setup({
+      incidents: [
+        { id: 'ok', imagePath: 'reports/fine.jpg' },
+        { id: 'bad', imagePath: 'reports/broken.jpg' },
+      ] as TrafficReportPanelProps['incidents'],
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await vi.waitFor(() => expect(view.result.current.photoUrls.ok).toBe('https://signed/reports/fine.jpg'));
+    expect(view.result.current.photoUrls.bad).toBeUndefined();
+  });
 });
