@@ -18,17 +18,21 @@ function parsePayload(event) {
 const PUSH_STATE_CACHE = 'imap-push-state';
 const BLOCKED_ENDPOINT_KEY = '/__imap/push-blocked-endpoint';
 
-/** Push này tới đăng ký của tài khoản đã đăng xuất: không được hiện hay chuyển cho tab. */
-async function isBlockedSubscription() {
+/** Bỏ qua cảnh báo nếu đăng ký đã bị chặn hoặc không xác minh được trạng thái chặn. */
+async function suppressBlockedPush() {
   try {
     const cache = await caches.open(PUSH_STATE_CACHE);
     const stored = await cache.match(BLOCKED_ENDPOINT_KEY);
     if (!stored) return false;
     const blocked = await stored.text();
+    if (!blocked) return false;
     const subscription = await self.registration.pushManager.getSubscription();
-    return Boolean(blocked) && (!subscription || subscription.endpoint === blocked);
+    if (subscription && subscription.endpoint !== blocked) return false;
+    // Chỉ hủy đăng ký vừa đối chiếu với dấu chặn, kể cả khi trang đã đóng.
+    await subscription?.unsubscribe();
+    return true;
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -38,13 +42,7 @@ self.addEventListener('push', (event) => {
 
   event.waitUntil(
     (async () => {
-      // Máy dùng chung: lần đăng xuất trước chưa gỡ được đăng ký thì bỏ qua cảnh báo của tài khoản cũ
-      // và thử hủy đăng ký thêm lần nữa (dù trang đang đóng).
-      if (await isBlockedSubscription()) {
-        const subscription = await self.registration.pushManager.getSubscription().catch(() => null);
-        await subscription?.unsubscribe().catch(() => false);
-        return;
-      }
+      if (await suppressBlockedPush()) return;
       const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       // Báo cho mọi tab đang mở để app hiện banner + hỏi đổi tuyến ngay.
       for (const client of windows) client.postMessage({ type: 'traffic_alert', report: payload.report });

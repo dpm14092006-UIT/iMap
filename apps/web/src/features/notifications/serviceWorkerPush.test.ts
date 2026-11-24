@@ -117,6 +117,55 @@ describe('service worker sau khi đăng xuất (issue #21)', () => {
     expect(subscription.unsubscribe.mock.calls.length).toBeGreaterThan(2);
   });
 
+  it('đã lưu dấu chặn nhưng trình duyệt không đọc được đăng ký: không phát cảnh báo', async () => {
+    const { subscription, registration } = stubBrowser();
+    stubSupabase();
+    await expect(deleteCurrentPushSubscription()).rejects.toThrow();
+    registration.pushManager.getSubscription.mockReset().mockRejectedValueOnce(new Error('lookup failed'));
+    subscription.unsubscribe.mockClear();
+    const worker = loadServiceWorker(registration);
+
+    await worker.push(PAYLOAD);
+
+    expect(registration.showNotification).not.toHaveBeenCalled();
+    expect(worker.tab.postMessage).not.toHaveBeenCalled();
+    expect(registration.pushManager.getSubscription).toHaveBeenCalledOnce();
+    expect(subscription.unsubscribe).not.toHaveBeenCalled();
+  });
+
+  it('không đọc được trạng thái chặn: bỏ qua cảnh báo mà không hủy đăng ký', async () => {
+    const { subscription, registration } = stubBrowser();
+    vi.stubGlobal('caches', {
+      open: vi.fn().mockRejectedValue(new Error('cache unavailable')),
+    });
+    const worker = loadServiceWorker(registration);
+
+    await worker.push(PAYLOAD);
+
+    expect(registration.showNotification).not.toHaveBeenCalled();
+    expect(worker.tab.postMessage).not.toHaveBeenCalled();
+    expect(subscription.unsubscribe).not.toHaveBeenCalled();
+  });
+
+  it('dấu chặn cũ không ảnh hưởng đến đăng ký có endpoint khác', async () => {
+    const { subscription, registration } = stubBrowser();
+    stubSupabase();
+    await expect(deleteCurrentPushSubscription()).rejects.toThrow();
+    const replacement = {
+      ...subscription,
+      endpoint: 'https://fcm.googleapis.com/fcm/send/new-subscription',
+      unsubscribe: vi.fn(async () => true),
+    };
+    registration.pushManager.getSubscription.mockResolvedValue(replacement);
+    const worker = loadServiceWorker(registration);
+
+    await worker.push(PAYLOAD);
+
+    expect(registration.showNotification).toHaveBeenCalledOnce();
+    expect(worker.tab.postMessage).toHaveBeenCalledOnce();
+    expect(replacement.unsubscribe).not.toHaveBeenCalled();
+  });
+
   it('tài khoản mới bật Web Push trên cùng máy: cảnh báo của tài khoản mới hiện bình thường', async () => {
     const { registration } = stubBrowser();
     const { rpc } = stubSupabase();
