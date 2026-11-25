@@ -1,5 +1,8 @@
 /** English translations for user-facing Vietnamese copy. Unlisted strings remain Vietnamese. */
 export const en: Record<string, string> = {
+  'Chưa có tài khoản?': 'New to iMap?',
+  'Đã có tài khoản?': 'Already have an account?',
+  'Chức năng đăng nhập chưa được cấu hình trên máy chủ.': 'Sign-in is not configured on the server.',
   'Tính năng phân tích ảnh hiện chưa khả dụng.': 'Image analysis is currently unavailable.',
   'Nhập nhu cầu': 'Type a request',
   'Nhu cầu của bạn': 'Your request',

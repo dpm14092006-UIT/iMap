@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (email: string, password: string) => {
     const client = await getSupabaseClient();
-    if (!client) throw new Error('Chưa cấu hình Supabase Auth.');
+    if (!client) throw new Error('Chức năng đăng nhập chưa được cấu hình trên máy chủ.');
     const { data, error } = await client.auth.signInWithPassword({ email, password });
     if (error) throw error;
     setSession(data.session);
@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(async (email: string, password: string) => {
     const client = await getSupabaseClient();
-    if (!client) throw new Error('Chưa cấu hình Supabase Auth.');
+    if (!client) throw new Error('Chức năng đăng nhập chưa được cấu hình trên máy chủ.');
     const { data, error } = await client.auth.signUp({ email, password });
     if (error) throw error;
     if (data.session) setSession(data.session);

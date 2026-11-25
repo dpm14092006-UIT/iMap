@@ -16,22 +16,20 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
   const [error, setError] = useState('');
   const signingUp = mode === 'sign_up';
   const heading = showHeading ? (
-    <div className="mb-7">
-      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[.16em] text-brand-600 dark:text-indigo-300">
-        {t('Tài khoản iMap')}
-      </p>
-      <h1 className="text-[30px] font-semibold leading-tight tracking-[-.045em]">
-        {user ? t('Sẵn sàng lên đường?') : signingUp ? t('Bắt đầu với iMap.') : t('Chào bạn trở lại.')}
+    <div>
+      <h1 className="imap-auth-title">
+        {user ? t('Tài khoản của bạn') : signingUp ? t('Đăng ký') : t('Đăng nhập')}
       </h1>
-      <p className="mt-2.5 text-[13px] leading-6 text-content-subtle">
-        {user
-          ? t('Hành trình tiếp theo đang chờ bạn.')
-          : signingUp
-            ? t('Tạo tài khoản để chia sẻ và xác nhận giao thông.')
-            : t('Đăng nhập để tiếp tục hành trình của bạn.')}
-      </p>
     </div>
   ) : null;
+
+  function changeMode(value: 'sign_in' | 'sign_up') {
+    setMode(value);
+    setPassword('');
+    setError('');
+    setMessage('');
+    setShowPassword(false);
+  }
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -136,33 +134,29 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
         </div>
       ) : (
         <>
-          <div
-            className="mb-6 grid grid-cols-2 gap-5 border-b border-line"
-            role="group"
-            aria-label={t('Chọn phương thức tài khoản')}
-          >
-            {(['sign_in', 'sign_up'] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                disabled={busy}
-                aria-pressed={mode === value}
-                onClick={() => {
-                  setMode(value);
-                  setPassword('');
-                  setError('');
-                  setMessage('');
-                  setShowPassword(false);
-                }}
-                className={`relative -mb-px min-h-11 border-b-2 px-1 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 dark:focus-visible:ring-indigo-400/30 disabled:opacity-50 ${mode === value ? 'border-brand-600 text-brand-700 dark:text-indigo-300' : 'border-transparent text-content-subtle hover:text-ink dark:hover:text-slate-100'}`}
-              >
-                {value === 'sign_in' ? t('Đăng nhập') : t('Đăng ký')}
-              </button>
-            ))}
-          </div>
+          {!showHeading && (
+            <div
+              className="mb-6 grid grid-cols-2 gap-5 border-b border-line"
+              role="group"
+              aria-label={t('Chọn phương thức tài khoản')}
+            >
+              {(['sign_in', 'sign_up'] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  disabled={busy}
+                  aria-pressed={mode === value}
+                  onClick={() => changeMode(value)}
+                  className={`relative -mb-px min-h-11 border-b-2 px-1 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 dark:focus-visible:ring-indigo-400/30 disabled:opacity-50 ${mode === value ? 'border-brand-600 text-brand-700 dark:text-indigo-300' : 'border-transparent text-content-subtle hover:text-ink dark:hover:text-slate-100'}`}
+                >
+                  {value === 'sign_in' ? t('Đăng nhập') : t('Đăng ký')}
+                </button>
+              ))}
+            </div>
+          )}
           <form onSubmit={(event) => void submit(event)} aria-busy={busy} className="space-y-4">
             <div>
-              <label htmlFor={`${id}-email`} className="text-xs font-semibold text-content-muted">
+              <label htmlFor={`${id}-email`} className="text-sm font-semibold text-content">
                 Email
               </label>
               <input
@@ -178,11 +172,11 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="ban@example.com"
-                className="mt-2 h-12 w-full rounded-xl border border-line bg-[#fafbfc] dark:bg-slate-800 px-3.5 text-base text-content sm:text-[13px] outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-brand-400 dark:focus:border-indigo-400 focus:ring-4 focus:ring-brand-50 dark:focus:ring-indigo-400/20 disabled:bg-slate-50 dark:disabled:bg-slate-800/40"
+                className="mt-2 h-12 w-full rounded-xl border border-slate-500 dark:border-slate-500 bg-surface px-3.5 text-base text-content outline-none placeholder:text-content-subtle focus:border-focus focus:ring-4 focus:ring-focus/20 disabled:bg-slate-50 dark:disabled:bg-slate-800/40"
               />
             </div>
             <div>
-              <label htmlFor={`${id}-password`} className="text-xs font-semibold text-content-muted">
+              <label htmlFor={`${id}-password`} className="text-sm font-semibold text-content">
                 {t('Mật khẩu')}
               </label>
               <div className="relative mt-2">
@@ -198,7 +192,7 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   aria-describedby={signingUp ? `${id}-password-help` : undefined}
-                  className="h-12 w-full rounded-xl border border-line bg-[#fafbfc] dark:bg-slate-800 placeholder:text-slate-400 dark:placeholder:text-slate-500 pl-3.5 pr-16 text-base text-content sm:text-[13px] outline-none focus:border-brand-400 dark:focus:border-indigo-400 focus:ring-4 focus:ring-brand-50 dark:focus:ring-indigo-400/20 disabled:bg-slate-50 dark:disabled:bg-slate-800/40"
+                  className="h-12 w-full rounded-xl border border-slate-500 dark:border-slate-500 bg-surface placeholder:text-content-subtle pl-3.5 pr-16 text-base text-content outline-none focus:border-focus focus:ring-4 focus:ring-focus/20 disabled:bg-slate-50 dark:disabled:bg-slate-800/40"
                 />
                 <button
                   type="button"
@@ -206,7 +200,7 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
                   aria-pressed={showPassword}
                   aria-label={showPassword ? t('Ẩn mật khẩu') : t('Hiện mật khẩu')}
                   onClick={() => setShowPassword((value) => !value)}
-                  className="absolute inset-y-0 right-1 my-1 rounded-lg px-3 text-xs font-semibold text-content-muted hover:bg-slate-50 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40"
+                  className="absolute inset-y-0 right-0 min-w-11 rounded-lg px-3 text-xs font-semibold text-content-muted hover:bg-slate-50 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40"
                 >
                   {showPassword ? t('Ẩn') : t('Hiện')}
                 </button>
@@ -236,11 +230,24 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
             <button
               type="submit"
               disabled={busy}
-              className="min-h-12 w-full rounded-xl bg-brand-600 px-4 text-[13px] font-semibold shadow-[0_4px_10px_-4px_rgba(36,100,210,.5)] text-white transition hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 dark:focus-visible:ring-indigo-400/30 disabled:cursor-wait disabled:bg-slate-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
+              className="min-h-12 w-full rounded-xl bg-primary px-4 text-base font-semibold text-on-primary transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/30 disabled:cursor-wait disabled:bg-slate-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
             >
               {busy ? t('Đang xử lý…') : signingUp ? t('Tạo tài khoản') : t('Đăng nhập')}
             </button>
           </form>
+          {showHeading && (
+            <p className="mt-3 flex flex-wrap items-center gap-x-1.5 text-sm text-content-muted">
+              {t(signingUp ? 'Đã có tài khoản?' : 'Chưa có tài khoản?')}
+              <button
+                type="button"
+                disabled={busy}
+                className="min-h-11 rounded-md px-1 font-semibold text-primary underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus"
+                onClick={() => changeMode(signingUp ? 'sign_in' : 'sign_up')}
+              >
+                {t(signingUp ? 'Đăng nhập' : 'Đăng ký')}
+              </button>
+            </p>
+          )}
         </>
       )}
       {user && error && (
