@@ -32,6 +32,10 @@ Cập nhật: 2026-11-26. Tài liệu bàn giao cho đợt nâng cấp bản đ�
 4. Nếu đạt, sửa nguồn trong registry: `status: 'APPROVED'`, thêm `approval: { by, date, report }`, cập nhật `evidence`, `lastVerified`. Lưu ảnh bằng chứng vào `docs/basemap/evidence/<ngày>/`.
 5. Test `providers.test.ts` và cổng kiểm chứng chặn mọi nguồn APPROVED thiếu người duyệt.
 
+## 3D (địa hình, toà nhà khối)
+
+Nghiêng, xoay bản đồ và dẫn đường 3D không đổi style nên bật ngay. Địa hình nổi và khối toà nhà dùng dữ liệu của nguồn (registry `features3d`), chỉ THÊM lớp của iMap dưới lớp chữ, không đổi lớp `sov-*`. Production chỉ bật khi có `features3d.approval`. vApp đang chờ ERPFit xác nhận (ROADMAP mục 2); khi có, ghi `approval: { by, date, report }` vào `features3d` của vApp. Khi bật, ghi thêm nguồn "Độ cao © Mapzen / AWS Terrain Tiles".
+
 ## Lệnh
 
 ```bash
