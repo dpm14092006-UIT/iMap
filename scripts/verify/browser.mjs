@@ -70,7 +70,8 @@ try {
     const url = new URL(route.request().url());
     if (url.hostname === '127.0.0.1') return route.continue();
     if (blockSentinel && url.pathname.includes('/Sentinel2/')) return route.fulfill({ status: 503 });
-    if (route.request().resourceType() === 'image')
+    // Leaflet tải ô bằng <img>, MapLibre bằng fetch(): cả hai nhận ô giả lập.
+    if (route.request().resourceType() === 'image' || /\/MapServer\/tile\//.test(url.pathname))
       return route.fulfill({
         contentType: 'image/png',
         body: fixtureTile,
@@ -565,6 +566,80 @@ try {
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.waitForTimeout(200);
     await page.screenshot({ path: resolve(artifacts, 'traffic-desktop-dark.png'), fullPage: true });
+  }
+  // Bộ máy MapLibre GL (đang chuyển dần từ Leaflet): cùng luồng tìm tuyến, chạy trên trang riêng.
+  {
+    // Nhóm kiểm thử trước giả lập Sentinel-2/hybrid lỗi; trang này dùng nguồn bình thường.
+    blockSentinel = false;
+    limitHybridTiles = false;
+    const gl = await context.newPage();
+    gl.setDefaultTimeout(15000);
+    gl.on('pageerror', (error) => errors.push(`[maplibre] ${error.message}`));
+    gl.on('console', (msg) => {
+      if (msg.type() === 'error' && !msg.text().startsWith('Failed to load resource:'))
+        errors.push(`[maplibre] ${msg.text()}`);
+    });
+    await gl.setViewportSize({ width: 1440, height: 1000 });
+    await gl.goto(`http://127.0.0.1:${address.port}/?engine=maplibre`);
+    await gl.locator('[data-map-engine="maplibre"] canvas.maplibregl-canvas').first().waitFor();
+    // vApp bị chặn trong kiểm thử (không gọi mạng ngoài): chuỗi dự phòng sang VIETMAP (ô giả lập), không OSM.
+    await gl.waitForFunction(
+      () => document.querySelector('[data-map-engine]')?.dataset.basemap === 'vietmap',
+    );
+    await openDirections(gl);
+    for (const [label, value] of [
+      ['Điểm xuất phát', 'QA Origin'],
+      ['Điểm đến', 'QA Destination'],
+    ]) {
+      await gl.getByRole('combobox', { name: label, exact: true }).fill(value);
+      await gl.getByRole('option').filter({ hasText: value }).first().click();
+    }
+    await gl.getByRole('button', { name: 'Tìm đường', exact: true }).click();
+    await gl.getByRole('button', { name: 'Bắt đầu', exact: true }).waitFor();
+    await gl.locator('.maplibregl-marker .routetwin-route-label').first().waitFor();
+    assert.equal(await gl.locator('.maplibregl-marker.routetwin-route-marker').count(), 2);
+    assert.equal(await gl.locator('[data-map-engine]').evaluate((el) => el.clientHeight > 0), true);
+    // Bản đồ phụ hiện (đang xem một phần lãnh thổ) và tuyến/điểm không nằm khuất sau nó.
+    await gl.waitForTimeout(600);
+    const glLayout = await gl.evaluate(() => {
+      const inset = document.querySelector('.routetwin-territory-inset');
+      const r = inset.getBoundingClientRect();
+      const hidden = [...document.querySelectorAll('.routetwin-route-marker, .routetwin-route-label')].filter(
+        (el) => {
+          const m = el.getBoundingClientRect();
+          return (
+            Math.min(r.right, m.right) > Math.max(r.left, m.left) &&
+            Math.min(r.bottom, m.bottom) > Math.max(r.top, m.top)
+          );
+        },
+      ).length;
+      return { shown: !inset.hidden, bounds: inset.dataset.insetBounds ?? '', hidden };
+    });
+    assert.equal(glLayout.shown, true);
+    assert.equal(glLayout.hidden, 0, 'Route markers hidden behind the territory inset (MapLibre)');
+    const [west, south, east, north] = glLayout.bounds.split(',').map(Number);
+    assert.ok(west <= 102 && south <= 4.5 && east >= 118 && north >= 23.5, `Inset bounds ${glLayout.bounds}`);
+    // Đổi nền sang Vệ tinh: style mới xóa mọi lớp, tuyến phải được cài lại; nhãn chủ quyền của iMap bật.
+    await gl.getByRole('button', { name: 'Lớp bản đồ', exact: true }).click();
+    await gl.getByRole('button', { name: 'Vệ tinh', exact: true }).click();
+    await gl.keyboard.press('Escape');
+    await gl.waitForFunction(
+      () => document.querySelector('[data-map-engine]')?.dataset.basemap === 'vnsdi-sentinel2',
+    );
+    await gl.waitForTimeout(800);
+    const afterSwap = await gl.evaluate(() => ({
+      attribution: document.querySelector('.routetwin-attribution')?.textContent ?? '',
+      labels: document.querySelectorAll('.sovereignty-label').length,
+    }));
+    assert.match(afterSwap.attribution, /VNSDI/);
+    assert.doesNotMatch(afterSwap.attribution, /openstreetmap\.org\/copyright.*tile/i);
+    assert.ok(afterSwap.labels > 0, 'iMap sovereignty labels on an unlabeled basemap');
+    // Tuyến vẫn bấm chọn được sau khi đổi nền (lớp tuyến đã được cài lại).
+    await gl.locator('.routetwin-route-label').first().waitFor();
+    await gl.close();
+    console.log(
+      '✓ MapLibre engine: basemap fallback, route, labels, inset, satellite swap re-installs layers',
+    );
   }
   assert.deepEqual(errors, [], `Browser errors: ${errors.join('; ')}`);
   assert.deepEqual(unexpected, [], `Unmocked API endpoints: ${unexpected.join(', ')}`);

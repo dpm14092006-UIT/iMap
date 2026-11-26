@@ -1,5 +1,5 @@
 import type { TrafficReportBounds } from '@routetwin/shared';
-import { useEffect, useRef, type MutableRefObject } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import type { LatLng } from '../../../shared/geo/types';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import type { Poi } from '../../explore/types';
@@ -7,6 +7,7 @@ import type { RoutePlan } from '../../routing/types';
 import type { TrafficMapLayer } from '../../traffic/domain/trafficMapLayer';
 import { LeafletMapController } from '../services/LeafletMapController';
 import type { MapController } from '../services/MapController';
+import { resolveMapEngine } from '../services/mapEngine';
 import type { DraftStops, MapLayer, MapOverlays } from '../types';
 
 type MapViewProps = {
@@ -55,28 +56,49 @@ export function MapView({
 }: MapViewProps) {
   const { language, t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
+  const [engine] = useState(resolveMapEngine);
+  // Tăng mỗi khi bản đồ sẵn sàng (MapLibre tạo bất đồng bộ) để lần vẽ đầu tiên không bị bỏ lỡ.
+  const [ready, setReady] = useState(0);
   // Giữ handler mới nhất trong ref để không phải tạo lại bản đồ khi callback đổi.
   const handlersRef = useRef({ onMapClick, onBoundsChange, onSelectRoute, onPoiClick });
   handlersRef.current = { onMapClick, onBoundsChange, onSelectRoute, onPoiClick };
 
-  // Tạo bản đồ khi mount, hủy khi unmount.
+  // Tạo bản đồ khi mount, hủy khi unmount. MapLibre GL tải theo nhu cầu (?engine=maplibre trong lúc chuyển).
   useEffect(() => {
-    if (!containerRef.current) return;
-    const controller: MapController = new LeafletMapController(containerRef.current, {
-      onBoundsChange: (bounds) => handlersRef.current.onBoundsChange(bounds),
-      onMapClick: (point) => handlersRef.current.onMapClick(point),
-      onSelectRoute: (routeId) => handlersRef.current.onSelectRoute(routeId),
-      onPoiClick: (poiId) => handlersRef.current.onPoiClick(poiId),
-    });
-    controllerRef.current = controller;
-    const resizeObserver = new ResizeObserver(() => controller.invalidateSize());
-    resizeObserver.observe(containerRef.current);
-    return () => {
-      resizeObserver.disconnect();
-      if (controllerRef.current === controller) controllerRef.current = null;
-      controller.destroy();
+    const container = containerRef.current;
+    if (!container) return;
+    let disposed = false;
+    let controller: MapController | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+    const handlers = {
+      onBoundsChange: (bounds: TrafficReportBounds) => handlersRef.current.onBoundsChange(bounds),
+      onMapClick: (point: LatLng) => handlersRef.current.onMapClick(point),
+      onSelectRoute: (routeId: string) => handlersRef.current.onSelectRoute(routeId),
+      onPoiClick: (poiId: string) => handlersRef.current.onPoiClick(poiId),
     };
-  }, [controllerRef]);
+    const attach = (created: MapController) => {
+      if (disposed) {
+        created.destroy();
+        return;
+      }
+      controller = created;
+      controllerRef.current = created;
+      resizeObserver = new ResizeObserver(() => created.invalidateSize());
+      resizeObserver.observe(container);
+      setReady((count) => count + 1);
+    };
+    if (engine === 'maplibre')
+      void import('../services/MaplibreMapController').then(({ MaplibreMapController }) =>
+        attach(new MaplibreMapController(container, handlers)),
+      );
+    else attach(new LeafletMapController(container, handlers));
+    return () => {
+      disposed = true;
+      resizeObserver?.disconnect();
+      if (controller && controllerRef.current === controller) controllerRef.current = null;
+      controller?.destroy();
+    };
+  }, [controllerRef, engine]);
 
   // Vẽ lại khi dữ liệu thay đổi.
   useEffect(() => {
@@ -97,6 +119,7 @@ export function MapView({
     });
   }, [
     controllerRef,
+    ready,
     language,
     layer,
     route,
@@ -115,7 +138,8 @@ export function MapView({
   return (
     <div
       ref={containerRef}
-      className="routetwin-leaflet absolute inset-0 z-0"
+      className={`${engine === 'maplibre' ? 'routetwin-map' : 'routetwin-leaflet'} absolute inset-0 z-0`}
+      data-map-engine={engine}
       role="region"
       aria-label={t('Bản đồ tương tác Việt Nam')}
     />
