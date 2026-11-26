@@ -35,7 +35,15 @@ import {
   usableChain,
   type BasemapMode,
 } from '../../apps/web/src/features/map/basemap/providers';
-import { MAP_TILE_SOURCES } from '../../apps/web/src/shared/security/contentSecurityPolicy';
+
+/** Máy chủ ô ảnh được phép tải thẳng từ trình duyệt: lấy từ các nguồn raster trong registry. */
+const MAP_TILE_SOURCES: readonly string[] = [
+  ...new Set(
+    BASEMAP_PROVIDERS.filter((p) => p.sourceType !== 'maplibre-style' && p.url.startsWith('https://')).map(
+      (p) => new URL(p.url.replace(/[{}]/g, '')).origin,
+    ),
+  ),
+];
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const args = Object.fromEntries(
@@ -423,7 +431,7 @@ async function boundaryGate(gate: Gate) {
     for (const host of FORBIDDEN_TILE_HOSTS)
       if (checked.includes(host)) offenders.push(`${rel(file)} → ${host}`);
     for (const m of text.matchAll(/https?:\/\/[^'"`\s]*\{z\}[^'"`\s]*/g))
-      if (!(MAP_TILE_SOURCES as readonly string[]).includes(new URL(m[0].replace(/[{}]/g, '')).origin))
+      if (!MAP_TILE_SOURCES.includes(new URL(m[0].replace(/[{}]/g, '')).origin))
         offenders.push(`${rel(file)} → ô bản đồ trực tiếp ${m[0]}`);
   }
   gate.expect(

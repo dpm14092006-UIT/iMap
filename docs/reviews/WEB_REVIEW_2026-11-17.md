@@ -35,6 +35,8 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
   Khi đăng xuất chỉ xóa endpoint ở state; đăng ký push và `route_watches` trên server vẫn còn → máy dùng chung tiếp tục nhận cảnh báo tuyến của người trước.
   _Gợi ý:_ trước khi `signOut`, gọi `delete_push_subscription` + `deleteRouteWatch(endpoint)`.
   _Ghi chú khi sửa:_ RPC `delete_push_subscription` chỉ cấp quyền cho `service_role` nên web không gọi được. Thay bằng xóa thẳng dòng của mình trong `push_subscriptions` (RLS `delete_self`; `route_watches` tự xóa theo `on delete cascade`) và hủy đăng ký push trong trình duyệt, chạy qua `AuthProvider.onBeforeSignOut` trước khi mất phiên.
+  _Còn thiếu (đã xử lý ở #19):_ khi cả xóa đăng ký ở Supabase và hủy đăng ký trong trình duyệt thất bại, thông báo cũ vẫn có thể tới máy dùng chung. Theo dõi ở [#19](https://github.com/dpm14092006-UIT/iMap/issues/19).
+  _Ghi chú khi sửa (#19):_ kiểm tra `{ error }` của Supabase; hủy đăng ký lỗi thì gỡ service worker (đăng ký push mất theo). Mọi bước đều lỗi thì ghi nhớ endpoint trong localStorage, `PushSignOutCleanup` dọn lại ở lần mở trang sau khi không có ai đăng nhập (cả trang bản đồ lẫn `/login`); `ensurePushSubscription` xóa dấu khi server đã chuyển endpoint sang tài khoản mới.
 
 - [x] **9. Lỗi Supabase khi ghi lịch sử bị bỏ qua** — `features/places/services/recentPlaces.ts:100`, `:115`
   `rpc()`/`.delete()` trả `{ error }` chứ không throw, nên `.catch()` ở nơi gọi không bao giờ chạy.
@@ -66,6 +68,8 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
   Gom các sự kiện (debounce ~500 ms) trước khi `refresh()`.
 - [x] **18. Ký lại link ảnh mỗi lần danh sách báo cáo đổi** — `features/traffic/components/TrafficReportPanel.tsx:165`
   Chỉ ký ảnh mới (cache theo `imagePath`), không phụ thuộc identity của mảng `incidents`.
+  _Còn thiếu (đã xử lý ở #19):_ bảng mở lâu vẫn giữ link đã hết hạn nếu danh sách ảnh không đổi. Theo dõi ở [#19](https://github.com/dpm14092006-UIT/iMap/issues/19).
+  _Ghi chú khi sửa (#19):_ `SignedUrlCache.refreshAt` cho biết link sớm nhất hết hạn dùng lại lúc nào; hook hẹn giờ tới mốc đó (9 phút, trước hạn 10 phút của Supabase) để ký lại các link đã hết hạn, link còn hạn vẫn lấy từ cache.
 - [x] **19. Gọi 2 RPC lịch sử mỗi lần đổi tuyến** — `app/App.tsx:633` + `RecentPlacesProvider.tsx:68`
   Bỏ qua RPC khi điểm đã đứng đầu danh sách; không ghi lại khi chỉ đổi phương án/tính lại tuyến.
 - [x] **20. Tính lại vị trí các điểm dừng mỗi lần có GPS** — `features/navigation/domain/NavigationGuidanceEngine.ts:120`
@@ -75,12 +79,17 @@ Cách làm: mỗi mục sửa trong một commit riêng, ghi số mục trong co
 
 ## C. Dọn code
 
-- [ ] **23. Phép chiếu điểm lên tuyến viết 3 lần** — `features/traffic/services/routeTraffic.ts:36` vs `shared/geo/path.ts` vs `navigation/domain/RoutePath.ts`. Gộp về một chỗ.
-- [ ] **24. Haversine/khoảng cách viết lại nhiều nơi** — `navigation/domain/position/SpeedEstimator.ts:17`, `traffic/hooks/useRouteTrafficAlert.ts:37`. Dùng `Geodesy.distanceMeters`.
-- [ ] **25. `bearingDegrees` hai bản khác công thức** — `navigation/hooks/useNavigationSession.ts:50` và `navigation/domain/position/SimulatedGpsSource.ts:30`. Đưa vào `Geodesy`.
-- [ ] **26. Hằng số đặt tên sai giá trị thật** — `traffic/hooks/useRouteTrafficAlert.ts:204` (`CLOSE_AFTER_DECISION_MS * 2`).
-- [ ] **27. Comment `isSamePlace` nói có so khoảng cách ~400 m nhưng code không so** — `places/components/PlaceCombobox.tsx:10`.
-- [ ] **28. `App.tsx` gần 1.500 dòng** — `app/App.tsx:207`. Tách phần dẫn đường + cảnh báo + reroute ra hook riêng (vd. `useNavigationController`); nhiều lỗi mục 5, 6, 10, 11 đến từ logic dựng tuyến bị chép nhiều nơi trong file này.
+- [x] **23. Phép chiếu điểm lên tuyến viết 3 lần** — `features/traffic/services/routeTraffic.ts:36` vs `shared/geo/path.ts` vs `navigation/domain/RoutePath.ts`. Gộp về một chỗ.
+  _Ghi chú khi đối chiếu (23/11):_ Đã xử lý trong refactor `a8db088` (N2): phép chiếu dùng chung `projectOntoSegment` ở `shared/geo/polyline.ts`; `RoutePath` và `routeTraffic` đều gọi hàm này.
+- [x] **24. Haversine/khoảng cách viết lại nhiều nơi** — `navigation/domain/position/SpeedEstimator.ts:17`, `traffic/hooks/useRouteTrafficAlert.ts:37`. Dùng `Geodesy.distanceMeters`.
+  _Ghi chú khi đối chiếu (23/11):_ Đã xử lý trong refactor `a8db088` (N2): khoảng cách dùng chung `haversineMeters` / `approxDistanceMeters` ở `shared/geo/distance.ts` (bọc bản trong `packages/shared`).
+- [x] **25. `bearingDegrees` hai bản khác công thức** — `navigation/hooks/useNavigationSession.ts:50` và `navigation/domain/position/SimulatedGpsSource.ts:30`. Đưa vào `Geodesy`.
+  _Ghi chú khi đối chiếu (23/11):_ Đã xử lý: còn một bản `bearingDegrees` ở `shared/geo/distance.ts` (`a8db088`); bản trong `SimulatedGpsSource` bị bỏ cùng chế độ demo (`42bc0a5`).
+- [x] **26. Hằng số đặt tên sai giá trị thật** — `traffic/hooks/useRouteTrafficAlert.ts:204` (`CLOSE_AFTER_DECISION_MS * 2`).
+- [x] **27. Comment `isSamePlace` nói có so khoảng cách ~400 m nhưng code không so** — `places/components/PlaceCombobox.tsx:10`.
+  _Ghi chú khi đối chiếu (23/11):_ Đã xử lý trong refactor `2c26e8c` (N2): `isSamePlace` chuyển sang `places/domain/sameSuggestion.ts`, chú thích mới khớp với code (so id hoặc tên + địa chỉ).
+- [x] **28. `App.tsx` gần 1.500 dòng** — `app/App.tsx:207`. Tách phần dẫn đường + cảnh báo + reroute ra hook riêng (vd. `useNavigationController`); nhiều lỗi mục 5, 6, 10, 11 đến từ logic dựng tuyến bị chép nhiều nơi trong file này.
+  _Ghi chú khi đối chiếu (23/11):_ Đã xử lý trong refactor `a8db088`/`42bc0a5` (N2): `App.tsx` còn ~630 dòng, luồng điều phối tách sang `app/flows/*`.
 
 ## Kiểm tra sau khi sửa
 

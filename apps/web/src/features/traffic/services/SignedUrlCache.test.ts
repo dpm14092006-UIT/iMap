@@ -54,4 +54,19 @@ describe('SignedUrlCache (review #18)', () => {
     expect(await cache.get('a.png')).toBe('ok');
     expect(sign).toHaveBeenCalledTimes(3);
   });
+
+  it('refreshAt trả mốc hết hạn sớm nhất của các ảnh đang nhớ (issue #19, mục 18)', async () => {
+    let now = 0;
+    const cache = new SignedUrlCache(
+      async (path) => `https://signed/${path}`,
+      1_000,
+      () => now,
+    );
+    await cache.get('a.png');
+    now = 400;
+    await cache.get('b.png');
+    expect(cache.refreshAt(['a.png', 'b.png', 'unknown.png'])).toBe(1_000);
+    expect(cache.refreshAt(['b.png'])).toBe(1_400);
+    expect(cache.refreshAt(['unknown.png'])).toBeNull();
+  });
 });

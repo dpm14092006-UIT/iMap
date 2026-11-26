@@ -172,7 +172,7 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="ban@example.com"
-                className="mt-2 h-12 w-full rounded-xl border border-slate-500 dark:border-slate-500 bg-surface px-3.5 text-base text-content outline-none placeholder:text-content-subtle focus:border-brand-400 dark:focus:border-indigo-400 focus:ring-4 focus:ring-brand-50 dark:focus:ring-indigo-400/20 disabled:bg-slate-50 dark:disabled:bg-slate-800/40"
+                className="mt-2 h-12 w-full rounded-xl border border-slate-500 dark:border-slate-500 bg-surface px-3.5 text-base text-content outline-none placeholder:text-content-subtle focus:border-focus focus:ring-4 focus:ring-focus/20 disabled:bg-slate-50 dark:disabled:bg-slate-800/40"
               />
             </div>
             <div>
@@ -192,7 +192,7 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   aria-describedby={signingUp ? `${id}-password-help` : undefined}
-                  className="h-12 w-full rounded-xl border border-slate-500 dark:border-slate-500 bg-surface placeholder:text-content-subtle pl-3.5 pr-16 text-base text-content outline-none focus:border-brand-400 dark:focus:border-indigo-400 focus:ring-4 focus:ring-brand-50 dark:focus:ring-indigo-400/20 disabled:bg-slate-50 dark:disabled:bg-slate-800/40"
+                  className="h-12 w-full rounded-xl border border-slate-500 dark:border-slate-500 bg-surface placeholder:text-content-subtle pl-3.5 pr-16 text-base text-content outline-none focus:border-focus focus:ring-4 focus:ring-focus/20 disabled:bg-slate-50 dark:disabled:bg-slate-800/40"
                 />
                 <button
                   type="button"
@@ -230,7 +230,7 @@ export function AccountForm({ showHeading = false }: { showHeading?: boolean } =
             <button
               type="submit"
               disabled={busy}
-              className="min-h-12 w-full rounded-xl bg-primary px-4 text-base font-semibold text-on-primary transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 dark:focus-visible:ring-indigo-400/30 disabled:cursor-wait disabled:bg-slate-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
+              className="min-h-12 w-full rounded-xl bg-primary px-4 text-base font-semibold text-on-primary transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/30 disabled:cursor-wait disabled:bg-slate-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
             >
               {busy ? t('Đang xử lý…') : signingUp ? t('Tạo tài khoản') : t('Đăng nhập')}
             </button>

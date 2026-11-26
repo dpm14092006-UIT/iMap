@@ -12,6 +12,7 @@ export const en: Record<string, string> = {
   'Cập nhật iMap': 'Update iMap',
   'Lộ trình nhiều điểm': 'Multi-stop route',
 
+  'Chức năng đăng nhập chưa được cấu hình trên máy chủ.': 'Sign-in is not configured on the server.',
   'Tính năng phân tích ảnh hiện chưa khả dụng.': 'Image analysis is currently unavailable.',
   'Nhập nhu cầu': 'Type a request',
   'Nhu cầu của bạn': 'Your request',
@@ -723,7 +724,6 @@ export const en: Record<string, string> = {
   'Điểm đã chọn trên bản đồ': 'Selected map point',
   'Điểm trên bản đồ': 'Map point',
   'Vị trí hiện tại': 'Current location',
-  'Chức năng đăng nhập chưa được cấu hình trên máy chủ.': 'Sign-in is not configured on the server.',
   'Địa điểm chưa có tọa độ. Hãy chọn kết quả khác.': 'This place has no coordinates. Choose another result.',
   'Dịch vụ lấy tọa độ chưa sẵn sàng.': 'The place lookup service is unavailable.',
   'VietMap trả về dữ liệu địa điểm không hợp lệ.': 'VietMap returned invalid place data.',
@@ -901,4 +901,5 @@ export const en: Record<string, string> = {
     'The destination is outside the algorithm map area (central Ho Chi Minh City).',
   'Không tìm được đường giữa hai điểm trong vùng dữ liệu.':
     'No path was found between the two points in the data area.',
+  // Bản đồ nền (vApp, Vietmap, VNSDI) và ghi nguồn.
 };

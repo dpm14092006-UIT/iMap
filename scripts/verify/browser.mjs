@@ -421,6 +421,36 @@ try {
   console.log(
     `✓ Browser → HTTP client → route fixture → native GPS guidance; traffic requests during GPS: ${after - before}`,
   );
+  await context.setGeolocation({ latitude: 10.78, longitude: 106.69, accuracy: 5 });
+  const trip = page.getByRole('region', { name: 'Điều hướng chuyến đi' });
+  const stop = trip.getByRole('button', { name: /^Kết thúc/ });
+  await trip.getByRole('button', { name: 'Tính lại tuyến' }).waitFor();
+  for (const width of [320, 768]) {
+    await page.setViewportSize({ width, height: 650 });
+    await trip.getByRole('button', { name: 'Báo cáo' }).waitFor();
+    await trip.getByRole('button', { name: /^(Toàn tuyến|Về vị trí)$/ }).waitFor();
+    const { fits, rows, count } = await stop.evaluate((button) => {
+      const banner = button.closest('section').getBoundingClientRect();
+      const actions = [...button.parentElement.querySelectorAll('button')].map((action) =>
+        action.getBoundingClientRect(),
+      );
+      return {
+        fits: actions.every((action) => action.left >= banner.left && action.right <= banner.right),
+        rows: new Set(actions.map((action) => Math.round(action.top))).size,
+        count: actions.length,
+      };
+    });
+    assert.deepEqual(
+      { fits, rows, count },
+      { fits: true, rows: 1, count: 4 },
+      `Off-route actions at ${width}px`,
+    );
+  }
+  await stop.click();
+  await trip.waitFor({ state: 'hidden' });
+  await context.setGeolocation({ latitude: 10.77, longitude: 106.69, accuracy: 5 });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  console.log('✓ Off-route actions fit narrow mobile and desktop banners, and the stop button works');
   await page.goto(`http://127.0.0.1:${address.port}/`);
   // Trang chủ chỉ có bản đồ + thanh tìm kiếm; bảng Chỉ đường mở khi bấm nút trên thanh trên cùng.
   await openDirections(page);

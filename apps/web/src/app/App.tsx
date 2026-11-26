@@ -324,7 +324,13 @@ export function App() {
   };
 
   const canUseAssistant = !authLoading && isAuthenticated;
-  const layerSwitcherProps = { layer, preference, overlays, onLayerChange: setLayer, onOverlaysChange: setOverlays };
+  const layerSwitcherProps = {
+    layer,
+    preference,
+    overlays,
+    onLayerChange: setLayer,
+    onOverlaysChange: setOverlays,
+  };
 
   return (
     <AppShell
@@ -360,7 +366,13 @@ export function App() {
             buildSearchAction={explorer.buildSearchAction}
             updateAvailable={updateAvailable}
             onUpdate={reloadForUpdate}
-            onInfo={() => showToast(t('Bản đồ nền vApp (map.vapp.vn), Vietmap và VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam) · tuyến đường tính qua API VietMap.'))}
+            onInfo={() =>
+              showToast(
+                t(
+                  'Bản đồ nền vApp (map.vapp.vn), Vietmap và VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam) · tuyến đường tính qua API VietMap.',
+                ),
+              )
+            }
             userEmail={user?.email ?? null}
             onSelectFeature={selectFeature}
             onShowVietnam={() => mapController.current?.showVietnam()}

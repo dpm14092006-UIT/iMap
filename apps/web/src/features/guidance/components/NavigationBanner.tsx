@@ -101,6 +101,14 @@ export function NavigationBanner({
   if (!visible) return null;
 
   const isGuiding = status === 'navigating' || status === 'locating';
+  /**
+   * Khi có nút tính lại hoặc thử lại GPS, ưu tiên chỗ cho thao tác chính trong banner.
+   * Các nút rút gọn vẫn có tên cho trình đọc màn hình và tooltip.
+   */
+  const compactSecondary = offRoute || status === 'error';
+  const secondaryLabelClass = compactSecondary ? 'sr-only' : undefined;
+  const previewLabel = t(followPaused ? 'Về vị trí' : 'Toàn tuyến');
+  const stopLabel = t(status === 'arrived' ? 'Đóng' : 'Kết thúc');
   const instructionText = instruction
     ? formatInstructionText(instruction, language)
     : t('Tiếp tục theo tuyến đường');
@@ -186,13 +194,13 @@ export function NavigationBanner({
         </div>
       </div>
 
-      <div className="flex gap-2 border-t border-white/10 px-3 py-2.5">
+      <div className="flex flex-wrap gap-1.5 border-t border-white/10 px-2 py-2.5">
         {(offRoute || status === 'error') && (
           <button
             type="button"
             onClick={offRoute ? onRecalculate : onRetry}
             disabled={offRoute ? !canRecalculate || isRecalculating : false}
-            className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-surface px-3 text-xs font-bold text-indigo-900 dark:text-indigo-200 transition hover:bg-indigo-50 dark:hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 disabled:bg-white/40 dark:disabled:bg-slate-800/30"
+            className="flex min-h-11 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full bg-surface px-2 text-xs font-bold text-indigo-900 dark:text-indigo-200 transition hover:bg-indigo-50 dark:hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 disabled:bg-white/40 dark:disabled:bg-slate-800/30"
           >
             {isRecalculating ? (
               <span
@@ -209,27 +217,30 @@ export function NavigationBanner({
           <button
             type="button"
             onClick={followPaused ? onRecenter : onPreviewRoute}
-            className={`flex min-h-11 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 ${followPaused ? 'bg-teal-300 text-slate-900 hover:bg-teal-200' : 'bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/20'}`}
+            title={previewLabel}
+            className={`flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full px-2 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 ${followPaused ? 'bg-teal-300 text-slate-900 hover:bg-teal-200' : 'bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/20'}`}
           >
             <Icon name={followPaused ? 'current-location' : 'route'} size={15} />
-            {t(followPaused ? 'Về vị trí' : 'Toàn tuyến')}
+            <span className={secondaryLabelClass}>{previewLabel}</span>
           </button>
         )}
         <button
           type="button"
           onClick={onReport}
-          className="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-amber-400/20 px-3 text-xs font-bold text-amber-100 ring-1 ring-amber-300/40 transition hover:bg-amber-400/30 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300"
+          title={t('Báo cáo')}
+          className="flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full bg-amber-400/20 px-2 text-xs font-bold text-amber-100 ring-1 ring-amber-300/40 transition hover:bg-amber-400/30 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300"
         >
           <Icon name="traffic" size={15} />
-          {t('Báo cáo')}
+          <span className={secondaryLabelClass}>{t('Báo cáo')}</span>
         </button>
         <button
           type="button"
           onClick={onStop}
-          className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-white/10 px-3 text-xs font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300"
+          title={stopLabel}
+          className={`flex min-h-11 min-w-11 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full bg-white/10 px-2 text-xs font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 ${compactSecondary ? 'max-[359px]:flex-none' : ''}`}
         >
           <Icon name="close" size={14} />
-          {t(status === 'arrived' ? 'Đóng' : 'Kết thúc')}
+          <span className={compactSecondary ? 'max-[359px]:sr-only' : undefined}>{stopLabel}</span>
           <span className="max-md:hidden">{t('chuyến đi')}</span>
         </button>
       </div>

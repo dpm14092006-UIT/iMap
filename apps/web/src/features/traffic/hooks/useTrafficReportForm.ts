@@ -5,7 +5,12 @@ import { trafficApi, trafficPhotos } from '../api/trafficApi';
 import { photoError } from '../domain/photoValidation';
 import { SignedUrlCache } from '../services/SignedUrlCache';
 import type { IncidentKind, IncidentSeverity, TrafficReportPanelProps, TrafficVehicleScope } from '../types';
+/** Link ảnh Supabase có hạn 10 phút; dùng lại tối đa 9 phút để không đưa ra link sắp chết. */
 const signedPhotoUrls = new SignedUrlCache((path) => trafficPhotos.signedUrl(path), 9 * 60_000);
+/** Khoảng chờ tối thiểu (ms) giữa hai lần làm mới link ảnh, tránh lặp liên tục nếu đồng hồ lệch. */
+const MIN_PHOTO_REFRESH_MS = 1_000;
+/** Ảnh ký lỗi (mất mạng, Supabase trả null) thì thử lại sau ngần này (ms), hoặc ngay khi có mạng lại. */
+const PHOTO_RETRY_MS = 30_000;
 export function useTrafficReportForm({
   incidents,
   selectedPoint,
@@ -25,6 +30,8 @@ export function useTrafficReportForm({
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState('');
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+  /** Tăng lên khi link ảnh đang hiện sắp hết hạn, để ký lại dù danh sách ảnh không đổi. */
+  const [photoUrlGeneration, setPhotoUrlGeneration] = useState(0);
   const [aiStatus, setAiStatus] = useState<'checking' | 'ready' | 'unavailable'>('checking');
   const [imageAnalysis, setImageAnalysis] = useState<TrafficImageAnalysisDto | null>(null);
   const [analysisTask, setAnalysisTask] = useState<TrafficImageAnalysisTask | null>(null);
@@ -60,6 +67,9 @@ export function useTrafficReportForm({
 
   useEffect(() => {
     let current = true;
+    let refreshTimer: number | undefined;
+    let waitingForNetwork = false;
+    const refresh = () => setPhotoUrlGeneration((generation) => generation + 1);
     const recentPhotos = recentPhotoKey ? recentPhotoKey.split('\n').map((line) => line.split('\t')) : [];
     if (!recentPhotos.length) {
       setPhotoUrls({});
@@ -67,24 +77,35 @@ export function useTrafficReportForm({
         current = false;
       };
     }
+    // Ký từng ảnh riêng: một ảnh lỗi không làm mất các ảnh còn lại.
     void Promise.all(
-      recentPhotos.map(async ([id, imagePath]) => [id!, await signedPhotoUrls.get(imagePath!)] as const),
-    )
-      .then((entries) => {
-        if (current)
-          setPhotoUrls(
-            Object.fromEntries(
-              entries.filter((entry): entry is readonly [string, string] => Boolean(entry[1])),
-            ),
-          );
-      })
-      .catch(() => {
-        if (current) setPhotoUrls({});
-      });
+      recentPhotos.map(async ([id, imagePath]) => {
+        const url = await signedPhotoUrls.get(imagePath!).catch(() => null);
+        return [id!, url] as const;
+      }),
+    ).then((entries) => {
+      if (!current) return;
+      setPhotoUrls(
+        Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => Boolean(entry[1]))),
+      );
+      // Bảng mở lâu mà danh sách không đổi thì effect không tự chạy lại, nên tự hẹn lần chạy kế:
+      // trước khi link đang hiện hết hạn, và sớm hơn nếu có ảnh ký lỗi (cache không nhớ lỗi nên sẽ ký lại).
+      const failed = entries.some(([, url]) => !url);
+      const refreshAt = signedPhotoUrls.refreshAt(recentPhotos.map(([, imagePath]) => imagePath!));
+      const nextAt = Math.min(refreshAt ?? Infinity, failed ? Date.now() + PHOTO_RETRY_MS : Infinity);
+      if (Number.isFinite(nextAt))
+        refreshTimer = window.setTimeout(refresh, Math.max(MIN_PHOTO_REFRESH_MS, nextAt - Date.now()));
+      if (failed) {
+        window.addEventListener('online', refresh);
+        waitingForNetwork = true;
+      }
+    });
     return () => {
       current = false;
+      window.clearTimeout(refreshTimer);
+      if (waitingForNetwork) window.removeEventListener('online', refresh);
     };
-  }, [recentPhotoKey]);
+  }, [recentPhotoKey, photoUrlGeneration]);
 
   useEffect(() => {
     let current = true;
