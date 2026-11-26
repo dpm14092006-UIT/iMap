@@ -19,7 +19,7 @@ export function RoutePanelFooter({ directions, onSave, onStartNavigation, isNavi
           type="button"
           onClick={() => onStartNavigation(route)}
           disabled={isNavigating}
-          className="flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-brand-gradient px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/25 transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-indigo-400/40 active:scale-[.98] disabled:bg-none disabled:bg-emerald-600"
+          className="flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-brand-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/25 transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-indigo-400/40 active:scale-[.98] disabled:bg-none disabled:bg-emerald-600"
         >
           <Icon name={isNavigating ? 'check' : 'directions'} size={17} />
           {isNavigating ? t('Đang dẫn đường') : t('Bắt đầu')}
@@ -42,7 +42,7 @@ export function RoutePanelFooter({ directions, onSave, onStartNavigation, isNavi
       type="button"
       disabled={!canCalculate}
       onClick={() => void directions.calculate()}
-      className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-brand-gradient px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/25 transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-indigo-400/40 active:scale-[.98] disabled:cursor-not-allowed disabled:bg-none disabled:bg-slate-300 disabled:shadow-none dark:disabled:bg-slate-700"
+      className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-brand-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/25 transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-indigo-400/40 active:scale-[.98] disabled:cursor-not-allowed disabled:bg-none disabled:bg-slate-300 disabled:shadow-none dark:disabled:bg-slate-700"
     >
       {isLoading ? (
         <span

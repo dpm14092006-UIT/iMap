@@ -119,3 +119,81 @@ describe('VietMap place search', () => {
     });
   });
 });
+
+describe('VietMap place details errors', () => {
+  it('maps an unknown reference (HTTP 404) to 404 PLACE_NOT_FOUND instead of "VietMap busy"', async () => {
+    mock({ message: 'not found' }, 404);
+    await expect(provider().resolve('auto:unknown')).rejects.toMatchObject({
+      statusCode: 404,
+      code: 'PLACE_NOT_FOUND',
+    });
+  });
+
+  it('still treats other upstream failures as unavailable', async () => {
+    mock({}, 500);
+    await expect(provider().resolve('auto:x')).rejects.toMatchObject({
+      statusCode: 502,
+      code: 'PLACE_SEARCH_UNAVAILABLE',
+    });
+  });
+});
+
+describe('VietMap place search with landmark aliases', () => {
+  it('"Hồ Gươm" also asks for "Hồ Hoàn Kiếm" and puts the lake first', async () => {
+    const fetcher = vi.fn().mockImplementation(async (url: URL) => {
+      const text = new URL(url).searchParams.get('text');
+      const body =
+        text === 'Hồ Hoàn Kiếm'
+          ? [{ ref_id: 'lake', name: 'Hồ Hoàn Kiếm', address: 'Hoàn Kiếm, Hà Nội' }]
+          : [
+              { ref_id: 'mall', name: 'Trung Tâm Thương Mại Hồ Gươm Plaza', address: 'Hà Nội' },
+              { ref_id: 'walk', name: 'Phố Đi Bộ Hồ Gươm', address: 'Hà Nội' },
+            ];
+      return new Response(JSON.stringify(body));
+    });
+    vi.stubGlobal('fetch', fetcher);
+    const ids = (await provider().suggest('Hồ Gươm', { lat: 21.03, lng: 105.85 })).map((place) => place.id);
+    expect(ids).toEqual(['lake', 'walk', 'mall']);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the typed results when the alias lookup fails', async () => {
+    const fetcher = vi
+      .fn()
+      .mockImplementation(async (url: URL) =>
+        new URL(url).searchParams.get('text') === 'Hồ Hoàn Kiếm'
+          ? new Response('{}', { status: 500 })
+          : new Response(JSON.stringify([{ ref_id: 'walk', name: 'Phố Đi Bộ Hồ Gươm', address: 'Hà Nội' }])),
+      );
+    vi.stubGlobal('fetch', fetcher);
+    expect((await provider().suggest('ho guom')).map((place) => place.id)).toEqual(['walk']);
+  });
+
+  it('does not make an extra call for ordinary queries', async () => {
+    const fetcher = mock([{ ref_id: 'pho', name: 'Phở Hòa', address: 'Quận 3' }]);
+    await provider().suggest('Phở Hòa');
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('VietMap address format', () => {
+  it('requests the post-2025 administrative format (display_type=5) for suggestions and reverse geocoding', async () => {
+    const fetcher = mock([
+      { ref_id: 'a', name: 'Chợ Bến Thành', address: 'Phường Bến Thành, Thành phố Hồ Chí Minh' },
+    ]);
+    await provider().suggest('Chợ Bến Thành');
+    expect(new URL(fetcher.mock.calls[0]![0]).searchParams.get('display_type')).toBe('5');
+    mock([
+      {
+        ref_id: 'r',
+        name: '21-23 Phan Chu Trinh',
+        address: 'Phường Bến Thành,Thành phố Hồ Chí Minh',
+        display: '21-23 Phan Chu Trinh Phường Bến Thành,Thành phố Hồ Chí Minh',
+        lat: 10.7725,
+        lng: 106.698,
+      },
+    ]);
+    const place = await provider().reverse({ lat: 10.7725, lng: 106.698 });
+    expect(place?.address).toBe('21-23 Phan Chu Trinh Phường Bến Thành, Thành phố Hồ Chí Minh');
+  });
+});

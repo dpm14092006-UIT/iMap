@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { LatLng } from '../../../shared/geo/types';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import { useRecentPlaces } from '../context/RecentPlacesProvider';
-import { popularPlaces } from '../domain/popularPlaces';
+import { routablePopularPlaces } from '../domain/popularPlaces';
 import type { RecentPlaceKind } from '../domain/recentPlaces';
 import type { Place } from '../types';
 import { PlaceCombobox } from './PlaceCombobox';
@@ -51,7 +51,7 @@ export function PlaceField({
         if (place) onChange(null);
       }}
       onSelect={onChange}
-      places={popularPlaces}
+      places={routablePopularPlaces}
       placeholder={t(placeholder)}
       value={text}
       recentPlaces={recentPlaces}

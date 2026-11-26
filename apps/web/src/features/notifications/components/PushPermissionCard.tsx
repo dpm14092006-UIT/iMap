@@ -40,7 +40,7 @@ export function PushPermissionCard({ busy, error, isAuthenticated, onEnable, onD
               type="button"
               disabled={busy}
               onClick={isAuthenticated ? onEnable : onSignIn}
-              className="h-9 rounded-full bg-brand-gradient px-4 text-xs font-bold text-white shadow-md transition hover:brightness-110 disabled:opacity-60"
+              className="h-9 rounded-full bg-brand-600 px-4 text-xs font-bold text-white shadow-md transition hover:brightness-110 disabled:opacity-60"
             >
               {busy ? t('Đang bật…') : isAuthenticated ? t('Bật thông báo') : t('Đăng nhập')}
             </button>

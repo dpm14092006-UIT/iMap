@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+import { lazyWithRecovery as lazy } from './lazyWithRecovery';
 
 // Các panel chỉ tải mã khi người dùng mở, để lần tải đầu chỉ gồm bản đồ và thanh công cụ.
 export const PlaceAssistantPanel = lazy(() =>

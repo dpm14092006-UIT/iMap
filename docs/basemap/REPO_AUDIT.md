@@ -17,7 +17,7 @@ Monorepo `RouteTwin_OOP_Starter`: `apps/web` (React 19 + Vite + Tailwind), `apps
 | Bản đồ phụ (Điều 20.2–20.3) | Mới: `VietnamInset` | `.../leaflet/VietnamInset.ts`, `domain/vietnamTerritory.ts` |
 | Tổng quan Việt Nam | Nút "Xem toàn Việt Nam" (menu) → khớp 4°30′–23°30′B, 102°–118°Đ | `.../leaflet/MapCamera.ts`, `app/shell/TopBar.tsx` |
 | Chọn lớp | Theo hệ thống / Đường phố / Tối / Vệ tinh / Hành chính; lớp phủ Giao thông, Sự cố, Địa hình | `features/map/components/LayerSwitcher.tsx` |
-| CSP | Chưa có trên nhánh này: chính sách CSP (cho phép `vnsdi.mae.gov.vn`, `map.vapp.vn`) nằm ở thay đổi riêng, tách PR sau | `apps/web/src/shared/security/contentSecurityPolicy.ts` (chưa gộp) |
+| CSP | `img-src` có `vnsdi.mae.gov.vn`; `connect-src` có `map.vapp.vn`; không có OSM/Esri. Có test đối chiếu với registry | `apps/web/src/shared/security/contentSecurityPolicy.ts`, `apps/web/vite.config.ts` |
 
 Đã gỡ trong đợt này: ô OpenStreetMap (openstreetmap.de/.fr), OpenTopoMap và Esri khỏi nền bản đồ, preconnect tới Esri/OSM trong `index.html`, link "Mở trên OpenStreetMap", dòng "Bản đồ nền OpenStreetMap".
 

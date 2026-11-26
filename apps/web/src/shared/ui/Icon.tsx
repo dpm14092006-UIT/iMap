@@ -17,6 +17,7 @@ export type IconName =
   | 'motorcycle'
   | 'multi-stop'
   | 'plus'
+  | 'user'
   | 'minus'
   | 'moon'
   | 'search'
@@ -92,6 +93,7 @@ const shapes: Record<IconName, string> = {
   'multi-stop':
     '<circle cx="5" cy="6" r="2" /><circle cx="19" cy="18" r="2" /><path d="M7 6h7a3 3 0 0 1 3 3v3a3 3 0 0 1-3 3H8" /><path d="m11 12-3 3 3 3" />',
   plus: '<path d="M12 5v14M5 12h14" />',
+  user: '<circle cx="12" cy="8" r="4" /><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0" />',
   minus: '<path d="M5 12h14" />',
   moon: '<path d="M20.6 15.1A8.7 8.7 0 0 1 8.9 3.4 8.8 8.8 0 1 0 20.6 15.1Z" />',
   search: '<circle cx="10.8" cy="10.8" r="6.6" /><path d="m16 16 5 5" />',

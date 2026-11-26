@@ -13,6 +13,20 @@ const fixtureTile = await readFile(resolve(root, 'apps/web/public/favicon-32.png
 const errors = [],
   requests = [],
   unexpected = [];
+/** Mở một chức năng: nút trực tiếp nếu có, nếu không thì qua menu trên cùng (giao diện không còn thanh bên). */
+async function openFeature(page, names) {
+  for (const name of names) {
+    const direct = page.getByRole('button', { name, exact: true }).filter({ visible: true }).first();
+    if (await direct.isVisible().catch(() => false)) return direct.click();
+  }
+  await page.getByRole('button', { name: 'Menu', exact: true }).filter({ visible: true }).first().click();
+  for (const name of names) {
+    const item = page.getByRole('button', { name, exact: true }).filter({ visible: true }).first();
+    if (await item.isVisible().catch(() => false)) return item.click();
+  }
+  throw new Error(`Không tìm thấy chức năng: ${names.join(' / ')}`);
+}
+
 async function openDirections(page) {
   const heading = page.getByRole('heading', { name: 'Chỉ đường', exact: true });
   if (await heading.isVisible().catch(() => false)) return;
@@ -370,6 +384,28 @@ try {
   await page.getByRole('button', { name: 'Bắt đầu', exact: true }).click();
   await page.getByRole('region', { name: 'Điều hướng chuyến đi' }).waitFor();
   await page.locator('.routetwin-navigation-marker').waitFor();
+  // Bản đồ phụ (Điều 20) phải nhìn thấy đủ: không bị đồng hồ tốc độ hay thanh dẫn đường che.
+  await page.waitForTimeout(1200);
+  const insetBlocked = await page.evaluate(() => {
+    const inset = document.querySelector('.routetwin-territory-inset');
+    if (!inset || inset.hidden) return null;
+    const a = inset.getBoundingClientRect();
+    return [...document.querySelectorAll('.speedometer, [data-nav-banner]')]
+      .map((el) => ({
+        name: el.className.toString().split(' ')[0] || 'banner',
+        r: el.getBoundingClientRect(),
+      }))
+      .filter(
+        ({ r }) =>
+          Math.min(a.right, r.right) > Math.max(a.left, r.left) &&
+          Math.min(a.bottom, r.bottom) > Math.max(a.top, r.top),
+      )
+      .map(({ name }) => name);
+  });
+  assert.ok(
+    !insetBlocked || insetBlocked.length === 0,
+    `Territory inset is covered by: ${JSON.stringify(insetBlocked)}`,
+  );
   const before = requests.filter((p) => p === '/api/traffic-reports').length;
   assert.match(await page.getByRole('region', { name: 'Điều hướng chuyến đi' }).innerText(), /GPS trực tiếp/);
   assert.equal(await page.getByRole('button', { name: /Rẽ nhầm|Tạm dừng|Sự cố phía trước/ }).count(), 0);
@@ -386,6 +422,28 @@ try {
     assert.equal(
       await dialog.getByRole('button', { name: 'Vệ tinh', exact: true }).getAttribute('aria-pressed'),
       'true',
+    );
+    // Menu không được chồng lên thanh dẫn đường (thanh nằm trên lớp của menu và che mất công tắc).
+    // Chờ bố cục ổn định (tối đa 2 giây): khi dẫn đường, thanh điều hướng còn dịch chuyển sau khi menu mở.
+    let overlap = null;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      overlap = await page.evaluate(() => {
+        const menu = document
+          .querySelector('[role="dialog"][aria-label="Lớp bản đồ"]')
+          ?.getBoundingClientRect();
+        const banner = document.querySelector('[data-nav-banner]')?.getBoundingClientRect();
+        if (!menu || !banner) return null;
+        const w = Math.min(menu.right, banner.right) - Math.max(menu.left, banner.left);
+        const h = Math.min(menu.bottom, banner.bottom) - Math.max(menu.top, banner.top);
+        return w > 0 && h > 0 ? { menu: menu.toJSON(), banner: banner.toJSON() } : null;
+      });
+      if (!overlap) break;
+      await page.waitForTimeout(200);
+    }
+    assert.equal(
+      overlap,
+      null,
+      `Map layer popover overlaps the navigation banner at ${viewport.width}×${viewport.height}: ${JSON.stringify(overlap)}`,
     );
     const box = await dialog.boundingBox();
     assert.ok(
@@ -429,17 +487,24 @@ try {
     await page.setViewportSize({ width, height: 650 });
     await trip.getByRole('button', { name: 'Báo cáo' }).waitFor();
     await trip.getByRole('button', { name: /^(Toàn tuyến|Về vị trí)$/ }).waitFor();
-    const { fits, rows, count } = await stop.evaluate((button) => {
-      const banner = button.closest('section').getBoundingClientRect();
-      const actions = [...button.parentElement.querySelectorAll('button')].map((action) =>
-        action.getBoundingClientRect(),
-      );
-      return {
-        fits: actions.every((action) => action.left >= banner.left && action.right <= banner.right),
-        rows: new Set(actions.map((action) => Math.round(action.top))).size,
-        count: actions.length,
-      };
-    });
+    // Đo lại cho tới khi bố cục ổn định (tối đa 2 giây): giao diện sắp xếp lại sau khi đổi kích thước.
+    let layout;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      layout = await stop.evaluate((button) => {
+        const banner = button.closest('section').getBoundingClientRect();
+        const actions = [...button.parentElement.querySelectorAll('button')].map((action) =>
+          action.getBoundingClientRect(),
+        );
+        return {
+          fits: actions.every((action) => action.left >= banner.left && action.right <= banner.right),
+          rows: new Set(actions.map((action) => Math.round(action.top))).size,
+          count: actions.length,
+        };
+      });
+      if (layout.rows === 1 && layout.fits) break;
+      await page.waitForTimeout(200);
+    }
+    const { fits, rows, count } = layout;
     assert.deepEqual(
       { fits, rows, count },
       { fits: true, rows: 1, count: 4 },
@@ -454,17 +519,9 @@ try {
   await page.goto(`http://127.0.0.1:${address.port}/`);
   // Trang chủ chỉ có bản đồ + thanh tìm kiếm; bảng Chỉ đường mở khi bấm nút trên thanh trên cùng.
   await openDirections(page);
-  await page
-    .getByRole('button', { name: 'Nhiều điểm', exact: true })
-    .filter({ visible: true })
-    .first()
-    .click();
+  await openFeature(page, ['Nhiều điểm', 'Lộ trình nhiều điểm']);
   await page.getByRole('heading', { name: 'Hành trình nhiều điểm' }).waitFor();
-  await page
-    .getByRole('button', { name: 'Giao thông', exact: true })
-    .filter({ visible: true })
-    .first()
-    .click();
+  await openFeature(page, ['Giao thông']);
   await page.getByRole('heading', { name: 'Tình hình giao thông' }).waitFor();
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);

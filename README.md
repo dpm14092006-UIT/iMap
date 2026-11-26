@@ -62,7 +62,7 @@ PostGIS hỗ trợ truy vấn báo cáo theo vùng và tìm tuyến ở gần s�
 | Web | React, TypeScript, Vite, Tailwind CSS, Leaflet và API trình duyệt cho GPS, âm thanh và chia sẻ. [Vercel Web](https://i-map-zzzf.vercel.app/) |
 | API REST | Node.js, Express, TypeScript, Zod và Web Push/VAPID. [Vercel API](https://i-map-one.vercel.app/api/health) |
 | Cơ sở dữ liệu | Supabase Auth, PostgreSQL, PostGIS, RLS, Storage và Realtime. |
-| Dữ liệu bản đồ | VietMap cho tìm kiếm, định tuyến và ma trận. OpenStreetMap, Overpass và Esri cho dữ liệu, địa điểm và bản đồ. |
+| Dữ liệu bản đồ | Bản đồ nền: vApp (map.vapp.vn), dự phòng VietMap; VNSDI (Sentinel-2, bản đồ hành chính khi có token). VietMap cho tìm kiếm, định tuyến và ma trận. OpenStreetMap/Overpass chỉ làm dữ liệu cho trợ lý địa điểm và đồ thị thuật toán, không làm nền. Xem `docs/basemap/`. |
 | Triển khai | Web và API là hai project Vercel cùng lấy mã từ `main`. GitHub Actions kiểm tra kiểu, test và build. [GitHub Actions](https://github.com/dpm14092006-UIT/iMap/actions) |
 
 ## API REST

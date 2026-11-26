@@ -105,7 +105,7 @@ export function PoiCard({
         <button
           type="button"
           onClick={() => onDirections(poi)}
-          className={`${actionClass} bg-brand-gradient text-white shadow-sm`}
+          className={`${actionClass} bg-brand-600 text-white shadow-sm`}
         >
           <Icon name="directions" size={14} />
           {t('Chỉ đường')}

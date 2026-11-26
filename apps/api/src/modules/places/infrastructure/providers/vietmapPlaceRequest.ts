@@ -12,6 +12,20 @@ export const vietmapPointSchema = z.object({
   display: z.string().optional(),
 });
 
+/**
+ * Định dạng địa chỉ của VietMap v4: `5` = địa giới hành chính mới (sau sáp nhập 1/7/2025: bỏ cấp
+ * quận/huyện, phường/xã mới). `6` trả địa chỉ cũ ("Quận Hoàn Kiếm", "Huyện Đông Anh") nên không dùng.
+ */
+export const VIETMAP_DISPLAY_TYPE = '5';
+
+/** VietMap đôi khi nối các cấp hành chính không có khoảng trắng ("Phường Bến Thành,Thành phố…"). */
+export function tidyVietmapAddress(value: string): string {
+  return value
+    .replace(/\s*,\s*/g, ', ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 export function invalidPlaceResponse() {
   return new AppError(502, 'PLACE_SEARCH_INVALID_RESPONSE', 'VietMap trả về dữ liệu địa điểm không hợp lệ.');
 }
@@ -34,6 +48,9 @@ export async function requestVietmapPlaces(
   }
   if (response.status === 401 || response.status === 403)
     throw new AppError(502, 'PLACE_SEARCH_AUTH', 'Key VietMap chưa được cấp quyền tìm địa điểm.');
+  // Place v4 trả 404 cho mã tham chiếu không tồn tại: lỗi của yêu cầu, không phải VietMap đang bận.
+  if (response.status === 404 && endpoint === 'place')
+    throw new AppError(404, 'PLACE_NOT_FOUND', 'Không tìm thấy địa điểm này. Hãy tìm lại.');
   if (response.status === 429 || response.status === 423)
     throw new AppError(429, 'PLACE_SEARCH_QUOTA', 'VietMap Search đã đạt hạn mức hoặc chưa được bật.');
   if (!response.ok)

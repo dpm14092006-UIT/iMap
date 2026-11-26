@@ -51,7 +51,13 @@ export function useMapViewport(
       const previous = lastSheetInset.current;
       if (!sheet.inset) return;
       lastSheetInset.current = sheet.inset;
-      if (previous && previous.left === sheet.inset.left && previous.bottom === sheet.inset.bottom) return;
+      if (
+        previous &&
+        previous.left === sheet.inset.left &&
+        previous.right === sheet.inset.right &&
+        previous.bottom === sheet.inset.bottom
+      )
+        return;
       window.clearTimeout(sheetFitTimer.current);
       sheetFitTimer.current = window.setTimeout(() => {
         if (routeFitActiveRef.current) mapController.current?.refit();

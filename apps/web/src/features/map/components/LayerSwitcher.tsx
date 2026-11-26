@@ -49,24 +49,47 @@ export function LayerSwitcher({
   const triggerRef = useRef<HTMLButtonElement>(null);
   // Mở về phía còn nhiều chỗ hơn (trên/dưới nút) và giới hạn chiều cao theo khoảng trống thật:
   // khi dẫn đường trên màn hình thấp, bảng điều hướng đẩy nút lên cao nên phía trên có thể rất hẹp.
-  const [placement, setPlacement] = useState<{ above: boolean; maxHeight: number } | null>(null);
+  const [placement, setPlacement] = useState<{ above: boolean; maxHeight: number; lift: number } | null>(
+    null,
+  );
   useLayoutEffect(() => {
     if (!open || inMenu) return;
+    let last = '';
     const measure = () => {
       const rect = triggerRef.current?.getBoundingClientRect();
       if (!rect) return;
       const gap = 8 + 8; // khoảng cách tới nút + lề màn hình
-      // Giới hạn dưới là mép trên của bảng điều hướng (nếu đang dẫn đường), không phải đáy màn hình.
+      // Thanh dẫn đường nằm trên lớp của menu: menu không được mở đè lên nó (sẽ che mất công tắc).
+      // Thanh có thể ở dưới nút, ở đỉnh màn hình (khi đang mở một bảng) hoặc đè một phần lên chính nút.
       const banner = document.querySelector('[data-nav-banner]')?.getBoundingClientRect();
-      const bottomLimit = banner && banner.top > rect.bottom ? banner.top : window.innerHeight;
-      const spaceAbove = rect.top - gap;
-      const spaceBelow = bottomLimit - rect.bottom - gap;
+      const overlapsTrigger = banner && banner.top < rect.bottom && banner.bottom > rect.top;
+      // Mép dưới mà menu mở lên phải nằm phía trên: nút, hoặc mép trên của thanh nếu thanh đè lên nút.
+      const anchorTop = overlapsTrigger ? Math.min(rect.top, banner.top) : rect.top;
+      const topLimit = banner && banner.bottom <= rect.top ? banner.bottom : 0;
+      const bottomLimit = banner && banner.top >= rect.bottom ? banner.top : window.innerHeight;
+      const spaceAbove = anchorTop - topLimit - gap;
+      const spaceBelow = overlapsTrigger ? 0 : bottomLimit - rect.bottom - gap;
       const above = spaceAbove >= 320 || spaceAbove >= spaceBelow;
-      setPlacement({ above, maxHeight: Math.max(120, Math.floor(above ? spaceAbove : spaceBelow)) });
+      const next = {
+        above,
+        maxHeight: Math.max(120, Math.floor(above ? spaceAbove : spaceBelow)),
+        lift: above ? Math.max(0, Math.round(rect.top - anchorTop)) : 0,
+      };
+      const key = JSON.stringify(next);
+      if (key !== last) {
+        last = key;
+        setPlacement(next);
+      }
     };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    // Đo lại mỗi khung hình khi menu đang mở: khi dẫn đường, thanh điều hướng và cụm nút bản đồ còn dịch
+    // chuyển (đổi chiều cao, đổi chỗ đỉnh/đáy) sau lúc menu mở. Chỉ cập nhật khi số đo thay đổi.
+    let frame = 0;
+    const loop = () => {
+      measure();
+      frame = requestAnimationFrame(loop);
+    };
+    loop();
+    return () => cancelAnimationFrame(frame);
   }, [open, inMenu]);
   const titleId = useId();
   const base = layer === 'satellite' ? 'satellite' : 'street';
@@ -87,7 +110,14 @@ export function LayerSwitcher({
           ? '!static !mb-2 !bg-surface-muted !shadow-none'
           : `${placement && !placement.above ? 'top-full mt-2' : 'bottom-full mb-2'} w-[280px] overflow-y-auto !border !border-line !bg-surface ${panelPosition}`
       }
-      panelStyle={!inMenu && placement ? { maxHeight: placement.maxHeight } : undefined}
+      panelStyle={
+        !inMenu && placement
+          ? {
+              maxHeight: placement.maxHeight,
+              ...(placement.lift ? { marginBottom: placement.lift + 8 } : {}),
+            }
+          : undefined
+      }
       trigger={
         <button
           ref={triggerRef}

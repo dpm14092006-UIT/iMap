@@ -2,32 +2,32 @@
 :root {
   color-scheme: light;
   --surface: 255 255 255;
-  --surface-muted: 248 250 252;
+  --surface-muted: 247 248 250;
   --surface-raised: 241 245 249;
-  --content: 23 43 67;
-  --content-muted: 71 85 105;
+  --content: 25 28 34;
+  --content-muted: 69 84 106;
   --content-subtle: 100 116 139;
   --line: 203 213 225;
-  --primary: 79 70 229;
-  --primary-hover: 67 56 202;
+  --primary: 0 90 156;
+  --primary-hover: 0 71 121;
   --on-primary: 255 255 255;
-  --focus: 99 102 241;
+  --focus: 0 90 156;
   --danger: 185 28 28;
   --map-background: 232 236 231;
 }
 .dark {
   color-scheme: dark;
-  --surface: 19 33 55;
-  --surface-muted: 27 43 66;
-  --surface-raised: 41 61 88;
-  --content: 242 246 251;
-  --content-muted: 210 222 236;
+  --surface: 32 42 54;
+  --surface-muted: 22 29 38;
+  --surface-raised: 39 55 70;
+  --content: 241 246 252;
+  --content-muted: 182 195 210;
   --content-subtle: 189 202 219;
   --line: 71 85 105;
-  --primary: 79 70 229;
-  --primary-hover: 67 56 202;
-  --on-primary: 255 255 255;
-  --focus: 165 180 252;
+  --primary: 131 202 255;
+  --primary-hover: 168 218 255;
+  --on-primary: 17 32 50;
+  --focus: 131 202 255;
   --danger: 252 165 165;
   --map-background: 15 23 42;
 }

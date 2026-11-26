@@ -75,4 +75,29 @@ describe('dynamic place count regression matrix', () => {
     const source = `Tìm thấy ${count} địa điểm`;
     expect(translate(language, source)).toBe(language === 'en' ? `Found ${count} places` : source);
   });
+
+  it('dịch các câu mới của bản đánh giá (không còn chữ tiếng Việt sót ở chế độ tiếng Anh)', () => {
+    for (const key of [
+      'Ước tính kẹt xe {length}',
+      'Phóng to bản đồ để ước tính giao thông khu vực',
+      'Phóng to để xem giao thông',
+      'Mở rộng thẻ Khu vực này (giao thông ước tính)',
+      'Giao thông ước tính từ giờ cao điểm và báo cáo cộng đồng, không phải dữ liệu thời gian thực',
+      'Dự báo theo dữ liệu giao thông của VietMap, không phải báo cáo cộng đồng hay số đo trực tiếp',
+      'Báo cáo được chia sẻ với mọi người dùng iMap và tự ẩn khi hết hạn. Hãy tự xác minh tình hình trước khi di chuyển.',
+      'Đăng nhập',
+    ])
+      expect(translate('en', key), key).not.toBe(key);
+    expect(translate('en', 'Ước tính kẹt xe {length}', { length: '280 m' })).toBe(
+      'Estimated congestion 280 m',
+    );
+  });
+
+  it('không còn câu hiển thị nhắc tới Supabase', async () => {
+    const { en } = await import('./locales/en');
+    for (const [vi, english] of Object.entries(en)) {
+      expect(vi).not.toMatch(/Supabase/);
+      expect(english).not.toMatch(/Supabase/);
+    }
+  });
 });

@@ -137,7 +137,7 @@ export function RouteOptionCard({
           {labels.map((label) => (
             <span
               key={label}
-              className="rounded-full bg-brand-gradient px-2 py-0.5 text-[11px] font-bold text-white"
+              className="rounded-full bg-brand-600 px-2 py-0.5 text-[11px] font-bold text-white"
             >
               {t(label)}
             </span>
@@ -150,9 +150,14 @@ export function RouteOptionCard({
           </span>
         )}
         {heavyMeters >= 100 && (
-          <span className="mt-1 flex items-center gap-1.5 text-xs font-medium text-red-700 dark:text-red-300">
+          <span
+            className="mt-1 flex items-center gap-1.5 text-xs font-medium text-red-700 dark:text-red-300"
+            title={t(
+              'Dự báo theo dữ liệu giao thông của VietMap, không phải báo cáo cộng đồng hay số đo trực tiếp',
+            )}
+          >
             <Icon name="traffic" size={13} />
-            {t('Kẹt xe {length}', { length: formatCongestionLength(heavyMeters, language) })}
+            {t('Ước tính kẹt xe {length}', { length: formatCongestionLength(heavyMeters, language) })}
           </span>
         )}
         {severity && (

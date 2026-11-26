@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
 import { Icon, type IconName } from './Icon';
 import { useMediaQuery } from '../hooks/useMediaQuery';
-import { useShell } from './shell';
+import { useShell, type SheetState } from './shell';
 import { useI18n } from '../i18n/I18nProvider';
 
 type Snap = 'peek' | 'half' | 'full';
@@ -35,7 +35,7 @@ type SheetPanelProps = {
 };
 
 /**
- * Panel chức năng: desktop/tablet là thẻ kính bên trái, mobile là bottom sheet kéo được
+ * Panel chức năng: desktop/tablet là bảng nền đặc bên phải, mobile là bottom sheet kéo được
  * với 3 nấc (thu 96px / nửa 40dvh / đầy: sát dưới ô tìm kiếm hoặc banner dẫn đường).
  */
 export function SheetPanel({
@@ -68,7 +68,7 @@ export function SheetPanel({
   const reportedHeight =
     isMobile && !hidden ? (dragHeight !== null ? `${dragHeight}px` : SNAP_HEIGHT[snap]) : null;
   // Đo vùng bản đồ bị bảng che (không tính transform của animation) để fitBounds chừa chỗ.
-  const [inset, setInset] = useState<{ left: number; bottom: number } | null>(null);
+  const [inset, setInset] = useState<SheetState['inset']>(null);
   useEffect(() => {
     const element = root.current;
     const parent = element?.offsetParent;
@@ -78,11 +78,17 @@ export function SheetPanel({
     }
     const measure = () => {
       const next = {
-        left: element.offsetLeft + element.offsetWidth,
+        left: 0,
+        right: isMobile ? 0 : parent.clientWidth - element.offsetLeft,
         bottom: parent.clientHeight - element.offsetTop,
       };
       setInset((current) =>
-        current && current.left === next.left && current.bottom === next.bottom ? current : next,
+        current &&
+        current.left === next.left &&
+        current.right === next.right &&
+        current.bottom === next.bottom
+          ? current
+          : next,
       );
     };
     measure();
@@ -90,7 +96,7 @@ export function SheetPanel({
     observer.observe(element);
     observer.observe(parent);
     return () => observer.disconnect();
-  }, [hidden]);
+  }, [hidden, isMobile]);
   useEffect(() => {
     setSheet({
       height: reportedHeight,
@@ -169,7 +175,7 @@ export function SheetPanel({
       aria-label={t(title)}
       style={isMobile ? { height: reportedHeight ?? undefined } : undefined}
       hidden={hidden}
-      className={`${hidden ? 'hidden' : 'flex'} absolute z-30 flex-col overflow-hidden bg-white/90 shadow-glass ring-1 ring-black/5 backdrop-blur-xl dark:bg-slate-900/95 dark:text-slate-100 dark:shadow-glass-dark dark:ring-white/10 max-md:inset-x-0 max-md:bottom-[var(--tab-h)] max-md:animate-sheet-up max-md:rounded-t-3xl ${dragHeight === null ? 'max-md:transition-[height] max-md:duration-200' : ''} md:bottom-3 md:left-[80px] md:top-[var(--sheet-top-inset)] md:w-[360px] md:animate-sheet-in md:rounded-3xl lg:left-[88px] lg:w-[400px]`}
+      className={`${hidden ? 'hidden' : 'flex'} absolute z-30 flex-col overflow-hidden border border-line bg-surface text-content shadow-glass dark:shadow-glass-dark max-md:inset-x-0 max-md:bottom-[var(--tab-h)] max-md:animate-sheet-up max-md:rounded-t-[20px] ${dragHeight === null ? 'max-md:transition-[height] max-md:duration-200' : ''} md:bottom-3 md:right-3 md:top-[var(--sheet-top-inset)] md:w-[360px] md:animate-fade-in md:rounded-2xl lg:w-[400px]`}
     >
       <header
         className="shrink-0 touch-none select-none border-b border-black/5 dark:border-white/10 max-md:cursor-grab"
@@ -189,12 +195,12 @@ export function SheetPanel({
               type="button"
               onClick={onBack}
               aria-label={t('Quay lại')}
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl text-ink-soft transition hover:bg-black/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white dark:focus-visible:ring-brand-500/40"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-content-muted transition hover:bg-black/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white dark:focus-visible:ring-brand-500/40"
             >
               <Icon name="arrow-left" size={19} />
             </button>
           )}
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-brand-gradient text-white shadow-sm">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-brand-600 text-white shadow-sm">
             <Icon name={icon} size={19} />
           </span>
           <div className="min-w-0 flex-1">
@@ -203,7 +209,7 @@ export function SheetPanel({
                 {t(eyebrow)}
               </p>
             )}
-            <h2 className="truncate text-base font-bold leading-tight tracking-tight text-content">
+            <h2 className="break-words text-base font-bold leading-tight tracking-tight text-content">
               {t(title)}
             </h2>
           </div>
@@ -211,7 +217,7 @@ export function SheetPanel({
             type="button"
             aria-label={t('Đóng bảng')}
             onClick={onClose}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl text-ink-soft transition hover:bg-black/5 hover:text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white dark:focus-visible:ring-brand-500/40"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-content-muted transition hover:bg-black/5 hover:text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white dark:focus-visible:ring-brand-500/40"
           >
             <Icon name="close" size={19} />
           </button>

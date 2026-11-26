@@ -124,7 +124,7 @@ describe('CalculateRouteUseCase', () => {
     await expect(new CalculateRouteUseCase(provider).execute(request)).rejects.toThrow('main failed');
   });
 
-  it('chỉ gộp khi khoảng cách, thời gian và hình học đều gần như trùng', async () => {
+  it('chỉ gộp khi khoảng cách và hình học đều gần như trùng', async () => {
     const provider = providerBy({
       '': [path(100, 90)],
       toll: [path(100.5, 90.5)], // trùng hình học, lệch <1% / <2%
@@ -132,5 +132,48 @@ describe('CalculateRouteUseCase', () => {
     });
     const result = await new CalculateRouteUseCase(provider).execute(request);
     expect(result.alternatives?.map((item) => item.distanceMeters)).toEqual([104_000, 100_500]);
+  });
+
+  it('tuyến gốc không thu phí thì phương án phụ không mang nhãn "tránh trạm thu phí"', async () => {
+    const provider = providerBy({
+      '': [path(5, 12, 0, 0)],
+      toll: [path(5.6, 14, 0.1, 0)],
+      ferry: [path(5, 12, 0, 0)],
+    });
+    const result = await new CalculateRouteUseCase(provider).execute(request);
+    const all = [result, ...(result.alternatives ?? [])];
+    expect(all.map((item) => item.variant)).toEqual(['default', 'alternative']);
+    expect(all.some((item) => item.variant === 'avoid-toll')).toBe(false);
+  });
+
+  it('vẫn giữ "tránh trạm thu phí" khi tuyến gốc có thu phí', async () => {
+    const provider = providerBy({
+      '': [path(97.9, 85, 0, 45_000)],
+      toll: [path(113.9, 108, 0.1, 0)],
+      ferry: [path(97.9, 85, 0, 45_000)],
+    });
+    const result = await new CalculateRouteUseCase(provider).execute(request);
+    expect(result.alternatives?.map((item) => item.variant)).toEqual(['avoid-toll']);
+  });
+
+  it('cùng một con đường nhưng lệch thời gian giữa các lời gọi vẫn chỉ là một phương án, giữ bản nhanh hơn', async () => {
+    const provider = providerBy({
+      '': [path(0.875, 1.92, 0, 0)],
+      toll: [path(0.875, 1.77, 0, 0)], // cùng hình học, nhanh hơn 8%
+      ferry: [path(0.875, 1.92, 0, 0)],
+    });
+    const result = await new CalculateRouteUseCase(provider).execute(request);
+    expect(result.alternatives).toBeUndefined();
+    expect(result.durationSeconds).toBeCloseTo(1.77 * 60);
+  });
+
+  it('hai tuyến khác hẳn hình học không bị gộp dù dài bằng nhau', async () => {
+    const provider = providerBy({
+      '': [path(10, 20, 0, 0)],
+      toll: [path(10, 22, 0.2, 0)],
+      ferry: new Error('no ferry'),
+    });
+    const result = await new CalculateRouteUseCase(provider, { warn: () => undefined }).execute(request);
+    expect(result.alternatives).toHaveLength(1);
   });
 });

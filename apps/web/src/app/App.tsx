@@ -3,10 +3,8 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { AssistantAccessPanel } from '../features/auth/components/AssistantAccessPanel';
 import { useAuth } from '../features/auth/context/AuthProvider';
 import { AlongRouteSearch } from '../features/explore/components/AlongRouteSearch';
-import { AreaInsightCard, AreaInsightPill } from '../features/explore/components/AreaInsightCard';
 import { CategoryChips } from '../features/explore/components/CategoryChips';
 import { PoiResultsPanel } from '../features/explore/components/PoiResultsPanel';
-import { computeAreaInsight } from '../features/explore/domain/areaInsight';
 import { NavigationBanner } from '../features/guidance/components/NavigationBanner';
 import { Speedometer } from '../features/guidance/components/Speedometer';
 import { RoutePath } from '../features/guidance/domain/RoutePath';
@@ -41,7 +39,8 @@ import { useEndpointPicker } from './flows/routes/useEndpointPicker';
 import { useMultiStopPlanner } from './flows/routes/useMultiStopPlanner';
 import { useRecentRouteEndpoints } from './flows/routes/useRecentRouteEndpoints';
 import { useSavedRouteActions } from './flows/routes/useSavedRouteActions';
-import { useSharedRouteLink } from './flows/routes/useSharedRouteLink';
+import { useAddressBarSync } from './flows/routes/useAddressBarSync';
+import { useSharedPlaceLink, useSharedRouteLink } from './flows/routes/useSharedRouteLink';
 import { useRealtimeRouteReports } from './flows/traffic/useRealtimeRouteReports';
 import { useRouteAlerts } from './flows/traffic/useRouteAlerts';
 import { useTrafficOverview } from './flows/traffic/useTrafficOverview';
@@ -50,7 +49,6 @@ import { useMapViewport } from './flows/workspace/useMapViewport';
 import { usePanelState } from './flows/workspace/usePanelState';
 import { usePlaceSelection } from './flows/workspace/usePlaceSelection';
 import { useAppUpdate } from './hooks/useAppUpdate';
-import { useNow } from './hooks/useNow';
 import { useToast } from './hooks/useToast';
 import {
   AuthPanel,
@@ -65,14 +63,12 @@ import { AppShell } from './shell/AppShell';
 import { MapPickHint } from './shell/MapPickHint';
 import { PanelFallback } from './shell/PanelFallback';
 import { RouteSummaryPill } from './shell/RouteSummaryPill';
-import { SideDock } from './shell/SideDock';
 import { StatusToast } from './shell/StatusToast';
 import { TopBar } from './shell/TopBar';
 import type { FeatureKey } from './types';
 
 /** Tâm Việt Nam, dùng khi bản đồ chưa sẵn sàng để trả tâm thật. */
 const VIETNAM_CENTER: LatLng = { lat: 16, lng: 108 };
-const AREA_INSIGHT_REFRESH_MS = 5 * 60_000;
 
 /**
  * Khung ứng dụng: lắp bản đồ với các panel chức năng.
@@ -91,13 +87,12 @@ export function App() {
   const { layer, preference, setLayer, isDark } = useMapAppearance();
   const savedRoutes = useSavedRoutes();
   const { updateAvailable, reloadForUpdate } = useAppUpdate();
-  const now = useNow(AREA_INSIGHT_REFRESH_MS);
 
   const panels = usePanelState();
   const { activePanel, openPanel, closePanel, pickTarget, setPickTarget } = panels;
   const [activeRoute, setActiveRoute] = useState<RoutePlan | null>(null);
   const [trafficBounds, setTrafficBounds] = useState<TrafficReportBounds>(vietnamBounds);
-  const [overlays, setOverlays] = useState<MapOverlays>({ traffic: true, incidents: true, terrain: false });
+  const [overlays, setOverlays] = useState<MapOverlays>({ traffic: false, incidents: true, terrain: false });
 
   // --- Dẫn đường theo GPS ---
   const navigation = useNavigationSession();
@@ -239,6 +234,25 @@ export function App() {
     t,
   });
   useSharedRouteLink(directions);
+  useSharedPlaceLink(selection.openPlace);
+  // Thanh địa chỉ theo thứ đang xem: tuyến (khi có đủ điểm đi/đến) hoặc chi tiết địa điểm.
+  useAddressBarSync(
+    activePanel === 'directions' && directions.origin && directions.destination
+      ? {
+          kind: 'route',
+          route: {
+            origin: directions.origin,
+            destination: directions.destination,
+            vehicle: directions.vehicle,
+            via: directions.waypoints.flatMap((item) => (item.place ? [item.place] : [])),
+            objective: directions.objective,
+            avoidFerry: directions.avoidFerry,
+          },
+        }
+      : activePanel === 'place' && selectedPlace
+        ? { kind: 'place', place: selectedPlace }
+        : { kind: 'none' },
+  );
 
   // Marker A/B cho điểm đã chọn nhưng chưa tính tuyến (chỉ khi panel chỉ đường đang mở).
   const draftStops = useMemo<DraftStops>(
@@ -257,15 +271,12 @@ export function App() {
     () => (activePanel === 'directions' && directions.route ? directions.routeOptions : []),
     [activePanel, directions.route, directions.routeOptions],
   );
-  const areaInsight = useMemo(() => computeAreaInsight(incidents.length, now), [incidents.length, now]);
-
   // --- Hành động của người dùng ---
   const selectFeature = (key: FeatureKey) => {
     selection.clearPlace();
     openPanel(key);
     if (key === 'traffic') setSelectedMapPoint(null);
   };
-  const openTrafficPanel = () => selectFeature('traffic');
 
   /** Click bản đồ: tùy panel đang mở mà xử lý khác nhau. */
   const handleMapClick = (point: LatLng) => {
@@ -313,7 +324,6 @@ export function App() {
   };
 
   const canUseAssistant = !authLoading && isAuthenticated;
-  const { panelOpen } = panels;
   const layerSwitcherProps = {
     layer,
     preference,
@@ -326,7 +336,6 @@ export function App() {
     <AppShell
       dark={isDark}
       onSheetChange={viewport.handleSheetChange}
-      panelOpen={panelOpen && isNavigationIdle}
       map={
         <MapView
           controllerRef={mapController}
@@ -349,16 +358,6 @@ export function App() {
           trafficLayer={trafficLayer}
         />
       }
-      dock={
-        isNavigationIdle && (
-          <SideDock
-            isAuthenticated={isAuthenticated}
-            active={activePanel}
-            incidentCount={incidents.length}
-            onSelect={selectFeature}
-          />
-        )
-      }
       topBar={
         isNavigationIdle && (
           <TopBar
@@ -375,6 +374,9 @@ export function App() {
               )
             }
             userEmail={user?.email ?? null}
+            onSelectFeature={selectFeature}
+            onShowVietnam={() => mapController.current?.showVietnam()}
+            layers={<LayerSwitcher inMenu {...layerSwitcherProps} />}
             strip={
               explorer.alongRouteMode ? (
                 <AlongRouteSearch
@@ -398,23 +400,15 @@ export function App() {
               <TrafficLegend onHide={() => setOverlays((current) => ({ ...current, traffic: false }))} />
             </div>
           )}
-          {isNavigationIdle && <LayerSwitcher {...layerSwitcherProps} />}
-          {isNavigationIdle && !panelOpen && (
-            <div className="md:hidden">
-              <AreaInsightPill insight={areaInsight} onOpenTraffic={openTrafficPanel} />
-            </div>
-          )}
         </>
       }
       bottomRight={
         <>
-          {!isNavigationIdle && <LayerSwitcher align="right" {...layerSwitcherProps} />}
+          <div className={isNavigationIdle ? 'hidden md:block' : ''}>
+            <LayerSwitcher align="right" {...layerSwitcherProps} />
+          </div>
           <MapControls
             showZoom={!isNavigationIdle}
-            onShowVietnam={() => {
-              follow.pauseIfNavigating();
-              mapController.current?.showVietnam();
-            }}
             onLocate={() => (isNavigationIdle ? void locateOnMap() : follow.recenter())}
             onZoomIn={() => {
               follow.pauseIfNavigating();
@@ -428,13 +422,6 @@ export function App() {
         </>
       }
     >
-      {/* Thẻ "Khu vực này" dưới ô tìm kiếm khi chưa mở panel nào (mobile dùng viên thuốc phía dưới). */}
-      {isNavigationIdle && !panelOpen && (
-        <div className="absolute top-[72px] z-20 hidden w-[360px] md:left-[80px] md:block lg:left-[88px] lg:w-[400px]">
-          <AreaInsightCard insight={areaInsight} onOpenTraffic={openTrafficPanel} />
-        </div>
-      )}
-
       {activeRoute && isNavigationIdle && activePanel !== 'directions' && (
         <RouteSummaryPill route={activeRoute} />
       )}
@@ -572,6 +559,9 @@ export function App() {
             error={traffic.error}
             onClose={closePanel}
             onSignIn={() => panels.setAuthOpen(true)}
+            onViewMap={() =>
+              setOverlays((current) => (current.incidents ? current : { ...current, incidents: true }))
+            }
             onReport={reporting.report}
             onClearance={reporting.verify}
           />

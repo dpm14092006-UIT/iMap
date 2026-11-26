@@ -51,7 +51,7 @@
 
 @layer components {
   .ui-button {
-    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition;
     @apply focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/30;
     @apply disabled:cursor-not-allowed disabled:opacity-50;
   }
@@ -68,7 +68,7 @@
     @apply border border-line bg-surface text-danger hover:bg-surface-raised;
   }
   .ui-field {
-    @apply min-h-10 w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-content;
+    @apply min-h-11 w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-content;
     @apply placeholder:text-content-subtle focus:outline-none focus:border-focus focus:ring-4 focus:ring-focus/20;
     @apply disabled:cursor-not-allowed disabled:opacity-60;
   }

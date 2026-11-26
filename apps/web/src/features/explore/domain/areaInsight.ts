@@ -1,26 +1,23 @@
-import type { IconName } from '../../../shared/ui/Icon';
-
 export type TrafficLevel = 'smooth' | 'moderate' | 'heavy';
-type WeatherKind = 'sunny' | 'cloudy' | 'rain' | 'night';
 
-export type AreaInsight = {
-  temperatureC: number;
-  weather: WeatherKind;
-  weatherLabel: string;
-  weatherIcon: IconName;
-  trafficLevel: TrafficLevel;
-  trafficLabel: string;
-  /** Ước tính (không phải số đo thật) chậm hơn thường lệ bao nhiêu phút; 0 nếu thông thoáng. */
-  delayMinutes: number;
-  incidentCount: number;
-};
-
-const weatherByKind: Record<WeatherKind, { label: string; icon: IconName }> = {
-  sunny: { label: 'Nắng', icon: 'sun' },
-  cloudy: { label: 'Nhiều mây', icon: 'cloud' },
-  rain: { label: 'Mưa rào', icon: 'rain' },
-  night: { label: 'Trời quang', icon: 'moon' },
-};
+/**
+ * "Khu vực này": chỉ là ước tính từ giờ cao điểm và số báo cáo cộng đồng trong khung nhìn.
+ * Không có thời tiết: trước đây là số minh họa (26–33°C) trông như dữ liệu thật nên đã bỏ.
+ */
+export type AreaInsight =
+  | {
+      /** Khung nhìn đủ nhỏ để tải báo cáo giao thông: có ước tính. */
+      status: 'estimated';
+      trafficLevel: TrafficLevel;
+      trafficLabel: string;
+      /** Ước tính (không phải số đo thật) chậm hơn thường lệ bao nhiêu phút; 0 nếu thông thoáng. */
+      delayMinutes: number;
+      incidentCount: number;
+    }
+  | {
+      /** Bản đồ đang thu nhỏ quá (cả nước, cả khu vực): không có dữ liệu để ước tính. */
+      status: 'zoom-in';
+    };
 
 const trafficLabels: Record<TrafficLevel, string> = {
   smooth: 'Ước tính: Giao thông thông thoáng',
@@ -34,29 +31,12 @@ export function isRushHour(now: Date): boolean {
   return (hour >= 7 && hour < 9) || (hour >= 16.5 && hour < 19);
 }
 
-/** Thời tiết minh họa theo giờ trong ngày, nhiệt độ 26–33°C (nóng nhất khoảng 14h). */
-function sampleWeather(now: Date): Pick<AreaInsight, 'temperatureC' | 'weather'> {
-  const hour = now.getHours() + now.getMinutes() / 60;
-  const temperatureC = Math.round(29.5 + 3.5 * Math.cos(((hour - 14) / 24) * 2 * Math.PI));
-  const weather: WeatherKind =
-    hour >= 19 || hour < 6
-      ? 'night'
-      : hour < 11
-        ? 'sunny'
-        : hour < 15
-          ? 'cloudy'
-          : hour < 17
-            ? 'rain'
-            : 'cloudy';
-  return { temperatureC, weather };
-}
-
 /**
  * Tổng hợp "Khu vực này" từ số sự cố đang báo trong khung nhìn và giờ trong ngày.
- * Thời tiết là dữ liệu minh họa; mức giao thông chỉ là ước tính suy ra từ giờ cao điểm và số báo cáo
- * cộng đồng, không phải dữ liệu giao thông thời gian thực.
+ * `canEstimate` = false khi bản đồ thu nhỏ quá mức tải được báo cáo: khi đó không đoán "thông thoáng".
  */
-export function computeAreaInsight(incidentCount: number, now = new Date()): AreaInsight {
+export function computeAreaInsight(incidentCount: number, now = new Date(), canEstimate = true): AreaInsight {
+  if (!canEstimate) return { status: 'zoom-in' };
   const rush = isRushHour(now);
   const score =
     (rush ? 1 : 0) + (incidentCount >= 6 ? 3 : incidentCount >= 3 ? 2 : incidentCount >= 1 ? 1 : 0);
@@ -65,12 +45,8 @@ export function computeAreaInsight(incidentCount: number, now = new Date()): Are
     trafficLevel === 'smooth'
       ? 0
       : Math.min(60, (rush ? 6 : 3) + incidentCount * 2 + (trafficLevel === 'heavy' ? 8 : 0));
-  const { temperatureC, weather } = sampleWeather(now);
   return {
-    temperatureC,
-    weather,
-    weatherLabel: weatherByKind[weather].label,
-    weatherIcon: weatherByKind[weather].icon,
+    status: 'estimated',
     trafficLevel,
     trafficLabel: trafficLabels[trafficLevel],
     delayMinutes,

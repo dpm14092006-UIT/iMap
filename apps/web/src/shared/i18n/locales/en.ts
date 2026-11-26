@@ -2,6 +2,16 @@
 export const en: Record<string, string> = {
   'Chưa có tài khoản?': 'New to iMap?',
   'Đã có tài khoản?': 'Already have an account?',
+  'Danh sách': 'List',
+  'Báo sự cố': 'Report an incident',
+  'Xem ghim sự cố trên bản đồ. Chạm vào bản đồ để chọn vị trí báo cáo.':
+    'View incident pins on the map. Tap the map to select a report location.',
+  'Theo hệ thống': 'System default',
+  'Đường phố': 'Street map',
+  Tối: 'Dark map',
+  'Cập nhật iMap': 'Update iMap',
+  'Lộ trình nhiều điểm': 'Multi-stop route',
+
   'Chức năng đăng nhập chưa được cấu hình trên máy chủ.': 'Sign-in is not configured on the server.',
   'Tính năng phân tích ảnh hiện chưa khả dụng.': 'Image analysis is currently unavailable.',
   'Nhập nhu cầu': 'Type a request',
@@ -43,12 +53,16 @@ export const en: Record<string, string> = {
   'Sự cố cộng đồng': 'Community incidents',
   'Marker kẹt xe, tai nạn, ngập…': 'Markers for traffic, crashes, flooding…',
   'Địa hình': 'Terrain',
-  'Đường đồng mức (chỉ với nền Bản đồ)': 'Contour lines (Map layer only)',
+  'Bản đồ địa hình VNSDI (không dùng với nền Vệ tinh)': 'VNSDI terrain map (not available with Satellite)',
+  'Hành chính': 'Administrative',
+  'Chưa có nguồn bản đồ được duyệt cho chế độ này': 'No approved map source for this mode yet',
+  'Nguồn: vApp (map.vapp.vn) · Vệ tinh: VNSDI Sentinel-2, Vietmap · Hành chính và Địa hình: VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam)':
+    'Source: vApp (map.vapp.vn) · Satellite: VNSDI Sentinel-2, Vietmap · Administrative and Terrain: VNSDI (Vietnam Department of Survey, Mapping and Geographic Information)',
+  'Nguồn: vApp · Vietmap · VNSDI': 'Source: vApp · Vietmap · VNSDI',
   'Lớp bản đồ': 'Map layers',
   Lớp: 'Layers',
   'Loại bản đồ': 'Map type',
   'Lớp phủ': 'Overlays',
-  'Chế độ tối tự động 18:00–06:00': 'Automatic dark mode, 6:00 PM–6:00 AM',
   'Điều khiển bản đồ': 'Map controls',
   'Định vị vị trí hiện tại': 'Locate current position',
   'Phóng to bản đồ': 'Zoom in',
@@ -134,6 +148,7 @@ export const en: Record<string, string> = {
   'Điểm chọn trên bản đồ': 'Point selected on the map',
   'Vị trí GPS của thiết bị': 'Device GPS location',
   'Tìm thấy qua VietMap': 'Found with VietMap',
+  'Tìm thấy qua dữ liệu OpenStreetMap': 'Found with OpenStreetMap data',
   'Tuyến đường đã lưu': 'Saved routes',
   'Hành trình của bạn': 'Your trips',
   'Được lưu an toàn trên trình duyệt này': 'Saved securely in this browser',
@@ -234,6 +249,8 @@ export const en: Record<string, string> = {
   'Đã bỏ lưu địa điểm': 'Place removed from saved items',
   'Đang chờ GPS để gắn báo cáo vào vị trí hiện tại.':
     'Waiting for GPS to attach the report to your current location.',
+  'Bản đồ nền vApp (map.vapp.vn), Vietmap và VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam) · tuyến đường tính qua API VietMap.':
+    'Base maps by vApp (map.vapp.vn), Vietmap and VNSDI (Vietnam Department of Survey, Mapping and Geographic Information) · routes calculated with the VietMap API.',
   'Không lấy được vị trí.': 'Could not get your location.',
   'Không tính lại được tuyến.': 'Could not recalculate the route.',
   'Tài khoản iMap': 'iMap account',
@@ -408,7 +425,9 @@ export const en: Record<string, string> = {
   'Mức giao thông trên tuyến: {levels}': 'Traffic along route: {levels}',
   '+{minutes} phút': '+{minutes} min',
   'qua {street}': 'via {street}',
-  'Kẹt xe {length}': 'Congestion {length}',
+  'Ước tính kẹt xe {length}': 'Estimated congestion {length}',
+  'Dự báo theo dữ liệu giao thông của VietMap, không phải báo cáo cộng đồng hay số đo trực tiếp':
+    'Forecast from VietMap traffic data, not community reports or live measurements',
   'Có thu phí ~{amount} ₫': 'Toll ~₫{amount}',
   'Đã sao chép liên kết': 'Link copied',
   'Không tự sao chép được. Hãy chọn liên kết và nhấn Ctrl+C.':
@@ -432,8 +451,8 @@ export const en: Record<string, string> = {
   'Đã đi vòng để tránh sự cố': 'Detoured to avoid the incident',
   'Không tìm được đường tránh sự cố, hãy chú ý':
     'No route could avoid the incident. Please proceed carefully.',
-  'Đã gửi báo cáo; Supabase chưa cập nhật phân luồng, cảnh báo tạm áp dụng cho cả ô tô và xe máy.':
-    'Report submitted. Supabase has not updated vehicle routing yet, so this alert temporarily applies to both cars and motorcycles.',
+  'Đã gửi báo cáo; máy chủ chưa hỗ trợ phân theo loại xe nên cảnh báo tạm áp dụng cho cả ô tô và xe máy.':
+    'Report submitted. The server does not support per-vehicle alerts yet, so this alert temporarily applies to both cars and motorcycles.',
   'Đã thêm điểm ghé: {name}': 'Added stop: {name}',
   'Đang khám phá quanh TP.HCM. Hãy phóng to bản đồ tới khu vực bạn muốn.':
     'Exploring near Ho Chi Minh City. Zoom in to the area you want to search.',
@@ -474,37 +493,34 @@ export const en: Record<string, string> = {
   'Cảnh báo giao thông': 'Traffic alert',
   'Không thể tải dữ liệu.': 'Could not load data.',
   'Khu vực này': 'This area',
-  'Thời tiết minh họa': 'Illustrative weather',
-  'Nhiệt độ': 'Temperature',
   'Cách tuyến {distance} · {detour}': '{distance} from route · {detour}',
   'đi vòng khoảng {minutes} phút': 'about {minutes} min detour',
   'ngay trên đường đi': 'right on the route',
   'Cách tâm tìm kiếm {distance}': '{distance} from search center',
   'Tọa độ': 'Coordinates',
+  'Sao chép tọa độ': 'Copy coordinates',
+  'Đã sao chép tọa độ': 'Coordinates copied',
   'Tìm đường đến đây': 'Directions here',
   'Nguồn địa điểm được ghi rõ theo từng kết quả ở trên.': 'The source is listed for each result above.',
   'Ước tính: Giao thông thông thoáng': 'Estimated: Free-flowing traffic',
   'Ước tính: Giao thông vừa phải': 'Estimated: Moderate traffic',
   'Ước tính: Giao thông đông đúc': 'Estimated: Heavy traffic',
-  Nắng: 'Sunny',
-  'Nhiều mây': 'Cloudy',
-  'Mưa rào': 'Showers',
-  'Trời quang': 'Clear',
-  'Mở rộng thẻ Khu vực này (thời tiết minh họa, giao thông ước tính)':
-    'Expand this area card (illustrative weather, estimated traffic)',
   'Thu gọn thẻ Khu vực này': 'Collapse this area card',
+  'Mở rộng thẻ Khu vực này (giao thông ước tính)': 'Expand this area card (estimated traffic)',
+  'Phóng to bản đồ để ước tính giao thông khu vực': 'Zoom in to estimate traffic in this area',
+  'Phóng to để xem giao thông': 'Zoom in for traffic',
+  '{message}. Mở bảng Giao thông': '{message}. Open Traffic',
+  'Giao thông ước tính từ giờ cao điểm và báo cáo cộng đồng, không phải dữ liệu thời gian thực':
+    'Traffic is estimated from rush hours and community reports, not live data',
+  'Khu vực này: {traffic} (ước tính từ giờ cao điểm và báo cáo cộng đồng). Mở bảng Giao thông':
+    'This area: {traffic} (estimated from rush hours and community reports). Open Traffic',
   'Mức giao thông là ước tính từ giờ cao điểm và báo cáo cộng đồng, không phải dữ liệu thời gian thực':
     'Traffic is estimated from rush hours and community reports, not live data',
-  'Thời tiết minh họa: {weather}': 'Illustrative weather: {weather}',
   'Có thể chậm hơn ~{minutes} phút': 'May be ~{minutes} min slower',
   'Chưa thấy dấu hiệu chậm hơn': 'No signs of slower traffic',
   '{count} sự cố đang báo': '{count} reported incidents',
   'Chưa có sự cố': 'No incidents reported',
   'Mở bảng Giao thông': 'Open Traffic',
-  'Thời tiết minh họa · Giao thông ước tính từ giờ cao điểm và báo cáo cộng đồng':
-    'Illustrative weather · Traffic estimated from rush hours and community reports',
-  'Khu vực này: {temperature} độ (thời tiết minh họa), {traffic} (ước tính từ giờ cao điểm và báo cáo cộng đồng). Mở bảng Giao thông':
-    'This area: {temperature} degrees (illustrative weather), {traffic} (estimated from rush hours and community reports). Open Traffic',
   'Theo tuyến': 'Along route',
   'Gần nhất': 'Nearest',
   'Ít đi vòng nhất': 'Shortest detour',
@@ -574,8 +590,8 @@ export const en: Record<string, string> = {
   'Vẫn còn': 'Still active',
   'Chưa có báo cáo trong khu vực này. Hãy chọn vị trí và gửi cập nhật đầu tiên.':
     'No reports in this area yet. Choose a location and submit the first update.',
-  'Báo cáo được đồng bộ qua Supabase và tự ẩn khi hết hạn. Hãy tự xác minh tình hình trước khi di chuyển.':
-    'Reports sync through Supabase and disappear when they expire. Verify conditions before traveling.',
+  'Báo cáo được chia sẻ với mọi người dùng iMap và tự ẩn khi hết hạn. Hãy tự xác minh tình hình trước khi di chuyển.':
+    'Reports are shared with all iMap users and disappear when they expire. Verify conditions before traveling.',
   'Bắt đầu chuyến đi': 'Start trip',
   'Chọn các điểm cần ghé. Tự sắp xếp thứ tự tốt nhất theo thời gian hoặc quãng đường, giữ cố định điểm xuất phát.':
     'Choose your stops. Automatically find the best order by time or distance while keeping the starting point fixed.',
@@ -708,7 +724,6 @@ export const en: Record<string, string> = {
   'Điểm đã chọn trên bản đồ': 'Selected map point',
   'Điểm trên bản đồ': 'Map point',
   'Vị trí hiện tại': 'Current location',
-  'Chưa cấu hình Supabase Auth.': 'Supabase Auth is not configured.',
   'Địa điểm chưa có tọa độ. Hãy chọn kết quả khác.': 'This place has no coordinates. Choose another result.',
   'Dịch vụ lấy tọa độ chưa sẵn sàng.': 'The place lookup service is unavailable.',
   'VietMap trả về dữ liệu địa điểm không hợp lệ.': 'VietMap returned invalid place data.',
@@ -747,7 +762,8 @@ export const en: Record<string, string> = {
   'Đăng nhập để gửi báo cáo giao thông.': 'Sign in to submit a traffic report.',
   'Không xác định được tài khoản để lưu ảnh.': 'Could not identify the account to save the image.',
   'Đăng nhập để xác minh báo cáo giao thông.': 'Sign in to verify a traffic report.',
-  'Cần cấu hình Supabase để đính kèm ảnh.': 'Supabase must be configured to attach an image.',
+  'Chức năng đính kèm ảnh chưa được cấu hình trên máy chủ.':
+    'Image attachments are not configured on the server.',
   'Ảnh phải là JPG, PNG hoặc WebP và không quá 5 MB.':
     'Images must be JPG, PNG, or WebP and no larger than 5 MB.',
   'Không tải được ảnh lên. Kiểm tra kết nối và quyền lưu trữ.':
@@ -886,18 +902,4 @@ export const en: Record<string, string> = {
   'Không tìm được đường giữa hai điểm trong vùng dữ liệu.':
     'No path was found between the two points in the data area.',
   // Bản đồ nền (vApp, Vietmap, VNSDI) và ghi nguồn.
-  'Bản đồ nền vApp (map.vapp.vn), Vietmap và VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam) · tuyến đường tính qua API VietMap.':
-    'Base maps by vApp (map.vapp.vn), Vietmap and VNSDI (Vietnam Department of Survey, Mapping and Geographic Information) · routes calculated with the VietMap API.',
-  'Bản đồ địa hình VNSDI (không dùng với nền Vệ tinh)': 'VNSDI terrain map (not available with Satellite)',
-  'Chưa có nguồn bản đồ được duyệt cho chế độ này': 'No approved map source for this mode yet',
-  'Hành chính': 'Administrative',
-  'Nguồn: vApp (map.vapp.vn) · Vệ tinh: VNSDI Sentinel-2, Vietmap · Hành chính và Địa hình: VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam)':
-    'Source: vApp (map.vapp.vn) · Satellite: VNSDI Sentinel-2, Vietmap · Administrative and Terrain: VNSDI (Vietnam Department of Survey, Mapping and Geographic Information)',
-  'Nguồn: vApp · Vietmap · VNSDI': 'Source: vApp · Vietmap · VNSDI',
-  'Theo hệ thống': 'System',
-  Tối: 'Dark',
-  'Đường phố': 'Streets',
-  'Sao chép tọa độ': 'Copy coordinates',
-  'Đã sao chép tọa độ': 'Coordinates copied',
-  'Tìm thấy qua dữ liệu OpenStreetMap': 'Found with OpenStreetMap data',
 };

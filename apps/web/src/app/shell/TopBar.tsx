@@ -1,40 +1,51 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ComboboxAction } from '../../features/places/components/PlaceCombobox';
 import { PlaceSearchBar } from '../../features/places/components/PlaceSearchBar';
 import type { Place } from '../../features/places/types';
 import type { LatLng } from '../../shared/geo/types';
 import { useI18n } from '../../shared/i18n/I18nProvider';
-import { Icon } from '../../shared/ui/Icon';
-import { BrandMark } from './BrandMark';
+import { Icon, type IconName } from '../../shared/ui/Icon';
+import { Popover } from '../../shared/ui/Popover';
+import type { FeatureKey } from '../types';
 
 type TopBarProps = {
   getFocus: () => LatLng;
   onSelectPlace: (place: Place) => void;
-  /** Dòng "Tìm … quanh đây / dọc tuyến" trong gợi ý của ô tìm kiếm. */
   buildSearchAction?: (query: string) => ComboboxAction | null;
-  /** Hàng chip danh mục hoặc thanh "Tìm dọc tuyến". */
   strip: ReactNode;
+  layers?: ReactNode;
   updateAvailable: boolean;
   onUpdate: () => void;
   onInfo: () => void;
+  onShowVietnam?: () => void;
   userEmail: string | null;
+  onSelectFeature: (feature: FeatureKey) => void;
 };
 
-const roundButton =
-  'grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/90 text-ink-soft shadow-glass ring-1 ring-black/5 backdrop-blur-xl transition hover:text-brand-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:bg-slate-900/90 dark:text-slate-200 dark:shadow-glass-dark dark:ring-white/10 dark:hover:text-brand-300 dark:focus-visible:ring-brand-500/40';
+const menuItems: { key: FeatureKey; label: string; icon: IconName }[] = [
+  { key: 'traffic', label: 'Giao thông', icon: 'traffic' },
+  { key: 'multi', label: 'Lộ trình nhiều điểm', icon: 'multi-stop' },
+  { key: 'saved', label: 'Tuyến đã lưu', icon: 'bookmark' },
+  { key: 'assistant', label: 'Trợ lý địa điểm', icon: 'sparkles' },
+];
+const menuRow = 'ui-button ui-button-ghost min-h-11 w-full justify-start gap-3 px-3 text-left text-sm';
 
-/** Thanh trên: command search (phím tắt / và ⌘K), chip danh mục, cập nhật, thông tin và avatar. */
 export function TopBar({
   getFocus,
   onSelectPlace,
   buildSearchAction,
   strip,
+  layers,
   updateAvailable,
   onUpdate,
   onInfo,
+  onShowVietnam,
   userEmail,
+  onSelectFeature,
 }: TopBarProps) {
   const input = useRef<HTMLInputElement>(null);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { language, setLanguage, t } = useI18n();
 
   useEffect(() => {
@@ -46,6 +57,7 @@ export function TopBar({
         ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k');
       if (!isShortcut) return;
       event.preventDefault();
+      setMenuOpen(false);
       input.current?.focus();
       input.current?.select();
     };
@@ -53,68 +65,154 @@ export function TopBar({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  return (
-    <header className="pointer-events-none absolute left-3 right-3 top-3 z-40 flex flex-wrap items-center gap-x-3 gap-y-2 md:left-[80px] lg:left-[88px] [&>*]:pointer-events-auto">
-      <BrandMark className="md:hidden" />
-      <div className="min-w-0 flex-1 md:w-[360px] md:flex-none lg:w-[400px]">
-        <PlaceSearchBar
-          getFocus={getFocus}
-          onSelect={onSelectPlace}
-          inputRef={input}
-          {...(buildSearchAction ? { buildAction: buildSearchAction } : {})}
-        />
-      </div>
-      <div className="ml-auto flex shrink-0 items-center gap-2 md:order-last">
-        <label className="sr-only" htmlFor="language-select">
-          {t('Ngôn ngữ')}
-        </label>
-        <select
-          id="language-select"
-          aria-label={t('Ngôn ngữ')}
-          value={language}
-          onChange={(event) => setLanguage(event.target.value === 'en' ? 'en' : 'vi')}
-          className="h-10 rounded-full bg-white/90 px-2.5 text-xs font-semibold text-ink shadow-glass ring-1 ring-black/5 backdrop-blur-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:bg-slate-900/90 dark:text-slate-100 dark:ring-white/10 dark:focus-visible:ring-brand-500/40"
-        >
-          <option value="vi">VI</option>
-          <option value="en">EN</option>
-        </select>
+  const directions = () => {
+    setMenuOpen(false);
+    onSelectFeature('directions');
+  };
 
+  return (
+    <header className="imap-topbar">
+      <a href="/" aria-label={t('iMap — về bản đồ')} className="imap-wordmark">
+        iMap
+      </a>
+      <div className="imap-quick-search">
+        <div className="min-w-0 flex-1">
+          <PlaceSearchBar
+            getFocus={getFocus}
+            onSelect={onSelectPlace}
+            inputRef={input}
+            {...(buildSearchAction ? { buildAction: buildSearchAction } : {})}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={directions}
+          className="ui-button ui-button-primary min-h-12 shrink-0 gap-1.5 px-3 text-sm md:min-h-11 md:px-4"
+        >
+          <Icon name="send" size={18} /> {t('Chỉ đường')}
+        </button>
+      </div>
+      <Popover
+        open={menuOpen}
+        onClose={() => {
+          if (menuButton.current?.parentElement?.contains(document.activeElement)) menuButton.current.focus();
+          setMenuOpen(false);
+        }}
+        label="Menu"
+        className="ml-auto shrink-0"
+        panelClassName="right-0 top-full mt-2 max-h-[calc(100dvh-80px)] w-[min(320px,calc(100vw-24px))] overflow-y-auto !border !border-line !bg-surface !p-2"
+        trigger={
+          <button
+            ref={menuButton}
+            className="ui-button ui-button-secondary relative grid h-11 w-11 place-items-center p-0"
+            type="button"
+            aria-label="Menu"
+            aria-expanded={menuOpen}
+            aria-haspopup="dialog"
+            onClick={() => setMenuOpen((current) => !current)}
+          >
+            <Icon name="menu" size={22} />
+            {updateAvailable && (
+              <span
+                className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary"
+                aria-hidden="true"
+              />
+            )}
+          </button>
+        }
+      >
         {updateAvailable && (
-          <>
-            <span className="sr-only" role="status" aria-live="polite">
-              {t('Có phiên bản iMap mới. Chọn Cập nhật để tải lại trang.')}
-            </span>
-            <button
-              type="button"
-              onClick={onUpdate}
-              aria-label={t('Có phiên bản mới. Cập nhật iMap')}
-              title={t('Có phiên bản iMap mới')}
-              className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-brand-gradient px-3 text-xs font-bold text-white shadow-glass dark:shadow-glass-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-brand-500/50"
-            >
-              <Icon name="refresh" size={15} />
-              {t('Cập nhật')}
-            </button>
-          </>
+          <button type="button" onClick={onUpdate} className={`${menuRow} text-primary`}>
+            <Icon name="refresh" />
+            {t('Cập nhật iMap')}
+          </button>
+        )}
+        <details className="mb-1">
+          <summary className={`${menuRow} cursor-pointer list-none`}>
+            <Icon name="search" />
+            {t('Khám phá')}
+            <Icon name="chevron-down" size={16} className="ml-auto" />
+          </summary>
+          <div
+            onClick={(event) => {
+              if ((event.target as Element).closest('button[aria-pressed]')) setMenuOpen(false);
+            }}
+            className="px-2 pb-2"
+          >
+            {strip}
+          </div>
+        </details>
+        {menuItems.map(({ key, label, icon }) => (
+          <button
+            key={key}
+            type="button"
+            className={menuRow}
+            onClick={() => {
+              setMenuOpen(false);
+              onSelectFeature(key);
+            }}
+          >
+            <Icon name={icon} />
+            {t(label)}
+          </button>
+        ))}
+        {layers && <div className="md:hidden">{layers}</div>}
+        {onShowVietnam && (
+          <button
+            type="button"
+            className={menuRow}
+            onClick={() => {
+              setMenuOpen(false);
+              onShowVietnam();
+            }}
+          >
+            <Icon name="globe" />
+            {t('Xem toàn Việt Nam')}
+          </button>
         )}
         <button
           type="button"
-          onClick={onInfo}
-          aria-label={t('Thông tin bản đồ')}
-          className={`${roundButton} max-md:hidden`}
+          className={menuRow}
+          onClick={() => {
+            setMenuOpen(false);
+            onInfo();
+          }}
         >
-          <Icon name="info" size={19} />
+          <Icon name="info" />
+          {t('Thông tin bản đồ')}
         </button>
-        <a
-          href="/login"
-          aria-label={userEmail ? `${t('Tài khoản')} ${userEmail}` : t('Đăng nhập tài khoản')}
-          className={`${roundButton} text-xs font-bold ${userEmail ? 'bg-brand-gradient text-white' : ''}`}
-        >
-          {userEmail ? userEmail.slice(0, 2).toUpperCase() : language === 'en' ? 'SI' : 'ĐN'}
-        </a>
-      </div>
-      <div data-topbar-strip="" className="min-w-0 basis-full md:basis-0 md:flex-1">
-        {strip}
-      </div>
+        <div className="mt-1 border-t border-line pt-1">
+          {userEmail ? (
+            <a
+              href="/login"
+              className={menuRow}
+              aria-label={`${t('Tài khoản')} ${userEmail}`}
+              title={userEmail}
+            >
+              <Icon name="user" />
+              {userEmail.slice(0, 2).toUpperCase()}
+            </a>
+          ) : (
+            <a href="/login" className={menuRow} aria-label={t('Đăng nhập tài khoản')}>
+              <Icon name="user" />
+              {t('Đăng nhập')}
+            </a>
+          )}
+          <label className="flex min-h-11 items-center gap-3 px-3 text-sm font-medium">
+            <Icon name="globe" />
+            <span className="flex-1">{t('Ngôn ngữ')}</span>
+            <select
+              aria-label={t('Ngôn ngữ')}
+              value={language}
+              onChange={(event) => setLanguage(event.target.value === 'en' ? 'en' : 'vi')}
+              className="ui-field min-h-11 w-auto font-semibold"
+            >
+              <option value="vi">VI</option>
+              <option value="en">EN</option>
+            </select>
+          </label>
+        </div>
+      </Popover>
     </header>
   );
 }

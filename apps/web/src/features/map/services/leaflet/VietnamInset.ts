@@ -27,6 +27,7 @@ export class VietnamInset extends L.Control {
   private box: HTMLElement | null = null;
   private attribution: string | null = null;
   private failed = new Set<string>();
+  private overlayWatch: MutationObserver | null = null;
 
   constructor(
     private readonly main: L.Map,
@@ -50,11 +51,28 @@ export class VietnamInset extends L.Control {
     this.box = box;
     this.main.on('moveend zoomend resize', this.sync);
     queueMicrotask(this.sync);
+    // Đồng hồ tốc độ/thanh dẫn đường xuất hiện hay đổi chỗ mà bản đồ không di chuyển: kiểm tra lại ngay,
+    // gộp theo từng khung hình để không tốn hiệu năng.
+    let frame = 0;
+    this.overlayWatch = new MutationObserver(() => {
+      if (frame || !this.box || this.box.hidden) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        this.avoidOverlays();
+      });
+    });
+    this.overlayWatch.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class'],
+    });
     return box;
   }
 
   override onRemove() {
     this.main.off('moveend zoomend resize', this.sync);
+    this.overlayWatch?.disconnect();
     this.setAttribution(null);
     this.inner?.remove();
     this.inner = null;
@@ -71,6 +89,7 @@ export class VietnamInset extends L.Control {
     const show = needsTerritoryInset(toBounds(this.main.getBounds()));
     this.box.hidden = !show;
     this.main.getContainer().classList.toggle('has-territory-inset', show);
+    if (show) this.avoidOverlays();
     if (!show) {
       this.setAttribution(null);
       return;
@@ -90,6 +109,27 @@ export class VietnamInset extends L.Control {
         interactive: false,
       }).addTo(this.inner);
   };
+
+  /**
+   * Dời bản đồ phụ xuống dưới các phần nổi cùng góc (đồng hồ tốc độ khi dẫn đường, thanh dẫn đường khi nó
+   * nằm ở đỉnh), để bản đồ phụ luôn nhìn thấy đủ. Không có vật cản thì dùng khoảng cách mặc định trong CSS.
+   */
+  private avoidOverlays() {
+    const box = this.box;
+    if (!box) return;
+    box.style.marginTop = '';
+    const rect = box.getBoundingClientRect();
+    const mapTop = this.main.getContainer().getBoundingClientRect().top;
+    let bottom = 0;
+    for (const el of document.querySelectorAll<HTMLElement>('.speedometer, [data-nav-banner]')) {
+      if (getComputedStyle(el).visibility === 'hidden') continue;
+      const r = el.getBoundingClientRect();
+      const sameColumn = r.left < rect.right && r.right > rect.left;
+      const nearTop = r.top < rect.bottom && r.bottom > rect.top - 8;
+      if (r.width > 0 && sameColumn && nearTop) bottom = Math.max(bottom, r.bottom);
+    }
+    if (bottom > 0) box.style.marginTop = `${Math.ceil(bottom - mapTop + 8)}px`;
+  }
 
   private ensureInner() {
     if (this.inner || !this.box) return;

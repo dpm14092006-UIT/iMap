@@ -26,7 +26,7 @@ export function AlongRouteSearch({ active, onSelect }: AlongRouteSearchProps) {
             type="button"
             aria-pressed={selected}
             onClick={() => onSelect({ category })}
-            className={`flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold shadow-sm ring-1 backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-indigo-400/40 active:scale-95 ${selected ? 'bg-brand-gradient text-white ring-transparent' : 'bg-white/90 text-ink ring-black/5 hover:bg-white dark:hover:bg-slate-700/60 dark:bg-slate-900/85 dark:text-slate-100 dark:ring-white/10'}`}
+            className={`flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold shadow-sm ring-1 backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-indigo-400/40 active:scale-95 ${selected ? 'bg-brand-600 text-white ring-transparent' : 'bg-white/90 text-ink ring-black/5 hover:bg-white dark:hover:bg-slate-700/60 dark:bg-slate-900/85 dark:text-slate-100 dark:ring-white/10'}`}
           >
             <Icon name={meta.icon} size={15} />
             {t(category === 'restaurant' ? 'Ăn uống' : meta.label)}

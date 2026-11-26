@@ -52,7 +52,9 @@ export function useTrafficReporting(options: Options) {
     showToast(
       created.vehicleScope === vehicleScope
         ? t('Đã đồng bộ báo cáo giao thông')
-        : t('Đã gửi báo cáo; Supabase chưa cập nhật phân luồng, cảnh báo tạm áp dụng cho cả ô tô và xe máy.'),
+        : t(
+            'Đã gửi báo cáo; máy chủ chưa hỗ trợ phân theo loại xe nên cảnh báo tạm áp dụng cho cả ô tô và xe máy.',
+          ),
     );
   };
 

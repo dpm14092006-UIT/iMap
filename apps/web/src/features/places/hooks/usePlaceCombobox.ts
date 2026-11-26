@@ -3,7 +3,7 @@ import type { LatLng } from '../../../shared/geo/types';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import { foldVietnamese } from '../../../shared/text/foldVietnamese';
 import { placeApi } from '../api/placeApi';
-import { isSamePlace } from '../domain/sameSuggestion';
+import { mergeSuggestions } from '../domain/mergeSuggestions';
 import { MIN_QUERY_LENGTH, usePlaceSearch } from '../hooks/usePlaceSearch';
 import type { ComboboxAction, PlaceComboboxProps, PlaceSearchSuggestion } from '../types';
 
@@ -57,17 +57,11 @@ export function usePlaceCombobox({
     setActiveIndex(preferAction ? 0 : offset);
   }, [value, preferAction, offset]);
 
-  // Gộp địa điểm có sẵn (ưu tiên) với kết quả từ API, bỏ trùng và giới hạn số lượng.
+  // Gộp địa điểm có sẵn với kết quả từ API (xem mergeSuggestions).
   const matches = useMemo(() => {
     const query = foldVietnamese(value);
     if (query.length < MIN_QUERY_LENGTH) return [];
-    const local = (searchKind === 'street' ? [] : places).filter((place) =>
-      foldVietnamese(`${place.name} ${place.address} ${place.category}`).includes(query),
-    );
-    const remainingLocal = local.filter(
-      (place) => !remotePlaces.some((candidate) => isSamePlace(place, candidate)),
-    );
-    return [...remotePlaces, ...remainingLocal].slice(0, maxSuggestions);
+    return mergeSuggestions(value, searchKind === 'street' ? [] : places, remotePlaces, maxSuggestions);
   }, [maxSuggestions, places, remotePlaces, value, searchKind]);
 
   const showRecent = open && recentActive && recentPlaces.length > 0;

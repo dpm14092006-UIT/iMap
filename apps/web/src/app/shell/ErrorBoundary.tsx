@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { scheduledMapLayer } from '../../features/map/hooks/useTimeBasedMapLayer';
+import { systemPrefersDark } from '../../features/map/hooks/useMapAppearance';
 import { readLanguage, translate } from '../../shared/i18n/translate';
 import { formatErrorReport } from './errorReport';
 
@@ -50,12 +50,12 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBound
   render() {
     if (!this.state.failed) return this.props.children;
     return (
-      <div className={scheduledMapLayer() === 'dark' ? 'dark' : ''}>
+      <div className={systemPrefersDark() ? 'dark' : ''}>
         <main
           className={`grid min-h-dvh place-items-center bg-slate-50 px-6 text-center text-ink dark:bg-slate-900 dark:text-slate-100`}
           role="alert"
         >
-          <div className="max-w-sm">
+          <div className="min-w-0 w-full max-w-sm py-6">
             <h1 className="text-xl font-bold tracking-tight">{t('Đã có lỗi xảy ra')}</h1>
             <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
               {t(
@@ -70,14 +70,14 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBound
               {t('Tải lại trang')}
             </button>
             {this.state.report && (
-              <details className="mt-6 text-left">
-                <summary className="cursor-pointer text-center text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <details className="mt-5 text-left text-xs text-slate-600 dark:text-slate-400">
+                <summary className="cursor-pointer py-2 text-center font-semibold">
                   {t('Chi tiết lỗi')}
                 </summary>
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                <p className="mt-2 leading-5">
                   {t('Chụp màn hình hoặc sao chép nội dung này gửi cho nhóm phát triển.')}
                 </p>
-                <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-slate-200/70 p-3 text-left text-[11px] leading-4 text-slate-800 select-text dark:bg-slate-800 dark:text-slate-200">
+                <pre className="mt-2 max-h-60 select-text overflow-auto whitespace-pre-wrap break-words rounded-xl bg-black/5 p-3 text-[11px] leading-5 dark:bg-white/5">
                   {this.state.report}
                 </pre>
                 <button

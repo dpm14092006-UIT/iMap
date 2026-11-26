@@ -59,7 +59,7 @@ const PHOTO_BUCKET = 'traffic-images';
 export class TrafficPhotoStorage {
   async upload(file: File, userId: string): Promise<string> {
     const client = await getSupabaseClient();
-    if (!client) throw new Error('Cần cấu hình Supabase để đính kèm ảnh.');
+    if (!client) throw new Error('Chức năng đính kèm ảnh chưa được cấu hình trên máy chủ.');
     if (!photoExtensions[file.type] || file.size > MAX_PHOTO_BYTES) {
       throw new Error('Ảnh phải là JPG, PNG hoặc WebP và không quá 5 MB.');
     }

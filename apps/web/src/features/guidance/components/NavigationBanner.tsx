@@ -117,7 +117,7 @@ export function NavigationBanner({
     <section
       ref={root}
       data-nav-banner=""
-      className={`absolute left-3 right-3 z-50 animate-fade-in overflow-hidden rounded-3xl ${atTop ? 'top-3' : 'bottom-[calc(12px+env(safe-area-inset-bottom))]'} bg-gradient-to-br from-slate-900 via-indigo-950 to-teal-900 text-white shadow-glass dark:shadow-glass-dark ring-1 ring-white/15 md:right-auto md:w-[420px]`}
+      className={`absolute left-3 right-3 z-50 animate-fade-in overflow-hidden rounded-xl ${atTop ? 'top-3' : 'bottom-[calc(12px+env(safe-area-inset-bottom))]'} bg-brand-800 text-white shadow-glass dark:shadow-glass-dark ring-1 ring-white/15 md:left-1/2 md:right-auto md:w-[420px] md:-translate-x-1/2`}
       aria-label={t('Điều hướng chuyến đi')}
       aria-live="polite"
     >
@@ -125,7 +125,7 @@ export function NavigationBanner({
         className={`flex items-center gap-2 px-4 py-2 text-[11px] font-bold tracking-[.1em] ${offRoute ? 'bg-amber-400/20 text-amber-200' : 'bg-white/10 text-white/80'}`}
       >
         <span
-          className={`h-2 w-2 rounded-full ${offRoute ? 'bg-amber-400' : status === 'arrived' ? 'bg-emerald-400' : 'animate-pulse bg-teal-300'}`}
+          className={`h-2 w-2 rounded-full ${offRoute ? 'bg-amber-400' : status === 'arrived' ? 'bg-brand-200' : 'bg-brand-300'}`}
         />
         {offRoute ? t('ĐANG LỆCH KHỎI TUYẾN') : statusLabels[status] ? t(statusLabels[status]!) : ''}
         {audio && (
@@ -139,7 +139,7 @@ export function NavigationBanner({
             title={t(
               audio.supported ? 'Âm thanh chỉ đường và cảnh báo' : 'Thiết bị chỉ hỗ trợ chuông cảnh báo',
             )}
-            className="ml-auto flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full bg-white/10 px-3 text-xs font-bold text-white ring-1 ring-white/20 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-300"
+            className="ml-auto flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-full bg-white/10 px-3 text-xs font-bold text-white ring-1 ring-white/20 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300"
           >
             <Icon name={audio.enabled ? 'volume' : 'volume-off'} size={16} />
             <span className="max-md:hidden">{t(audio.enabled ? 'Âm thanh' : 'Tắt tiếng')}</span>
@@ -167,7 +167,7 @@ export function NavigationBanner({
                     : instructionText}
           </p>
           {isGuiding && !offRoute && status === 'navigating' && (
-            <p className="mt-1 text-sm font-semibold text-teal-200">
+            <p className="mt-1 text-sm font-semibold text-brand-200">
               {distanceToInstructionMeters > 0
                 ? t('Trong {distance}', {
                     distance: formatDistanceMeters(distanceToInstructionMeters, language),
@@ -200,7 +200,7 @@ export function NavigationBanner({
             type="button"
             onClick={offRoute ? onRecalculate : onRetry}
             disabled={offRoute ? !canRecalculate || isRecalculating : false}
-            className="flex min-h-10 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full bg-surface px-2 text-xs font-bold text-indigo-900 dark:text-indigo-200 transition hover:bg-indigo-50 dark:hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-300 disabled:bg-white/40 dark:disabled:bg-slate-800/30"
+            className="flex min-h-10 min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full bg-surface px-2 text-xs font-bold text-brand-800 dark:text-brand-200 transition hover:bg-brand-50 dark:hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 disabled:bg-white/40 dark:disabled:bg-slate-800/30"
           >
             {isRecalculating ? (
               <span
@@ -210,7 +210,10 @@ export function NavigationBanner({
             ) : (
               <Icon name="route" size={14} />
             )}
-            {t(isRecalculating ? 'Đang tính lại…' : offRoute ? 'Tính lại tuyến' : 'Thử lại GPS')}
+            {/* Co được và cắt "…" thay vì đẩy cả hàng nút xuống dòng trên màn hình 320px. */}
+            <span className="min-w-0 truncate">
+              {t(isRecalculating ? 'Đang tính lại…' : offRoute ? 'Tính lại tuyến' : 'Thử lại GPS')}
+            </span>
           </button>
         )}
         {isGuiding && (followPaused ? onRecenter : onPreviewRoute) && (
@@ -218,7 +221,7 @@ export function NavigationBanner({
             type="button"
             onClick={followPaused ? onRecenter : onPreviewRoute}
             title={previewLabel}
-            className={`flex min-h-10 min-w-10 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full px-2 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-300 ${followPaused ? 'bg-teal-300 text-slate-900 hover:bg-teal-200' : 'bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/20'}`}
+            className={`flex min-h-10 min-w-10 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full px-2 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 ${followPaused ? 'bg-teal-300 text-slate-900 hover:bg-teal-200' : 'bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/20'}`}
           >
             <Icon name={followPaused ? 'current-location' : 'route'} size={15} />
             <span className={secondaryLabelClass}>{previewLabel}</span>
@@ -237,7 +240,7 @@ export function NavigationBanner({
           type="button"
           onClick={onStop}
           title={stopLabel}
-          className={`flex min-h-10 min-w-10 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full bg-white/10 px-2 text-xs font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-300 ${compactSecondary ? 'max-[359px]:flex-none' : ''}`}
+          className={`flex min-h-10 min-w-10 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full bg-white/10 px-2 text-xs font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 ${compactSecondary ? 'max-[359px]:flex-none' : ''}`}
         >
           <Icon name="close" size={14} />
           <span className={compactSecondary ? 'max-[359px]:sr-only' : undefined}>{stopLabel}</span>

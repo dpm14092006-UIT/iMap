@@ -1,4 +1,4 @@
-/* Chiều cao thanh tab đáy (chỉ có trên mobile) và vùng đáy bị bảng kéo chiếm. */
+/* Chiều cao cụm tìm kiếm và chỉ đường (chỉ có trên mobile) và vùng đáy bị bảng kéo chiếm. */
 
 main {
   --tab-h: 0px;
@@ -8,11 +8,7 @@ main {
 
 @media (max-width: 767px) {
   main {
-    --tab-h: calc(64px + env(safe-area-inset-bottom));
-  }
-  /* Bảng kéo lên nấc đầy che chỗ hàng chip: ẩn hàng chip, chỉ giữ ô tìm kiếm. */
-  main[data-sheet='full'] [data-topbar-strip] {
-    display: none;
+    --tab-h: calc(68px + env(safe-area-inset-bottom));
   }
   /* Lúc dẫn đường thanh tab ẩn đi, banner chỉ dẫn nằm sát đáy thay chỗ. */
   main:has(> [data-nav-banner]) {
@@ -26,11 +22,84 @@ main {
   left: 15px;
   top: 28px;
   bottom: 28px;
-  border-left: 2px dotted #a5b4fc;
+  border-left: 2px dotted #83caff;
 }
 
 .dark .routetwin-route-marker span,
 .dark .routetwin-poi-marker span,
 .dark .routetwin-incident-marker {
   border-color: #e2e8f0;
+}
+
+.imap-topbar {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 12px;
+  right: 12px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.imap-topbar > * {
+  pointer-events: auto;
+}
+.imap-wordmark {
+  display: grid;
+  min-width: 66px;
+  height: 44px;
+  place-items: center;
+  padding-inline: 8px;
+  border: 1px solid rgb(var(--line));
+  border-radius: 12px;
+  background: rgb(var(--surface));
+  color: rgb(var(--primary));
+  font-size: 25px;
+  font-weight: 850;
+  letter-spacing: -0.075em;
+}
+.imap-wordmark:focus-visible {
+  outline: 2px solid rgb(var(--focus));
+  outline-offset: 2px;
+}
+.imap-quick-search {
+  position: fixed;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  left: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+@media (min-width: 768px) {
+  .imap-topbar {
+    left: 50%;
+    right: auto;
+    width: min(660px, calc(100vw - 24px));
+    transform: translateX(-50%);
+    padding: 5px;
+    border: 1px solid rgb(var(--line));
+    border-radius: 14px;
+    background: rgb(var(--surface));
+    box-shadow: 0 2px 8px rgb(25 28 34 / 10%);
+  }
+  .imap-quick-search {
+    position: static;
+    flex: 1;
+    min-width: 0;
+  }
+  main[data-panel-open='true'] > [data-map-controls] {
+    right: min(430px, 55vw);
+  }
+}
+@media (max-width: 767px) {
+  .imap-quick-search > * {
+    box-shadow: 0 2px 8px rgb(25 28 34 / 16%);
+    border-radius: 12px;
+  }
+}
+
+.imap-topbar summary::-webkit-details-marker {
+  display: none;
 }

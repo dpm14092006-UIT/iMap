@@ -68,7 +68,7 @@ export function TrafficLegend({ onHide }: TrafficLegendProps) {
         aria-checked="true"
         aria-label={t('Tắt lớp giao thông trực tiếp')}
         onClick={onHide}
-        className="relative h-5 w-9 shrink-0 rounded-full bg-brand-gradient before:absolute before:-inset-x-1 before:-inset-y-2.5 before:content-[''] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40"
+        className="relative h-5 w-9 shrink-0 rounded-full bg-brand-600 before:absolute before:-inset-x-1 before:-inset-y-2.5 before:content-[''] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40"
       >
         <span className="absolute left-[18px] top-0.5 h-4 w-4 rounded-full bg-white shadow" />
       </button>

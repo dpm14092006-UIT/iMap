@@ -1,20 +1,32 @@
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import { Icon } from '../../../shared/ui/Icon';
+import { SuggestionPopup } from './SuggestionPopup';
 import type { usePlaceCombobox } from '../hooks/usePlaceCombobox';
 import type { PlaceComboboxProps } from '../types';
 
-type Props = Pick<PlaceComboboxProps, 'onChange' | 'onSelect' | 'recentPlaces' | 'onRemoveRecent'> & {
+type Props = Pick<
+  PlaceComboboxProps,
+  'onChange' | 'onSelect' | 'recentPlaces' | 'onRemoveRecent' | 'listPositionClassName'
+> & {
   form: Pick<ReturnType<typeof usePlaceCombobox>, 'setOpen' | 'showRecent'>;
 };
-export function RecentPlacesList({ onChange, onSelect, recentPlaces = [], onRemoveRecent, form }: Props) {
+export function RecentPlacesList({
+  onChange,
+  onSelect,
+  recentPlaces = [],
+  onRemoveRecent,
+  listPositionClassName,
+  form,
+}: Props) {
   const { setOpen, showRecent } = form;
 
   const { t } = useI18n();
   return (
     <>
       {showRecent && (
-        <div
-          className="absolute left-0 right-0 top-[calc(100%+7px)] z-[80] max-h-[min(70dvh,560px)] overflow-y-auto overscroll-contain rounded-2xl border border-slate-100 bg-white p-1.5 shadow-float dark:shadow-float-dark dark:border-white/10 dark:bg-slate-800"
+        <SuggestionPopup
+          positionClassName={listPositionClassName}
+
           role="group"
           aria-label={t('Điểm gần đây')}
         >
@@ -60,7 +72,7 @@ export function RecentPlacesList({ onChange, onSelect, recentPlaces = [], onRemo
               )}
             </div>
           ))}
-        </div>
+        </SuggestionPopup>
       )}
     </>
   );

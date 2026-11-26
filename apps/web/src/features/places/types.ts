@@ -50,6 +50,8 @@ export type PlaceComboboxProps = {
   icon?: IconName | null;
   className?: string;
   inputClassName?: string;
+  /** Lớp định vị danh sách gợi ý thay cho mặc định (ngay dưới ô nhập). */
+  listPositionClassName?: string;
   ariaLabel: string;
   maxSuggestions?: number;
   /** Để nơi dùng focus ô nhập bằng phím tắt. */
