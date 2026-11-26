@@ -3,6 +3,7 @@
 @import '../shared/styles/components.css';
 @import './styles/shell.css';
 @import '../features/map/styles/leaflet.css';
+@import '../features/map/styles/maplibre.css';
 
 @tailwind base;
 @tailwind components;

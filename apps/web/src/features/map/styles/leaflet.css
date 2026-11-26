@@ -1,8 +1,8 @@
-.routetwin-leaflet {
+:is(.routetwin-leaflet, .routetwin-map) {
   background: #e8ece7;
 }
 
-.routetwin-leaflet .leaflet-control-attribution {
+:is(.routetwin-leaflet, .routetwin-map) .leaflet-control-attribution {
   margin: 0 0 3px 3px;
   border-radius: 5px;
   background: rgba(255, 255, 255, 0.84);
@@ -12,7 +12,7 @@
 
 /* Điều khiển góc dưới của Leaflet luôn nằm phía trên thanh tab / bảng kéo. */
 
-.routetwin-leaflet .leaflet-bottom {
+:is(.routetwin-leaflet, .routetwin-map) .leaflet-bottom {
   bottom: var(--shell-bottom, 0px);
   transition: bottom 180ms ease-out;
 }
@@ -20,56 +20,56 @@
 /* Điện thoại: bỏ thước tỉ lệ cho góc dưới đỡ chật. */
 
 @media (max-width: 767px) {
-  .routetwin-leaflet .leaflet-control-scale {
+  :is(.routetwin-leaflet, .routetwin-map) .leaflet-control-scale {
     display: none;
   }
 }
 
-.routetwin-leaflet .leaflet-control-scale-line {
+:is(.routetwin-leaflet, .routetwin-map) .leaflet-control-scale-line {
   border-color: #475569;
   background: rgba(255, 255, 255, 0.8);
   color: #334155;
   font-size: 10px;
 }
 
-.routetwin-leaflet .leaflet-control-attribution a {
+:is(.routetwin-leaflet, .routetwin-map) .leaflet-control-attribution a {
   color: #004779;
 }
 
-.routetwin-leaflet .leaflet-gl-layer {
+:is(.routetwin-leaflet, .routetwin-map) .leaflet-gl-layer {
   position: absolute;
   top: 0;
   left: 0;
   pointer-events: none;
 }
 
-.routetwin-leaflet .leaflet-gl-layer .maplibregl-canvas {
+:is(.routetwin-leaflet, .routetwin-map) .leaflet-gl-layer .maplibregl-canvas {
   max-width: none;
 }
 
-.routetwin-leaflet .leaflet-tile {
+:is(.routetwin-leaflet, .routetwin-map) .leaflet-tile {
   filter: saturate(0.92);
 }
 
-.routetwin-leaflet.map-theme-dark {
+:is(.routetwin-leaflet, .routetwin-map).map-theme-dark {
   background: #101a29;
 }
 
-.routetwin-leaflet.map-theme-dark .leaflet-tile-pane .leaflet-tile {
+:is(.routetwin-leaflet, .routetwin-map).map-theme-dark .leaflet-tile-pane .leaflet-tile {
   /* Vietmap có style tối riêng. Bộ lọc này chỉ áp dụng cho ô ảnh VNSDI khi làm nền dự phòng. */
   filter: invert(0.92) hue-rotate(180deg) brightness(1.08) contrast(0.92) saturate(0.68);
 }
 
-.routetwin-leaflet.map-theme-dark .leaflet-control-attribution {
+:is(.routetwin-leaflet, .routetwin-map).map-theme-dark .leaflet-control-attribution {
   color: #d6e1ef;
   background: rgb(17 29 46 / 94%);
 }
 
-.routetwin-leaflet.map-theme-dark .leaflet-control-attribution a {
+:is(.routetwin-leaflet, .routetwin-map).map-theme-dark .leaflet-control-attribution a {
   color: #b8c6ff;
 }
 
-.routetwin-leaflet.map-theme-dark .leaflet-control-scale-line {
+:is(.routetwin-leaflet, .routetwin-map).map-theme-dark .leaflet-control-scale-line {
   border-color: #a8bacf;
   background: rgb(17 29 46 / 90%);
   color: #d6e1ef;
@@ -208,8 +208,8 @@
 
 /* Chế độ chọn điểm trên bản đồ: con trỏ dấu "+" thay cho bàn tay kéo. */
 
-.routetwin-leaflet.is-picking,
-.routetwin-leaflet.is-picking .leaflet-interactive {
+:is(.routetwin-leaflet, .routetwin-map).is-picking,
+:is(.routetwin-leaflet, .routetwin-map).is-picking .leaflet-interactive {
   cursor: crosshair;
 }
 
@@ -372,12 +372,12 @@
 
 /* Tên Quần đảo Hoàng Sa, Trường Sa (Việt Nam), Biển Đông, các đảo: chữ có viền sáng, nổi trên mọi nền. */
 
-.routetwin-leaflet .sovereignty-label {
+:is(.routetwin-leaflet, .routetwin-map) .sovereignty-label {
   border: 0;
   background: transparent;
 }
 
-.routetwin-leaflet .sovereignty-label > div {
+:is(.routetwin-leaflet, .routetwin-map) .sovereignty-label > div {
   width: max-content;
   transform: translate(-50%, -50%);
   color: #1e3a8a;
@@ -393,17 +393,17 @@
   user-select: none;
 }
 
-.routetwin-leaflet .sovereignty-label--archipelago > div {
+:is(.routetwin-leaflet, .routetwin-map) .sovereignty-label--archipelago > div {
   font-size: 13px;
   letter-spacing: 0.01em;
 }
 
-.routetwin-leaflet .sovereignty-label--island > div {
+:is(.routetwin-leaflet, .routetwin-map) .sovereignty-label--island > div {
   font-size: 11px;
   font-weight: 600;
 }
 
-.routetwin-leaflet .sovereignty-label--sea > div {
+:is(.routetwin-leaflet, .routetwin-map) .sovereignty-label--sea > div {
   color: #1d4ed8;
   font-size: 15px;
   font-style: italic;
@@ -411,7 +411,7 @@
   letter-spacing: 0.08em;
 }
 
-.routetwin-leaflet.map-theme-dark .sovereignty-label > div {
+:is(.routetwin-leaflet, .routetwin-map).map-theme-dark .sovereignty-label > div {
   color: #bfdbfe;
   text-shadow:
     0 0 2px #0f172a,
@@ -419,7 +419,7 @@
     0 0 4px #0f172a;
 }
 
-.routetwin-leaflet.map-theme-satellite .sovereignty-label > div {
+:is(.routetwin-leaflet, .routetwin-map).map-theme-satellite .sovereignty-label > div {
   color: #fff;
   text-shadow:
     0 0 2px #000,
@@ -427,7 +427,7 @@
     0 1px 4px #000;
 }
 
-.routetwin-leaflet .routetwin-basemap-notice {
+:is(.routetwin-leaflet, .routetwin-map) .routetwin-basemap-notice {
   max-width: 280px;
   margin-top: 72px;
   padding: 8px 12px;
@@ -439,13 +439,13 @@
   box-shadow: 0 4px 16px rgb(15 23 42 / 16%);
 }
 
-.routetwin-leaflet.map-theme-dark .routetwin-basemap-notice {
+:is(.routetwin-leaflet, .routetwin-map).map-theme-dark .routetwin-basemap-notice {
   background: rgb(17 29 46 / 96%);
   color: #d6e1ef;
 }
 
 /* Bản đồ phụ toàn vẹn lãnh thổ (Điều 20.2–20.3, TT 17/2018/TT-BTNMT). */
-.routetwin-leaflet .routetwin-territory-inset {
+:is(.routetwin-leaflet, .routetwin-map) .routetwin-territory-inset {
   position: relative;
   display: block;
   width: 120px;
@@ -463,22 +463,22 @@
   transition: none;
 }
 
-.routetwin-leaflet .routetwin-territory-inset[hidden] {
+:is(.routetwin-leaflet, .routetwin-map) .routetwin-territory-inset[hidden] {
   display: none;
 }
 
-.routetwin-leaflet .routetwin-territory-inset:focus-visible {
+:is(.routetwin-leaflet, .routetwin-map) .routetwin-territory-inset:focus-visible {
   outline: 3px solid #2878ff;
   outline-offset: 2px;
 }
 
-.routetwin-leaflet .routetwin-territory-inset__map {
+:is(.routetwin-leaflet, .routetwin-map) .routetwin-territory-inset__map {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.routetwin-leaflet .routetwin-territory-inset__caption {
+:is(.routetwin-leaflet, .routetwin-map) .routetwin-territory-inset__caption {
   position: absolute;
   z-index: 1000;
   top: 4px;
@@ -492,7 +492,7 @@
   pointer-events: none;
 }
 
-.routetwin-leaflet .routetwin-territory-inset.is-unavailable::after {
+:is(.routetwin-leaflet, .routetwin-map) .routetwin-territory-inset.is-unavailable::after {
   content: 'Chưa có nguồn bản đồ được duyệt';
   position: absolute;
   inset: auto 6px 6px;
@@ -501,7 +501,7 @@
 }
 
 @media (max-width: 767px) {
-  .routetwin-leaflet .routetwin-territory-inset {
+  :is(.routetwin-leaflet, .routetwin-map) .routetwin-territory-inset {
     width: 92px;
     height: 114px;
     margin-top: 72px;
@@ -509,7 +509,7 @@
   }
 }
 
-.routetwin-leaflet .routetwin-territory-inset__label span {
+:is(.routetwin-leaflet, .routetwin-map) .routetwin-territory-inset__label span {
   position: absolute;
   top: 0;
   left: 0;

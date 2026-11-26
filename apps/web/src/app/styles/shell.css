@@ -93,7 +93,8 @@ main {
     right: min(430px, 55vw);
   }
   /* Góc trên phải của bản đồ (bản đồ phụ Điều 20, thông báo nguồn nền) cũng né bảng bên phải. */
-  main[data-panel-open='true'] .leaflet-top.leaflet-right {
+  main[data-panel-open='true'] .leaflet-top.leaflet-right,
+  main[data-panel-open='true'] .maplibregl-ctrl-top-right {
     right: calc(min(430px, 55vw) - 10px);
   }
 }

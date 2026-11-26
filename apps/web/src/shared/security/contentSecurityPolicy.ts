@@ -13,7 +13,7 @@ export const MAP_TILE_SOURCES = ['https://vnsdi.mae.gov.vn'] as const;
 
 /**
  * Bản đồ vector tải thẳng từ trình duyệt (MapLibre dùng fetch cho style, ô vector, font):
- * vApp cho hiển thị miễn phí, không cần khóa (xem features/map/services/leaflet/VappLayer.ts).
+ * vApp cho hiển thị miễn phí, không cần khóa (xem features/map/services/maplibre/MaplibreBasemap.ts).
  */
 export const MAP_STYLE_SOURCES = ['https://map.vapp.vn'] as const;
 
@@ -50,7 +50,8 @@ export function buildContentSecurityPolicy({ apiBaseUrl, supabaseUrl }: CspConfi
     // data: biểu tượng SVG nội tuyến; blob: ảnh xem trước khi báo cáo; Supabase: ảnh báo cáo (link ký).
     // API: ô ảnh VNSDI qua proxy /api/map/vnsdi.
     'img-src': list("'self'", 'data:', 'blob:', ...MAP_TILE_SOURCES, api, supabase),
-    'connect-src': list("'self'", api, supabase, supabaseSocket, ...MAP_STYLE_SOURCES),
+    // MapLibre GL tải cả ô ảnh bằng fetch (Leaflet dùng <img>): máy chủ ô ảnh cũng cần ở connect-src.
+    'connect-src': list("'self'", api, supabase, supabaseSocket, ...MAP_STYLE_SOURCES, ...MAP_TILE_SOURCES),
     'font-src': "'self'",
     'worker-src': "'self'",
     'manifest-src': "'self'",
