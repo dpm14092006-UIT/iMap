@@ -56,17 +56,24 @@ export function LayerSwitcher({
       const rect = triggerRef.current?.getBoundingClientRect();
       if (!rect) return;
       const gap = 8 + 8; // khoảng cách tới nút + lề màn hình
-      // Giới hạn dưới là mép trên của bảng điều hướng (nếu đang dẫn đường), không phải đáy màn hình.
+      // Thanh dẫn đường có thể nằm dưới nút (bình thường) hoặc ở đỉnh màn hình (khi đang mở một bảng):
+      // menu không được mở đè lên nó, vì thanh nằm trên lớp của menu và che mất các nút.
       const banner = document.querySelector('[data-nav-banner]')?.getBoundingClientRect();
-      const bottomLimit = banner && banner.top > rect.bottom ? banner.top : window.innerHeight;
-      const spaceAbove = rect.top - gap;
+      const topLimit = banner && banner.bottom <= rect.top ? banner.bottom : 0;
+      const bottomLimit = banner && banner.top >= rect.bottom ? banner.top : window.innerHeight;
+      const spaceAbove = rect.top - topLimit - gap;
       const spaceBelow = bottomLimit - rect.bottom - gap;
       const above = spaceAbove >= 320 || spaceAbove >= spaceBelow;
       setPlacement({ above, maxHeight: Math.max(120, Math.floor(above ? spaceAbove : spaceBelow)) });
     };
     measure();
+    // Đo lại sau một khung hình: thanh dẫn đường có thể vừa đổi chỗ (đỉnh/đáy) cùng lúc menu mở.
+    const frame = requestAnimationFrame(measure);
     window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', measure);
+    };
   }, [open, inMenu]);
   const titleId = useId();
   const base = layer === 'satellite' ? 'satellite' : 'street';
