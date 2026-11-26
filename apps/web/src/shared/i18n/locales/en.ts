@@ -56,9 +56,7 @@ export const en: Record<string, string> = {
   'Bản đồ địa hình VNSDI (không dùng với nền Vệ tinh)': 'VNSDI terrain map (not available with Satellite)',
   'Hành chính': 'Administrative',
   'Chưa có nguồn bản đồ được duyệt cho chế độ này': 'No approved map source for this mode yet',
-  'Nguồn: vApp (map.vapp.vn) · Vệ tinh: VNSDI Sentinel-2, Vietmap · Hành chính và Địa hình: VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam)':
-    'Source: vApp (map.vapp.vn) · Satellite: VNSDI Sentinel-2, Vietmap · Administrative and Terrain: VNSDI (Vietnam Department of Survey, Mapping and Geographic Information)',
-  'Nguồn: vApp · Vietmap · VNSDI': 'Source: vApp · Vietmap · VNSDI',
+  'Nguồn: {sources}': 'Source: {sources}',
   'Lớp bản đồ': 'Map layers',
   Lớp: 'Layers',
   'Loại bản đồ': 'Map type',
@@ -249,8 +247,8 @@ export const en: Record<string, string> = {
   'Đã bỏ lưu địa điểm': 'Place removed from saved items',
   'Đang chờ GPS để gắn báo cáo vào vị trí hiện tại.':
     'Waiting for GPS to attach the report to your current location.',
-  'Bản đồ nền vApp (map.vapp.vn), Vietmap và VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam) · tuyến đường tính qua API VietMap.':
-    'Base maps by vApp (map.vapp.vn), Vietmap and VNSDI (Vietnam Department of Survey, Mapping and Geographic Information) · routes calculated with the VietMap API.',
+  'Bản đồ nền: {sources} · tuyến đường và tìm kiếm qua API VietMap.':
+    'Base map: {sources} · routes and search by the VietMap API.',
   'Không lấy được vị trí.': 'Could not get your location.',
   'Không tính lại được tuyến.': 'Could not recalculate the route.',
   'Tài khoản iMap': 'iMap account',
