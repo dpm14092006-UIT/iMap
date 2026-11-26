@@ -10,6 +10,7 @@ import { Speedometer } from '../features/guidance/components/Speedometer';
 import { RoutePath } from '../features/guidance/domain/RoutePath';
 import { useNavigationAudio } from '../features/guidance/hooks/useNavigationAudio';
 import { useNavigationSession } from '../features/guidance/hooks/useNavigationSession';
+import { usableSourceCredits } from '../features/map/basemap/providers';
 import { LayerSwitcher } from '../features/map/components/LayerSwitcher';
 import { MapControls } from '../features/map/components/MapControls';
 import { MapView } from '../features/map/components/MapView';
@@ -92,7 +93,7 @@ export function App() {
   const { activePanel, openPanel, closePanel, pickTarget, setPickTarget } = panels;
   const [activeRoute, setActiveRoute] = useState<RoutePlan | null>(null);
   const [trafficBounds, setTrafficBounds] = useState<TrafficReportBounds>(vietnamBounds);
-  const [overlays, setOverlays] = useState<MapOverlays>({ traffic: false, incidents: true, terrain: false });
+  const [overlays, setOverlays] = useState<MapOverlays>({ traffic: true, incidents: true, terrain: false });
 
   // --- Dẫn đường theo GPS ---
   const navigation = useNavigationSession();
@@ -368,9 +369,9 @@ export function App() {
             onUpdate={reloadForUpdate}
             onInfo={() =>
               showToast(
-                t(
-                  'Bản đồ nền vApp (map.vapp.vn), Vietmap và VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam) · tuyến đường tính qua API VietMap.',
-                ),
+                t('Bản đồ nền: {sources} · tuyến đường và tìm kiếm qua API VietMap.', {
+                  sources: usableSourceCredits(import.meta.env.PROD).join(', '),
+                }),
               )
             }
             userEmail={user?.email ?? null}

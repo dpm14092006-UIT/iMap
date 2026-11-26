@@ -459,6 +459,8 @@
   background: #e9eef3;
   box-shadow: 0 4px 16px rgb(15 23 42 / 18%);
   cursor: pointer;
+  /* Không chuyển tiếp margin: VietnamInset đo vị trí ngay sau khi đặt lại margin để né đồng hồ tốc độ. */
+  transition: none;
 }
 
 .routetwin-leaflet .routetwin-territory-inset[hidden] {

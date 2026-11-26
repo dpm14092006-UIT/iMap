@@ -58,7 +58,8 @@ export function AppShell({
         </div>
         <div
           data-map-controls
-          className={`absolute bottom-[var(--map-controls-bottom)] right-3 z-20 flex flex-col items-end gap-2 [--map-controls-bottom:calc(var(--shell-bottom)+10px)] transition-[bottom] duration-200 ${docked ? 'max-md:[--map-controls-bottom:calc(var(--shell-bottom)+12px)]' : ''} ${hideOnFullSheet}`}
+          // Đứng trên dòng ghi nguồn bản đồ (điện thoại) và thước tỉ lệ (desktop) để không che chúng.
+          className={`absolute bottom-[var(--map-controls-bottom)] right-3 z-20 flex flex-col items-end gap-2 [--map-controls-bottom:calc(var(--shell-bottom)+22px)] md:[--map-controls-bottom:calc(var(--shell-bottom)+44px)] transition-[bottom] duration-200 ${hideOnFullSheet}`}
         >
           {bottomRight}
         </div>

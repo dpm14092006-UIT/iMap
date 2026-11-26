@@ -10,3 +10,6 @@ coverage/
 
 # Báo cáo và ảnh chụp của cổng kiểm chứng chủ quyền
 reports/
+
+# Liên kết Vercel CLI (cấu hình cục bộ)
+.vercel/

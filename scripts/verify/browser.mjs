@@ -379,6 +379,25 @@ try {
   await page.getByRole('button', { name: 'Tìm đường', exact: true }).click();
   await page.getByRole('button', { name: 'Bắt đầu', exact: true }).waitFor();
   assert.equal(await page.locator('.routetwin-route-label').count(), 1);
+  // Lớp giao thông trực tiếp (màu ùn tắc trên tuyến) bật sẵn: chú giải phải hiện khi có tuyến.
+  await page.getByRole('group', { name: 'Chú giải giao thông' }).waitFor();
+  // Bảng chỉ đường bên phải (desktop) không được che bản đồ phụ Điều 20 ở góc trên phải. Đo trong góc bo 12px.
+  await page.waitForTimeout(400);
+  const insetCorners = await page.evaluate(() => {
+    const inset = document.querySelector('.routetwin-territory-inset');
+    if (!inset || inset.hidden) return 'hidden';
+    const r = inset.getBoundingClientRect();
+    return [
+      [r.left + 16, r.top + 16],
+      [r.right - 16, r.top + 16],
+      [r.left + 16, r.bottom - 16],
+      [r.right - 16, r.bottom - 16],
+    ].map(([x, y]) => {
+      const hit = document.elementFromPoint(x, y);
+      return inset.contains(hit) || `${hit?.tagName}.${hit?.className}`.slice(0, 80);
+    });
+  });
+  assert.deepEqual(insetCorners, [true, true, true, true], 'Directions panel covers the territory inset');
   await page.getByRole('button', { name: 'Tùy chọn', exact: true }).click();
   await page.getByRole('button', { name: 'Tùy chọn', exact: true }).click();
   await page.getByRole('button', { name: 'Bắt đầu', exact: true }).click();

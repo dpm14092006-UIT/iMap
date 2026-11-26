@@ -4,7 +4,10 @@ import { Icon } from '../../../shared/ui/Icon';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import type { MapLayer, MapOverlays } from '../types';
 import type { MapLayerPreference } from '../hooks/useMapAppearance';
-import { usableChain } from '../basemap/providers';
+import { usableChain, usableSourceCredits } from '../basemap/providers';
+
+/** Đơn vị nguồn nền dùng được trong bản build này (production: chỉ nguồn đã duyệt). */
+const SOURCE_CREDITS = usableSourceCredits(import.meta.env.PROD).join(' · ');
 
 type LayerSwitcherProps = {
   layer: MapLayer;
@@ -170,11 +173,9 @@ export function LayerSwitcher({
 
       <p
         className="mt-2 truncate text-[11px] leading-4 text-content-subtle"
-        title={t(
-          'Nguồn: vApp (map.vapp.vn) · Vệ tinh: VNSDI Sentinel-2, Vietmap · Hành chính và Địa hình: VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam)',
-        )}
+        title={t('Nguồn: {sources}', { sources: SOURCE_CREDITS })}
       >
-        {t('Nguồn: vApp · Vietmap · VNSDI')}
+        {t('Nguồn: {sources}', { sources: SOURCE_CREDITS })}
       </p>
 
       <p className="mb-1 mt-3 text-xs font-bold text-content">{t('Lớp phủ')}</p>

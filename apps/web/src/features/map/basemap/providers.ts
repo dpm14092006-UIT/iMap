@@ -275,6 +275,24 @@ export const MODE_CHAINS: Record<BasemapMode, string[]> = {
   overview: ['vnsdi-admin', 'vapp'],
 };
 
+/** Tên ngắn của đơn vị cung cấp, theo tiền tố id (vnsdi-admin, vnsdi-sentinel2… đều là VNSDI). */
+const SOURCE_CREDITS: Record<string, string> = {
+  vapp: 'vApp (map.vapp.vn)',
+  vietmap: 'Vietmap',
+  vnsdi: 'VNSDI',
+};
+
+/**
+ * Các đơn vị có nguồn nền thực sự dùng được trong bản build này (production: chỉ nguồn đã duyệt).
+ * Dùng cho dòng "Nguồn" trong giao diện, để không ghi tên nguồn chưa được dùng.
+ */
+export function usableSourceCredits(production: boolean): string[] {
+  const credits = BASEMAP_PROVIDERS.filter((provider) => isUsable(provider, production)).map(
+    (provider) => SOURCE_CREDITS[provider.id.split('-')[0] ?? ''] ?? provider.name,
+  );
+  return [...new Set(credits)];
+}
+
 export function usableChain(mode: BasemapMode, production: boolean): BasemapProvider[] {
   return MODE_CHAINS[mode]
     .map(providerById)

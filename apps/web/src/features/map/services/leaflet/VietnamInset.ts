@@ -54,8 +54,15 @@ export class VietnamInset extends L.Control {
     // Đồng hồ tốc độ/thanh dẫn đường xuất hiện hay đổi chỗ mà bản đồ không di chuyển: kiểm tra lại ngay,
     // gộp theo từng khung hình để không tốn hiệu năng.
     let frame = 0;
-    this.overlayWatch = new MutationObserver(() => {
+    // Theo dõi mọi thuộc tính: đồng hồ tốc độ dời chỗ qua biến CSS `--sheet-top-inset` (style của <main>),
+    // bản đồ phụ dời theo `data-panel-open` khi bảng bên phải đóng/mở, hoặc khi control khác cùng góc
+    // xuất hiện/biến mất. Bỏ qua lớp ô/vector của Leaflet (transform đổi liên tục khi kéo) và chính bản
+    // đồ phụ (nó tự ghi margin) để không tự kích hoạt lại.
+    const mapPane = this.main.getPane('mapPane');
+    this.overlayWatch = new MutationObserver((records) => {
       if (frame || !this.box || this.box.hidden) return;
+      const box = this.box;
+      if (records.every(({ target }) => box.contains(target) || mapPane?.contains(target))) return;
       frame = requestAnimationFrame(() => {
         frame = 0;
         this.avoidOverlays();
@@ -65,7 +72,6 @@ export class VietnamInset extends L.Control {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['class'],
     });
     return box;
   }

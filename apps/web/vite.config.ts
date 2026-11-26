@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import type { Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -82,6 +83,8 @@ function htmlSecurityAndPreviewPlugin(): Plugin {
 export default defineConfig({
   plugins: [react(), appVersionPlugin(appBuildVersion), htmlSecurityAndPreviewPlugin()],
   define: { __APP_BUILD_VERSION__: JSON.stringify(appBuildVersion) },
+  // Node 25+ có localStorage riêng (rỗng nếu thiếu --localstorage-file), che mất localStorage của jsdom.
+  test: { execArgv: ['--no-experimental-webstorage'] },
   build: {
     rollupOptions: {
       output: {

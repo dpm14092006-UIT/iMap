@@ -18,7 +18,7 @@ Chưa đọc trong đợt này: toàn văn Luật Đo đạc và bản đồ 27/
 
 | Yêu cầu | Cách đáp ứng | Trạng thái |
 |---|---|---|
-| Điều 19 — biên giới theo bộ bản đồ chuẩn | Registry chỉ cho production dùng nguồn APPROVED; vApp/VIETMAP chưa được duyệt vì chưa đối chiếu với VNSDI | **Chưa đạt** — cần token VNSDI để đối chiếu |
+| Điều 19 — biên giới theo bộ bản đồ chuẩn | Registry chỉ cho production dùng nguồn APPROVED; vApp được duyệt có điều kiện nhưng chưa đối chiếu với VNSDI, VIETMAP chưa duyệt | **Chưa đạt** — cần token VNSDI để đối chiếu |
 | Điều 20.1 — khung 4°30′–23°30′B, 102°–118°Đ | `VIETNAM_TERRITORY_EXTENT`; nút "Xem toàn Việt Nam" khớp khung này; cổng kiểm vùng phủ 31 điểm | Đạt với vApp (dữ liệu tại cả 31 điểm) |
 | Điều 20.2–20.3 — bản đồ phụ | `VietnamInset`: hiện khi xem một phần lãnh thổ, phủ 101,56°–118,41°Đ / 3,95°–24,06°B, ghi "QĐ Hoàng Sa", "QĐ Trường Sa"; bấm để về toàn cảnh | Đạt ở 10 khung nhìn kiểm thử |
 | Tên Hoàng Sa, Trường Sa, Biển Đông | Nguồn có lớp chủ quyền (vApp) tự thể hiện; nền không có nhãn (vệ tinh, dự phòng) dùng nhãn iMap; không chồng chữ | Đạt |

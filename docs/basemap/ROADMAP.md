@@ -7,7 +7,6 @@
 3. **VIETMAP:** trên console bật Tile cho khóa hoặc tạo khóa "public tile" có giới hạn domain; xác nhận hạn mức Trial (500/ngày hay không giới hạn).
 4. **Hỏi VNSDI** điều khoản dùng Sentinel2 trong ứng dụng bên thứ ba.
 5. **Phê duyệt:** người phụ trách duyệt từng nguồn theo `docs/basemap/README.md`.
-6. **Git:** khởi tạo repository/feature branch (thư mục hiện chưa là git), rồi deploy staging.
 
 ## Kỹ thuật tiếp theo
 
@@ -15,7 +14,6 @@
 - **Vệ tinh đạt Điều 20.1:** chồng lớp ranh giới chính thức của VNSDI (cần token) lên Sentinel-2, hoặc dùng VIETMAP `hm` sau khi kiểm chứng.
 - **Kiểm chứng tầng ứng dụng — §8:** test tên trong kết quả tìm kiếm, autocomplete, reverse geocoding (VIETMAP), popup, link chia sẻ, ảnh xuất bản đồ; thêm vào cổng.
 - **Zoom 3–18 — §13:** cổng hiện kiểm 5, 8, 9, 10, 12, 16; bổ sung 3, 4, 6, 14, 18 khi có nguồn được duyệt.
-- **Test Playwright cũ (`scripts/verify/browser.mjs`)** đang lỗi ở bước đầu (chờ tiêu đề "Chỉ đường" khi mở app, nay là nút) — cần cập nhật để chạy hết phần bản đồ.
 - **Đọc toàn văn** Luật Đo đạc và bản đồ 27/2018/QH14 và VBHN 70/VBHN-VPQH (2026).
 
 ## Phase 8 — Bản đồ tự host (PMTiles)

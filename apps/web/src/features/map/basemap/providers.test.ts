@@ -4,6 +4,7 @@ import {
   MODE_CHAINS,
   isUsable,
   usableChain,
+  usableSourceCredits,
   type BasemapMode,
   type BasemapProvider,
 } from './providers';
@@ -46,5 +47,15 @@ describe('BasemapRegistry', () => {
     for (const mode of modes) for (const p of usableChain(mode, false)) expect(p.modes).toContain(mode);
     expect(usableChain('street', false).map((p) => p.id)).toEqual(['vapp', 'vietmap']);
     expect(usableChain('satellite', false)[0]?.id).toBe('vnsdi-sentinel2');
+  });
+
+  it('dòng "Nguồn" chỉ ghi đơn vị có nguồn được dùng trong bản build', () => {
+    const production = usableSourceCredits(true);
+    const approvedPrefixes = new Set(
+      BASEMAP_PROVIDERS.filter((p) => isUsable(p, true)).map((p) => p.id.split('-')[0]),
+    );
+    expect(production).toHaveLength(approvedPrefixes.size);
+    expect(production).toContain('vApp (map.vapp.vn)');
+    expect(usableSourceCredits(false)).toEqual(['VNSDI', 'vApp (map.vapp.vn)', 'Vietmap']);
   });
 });
