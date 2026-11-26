@@ -6,6 +6,7 @@ import type { Poi } from '../../explore/types';
 import type { RoutePlan } from '../../routing/types';
 import type { TrafficMapLayer } from '../../traffic/domain/trafficMapLayer';
 import { LeafletMapController } from '../services/LeafletMapController';
+import type { MapController } from '../services/MapController';
 import type { DraftStops, MapLayer, MapOverlays } from '../types';
 
 type MapViewProps = {
@@ -25,14 +26,14 @@ type MapViewProps = {
   /** Địa điểm đang hiển thị từ chức năng khám phá / tìm dọc tuyến. */
   pois: Poi[];
   highlightedPoiId: string | null;
-  controllerRef: MutableRefObject<LeafletMapController | null>;
+  controllerRef: MutableRefObject<MapController | null>;
   onMapClick: (point: LatLng) => void;
   onBoundsChange: (bounds: TrafficReportBounds) => void;
   onSelectRoute: (routeId: string) => void;
   onPoiClick: (poiId: string) => void;
 };
 
-/** Component React bọc LeafletMapController: tạo bản đồ 1 lần, sau đó chỉ truyền dữ liệu mới. */
+/** Component React bọc bộ máy bản đồ (MapController): tạo bản đồ 1 lần, sau đó chỉ truyền dữ liệu mới. */
 export function MapView({
   layer,
   route,
@@ -61,7 +62,7 @@ export function MapView({
   // Tạo bản đồ khi mount, hủy khi unmount.
   useEffect(() => {
     if (!containerRef.current) return;
-    const controller = new LeafletMapController(containerRef.current, {
+    const controller: MapController = new LeafletMapController(containerRef.current, {
       onBoundsChange: (bounds) => handlersRef.current.onBoundsChange(bounds),
       onMapClick: (point) => handlersRef.current.onMapClick(point),
       onSelectRoute: (routeId) => handlersRef.current.onSelectRoute(routeId),

@@ -2,7 +2,7 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DirectionsController } from '../../../features/routing/hooks/useDirections';
-import type { LeafletMapController } from '../../../features/map/services/LeafletMapController';
+import type { MapController } from '../../../features/map/services/MapController';
 import { placeFromPoint } from '../../../features/places/services/placeFromPoint';
 import type { Place } from '../../../features/places/types';
 import { deferred, routePlan } from '../../../testing/fixtures';
@@ -30,7 +30,7 @@ function setup() {
           setDestination,
         } as unknown as DirectionsController,
         locate,
-        mapController: { current: { flyTo } as unknown as LeafletMapController },
+        mapController: { current: { flyTo } as unknown as MapController },
         showToast: vi.fn(),
         t: (text) => text,
       }),
