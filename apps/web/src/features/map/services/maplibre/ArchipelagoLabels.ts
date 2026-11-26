@@ -6,7 +6,7 @@ import {
   VIETNAM_ARCHIPELAGOS,
   VIETNAM_ISLANDS,
 } from '../../domain/vietnamArchipelagos';
-import { maplibregl, textElement, type GLMap } from './gl';
+import { fromGLZoom, maplibregl, textElement, type GLMap } from './gl';
 
 type Group = 'archipelago' | 'island' | 'sea';
 
@@ -89,7 +89,8 @@ export class ArchipelagoLabels {
   }
 
   private readonly sync = () => {
-    const zoom = this.map.getZoom();
+    // Ngưỡng trong vietnamArchipelagos.ts theo thang zoom của ứng dụng (ô 256 px).
+    const zoom = fromGLZoom(this.map.getZoom());
     for (const { group, marker } of this.markers) {
       const show = this.visible(group, zoom);
       const shown = marker.getElement().isConnected;

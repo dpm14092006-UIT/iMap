@@ -2,7 +2,7 @@ import type { LatLng } from '../../../../shared/geo/types';
 import { haversineMeters } from '../../../../shared/geo/distance';
 import { VIETNAM_TERRITORY_EXTENT, viewShowsWholeTerritory } from '../../domain/vietnamTerritory';
 import type { FitInsets, MapBounds } from '../MapController';
-import { maplibregl, type GLMap } from './gl';
+import { fromGLZoom, maplibregl, toGLZoom, type GLMap } from './gl';
 
 /** Dưới ngưỡng này (px) là điện thoại: chừa chỗ cho bảng kéo ở đáy. */
 export const MOBILE_QUERY = '(max-width: 767px)';
@@ -39,8 +39,9 @@ export class MaplibreCamera {
   zoomOut() {
     this.map.zoomOut();
   }
+  /** Mức zoom theo thang của ứng dụng (ô 256 px). */
   getZoom(): number {
-    return this.map.getZoom();
+    return fromGLZoom(this.map.getZoom());
   }
   getCenter(): LatLng {
     const { lat, lng } = this.map.getCenter();
@@ -57,7 +58,12 @@ export class MaplibreCamera {
   }
 
   flyTo(point: LatLng, zoom = 15) {
-    this.map.flyTo({ center: [point.lng, point.lat], zoom, offset: this.sheetOffset(), duration: 550 });
+    this.map.flyTo({
+      center: [point.lng, point.lat],
+      zoom: toGLZoom(zoom),
+      offset: this.sheetOffset(),
+      duration: 550,
+    });
   }
 
   /**
@@ -71,8 +77,8 @@ export class MaplibreCamera {
 
   followLocation(point: LatLng, zoom = 16) {
     const target = { center: [point.lng, point.lat] as [number, number], offset: this.sheetOffset() };
-    if (this.map.getZoom() < zoom) {
-      this.map.easeTo({ ...target, zoom, duration: 350 });
+    if (this.getZoom() < zoom) {
+      this.map.easeTo({ ...target, zoom: toGLZoom(zoom), duration: 350 });
       return;
     }
     // Không dời khung khi chỉ lệch vài mét (tránh rung bản đồ theo nhiễu GPS).
@@ -91,10 +97,19 @@ export class MaplibreCamera {
     const byUser = (event: { originalEvent?: unknown }) => {
       if (event.originalEvent) listener();
     };
+    // Cuộn chuột và chụm hai ngón báo ngay (như bản Leaflet), không chờ khung hình sau mới có zoomstart.
+    const container = this.map.getContainer();
+    const onTouch = (event: TouchEvent) => {
+      if (event.touches.length > 1) listener();
+    };
     const events = ['dragstart', 'zoomstart', 'rotatestart', 'pitchstart', 'dblclick'] as const;
     for (const name of events) this.map.on(name, byUser);
+    container.addEventListener('wheel', listener, { passive: true });
+    container.addEventListener('touchstart', onTouch, { passive: true });
     return () => {
       for (const name of events) this.map.off(name, byUser);
+      container.removeEventListener('wheel', listener);
+      container.removeEventListener('touchstart', onTouch);
     };
   }
 
@@ -162,7 +177,7 @@ export class MaplibreCamera {
     for (const point of points) bounds.extend([point.lng, point.lat]);
     this.map.fitBounds(bounds, {
       padding: tooSmall ? 70 : { top, left, right, bottom },
-      maxZoom: 15,
+      maxZoom: toGLZoom(15),
       bearing: this.map.getBearing(),
       pitch: this.map.getPitch(),
     });

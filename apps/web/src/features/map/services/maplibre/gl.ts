@@ -9,6 +9,14 @@ maplibregl.setWorkerUrl(workerUrl);
 export { maplibregl };
 export type GLMap = maplibregl.Map;
 
+/**
+ * Cả ứng dụng (ngưỡng nhãn đảo, flyTo(…, 15), maxZoom khi fit…) dùng mức zoom theo ô 256 px như Leaflet.
+ * MapLibre dùng ô 512 px: cùng tỉ lệ bản đồ thì zoom MapLibre = zoom ứng dụng − 1. Quy đổi tại biên này.
+ */
+export const ZOOM_OFFSET = 1;
+export const toGLZoom = (appZoom: number) => appZoom - ZOOM_OFFSET;
+export const fromGLZoom = (glZoom: number) => glZoom + ZOOM_OFFSET;
+
 /** Khung nhìn khởi đầu toàn Việt Nam: [kinh độ, vĩ độ]. */
 export const VIETNAM_CENTER_LNGLAT: [number, number] = [108, 16];
 

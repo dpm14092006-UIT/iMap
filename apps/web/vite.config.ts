@@ -91,7 +91,6 @@ export default defineConfig({
         // Tách thư viện ít đổi để trình duyệt cache lâu; Supabase đã là chunk động riêng (import()).
         manualChunks(id) {
           if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'vendor-react';
-          if (id.includes('node_modules/leaflet/')) return 'vendor-leaflet';
           if (/node_modules\/(@supabase|iceberg-js)\//.test(id)) return 'vendor-supabase';
           return undefined;
         },

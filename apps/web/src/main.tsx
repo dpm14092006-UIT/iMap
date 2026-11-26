@@ -7,7 +7,6 @@ import { AuthProvider } from './features/auth/context/AuthProvider';
 import { PushSignOutCleanup } from './features/notifications/components/PushSignOutCleanup';
 import { RecentPlacesProvider } from './features/places/context/RecentPlacesProvider';
 import { I18nProvider, useI18n } from './shared/i18n/I18nProvider';
-import 'leaflet/dist/leaflet.css';
 import './app/styles.css';
 
 const AuthPage = lazy(() =>

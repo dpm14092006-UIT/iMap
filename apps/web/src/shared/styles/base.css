@@ -79,7 +79,7 @@ select:focus-visible,
   color: #3730a3;
 }
 
-/* Chế độ tối cho phần tử Leaflet (nằm ngoài React nên dùng tổ tiên `.dark`). */
+/* Chế độ tối cho phần tử bản đồ (nằm ngoài React nên dùng tổ tiên `.dark`). */
 
 .dark {
   color: rgb(var(--content));
@@ -91,8 +91,7 @@ select:focus-visible,
   color: rgb(var(--content));
 }
 
-.dark .routetwin-tooltip,
-.dark .leaflet-tooltip {
+.dark .routetwin-tooltip {
   background: rgb(15 23 42 / 96%);
   box-shadow: 0 2px 12px rgb(0 0 0 / 50%);
   color: #e2e8f0;

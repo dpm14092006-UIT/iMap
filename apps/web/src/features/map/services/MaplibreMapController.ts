@@ -5,7 +5,7 @@ import type { TrafficMapLayer } from '../../traffic/domain/trafficMapLayer';
 import type { FitInsets, MapController, MapControllerData, MapControllerHandlers } from './MapController';
 import { ArchipelagoLabels } from './maplibre/ArchipelagoLabels';
 import { AttributionLine } from './maplibre/AttributionLine';
-import { maplibregl, transformMapRequest, VIETNAM_CENTER_LNGLAT, type GLMap } from './maplibre/gl';
+import { maplibregl, toGLZoom, transformMapRequest, VIETNAM_CENTER_LNGLAT, type GLMap } from './maplibre/gl';
 import { MaplibreBasemap } from './maplibre/MaplibreBasemap';
 import { MaplibreCamera } from './maplibre/MaplibreCamera';
 import { FocusPin, LocationMarker, PoiMarkers } from './maplibre/markers';
@@ -49,9 +49,10 @@ export class MaplibreMapController implements MapController {
     this.map = new maplibregl.Map({
       container,
       center: VIETNAM_CENTER_LNGLAT,
-      zoom: 4.2,
-      minZoom: 1,
-      maxZoom: 19,
+      zoom: toGLZoom(5),
+      // Cùng giới hạn với bản Leaflet trước đây (1–19 theo thang ô 256 px).
+      minZoom: toGLZoom(1),
+      maxZoom: toGLZoom(19),
       maxPitch: 60,
       attributionControl: false,
       dragRotate: true,
