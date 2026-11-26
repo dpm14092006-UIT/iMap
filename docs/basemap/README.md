@@ -48,7 +48,7 @@ npm run verify:sovereignty -- --update-baseline
 
 Cổng cũng chạy trong `npm run verify` (vòng 6).
 
-## Giới hạn của đợt này
+## Giới hạn
 
-- Thư mục dự án chưa là repository git, nên chưa có feature branch, commit hay deploy staging.
-- Không tuyên bố đã tuân thủ pháp luật hay được cơ quan nhà nước chứng nhận. Các nguồn chỉ ở mức TESTING/BLOCKED.
+- Không tuyên bố đã tuân thủ pháp luật hay được cơ quan nhà nước chứng nhận. vApp chỉ được chủ dự án duyệt có điều kiện; các nguồn khác ở mức TESTING/BLOCKED.
+- Dòng "Nguồn" trong giao diện (bảng Lớp, menu Thông tin bản đồ) lấy từ registry: production chỉ ghi nguồn đã duyệt.

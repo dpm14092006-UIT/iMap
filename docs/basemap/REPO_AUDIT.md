@@ -39,5 +39,5 @@ Monorepo `RouteTwin_OOP_Starter`: `apps/web` (React 19 + Vite + Tailwind), `apps
 
 ## Phân loại OSM
 
-- **OSM để hiển thị bản đồ:** đã loại bỏ. Nguồn vApp dựng từ dữ liệu OSM/Overture/Wikidata nhưng có lớp chủ quyền riêng; đang ở TESTING.
+- **OSM để hiển thị bản đồ:** đã loại bỏ. Nguồn vApp dựng từ dữ liệu OSM/Overture/Wikidata nhưng có lớp chủ quyền riêng; được chủ dự án duyệt có điều kiện ngày 2026-11-26.
 - **OSM làm dữ liệu:** Overpass cho trợ lý địa điểm và file đồ thị cho benchmark. Không gây vấn đề hiển thị chủ quyền nên giữ, có ghi nguồn ODbL. Có thể thay Overpass bằng VIETMAP POI, nhưng tốn hạn mức.
