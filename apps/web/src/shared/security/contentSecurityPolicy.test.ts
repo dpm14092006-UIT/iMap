@@ -60,7 +60,7 @@ describe('buildContentSecurityPolicy', () => {
     expect(origins('arcgis-raster')).toEqual([...MAP_TILE_SOURCES].sort());
     expect(origins('maplibre-style')).toEqual([...MAP_STYLE_SOURCES].sort());
     const vapp = readFileSync(
-      new URL('../../features/map/services/leaflet/VappLayer.ts', import.meta.url),
+      new URL('../../features/map/services/maplibre/MaplibreBasemap.ts', import.meta.url),
       'utf8',
     );
     expect(vapp).toContain(`'${MAP_STYLE_SOURCES[0]}'`);

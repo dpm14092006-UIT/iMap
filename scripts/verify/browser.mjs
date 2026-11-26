@@ -1,5 +1,5 @@
 /* global document, window, WheelEvent, getComputedStyle, requestAnimationFrame */
-/** Repeatable UI + real Leaflet integration checks. No paid API calls, writes or real GPS required. */
+/** Repeatable UI + real MapLibre GL integration checks. No paid API calls, writes or real GPS required. */
 import assert from 'node:assert/strict';
 import { mkdir, readFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
@@ -65,12 +65,12 @@ try {
     permissions: ['geolocation'],
     geolocation: { latitude: 10.77, longitude: 106.69, accuracy: 5 },
   });
-  // Fixture tiles keep CI independent of map-provider availability. Leaflet itself is never mocked.
+  // Fixture tiles keep CI independent of map-provider availability. MapLibre itself is never mocked.
   await context.route(/^https?:\/\//, async (route) => {
     const url = new URL(route.request().url());
     if (url.hostname === '127.0.0.1') return route.continue();
     if (blockSentinel && url.pathname.includes('/Sentinel2/')) return route.fulfill({ status: 503 });
-    // Leaflet tải ô bằng <img>, MapLibre bằng fetch(): cả hai nhận ô giả lập.
+    // MapLibre tải ô ảnh bằng fetch(), ảnh khác (biểu tượng, ảnh báo cáo) bằng <img>: cả hai nhận ô giả lập.
     if (route.request().resourceType() === 'image' || /\/MapServer\/tile\//.test(url.pathname))
       return route.fulfill({
         contentType: 'image/png',
@@ -170,25 +170,24 @@ try {
   // Trang chủ chỉ có bản đồ + thanh tìm kiếm; bảng Chỉ đường mở khi bấm nút trên thanh trên cùng.
   await openDirections(page);
   await initialMapTile;
-  await page.locator('.leaflet-gl-layer .maplibregl-canvas').first().waitFor();
+  await page.locator('[data-map-engine] canvas.maplibregl-canvas').first().waitFor();
   assert.ok(
     requests.includes('/api/map/vietmap/styles/tm/style.json') ||
       requests.includes('/api/map/vietmap/styles/dm/style.json'),
   );
   assert.equal(await page.getByRole('button', { name: 'Demo', exact: true }).count(), 0);
   assert.equal(await page.getByText('So sánh thuật toán', { exact: true }).count(), 0);
-  console.log('✓ Legacy demo URL/storage cannot enable removed UI; app and Leaflet render');
+  console.log('✓ Legacy demo URL/storage cannot enable removed UI; app and MapLibre GL render');
   await page.evaluate(async () => {
-    const { LeafletMapController } = await import('/src/features/map/services/LeafletMapController.ts');
+    const { MaplibreMapController } = await import('/src/features/map/services/MaplibreMapController.ts');
     const { routePlan } = await import('/src/testing/fixtures.ts');
     const { toTrafficMapLayer } = await import('/src/features/traffic/domain/trafficMapLayer.ts');
     const el = document.createElement('div');
     el.id = 'qa-map';
-    el.className = 'routetwin-leaflet';
     el.style.cssText = 'position:fixed;inset:0;z-index:10000';
     document.body.append(el);
     const events = { bounds: 0, clicks: 0, selected: [], pois: [], gestures: 0 };
-    const c = new LeafletMapController(el, {
+    const c = new MaplibreMapController(el, {
       onBoundsChange: () => events.bounds++,
       onMapClick: () => events.clicks++,
       onSelectRoute: (id) => events.selected.push(id),
@@ -211,7 +210,7 @@ try {
       highlightedPoiId: null,
     };
     c.update(data);
-    window.__qa = { c, data, route, events, el, LeafletMapController, toTrafficMapLayer };
+    window.__qa = { c, data, route, events, el, MaplibreMapController, toTrafficMapLayer };
   });
   await page.waitForFunction(() => window.__qa.c.getZoom() > 5);
   assert.equal(await page.locator('#qa-map .routetwin-route-label').count(), 1);
@@ -257,7 +256,7 @@ try {
   });
   await darkStyle;
   assert.equal(await page.locator('#qa-map.map-theme-dark.is-picking').count(), 1);
-  await page.locator('#qa-map .maplibregl-canvas').waitFor();
+  await page.locator('#qa-map > .maplibregl-canvas-container > canvas').waitFor();
   assert.equal(await page.locator('#qa-map .routetwin-navigation-marker').count(), 1);
   assert.equal(await page.locator('#qa-map .routetwin-route-label').count(), 0);
   assert.equal(await page.locator('#qa-map .routetwin-poi-marker.is-highlighted').count(), 1);
@@ -272,9 +271,9 @@ try {
   assert.deepEqual(await page.evaluate(() => window.__qa.events.pois), ['poi']);
   await page.locator('#qa-map .routetwin-incident-marker').click();
   await page.waitForFunction(() =>
-    document.querySelector('#qa-map .leaflet-popup-content')?.textContent?.includes('QA Flood'),
+    document.querySelector('#qa-map .maplibregl-popup-content')?.textContent?.includes('QA Flood'),
   );
-  assert.match(await page.locator('#qa-map .leaflet-popup-content').textContent(), /QA Flood/);
+  assert.match(await page.locator('#qa-map .maplibregl-popup-content').textContent(), /QA Flood/);
   console.log('✓ GPS arrow, heading, POI selection, focus pin, active incident popup and independent layers');
   const sentinelTile = page.waitForResponse((r) => r.ok() && r.url().includes('/Sentinel2/MapServer/tile/'));
   await page.evaluate(() => {
@@ -297,9 +296,9 @@ try {
   assert.equal(await page.evaluate(() => window.__qa.events.gestures), 1);
   // Vệ tinh: ảnh Sentinel-2 của VNSDI (không nhãn) → nhãn chủ quyền của iMap phải hiện.
   await sentinelTile;
-  await page.locator('#qa-map.map-theme-satellite .leaflet-tile-loaded').first().waitFor();
+  await page.waitForFunction(() => window.__qa.c.activeBasemapId() === 'vnsdi-sentinel2');
   assert.equal(await page.evaluate(() => window.__qa.el.dataset.basemap), 'vnsdi-sentinel2');
-  assert.match(await page.locator('#qa-map .leaflet-control-attribution').textContent(), /VNSDI.*Sentinel-2/);
+  assert.match(await page.locator('#qa-map .routetwin-attribution').textContent(), /VNSDI.*Sentinel-2/);
   assert.equal(await page.locator('#qa-map .sovereignty-label--archipelago').count(), 2);
   // Đường phố + Địa hình khi VNSDI địa hình chưa có token: giữ nền đường phố, không để bản đồ trắng.
   await page.evaluate(() => {
@@ -316,12 +315,12 @@ try {
   await page.evaluate(() => {
     const q = window.__qa;
     // Sang vùng khác để trình duyệt phải tải ô Sentinel-2 mới (ô cũ nằm trong bộ nhớ đệm).
-    q.c.map.setView([21.03, 105.85], 9, { animate: false });
+    q.c.map.jumpTo({ center: [105.85, 21.03], zoom: 8 });
     q.data.layer = 'satellite';
     q.c.update(q.data);
   });
   await hybridTile;
-  await page.locator('#qa-map.map-theme-satellite .maplibregl-canvas').waitFor();
+  await page.locator('#qa-map.map-theme-satellite > .maplibregl-canvas-container > canvas').waitFor();
   assert.equal(await page.evaluate(() => window.__qa.el.dataset.basemap), 'vietmap');
   assert.ok(requests.includes('/api/map/vietmap/styles/hm/style.json'));
   // Hết nguồn hợp lệ (Vietmap 423) → thông báo, không dự phòng về OSM.
@@ -339,7 +338,7 @@ try {
   });
   await blockedTile;
   await page.locator('#qa-map .routetwin-basemap-notice').waitFor();
-  assert.equal(await page.locator('#qa-map .maplibregl-canvas').count(), 0);
+  assert.equal(await page.evaluate(() => window.__qa.el.dataset.basemap ?? null), null);
   assert.equal(await page.locator('#qa-map .sovereignty-label--archipelago').count(), 2);
   console.log(
     '✓ Satellite uses VNSDI Sentinel-2, falls back to Vietmap hybrid, then shows a notice (never OSM); terrain without a source keeps the base',
@@ -359,7 +358,7 @@ try {
   await page.evaluate(() => {
     const q = window.__qa;
     q.c.destroy();
-    const fresh = new q.LeafletMapController(q.el, { onMapClick: () => {} });
+    const fresh = new q.MaplibreMapController(q.el, { onMapClick: () => {} });
     fresh.destroy();
     q.el.remove();
     delete window.__qa;
@@ -567,7 +566,7 @@ try {
     await page.waitForTimeout(200);
     await page.screenshot({ path: resolve(artifacts, 'traffic-desktop-dark.png'), fullPage: true });
   }
-  // Bộ máy MapLibre GL (đang chuyển dần từ Leaflet): cùng luồng tìm tuyến, chạy trên trang riêng.
+  // Luồng ứng dụng thật trên trang riêng: tìm tuyến, bản đồ phụ, đổi nền rồi cài lại lớp của iMap.
   {
     // Nhóm kiểm thử trước giả lập Sentinel-2/hybrid lỗi; trang này dùng nguồn bình thường.
     blockSentinel = false;
@@ -580,7 +579,7 @@ try {
         errors.push(`[maplibre] ${msg.text()}`);
     });
     await gl.setViewportSize({ width: 1440, height: 1000 });
-    await gl.goto(`http://127.0.0.1:${address.port}/?engine=maplibre`);
+    await gl.goto(`http://127.0.0.1:${address.port}/`);
     await gl.locator('[data-map-engine="maplibre"] canvas.maplibregl-canvas').first().waitFor();
     // vApp bị chặn trong kiểm thử (không gọi mạng ngoài): chuỗi dự phòng sang VIETMAP (ô giả lập), không OSM.
     await gl.waitForFunction(

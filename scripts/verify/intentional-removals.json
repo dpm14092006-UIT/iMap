@@ -1,1 +1,18 @@
-{}
+{
+  "LeafletMapController": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. Thay bằng MaplibreMapController (cùng interface MapController).",
+  "rasterLayer": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. Thay bằng rasterStyle() trong maplibre/MaplibreBasemap.ts.",
+  "BaseLayers": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. Thay bằng MaplibreBasemap (cùng registry, chuỗi dự phòng, thông báo khi hết nguồn).",
+  "LifecycleCanvas": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. Chỉ dùng để vá Canvas của Leaflet 1.9; MapLibre không cần.",
+  "LocationLayer": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. Thay bằng LocationMarker trong maplibre/markers.ts.",
+  "MapCamera": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. Thay bằng MaplibreCamera.",
+  "PoiLayer": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. Thay bằng PoiMarkers trong maplibre/markers.ts.",
+  "addVappLayer": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. MapLibre dùng thẳng style vApp: fetchVappStyle() trong maplibre/MaplibreBasemap.ts.",
+  "addVietmapLayer": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. Style Vietmap tải qua proxy trong MaplibreBasemap; transformMapRequest trong maplibre/gl.ts.",
+  "VIETNAM_TERRITORY_BOUNDS": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. Thay bằng VIETNAM_TERRITORY_LNGLAT_BOUNDS trong maplibre/MaplibreCamera.ts.",
+  "VIETNAM_CENTER": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. Thay bằng VIETNAM_CENTER_LNGLAT trong maplibre/gl.ts.",
+  "COLORS": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. Thay bằng ROUTE_COLORS trong maplibre/RouteLayer.ts.",
+  "ROUND": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. Kiểu nét Leaflet; MapLibre dùng layout line-cap/line-join.",
+  "toLatLngs": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. Đổi tọa độ cho Leaflet; thay bằng coordinateToLngLat trong maplibre/gl.ts.",
+  "drawWhiteCasing": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. Viền trắng là lớp 'casing' trong maplibre/RouteLayer.ts.",
+  "toggleGroup": "Thay Leaflet bằng MapLibre GL (bản đồ 3D/4D, nhánh dpm, 2026-11-27): thay thế trong features/map/services/maplibre/ và MaplibreMapController. Bật/tắt LayerGroup của Leaflet; MapLibre dùng visibility của lớp và marker."
+}

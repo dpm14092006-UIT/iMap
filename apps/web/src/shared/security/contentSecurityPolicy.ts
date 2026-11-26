@@ -45,7 +45,7 @@ export function buildContentSecurityPolicy({ apiBaseUrl, supabaseUrl }: CspConfi
   const directives: Record<string, string> = {
     'default-src': "'self'",
     'script-src': "'self'",
-    // Leaflet và React đặt style trực tiếp trên phần tử (vị trí ô bản đồ, marker).
+    // MapLibre và React đặt style trực tiếp trên phần tử (vị trí marker, khung vẽ).
     'style-src': "'self' 'unsafe-inline'",
     // data: biểu tượng SVG nội tuyến; blob: ảnh xem trước khi báo cáo; Supabase: ảnh báo cáo (link ký).
     // API: ô ảnh VNSDI qua proxy /api/map/vnsdi.

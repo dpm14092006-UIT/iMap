@@ -6,18 +6,18 @@ Monorepo `RouteTwin_OOP_Starter`: `apps/web` (React 19 + Vite + Tailwind), `apps
 
 | Hạng mục | Hiện trạng | Tệp |
 |---|---|---|
-| Map engine | Leaflet 1.9 + MapLibre GL 5 qua `@maplibre/maplibre-gl-leaflet` (vector style chạy trong lớp Leaflet) | `apps/web/src/features/map/services/LeafletMapController.ts` |
+| Map engine | MapLibre GL 5 (WebGL; thay Leaflet từ 2026-11-27, nhánh `dpm`), sau interface `MapController` | `apps/web/src/features/map/services/MaplibreMapController.ts`, `MapController.ts` |
 | Registry nguồn nền | Mới: `BASEMAP_PROVIDERS`, trạng thái UNVERIFIED/TESTING/APPROVED/REJECTED/BLOCKED | `apps/web/src/features/map/basemap/providers.ts` |
-| BasemapManager | `BaseLayers`: chọn nguồn theo registry, dự phòng trong chuỗi, thông báo khi hết nguồn | `.../services/leaflet/BaseLayers.ts` |
-| vApp | style.json tải thẳng từ trình duyệt, style gốc không chỉnh | `.../services/leaflet/VappLayer.ts` |
-| VIETMAP | style/ô qua proxy API (khóa giữ ở máy chủ) | `.../leaflet/VietmapLayer.ts`, `apps/api/src/modules/map/presentation/vietmapBasemapRouter.ts` |
+| BasemapManager | `MaplibreBasemap`: chọn nguồn theo registry, dự phòng trong chuỗi, thông báo khi hết nguồn; lớp của iMap cài lại sau mỗi `setStyle` | `.../services/maplibre/MaplibreBasemap.ts` |
+| vApp | style.json tải thẳng từ trình duyệt, style gốc không chỉnh | `.../services/maplibre/MaplibreBasemap.ts` (`fetchVappStyle`) |
+| VIETMAP | style/ô qua proxy API (khóa giữ ở máy chủ) | `.../maplibre/gl.ts` (`transformMapRequest`), `apps/api/src/modules/map/presentation/vietmapBasemapRouter.ts` |
 | VNSDI hành chính/địa hình | ô ArcGIS qua proxy API (token ở máy chủ) | `apps/api/src/modules/map/presentation/vnsdiBasemapRouter.ts` |
 | VNSDI Sentinel-2 | ô ArcGIS công khai, tải thẳng | registry `vnsdi-sentinel2` |
-| Nhãn chủ quyền iMap | `ArchipelagoLabels`: Hoàng Sa, Trường Sa, Biển Đông, 15 đảo; tự tắt khi nền đã có nhãn | `.../leaflet/ArchipelagoLabels.ts`, `domain/vietnamArchipelagos.ts` |
-| Bản đồ phụ (Điều 20.2–20.3) | Mới: `VietnamInset` | `.../leaflet/VietnamInset.ts`, `domain/vietnamTerritory.ts` |
-| Tổng quan Việt Nam | Nút "Xem toàn Việt Nam" (menu) → khớp 4°30′–23°30′B, 102°–118°Đ | `.../leaflet/MapCamera.ts`, `app/shell/TopBar.tsx` |
+| Nhãn chủ quyền iMap | `ArchipelagoLabels`: Hoàng Sa, Trường Sa, Biển Đông, 15 đảo (HTML, không phụ thuộc font nguồn); tự tắt khi nền đã có nhãn | `.../maplibre/ArchipelagoLabels.ts`, `domain/vietnamArchipelagos.ts` |
+| Bản đồ phụ (Điều 20.2–20.3) | `VietnamInset` (map MapLibre nhỏ, không tương tác; khung đỏ theo 4 góc màn hình, đúng cả khi nghiêng/xoay) | `.../maplibre/VietnamInset.ts`, `domain/vietnamTerritory.ts` |
+| Tổng quan Việt Nam | Nút "Xem toàn Việt Nam" (menu) → khớp 4°30′–23°30′B, 102°–118°Đ | `.../maplibre/MaplibreCamera.ts`, `app/shell/TopBar.tsx` |
 | Chọn lớp | Theo hệ thống / Đường phố / Tối / Vệ tinh / Hành chính; lớp phủ Giao thông, Sự cố, Địa hình | `features/map/components/LayerSwitcher.tsx` |
-| CSP | `img-src` có `vnsdi.mae.gov.vn`; `connect-src` có `map.vapp.vn`; không có OSM/Esri. Có test đối chiếu với registry | `apps/web/src/shared/security/contentSecurityPolicy.ts`, `apps/web/vite.config.ts` |
+| CSP | `img-src` và `connect-src` có `vnsdi.mae.gov.vn` (MapLibre tải ô bằng fetch); `connect-src` có `map.vapp.vn`; không có OSM/Esri. Có test đối chiếu với registry | `apps/web/src/shared/security/contentSecurityPolicy.ts`, `apps/web/vite.config.ts` |
 
 Đã gỡ trong đợt này: ô OpenStreetMap (openstreetmap.de/.fr), OpenTopoMap và Esri khỏi nền bản đồ, preconnect tới Esri/OSM trong `index.html`, link "Mở trên OpenStreetMap", dòng "Bản đồ nền OpenStreetMap".
 

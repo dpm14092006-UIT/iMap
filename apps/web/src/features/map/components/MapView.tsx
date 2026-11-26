@@ -5,9 +5,7 @@ import { useI18n } from '../../../shared/i18n/I18nProvider';
 import type { Poi } from '../../explore/types';
 import type { RoutePlan } from '../../routing/types';
 import type { TrafficMapLayer } from '../../traffic/domain/trafficMapLayer';
-import { LeafletMapController } from '../services/LeafletMapController';
 import type { MapController } from '../services/MapController';
-import { resolveMapEngine } from '../services/mapEngine';
 import type { DraftStops, MapLayer, MapOverlays } from '../types';
 
 type MapViewProps = {
@@ -56,14 +54,13 @@ export function MapView({
 }: MapViewProps) {
   const { language, t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [engine] = useState(resolveMapEngine);
   // Tăng mỗi khi bản đồ sẵn sàng (MapLibre tạo bất đồng bộ) để lần vẽ đầu tiên không bị bỏ lỡ.
   const [ready, setReady] = useState(0);
   // Giữ handler mới nhất trong ref để không phải tạo lại bản đồ khi callback đổi.
   const handlersRef = useRef({ onMapClick, onBoundsChange, onSelectRoute, onPoiClick });
   handlersRef.current = { onMapClick, onBoundsChange, onSelectRoute, onPoiClick };
 
-  // Tạo bản đồ khi mount, hủy khi unmount. MapLibre GL tải theo nhu cầu (?engine=maplibre trong lúc chuyển).
+  // Tạo bản đồ khi mount, hủy khi unmount. MapLibre GL (WebGL) tải riêng để giao diện hiện trước.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -87,18 +84,16 @@ export function MapView({
       resizeObserver.observe(container);
       setReady((count) => count + 1);
     };
-    if (engine === 'maplibre')
-      void import('../services/MaplibreMapController').then(({ MaplibreMapController }) =>
-        attach(new MaplibreMapController(container, handlers)),
-      );
-    else attach(new LeafletMapController(container, handlers));
+    void import('../services/MaplibreMapController').then(({ MaplibreMapController }) =>
+      attach(new MaplibreMapController(container, handlers)),
+    );
     return () => {
       disposed = true;
       resizeObserver?.disconnect();
       if (controller && controllerRef.current === controller) controllerRef.current = null;
       controller?.destroy();
     };
-  }, [controllerRef, engine]);
+  }, [controllerRef]);
 
   // Vẽ lại khi dữ liệu thay đổi.
   useEffect(() => {
@@ -138,8 +133,8 @@ export function MapView({
   return (
     <div
       ref={containerRef}
-      className={`${engine === 'maplibre' ? 'routetwin-map' : 'routetwin-leaflet'} absolute inset-0 z-0`}
-      data-map-engine={engine}
+      className="routetwin-map absolute inset-0 z-0"
+      data-map-engine="maplibre"
       role="region"
       aria-label={t('Bản đồ tương tác Việt Nam')}
     />
