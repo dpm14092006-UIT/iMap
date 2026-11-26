@@ -28,6 +28,8 @@ describe('buildContentSecurityPolicy', () => {
       'https://abc.supabase.co',
       'wss://abc.supabase.co',
       'https://map.vapp.vn',
+      // MapLibre GL tải ô ảnh VNSDI bằng fetch.
+      'https://vnsdi.mae.gov.vn',
     ]);
   });
 
@@ -39,7 +41,7 @@ describe('buildContentSecurityPolicy', () => {
 
   it('API cùng nguồn ("/api") hoặc thiếu cấu hình thì chỉ còn self', () => {
     const local = buildContentSecurityPolicy({ apiBaseUrl: '/api' });
-    expect(directive(local, 'connect-src')).toEqual(["'self'", ...MAP_STYLE_SOURCES]);
+    expect(directive(local, 'connect-src')).toEqual(["'self'", ...MAP_STYLE_SOURCES, ...MAP_TILE_SOURCES]);
     expect(buildContentSecurityPolicy({ apiBaseUrl: 'javascript:alert(1)' })).not.toContain('javascript');
   });
 
