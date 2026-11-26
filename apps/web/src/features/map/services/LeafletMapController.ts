@@ -1,10 +1,9 @@
 import * as L from 'leaflet';
 import type { LatLng } from '../../../shared/geo/types';
 import type { Language } from '../../../shared/i18n/translate';
-import type { Poi } from '../../explore/types';
 import type { RoutePlan } from '../../routing/types';
 import type { TrafficMapLayer } from '../../traffic/domain/trafficMapLayer';
-import type { DraftStops, MapLayer, MapOverlays } from '../types';
+import type { FitInsets, MapController, MapControllerData, MapControllerHandlers } from './MapController';
 import { ArchipelagoLabels } from './leaflet/ArchipelagoLabels';
 import { VietnamInset } from './leaflet/VietnamInset';
 import { BaseLayers } from './leaflet/BaseLayers';
@@ -12,42 +11,17 @@ import { VIETNAM_CENTER } from './leaflet/drawing';
 import { FocusPin } from './leaflet/FocusPin';
 import { LifecycleCanvas } from './leaflet/LifecycleCanvas';
 import { LocationLayer } from './leaflet/LocationLayer';
-import { MapCamera, type FitInsets } from './leaflet/MapCamera';
+import { MapCamera } from './leaflet/MapCamera';
 import { PoiLayer } from './leaflet/PoiLayer';
 import { RouteLayer } from './leaflet/RouteLayer';
 import { TrafficLayers } from './leaflet/TrafficLayers';
-
-type MapControllerHandlers = {
-  onMapClick: (point: LatLng) => void;
-  /** Bấm vào tuyến phụ hoặc nhãn tuyến trên bản đồ. */
-  onSelectRoute?: (routeId: string) => void;
-  onPoiClick?: (poiId: string) => void;
-  onBoundsChange?: (bounds: { minLat: number; minLng: number; maxLat: number; maxLng: number }) => void;
-};
-
-/** Toàn bộ dữ liệu cần vẽ trên bản đồ, được MapView truyền vào mỗi khi thay đổi. */
-type MapControllerData = {
-  language: Language;
-  layer: MapLayer;
-  route: RoutePlan | null;
-  routeOptions: RoutePlan[];
-  draftStops: DraftStops;
-  trafficLayer: TrafficMapLayer;
-  currentLocation: LatLng | null;
-  headingDegrees: number | null;
-  isNavigating: boolean;
-  isPicking: boolean;
-  overlays: MapOverlays;
-  pois: Poi[];
-  highlightedPoiId: string | null;
-};
 
 /**
  * Facade bọc thư viện Leaflet: React chỉ gọi các method public của lớp này.
  * Mỗi loại dữ liệu trên bản đồ do một lớp riêng trong `./leaflet/` vẽ; lớp này quyết định KHI NÀO vẽ lại
  * (so với lần cập nhật trước) và giữ thứ tự chồng lớp.
  */
-export class LeafletMapController {
+export class LeafletMapController implements MapController {
   private language: Language = 'vi';
   private readonly map: L.Map;
   private readonly renderer = new LifecycleCanvas();

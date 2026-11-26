@@ -1,6 +1,6 @@
 import type { RefObject } from 'react';
 import type { TrafficReportDto, TrafficReportInput } from '@routetwin/shared';
-import type { LeafletMapController } from '../../../features/map/services/LeafletMapController';
+import type { MapController } from '../../../features/map/services/MapController';
 import type { IncidentKind, IncidentSeverity, TrafficVehicleScope } from '../../../features/traffic/types';
 import type { LatLng } from '../../../shared/geo/types';
 
@@ -10,7 +10,7 @@ type Options = {
   updateClearance: (id: string, state: 'clear' | 'still_active') => Promise<unknown>;
   openSignIn: () => void;
   onReported: () => void;
-  mapController: RefObject<LeafletMapController | null>;
+  mapController: RefObject<MapController | null>;
   showToast: (message: string) => void;
   t: (text: string) => string;
 };

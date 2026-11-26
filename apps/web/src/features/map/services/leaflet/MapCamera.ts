@@ -1,10 +1,8 @@
 import * as L from 'leaflet';
 import type { LatLng } from '../../../../shared/geo/types';
 import { MOBILE_QUERY } from './drawing';
+import type { FitInsets } from '../MapController';
 import { VIETNAM_TERRITORY_BOUNDS } from './VietnamInset';
-
-/** Vùng bản đồ bị giao diện nổi che (px, tính từ mép khung bản đồ). */
-export type FitInsets = { left: number; right?: number; bottom: number };
 
 /**
  * Điều khiển khung nhìn: bay tới điểm, bám vị trí, zoom vừa các điểm trong phần bản đồ còn thấy

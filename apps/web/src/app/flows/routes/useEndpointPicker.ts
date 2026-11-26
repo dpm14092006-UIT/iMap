@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import type { useCurrentLocation } from '../../../features/map/hooks/useCurrentLocation';
-import type { LeafletMapController } from '../../../features/map/services/LeafletMapController';
+import type { MapController } from '../../../features/map/services/MapController';
 import type { PickTarget } from '../../../features/routing/components/RoutePanel';
 import type { DirectionsController } from '../../../features/routing/hooks/useDirections';
 import { placeFromPoint } from '../../../features/places/services/placeFromPoint';
@@ -12,7 +12,7 @@ import { errorMessage } from '../../../shared/text/errorMessage';
 type Options = {
   directions: DirectionsController;
   locate: ReturnType<typeof useCurrentLocation>['locate'];
-  mapController: RefObject<LeafletMapController | null>;
+  mapController: RefObject<MapController | null>;
   showToast: (message: string) => void;
   t: (text: string) => string;
 };

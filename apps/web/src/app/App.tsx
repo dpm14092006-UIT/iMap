@@ -17,7 +17,7 @@ import { MapView } from '../features/map/components/MapView';
 import { TrafficLegend } from '../features/map/components/TrafficLegend';
 import { useCurrentLocation } from '../features/map/hooks/useCurrentLocation';
 import { useMapAppearance } from '../features/map/hooks/useMapAppearance';
-import type { LeafletMapController } from '../features/map/services/LeafletMapController';
+import type { MapController } from '../features/map/services/MapController';
 import type { DraftStops, MapOverlays } from '../features/map/types';
 import { useSavedRoutes } from '../features/my-routes/hooks/useSavedRoutes';
 import { PushPermissionCard } from '../features/notifications/components/PushPermissionCard';
@@ -79,7 +79,7 @@ const VIETNAM_CENTER: LatLng = { lat: 16, lng: 108 };
 export function App() {
   const { t } = useI18n();
   const routeApi = useMemo(() => new RouteApiClient(), []);
-  const mapController = useRef<LeafletMapController | null>(null);
+  const mapController = useRef<MapController | null>(null);
   const getMapCenter = useCallback(() => mapController.current?.getCenter() ?? VIETNAM_CENTER, []);
   const { toast, showToast } = useToast();
   const { location: currentLocation, locate } = useCurrentLocation();
