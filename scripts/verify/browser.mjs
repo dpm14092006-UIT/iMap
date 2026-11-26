@@ -424,16 +424,22 @@ try {
       'true',
     );
     // Menu không được chồng lên thanh dẫn đường (thanh nằm trên lớp của menu và che mất công tắc).
-    const overlap = await page.evaluate(() => {
-      const menu = document
-        .querySelector('[role="dialog"][aria-label="Lớp bản đồ"]')
-        ?.getBoundingClientRect();
-      const banner = document.querySelector('[data-nav-banner]')?.getBoundingClientRect();
-      if (!menu || !banner) return null;
-      const w = Math.min(menu.right, banner.right) - Math.max(menu.left, banner.left);
-      const h = Math.min(menu.bottom, banner.bottom) - Math.max(menu.top, banner.top);
-      return w > 0 && h > 0 ? { menu: menu.toJSON(), banner: banner.toJSON() } : null;
-    });
+    // Chờ bố cục ổn định (tối đa 2 giây): khi dẫn đường, thanh điều hướng còn dịch chuyển sau khi menu mở.
+    let overlap = null;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      overlap = await page.evaluate(() => {
+        const menu = document
+          .querySelector('[role="dialog"][aria-label="Lớp bản đồ"]')
+          ?.getBoundingClientRect();
+        const banner = document.querySelector('[data-nav-banner]')?.getBoundingClientRect();
+        if (!menu || !banner) return null;
+        const w = Math.min(menu.right, banner.right) - Math.max(menu.left, banner.left);
+        const h = Math.min(menu.bottom, banner.bottom) - Math.max(menu.top, banner.top);
+        return w > 0 && h > 0 ? { menu: menu.toJSON(), banner: banner.toJSON() } : null;
+      });
+      if (!overlap) break;
+      await page.waitForTimeout(200);
+    }
     assert.equal(
       overlap,
       null,
