@@ -16,7 +16,11 @@ export type MapControllerHandlers = {
   onSelectRoute?: (routeId: string) => void;
   onPoiClick?: (poiId: string) => void;
   onBoundsChange?: (bounds: MapBounds) => void;
+  /** Hướng xoay (độ, 0 = Bắc) và độ nghiêng (độ) của bản đồ, cho la bàn. */
+  onCameraChange?: (camera: MapCamera) => void;
 };
+
+export type MapCamera = { bearing: number; pitch: number };
 
 /** Toàn bộ dữ liệu cần vẽ trên bản đồ, được MapView truyền vào mỗi khi thay đổi. */
 export type MapControllerData = {
@@ -33,6 +37,8 @@ export type MapControllerData = {
   overlays: MapOverlays;
   pois: Poi[];
   highlightedPoiId: string | null;
+  /** Chế độ 3D: nghiêng bản đồ, dẫn đường xoay theo hướng đi, địa hình/toà nhà khối khi nguồn cho phép. */
+  view3d: boolean;
 };
 
 /**
@@ -47,6 +53,8 @@ export interface MapController {
   zoomIn(): void;
   zoomOut(): void;
   flyTo(point: LatLng, zoom?: number): void;
+  /** Xoay về hướng Bắc (nút la bàn). */
+  resetNorth(): void;
   followLocation(point: LatLng, zoom?: number): void;
   /** Nghe thao tác kéo/zoom của người dùng; trả về hàm hủy. */
   onUserGesture(listener: () => void): () => void;

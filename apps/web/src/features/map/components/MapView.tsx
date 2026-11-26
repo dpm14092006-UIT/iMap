@@ -5,7 +5,7 @@ import { useI18n } from '../../../shared/i18n/I18nProvider';
 import type { Poi } from '../../explore/types';
 import type { RoutePlan } from '../../routing/types';
 import type { TrafficMapLayer } from '../../traffic/domain/trafficMapLayer';
-import type { MapController } from '../services/MapController';
+import type { MapCamera, MapController } from '../services/MapController';
 import type { DraftStops, MapLayer, MapOverlays } from '../types';
 
 type MapViewProps = {
@@ -30,6 +30,10 @@ type MapViewProps = {
   onBoundsChange: (bounds: TrafficReportBounds) => void;
   onSelectRoute: (routeId: string) => void;
   onPoiClick: (poiId: string) => void;
+  /** Chế độ 3D (nghiêng, dẫn đường xoay theo hướng đi). */
+  view3d?: boolean;
+  /** Hướng xoay / độ nghiêng của bản đồ (la bàn). */
+  onCameraChange?: (camera: MapCamera) => void;
 };
 
 /** Component React bọc bộ máy bản đồ (MapController): tạo bản đồ 1 lần, sau đó chỉ truyền dữ liệu mới. */
@@ -51,14 +55,16 @@ export function MapView({
   onBoundsChange,
   onSelectRoute,
   onPoiClick,
+  view3d = false,
+  onCameraChange,
 }: MapViewProps) {
   const { language, t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   // Tăng mỗi khi bản đồ sẵn sàng (MapLibre tạo bất đồng bộ) để lần vẽ đầu tiên không bị bỏ lỡ.
   const [ready, setReady] = useState(0);
   // Giữ handler mới nhất trong ref để không phải tạo lại bản đồ khi callback đổi.
-  const handlersRef = useRef({ onMapClick, onBoundsChange, onSelectRoute, onPoiClick });
-  handlersRef.current = { onMapClick, onBoundsChange, onSelectRoute, onPoiClick };
+  const handlersRef = useRef({ onMapClick, onBoundsChange, onSelectRoute, onPoiClick, onCameraChange });
+  handlersRef.current = { onMapClick, onBoundsChange, onSelectRoute, onPoiClick, onCameraChange };
 
   // Tạo bản đồ khi mount, hủy khi unmount. MapLibre GL (WebGL) tải riêng để giao diện hiện trước.
   useEffect(() => {
@@ -72,6 +78,7 @@ export function MapView({
       onMapClick: (point: LatLng) => handlersRef.current.onMapClick(point),
       onSelectRoute: (routeId: string) => handlersRef.current.onSelectRoute(routeId),
       onPoiClick: (poiId: string) => handlersRef.current.onPoiClick(poiId),
+      onCameraChange: (camera: MapCamera) => handlersRef.current.onCameraChange?.(camera),
     };
     const attach = (created: MapController) => {
       if (disposed) {
@@ -111,6 +118,7 @@ export function MapView({
       overlays,
       pois,
       highlightedPoiId,
+      view3d,
     });
   }, [
     controllerRef,
@@ -128,6 +136,7 @@ export function MapView({
     overlays,
     pois,
     highlightedPoiId,
+    view3d,
   ]);
 
   return (

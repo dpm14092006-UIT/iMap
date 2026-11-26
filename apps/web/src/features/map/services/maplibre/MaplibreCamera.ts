@@ -4,6 +4,10 @@ import { VIETNAM_TERRITORY_EXTENT, viewShowsWholeTerritory } from '../../domain/
 import type { FitInsets, MapBounds } from '../MapController';
 import { fromGLZoom, maplibregl, toGLZoom, type GLMap } from './gl';
 
+/** Độ nghiêng khi bật 3D để xem bản đồ, và khi dẫn đường 3D (nhìn xa phía trước hơn). */
+export const VIEW_PITCH_3D = 50;
+export const NAV_PITCH_3D = 55;
+
 /** Dưới ngưỡng này (px) là điện thoại: chừa chỗ cho bảng kéo ở đáy. */
 export const MOBILE_QUERY = '(max-width: 767px)';
 
@@ -22,6 +26,7 @@ export class MaplibreCamera {
   private fitInsets: FitInsets | null = null;
   private lastFitPoints: LatLng[] | null = null;
   private readonly mobileQuery = window.matchMedia(MOBILE_QUERY);
+  private readonly reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   constructor(
     private readonly map: GLMap,
@@ -87,6 +92,52 @@ export class MaplibreCamera {
     );
     if (haversineMeters({ lat: shown.lat, lng: shown.lng }, point) > 25)
       this.map.easeTo({ ...target, duration: 350 });
+  }
+
+  /**
+   * Bật 3D: nghiêng bản đồ, giữ hướng đang xoay (hoặc về hướng Bắc khi `north`). Tắt 3D: nhìn thẳng từ trên,
+   * hướng Bắc lên trên. Một chuyển động duy nhất để không lệnh nào cắt ngang lệnh nào.
+   */
+  setPitchMode(view3d: boolean, north = !view3d) {
+    this.map.easeTo({
+      pitch: view3d ? VIEW_PITCH_3D : 0,
+      bearing: north ? 0 : this.map.getBearing(),
+      duration: this.reducedMotion.matches ? 0 : 600,
+    });
+  }
+
+  /** Nút la bàn: xoay về hướng Bắc (giữ độ nghiêng). */
+  resetNorth() {
+    this.map.easeTo({ bearing: 0, duration: this.reducedMotion.matches ? 0 : 400 });
+  }
+
+  /** Giảm chuyển động: dẫn đường giữ 2D, hướng Bắc lên trên (không xoay bản đồ liên tục). */
+  prefersReducedMotion(): boolean {
+    return this.reducedMotion.matches;
+  }
+
+  /**
+   * Dẫn đường 3D: bản đồ nghiêng, xoay theo hướng đi (hướng đi luôn hướng lên), vị trí đặt thấp trên màn hình
+   * để thấy nhiều đường phía trước. Bỏ qua dao động nhỏ của GPS/la bàn để bản đồ không rung.
+   */
+  followHeading(point: LatLng, zoom: number, heading: number) {
+    const [, sheetY] = this.sheetOffset();
+    const visible = this.map.getContainer().clientHeight + 2 * sheetY;
+    const offset: [number, number] = [0, sheetY + visible * 0.22];
+    const turn = Math.abs(((heading - this.map.getBearing() + 540) % 360) - 180);
+    const center = this.map.getCenter();
+    const moved = haversineMeters({ lat: center.lat, lng: center.lng }, point);
+    const steady = Math.abs(this.map.getPitch() - NAV_PITCH_3D) < 1 && this.getZoom() >= zoom;
+    if (steady && turn < 3 && moved < 4) return;
+    this.map.easeTo({
+      center: [point.lng, point.lat],
+      zoom: toGLZoom(Math.max(this.getZoom(), zoom)),
+      bearing: heading,
+      pitch: NAV_PITCH_3D,
+      offset,
+      duration: 400,
+      easing: (t) => t,
+    });
   }
 
   /**

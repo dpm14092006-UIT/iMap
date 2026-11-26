@@ -31,6 +31,7 @@ import {
 } from '../../apps/web/src/features/map/domain/vietnamTerritory';
 import {
   BASEMAP_PROVIDERS,
+  isUsable,
   MODE_CHAINS,
   usableChain,
   type BasemapMode,
@@ -469,10 +470,32 @@ async function boundaryGate(gate: Gate) {
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/\/\/.*$/gm, '');
   gate.expect(
-    !/\.layers\b|setLayoutProperty|setPaintProperty|setFilter|removeLayer|moveLayer|sov-/.test(basemapCode),
+    !/\.layers\b|\b(setLayoutProperty|setPaintProperty|setFilter|removeLayer|moveLayer)\b|sov-/.test(
+      basemapCode,
+    ),
     'Không ẩn, lọc hay đổi lớp chủ quyền (sov-*) của nguồn vApp',
     'MaplibreBasemap đang ẩn/lọc/đổi lớp của style nguồn',
   );
+
+  // 3D (địa hình, toà nhà khối) chỉ THÊM dữ liệu của iMap trên nền: không ẩn/đổi lớp của nhà cung cấp,
+  // khối toà nhà nằm dưới lớp chữ (tên chủ quyền luôn ở trên), production cần phê duyệt riêng.
+  const map3dCode = read('apps/web/src/features/map/services/maplibre/Map3D.ts')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  const removes = [...map3dCode.matchAll(/removeLayer\(([^)]*)\)/g)].map((m) => m[1]);
+  gate.expect(
+    !/\b(setLayoutProperty|setPaintProperty|setFilter|moveLayer)\b|sov-/.test(map3dCode) &&
+      removes.every((arg) => arg === 'BUILDINGS_3D_LAYER') &&
+      /type === 'symbol'/.test(map3dCode) &&
+      /usable3d\(/.test(map3dCode),
+    '3D chỉ thêm địa hình và lớp khối của iMap (dưới lớp chữ), không đổi lớp chủ quyền; production cần phê duyệt',
+    'Map3D đang đổi/gỡ lớp của nhà cung cấp, đặt khối toà nhà trên lớp chữ, hoặc bỏ qua phê duyệt',
+  );
+  for (const p of BASEMAP_PROVIDERS.filter((x) => x.features3d && isUsable(x, true)))
+    if (!p.features3d!.approval)
+      gate.warn(
+        `${p.id}: 3D (địa hình, toà nhà khối) chưa được duyệt cho production — ${p.features3d!.blockers[0]}`,
+      );
 
   // Điều 20.1–20.3 TT 17/2018/TT-BTNMT: khung toàn vẹn lãnh thổ và bản đồ phụ.
   const e = VIETNAM_TERRITORY_EXTENT;
@@ -1059,6 +1082,7 @@ async function visualGate(gate: Gate) {
           overlays: { traffic: false, incidents: false, terrain: false },
           pois: [],
           highlightedPoiId: null,
+          view3d: false,
         });
         // Mức zoom của khung nhìn theo ô 256 px; MapLibre dùng ô 512 px nên cùng tỉ lệ là zoom − 1.
         (c as unknown as { map: { jumpTo(o: object): void } }).map.jumpTo({
