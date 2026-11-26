@@ -888,26 +888,16 @@ export const en: Record<string, string> = {
   // Bản đồ nền (vApp, Vietmap, VNSDI) và ghi nguồn.
   'Bản đồ nền vApp (map.vapp.vn), Vietmap và VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam) · tuyến đường tính qua API VietMap.':
     'Base maps by vApp (map.vapp.vn), Vietmap and VNSDI (Vietnam Department of Survey, Mapping and Geographic Information) · routes calculated with the VietMap API.',
-  'Bản đồ địa hình VNSDI (không dùng với nền Vệ tinh)':
-    'VNSDI terrain map (not available with Satellite)',
-  'Chưa có nguồn bản đồ được duyệt cho chế độ này':
-    'No approved map source for this mode yet',
-  'Hành chính':
-    'Administrative',
+  'Bản đồ địa hình VNSDI (không dùng với nền Vệ tinh)': 'VNSDI terrain map (not available with Satellite)',
+  'Chưa có nguồn bản đồ được duyệt cho chế độ này': 'No approved map source for this mode yet',
+  'Hành chính': 'Administrative',
   'Nguồn: vApp (map.vapp.vn) · Vệ tinh: VNSDI Sentinel-2, Vietmap · Hành chính và Địa hình: VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam)':
     'Source: vApp (map.vapp.vn) · Satellite: VNSDI Sentinel-2, Vietmap · Administrative and Terrain: VNSDI (Vietnam Department of Survey, Mapping and Geographic Information)',
-  'Nguồn: vApp · Vietmap · VNSDI':
-    'Source: vApp · Vietmap · VNSDI',
-  'Theo hệ thống':
-    'System',
-  'Tối':
-    'Dark',
-  'Đường phố':
-    'Streets',
-  'Sao chép tọa độ':
-    'Copy coordinates',
-  'Đã sao chép tọa độ':
-    'Coordinates copied',
-  'Tìm thấy qua dữ liệu OpenStreetMap':
-    'Found with OpenStreetMap data',
+  'Nguồn: vApp · Vietmap · VNSDI': 'Source: vApp · Vietmap · VNSDI',
+  'Theo hệ thống': 'System',
+  Tối: 'Dark',
+  'Đường phố': 'Streets',
+  'Sao chép tọa độ': 'Copy coordinates',
+  'Đã sao chép tọa độ': 'Coordinates copied',
+  'Tìm thấy qua dữ liệu OpenStreetMap': 'Found with OpenStreetMap data',
 };

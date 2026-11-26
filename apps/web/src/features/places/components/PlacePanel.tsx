@@ -75,9 +75,10 @@ export function PlacePanel({ place, poi, onClose, onDirections }: PlacePanelProp
       <button
         type="button"
         onClick={() => {
-          void navigator.clipboard
-            ?.writeText(`${place.lat.toFixed(6)}, ${place.lng.toFixed(6)}`)
-            .then(() => setCopied(true), () => setCopied(false));
+          void navigator.clipboard?.writeText(`${place.lat.toFixed(6)}, ${place.lng.toFixed(6)}`).then(
+            () => setCopied(true),
+            () => setCopied(false),
+          );
         }}
         className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface text-[11px] font-semibold text-content-muted transition hover:border-brand-200 dark:hover:border-indigo-300/30 hover:text-brand-700 dark:hover:text-indigo-300"
       >
