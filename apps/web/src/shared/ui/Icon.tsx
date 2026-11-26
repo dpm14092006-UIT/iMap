@@ -9,6 +9,7 @@ export type IconName =
   | 'chevron-down'
   | 'close'
   | 'compass'
+  | 'cube'
   | 'current-location'
   | 'directions'
   | 'globe'
@@ -81,6 +82,7 @@ const shapes: Record<IconName, string> = {
   'chevron-down': '<path d="m6 9 6 6 6-6" />',
   close: '<path d="m6 6 12 12M18 6 6 18" />',
   compass: '<circle cx="12" cy="12" r="9" /><path d="m15.6 8.4-2.2 5-5 2.2 2.2-5 5-2.2Z" />',
+  cube: '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" /><path d="m4 7.5 8 4.5 8-4.5M12 12v9" />',
   'current-location':
     '<circle cx="12" cy="12" r="7" /><circle cx="12" cy="12" r="2.1" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />',
   directions:

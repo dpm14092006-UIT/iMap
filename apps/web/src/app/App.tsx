@@ -13,11 +13,12 @@ import { useNavigationSession } from '../features/guidance/hooks/useNavigationSe
 import { usableSourceCredits } from '../features/map/basemap/providers';
 import { LayerSwitcher } from '../features/map/components/LayerSwitcher';
 import { MapControls } from '../features/map/components/MapControls';
+import { useMapView3d } from '../features/map/hooks/useMapView3d';
 import { MapView } from '../features/map/components/MapView';
 import { TrafficLegend } from '../features/map/components/TrafficLegend';
 import { useCurrentLocation } from '../features/map/hooks/useCurrentLocation';
 import { useMapAppearance } from '../features/map/hooks/useMapAppearance';
-import type { MapController } from '../features/map/services/MapController';
+import type { MapCamera, MapController } from '../features/map/services/MapController';
 import type { DraftStops, MapOverlays } from '../features/map/types';
 import { useSavedRoutes } from '../features/my-routes/hooks/useSavedRoutes';
 import { PushPermissionCard } from '../features/notifications/components/PushPermissionCard';
@@ -86,6 +87,8 @@ export function App() {
   const { user, accessToken, loading: authLoading } = useAuth();
   const isAuthenticated = Boolean(user && !user.is_anonymous && accessToken);
   const { layer, preference, setLayer, isDark } = useMapAppearance();
+  const { view3d, setView3d } = useMapView3d();
+  const [mapCamera, setMapCamera] = useState<MapCamera>({ bearing: 0, pitch: 0 });
   const savedRoutes = useSavedRoutes();
   const { updateAvailable, reloadForUpdate } = useAppUpdate();
 
@@ -357,6 +360,8 @@ export function App() {
           route={activeRoute}
           routeOptions={routeOptionsForMap}
           trafficLayer={trafficLayer}
+          view3d={view3d}
+          onCameraChange={setMapCamera}
         />
       }
       topBar={
@@ -410,6 +415,10 @@ export function App() {
           </div>
           <MapControls
             showZoom={!isNavigationIdle}
+            view3d={view3d}
+            onToggle3d={() => setView3d(!view3d)}
+            camera={mapCamera}
+            onResetNorth={() => mapController.current?.resetNorth()}
             onLocate={() => (isNavigationIdle ? void locateOnMap() : follow.recenter())}
             onZoomIn={() => {
               follow.pauseIfNavigating();

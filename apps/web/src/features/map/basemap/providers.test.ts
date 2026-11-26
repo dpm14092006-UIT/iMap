@@ -5,6 +5,7 @@ import {
   isUsable,
   usableChain,
   usableSourceCredits,
+  usable3d,
   type BasemapMode,
   type BasemapProvider,
 } from './providers';
@@ -57,5 +58,20 @@ describe('BasemapRegistry', () => {
     expect(production).toHaveLength(approvedPrefixes.size);
     expect(production).toContain('vApp (map.vapp.vn)');
     expect(usableSourceCredits(false)).toEqual(['VNSDI', 'vApp (map.vapp.vn)', 'Vietmap']);
+  });
+
+  it('3D (địa hình, toà nhà khối) chỉ bật ở production khi đã có phê duyệt riêng', () => {
+    const vapp = BASEMAP_PROVIDERS.find((p) => p.id === 'vapp')!;
+    expect(usable3d(vapp, false)?.terrainSource).toBe('terrain');
+    expect(usable3d(vapp, true)).toBe(vapp.features3d?.approval ? vapp.features3d : null);
+    expect(
+      usable3d(
+        { ...vapp, features3d: { ...vapp.features3d!, approval: { by: 'x', date: 'y', report: 'z' } } },
+        true,
+      ),
+    ).not.toBeNull();
+    expect(usable3d(null, false)).toBeNull();
+    for (const p of BASEMAP_PROVIDERS)
+      if (p.features3d) expect(p.features3d.attribution.length).toBeGreaterThan(0);
   });
 });

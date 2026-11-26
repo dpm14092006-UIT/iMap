@@ -9,6 +9,7 @@ import { maplibregl, toGLZoom, transformMapRequest, VIETNAM_CENTER_LNGLAT, type 
 import { MaplibreBasemap } from './maplibre/MaplibreBasemap';
 import { MaplibreCamera } from './maplibre/MaplibreCamera';
 import { FocusPin, LocationMarker, PoiMarkers } from './maplibre/markers';
+import { Map3D } from './maplibre/Map3D';
 import { ALTERNATIVE_ROUTE_LAYER, RouteLayer } from './maplibre/RouteLayer';
 import { TrafficLayers } from './maplibre/TrafficLayers';
 import { VietnamInset } from './maplibre/VietnamInset';
@@ -31,7 +32,12 @@ export class MaplibreMapController implements MapController {
   private readonly pois: PoiMarkers;
   private readonly location: LocationMarker;
   private readonly focus: FocusPin;
+  private readonly map3d: Map3D;
   private destroyed = false;
+  private view3d = false;
+  private navigating = false;
+  private heading: number | null = null;
+  private cameraFrame = 0;
 
   private lastRouteId: string | null = null;
   private lastRouteOptionsKey = '';
@@ -86,11 +92,15 @@ export class MaplibreMapController implements MapController {
     this.pois = new PoiMarkers(this.map, handlers.onPoiClick);
     this.focus = new FocusPin(this.map);
     this.location = new LocationMarker(this.map);
+    this.map3d = new Map3D(this.map, import.meta.env.PROD, (text) => this.attribution.set('3d', text));
 
     this.map.on('style.load', this.reinstall);
     this.map.on('moveend', this.reportBounds);
     this.map.on('click', this.onClick);
     this.map.on('mousemove', this.onHover);
+    this.map.on('rotate', this.reportCamera);
+    this.map.on('pitch', this.reportCamera);
+    this.map.on('moveend', this.reportCamera);
     handlers.onBoundsChange?.(this.camera.getBounds());
     // Khung đầu tiên: toàn vẹn lãnh thổ (như bản Leaflet mở ở tâm Việt Nam).
     this.camera.showVietnam();
@@ -106,6 +116,7 @@ export class MaplibreMapController implements MapController {
     this.traffic.setVisibility(data.overlays);
     this.map.getContainer().classList.toggle('is-picking', data.isPicking);
     this.pois.update(data.pois, data.highlightedPoiId);
+    this.apply3d(data);
 
     const routeId = data.route?.id ?? null;
     const routeOptionsKey = data.routeOptions.map((route) => route.id).join('|');
@@ -166,7 +177,13 @@ export class MaplibreMapController implements MapController {
     this.camera.flyTo(point, zoom);
   }
   followLocation(point: LatLng, zoom = 16) {
-    this.camera.followLocation(point, zoom);
+    // Dẫn đường 3D: xoay theo hướng đi; giảm chuyển động hoặc chưa có hướng thì bám vị trí như 2D.
+    if (this.view3d && this.navigating && this.heading !== null && !this.camera.prefersReducedMotion())
+      this.camera.followHeading(point, zoom, this.heading);
+    else this.camera.followLocation(point, zoom);
+  }
+  resetNorth() {
+    this.camera.resetNorth();
   }
   onUserGesture(listener: () => void): () => void {
     return this.camera.onUserGesture(listener);
@@ -197,6 +214,7 @@ export class MaplibreMapController implements MapController {
     this.destroyed = true;
     this.map.off('moveend', this.reportBounds);
     this.map.off('style.load', this.reinstall);
+    cancelAnimationFrame(this.cameraFrame);
     this.routeLayer.destroy();
     this.traffic.destroy();
     this.pois.clear();
@@ -221,6 +239,29 @@ export class MaplibreMapController implements MapController {
     this.traffic.installHalo();
     this.routeLayer.install();
     this.traffic.installSections();
+    this.map3d.apply(this.base.currentProvider(), this.view3d);
+  };
+
+  /** Chuyển 2D/3D; kết thúc dẫn đường 3D thì quay lại hướng Bắc (vẫn giữ nghiêng nếu đang 3D). */
+  private apply3d(data: MapControllerData) {
+    const wasNavigating = this.navigating;
+    this.navigating = data.isNavigating;
+    this.heading = data.headingDegrees;
+    if (data.view3d !== this.view3d) {
+      this.view3d = data.view3d;
+      this.camera.setPitchMode(data.view3d);
+      this.map3d.apply(this.base.currentProvider(), data.view3d);
+    } else if (wasNavigating && !data.isNavigating) this.camera.setPitchMode(this.view3d, true);
+  }
+
+  /** Báo hướng xoay/độ nghiêng cho la bàn, gộp theo khung hình. */
+  private readonly reportCamera = () => {
+    if (this.cameraFrame || this.destroyed) return;
+    this.cameraFrame = requestAnimationFrame(() => {
+      this.cameraFrame = 0;
+      if (!this.destroyed)
+        this.handlers.onCameraChange?.({ bearing: this.map.getBearing(), pitch: this.map.getPitch() });
+    });
   };
 
   /** Bấm trúng marker/nhãn/popup thì không tính là bấm bản đồ; bấm tuyến phụ thì chọn tuyến đó. */

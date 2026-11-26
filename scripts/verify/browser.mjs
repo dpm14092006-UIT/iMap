@@ -208,6 +208,7 @@ try {
       overlays: { traffic: true, incidents: true, terrain: false },
       pois: [],
       highlightedPoiId: null,
+      view3d: false,
     };
     c.update(data);
     window.__qa = { c, data, route, events, el, MaplibreMapController, toTrafficMapLayer };
@@ -342,6 +343,52 @@ try {
   assert.equal(await page.locator('#qa-map .sovereignty-label--archipelago').count(), 2);
   console.log(
     '✓ Satellite uses VNSDI Sentinel-2, falls back to Vietmap hybrid, then shows a notice (never OSM); terrain without a source keeps the base',
+  );
+  // 3D: nghiêng khi bật; dẫn đường xoay theo hướng đi (khi không giảm chuyển động); hết dẫn đường về hướng Bắc.
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const camera = () =>
+    page.evaluate(() => {
+      const m = window.__qa.c.map;
+      return { pitch: Math.round(m.getPitch()), bearing: Math.round(((m.getBearing() % 360) + 360) % 360) };
+    });
+  await page.evaluate(() => {
+    const q = window.__qa;
+    q.data.view3d = true;
+    q.c.update(q.data);
+  });
+  await page.waitForTimeout(900);
+  assert.deepEqual(await camera(), { pitch: 50, bearing: 0 });
+  await page.evaluate(() => {
+    const q = window.__qa;
+    q.data.isNavigating = true;
+    q.data.headingDegrees = 90;
+    q.data.currentLocation = { lat: 10.77, lng: 106.69 };
+    q.c.update(q.data);
+    q.c.followLocation(q.data.currentLocation);
+  });
+  await page.waitForTimeout(900);
+  assert.deepEqual(await camera(), { pitch: 55, bearing: 90 }, '3D navigation turns the map to the heading');
+  await page.evaluate(() => {
+    const q = window.__qa;
+    q.data.isNavigating = false;
+    q.data.currentLocation = null;
+    q.c.update(q.data);
+  });
+  await page.waitForTimeout(900);
+  assert.deepEqual(await camera(), { pitch: 50, bearing: 0 }, 'Ending 3D navigation returns to north');
+  // Nguồn không khai báo dữ liệu 3D (Vietmap giả lập): không thêm lớp toà nhà, không thêm ghi nguồn độ cao.
+  assert.equal(await page.evaluate(() => Boolean(window.__qa.c.map.getLayer('rt-3d-buildings'))), false);
+  assert.doesNotMatch(await page.locator('#qa-map .routetwin-attribution').textContent(), /Mapzen/);
+  await page.evaluate(() => {
+    const q = window.__qa;
+    q.data.view3d = false;
+    q.c.update(q.data);
+  });
+  await page.waitForTimeout(900);
+  assert.deepEqual(await camera(), { pitch: 0, bearing: 0 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  console.log(
+    '✓ 3D: pitch toggle, heading-up 3D navigation, back to north; no 3D layers without provider data',
   );
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => {
