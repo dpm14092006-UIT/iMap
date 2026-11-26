@@ -93,7 +93,7 @@ export function App() {
   const { activePanel, openPanel, closePanel, pickTarget, setPickTarget } = panels;
   const [activeRoute, setActiveRoute] = useState<RoutePlan | null>(null);
   const [trafficBounds, setTrafficBounds] = useState<TrafficReportBounds>(vietnamBounds);
-  const [overlays, setOverlays] = useState<MapOverlays>({ traffic: false, incidents: true, terrain: false });
+  const [overlays, setOverlays] = useState<MapOverlays>({ traffic: true, incidents: true, terrain: false });
 
   // --- Dẫn đường theo GPS ---
   const navigation = useNavigationSession();
