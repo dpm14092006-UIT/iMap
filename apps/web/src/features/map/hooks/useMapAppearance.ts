@@ -18,7 +18,7 @@ function subscribe(onChange: () => void) {
 function readLayer(): MapLayerPreference {
   try {
     const value = window.localStorage.getItem(STORAGE_KEY);
-    if (value === 'street' || value === 'dark' || value === 'satellite') return value;
+    if (value === 'street' || value === 'dark' || value === 'satellite' || value === 'admin') return value;
   } catch {
     // Vẫn bật theo hệ thống nếu trình duyệt không cung cấp bộ nhớ.
   }

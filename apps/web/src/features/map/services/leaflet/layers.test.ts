@@ -194,6 +194,11 @@ describe('Leaflet layers with real Leaflet objects', () => {
     expect(again).toBe(count);
     base.apply('satellite', false);
     expect(container.classList.contains('map-theme-dark')).toBe(false);
+    base.apply('satellite', false);
+    expect(container.classList.contains('map-theme-satellite')).toBe(true);
+    base.apply('street', false);
+    expect(container.classList.contains('map-theme-satellite')).toBe(false);
+    base.destroy();
   });
   it('fits the route in the unoccluded desktop viewport and refits with new insets', () => {
     const camera = new MapCamera(map);

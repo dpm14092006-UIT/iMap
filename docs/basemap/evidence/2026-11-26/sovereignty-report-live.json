@@ -1,0 +1,473 @@
+{
+  "ranAt": "2026-11-26T11:56:15.640Z",
+  "live": true,
+  "gates": [
+    {
+      "id": "coverage",
+      "title": "Geographic Coverage",
+      "status": "WARN",
+      "checks": [
+        {
+          "status": "PASS",
+          "message": "Quần đảo Hoàng Sa: nhãn và 6 đảo tiêu biểu nằm trong vùng bao"
+        },
+        {
+          "status": "PASS",
+          "message": "Quần đảo Trường Sa: nhãn và 9 đảo tiêu biểu nằm trong vùng bao"
+        },
+        {
+          "status": "PASS",
+          "message": "Mọi đảo tiêu biểu thuộc Hoàng Sa hoặc Trường Sa"
+        },
+        {
+          "status": "PASS",
+          "message": "Bản đồ không giới hạn maxBounds, người dùng kéo tới được Hoàng Sa và Trường Sa"
+        },
+        {
+          "status": "WARN",
+          "message": "Vùng chỉ đường VietMap (VIETMAP_COVERAGE) chưa phủ: Lũng Cú (cực Bắc), A Pa Chải (cực Tây) — bản đồ vẫn hiển thị, chỉ không tính tuyến"
+        },
+        {
+          "status": "PASS",
+          "message": "vApp có dữ liệu ô vector tại cả 31 điểm chuẩn (đất liền, đảo, Hoàng Sa, Trường Sa)"
+        },
+        {
+          "status": "WARN",
+          "message": "Vietmap đang hết hạn mức ô bản đồ trong ngày (423): Vệ tinh tạm không có, các nền khác vẫn chạy"
+        },
+        {
+          "status": "WARN",
+          "message": "VNSDI chưa cấu hình VNSDI_BASEMAP_TOKEN ở apps/api/.env — lớp Hành chính/Địa hình và nền dự phòng không chạy"
+        }
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "Boundary Validation",
+      "status": "FAIL",
+      "checks": [
+        {
+          "status": "PASS",
+          "message": "Frontend không tải ô bản đồ từ OSM/Esri/nhà cung cấp nước ngoài; chỉ nguồn trong registry"
+        },
+        {
+          "status": "PASS",
+          "message": "Production chỉ dùng nguồn APPROVED có người phê duyệt"
+        },
+        {
+          "status": "WARN",
+          "message": "Chưa có nguồn nào APPROVED: bản build production sẽ hiện \"Bản đồ nền tạm thời không khả dụng\" cho tới khi người phụ trách duyệt"
+        },
+        {
+          "status": "PASS",
+          "message": "OpenStreetMap nguyên bản không có trong chuỗi nền nào (kể cả dự phòng)"
+        },
+        {
+          "status": "PASS",
+          "message": "Trạng thái nguồn: vnsdi-admin=BLOCKED, vnsdi-terrain=BLOCKED, vnsdi-sentinel2=TESTING, vapp=TESTING, vietmap=TESTING, openmap=BLOCKED, ekmap=BLOCKED, mapslibvn=BLOCKED, osm-standard=REJECTED"
+        },
+        {
+          "status": "PASS",
+          "message": "Không ẩn, lọc hay đổi lớp chủ quyền (sov-*) của nguồn vApp"
+        },
+        {
+          "status": "PASS",
+          "message": "Khung toàn vẹn lãnh thổ 4°30′–23°30′B, 102°–118°Đ đúng Điều 20.1"
+        },
+        {
+          "status": "PASS",
+          "message": "Bản đồ phụ bật khi xem một phần lãnh thổ (Đà Nẵng, Khánh Hòa, TP.HCM, An Giang…) và tắt khi đã thấy toàn vẹn"
+        },
+        {
+          "status": "PASS",
+          "message": "Bản đồ chính có bản đồ phụ; nút \"Xem toàn Việt Nam\" khớp khung Điều 20.1"
+        },
+        {
+          "status": "PASS",
+          "message": "Proxy API trỏ tới dịch vụ chính thức vnsdi.mae.gov.vn/BanDoHanhChinhVietNam"
+        },
+        {
+          "status": "PASS",
+          "message": "Nhãn chủ quyền của iMap (ArchipelagoLabels) hiện trên nền không tự có nhãn; tắt khi nguồn đã thể hiện để không chồng chữ"
+        },
+        {
+          "status": "PASS",
+          "message": "Vùng bao Hoàng Sa (15–17,8°N) và Trường Sa (5,5–12,5°N) đúng vị trí"
+        },
+        {
+          "status": "FAIL",
+          "message": "Cần API đang chạy và VNSDI_BASEMAP_TOKEN để đối chiếu đường biên với bản đồ hành chính nhà nước"
+        }
+      ]
+    },
+    {
+      "id": "names",
+      "title": "Place Name Validation",
+      "status": "WARN",
+      "checks": [
+        {
+          "status": "PASS",
+          "message": "Không có tên sai chủ quyền trong 346 file UI/API/dữ liệu"
+        },
+        {
+          "status": "PASS",
+          "message": "Đủ tên chuẩn: Quần đảo Hoàng Sa, Quần đảo Trường Sa, Biển Đông (VI/EN)"
+        },
+        {
+          "status": "PASS",
+          "message": "Nhãn quần đảo kèm \"(Việt Nam)\" / \"(Viet Nam)\""
+        },
+        {
+          "status": "PASS",
+          "message": "Nhãn Biển Đông đặt giữa Biển Đông"
+        },
+        {
+          "status": "PASS",
+          "message": "15 đảo tiêu biểu mang tên Việt Nam (hiện từ mức zoom 9)"
+        },
+        {
+          "status": "PASS",
+          "message": "Đã quét 21 ô vector vApp quanh Biển Đông"
+        },
+        {
+          "status": "PASS",
+          "message": "Dữ liệu vApp không chứa tên sai chủ quyền"
+        },
+        {
+          "status": "PASS",
+          "message": "Style vApp sạch tên sai"
+        },
+        {
+          "status": "WARN",
+          "message": "Không tải được ô vector Vietmap để quét tên (thường do hết hạn mức ô trong ngày)"
+        },
+        {
+          "status": "PASS",
+          "message": "Style Vietmap \"tm\" sạch tên sai"
+        },
+        {
+          "status": "PASS",
+          "message": "Style Vietmap \"dm\" sạch tên sai"
+        },
+        {
+          "status": "PASS",
+          "message": "Style Vietmap \"hm\" sạch tên sai"
+        }
+      ]
+    },
+    {
+      "id": "license",
+      "title": "License Validation",
+      "status": "FAIL",
+      "checks": [
+        {
+          "status": "PASS",
+          "message": "Ghi nguồn \"© Vietmap\" trên nền Vietmap"
+        },
+        {
+          "status": "PASS",
+          "message": "vapp: ghi nguồn đủ (© map.vapp.vn · © OpenStreetMap) và có điều kiện giấy phép"
+        },
+        {
+          "status": "PASS",
+          "message": "vnsdi-admin: ghi nguồn đủ (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam · VNSDI) và có điều kiện giấy phép"
+        },
+        {
+          "status": "PASS",
+          "message": "vnsdi-terrain: ghi nguồn đủ (VNSDI · NASA, JAXA) và có điều kiện giấy phép"
+        },
+        {
+          "status": "PASS",
+          "message": "vnsdi-sentinel2: ghi nguồn đủ (VNSDI · Sentinel-2) và có điều kiện giấy phép"
+        },
+        {
+          "status": "PASS",
+          "message": "vietmap: ghi nguồn đủ (© Vietmap) và có điều kiện giấy phép"
+        },
+        {
+          "status": "WARN",
+          "message": "Quyền sử dụng chưa xác nhận đủ để duyệt production:\n      vnsdi-sentinel2: Cần xác nhận điều khoản sử dụng với VNSDI.\n      vapp: Chưa đối chiếu đường biên giới với bộ bản đồ chuẩn biên giới quốc gia (Điều 19) — cần token VNSDI.\n      vietmap: Khóa hiện tại không tải được ô bản đồ: cần bật Tile hoặc tạo khóa \"public tile\" trên console VIETMAP."
+        },
+        {
+          "status": "PASS",
+          "message": "Khung ghi nguồn bản đồ luôn hiển thị"
+        },
+        {
+          "status": "PASS",
+          "message": "Trợ lý địa điểm dùng dữ liệu OSM (ODbL) và có ghi nguồn OpenStreetMap"
+        },
+        {
+          "status": "WARN",
+          "message": "Còn dùng dữ liệu gốc OpenStreetMap: nền vApp (dựng từ OSM, Overture, Wikidata) và trợ lý địa điểm (Overpass). Giao diện không còn là OSM; đã ghi nguồn theo ODbL."
+        },
+        {
+          "status": "PASS",
+          "message": "Khóa Vietmap và token VNSDI chỉ nằm ở API, không lộ ra trình duyệt"
+        },
+        {
+          "status": "PASS",
+          "message": "apps/api/.env.example hướng dẫn VIETMAP_API_KEY và VNSDI_BASEMAP_TOKEN"
+        },
+        {
+          "status": "PASS",
+          "message": "API đã cấu hình khóa Vietmap"
+        },
+        {
+          "status": "FAIL",
+          "message": "API chưa có VNSDI_BASEMAP_TOKEN — đăng ký tại vnsdi.mae.gov.vn"
+        }
+      ]
+    },
+    {
+      "id": "visual",
+      "title": "Visual Regression Testing",
+      "status": "WARN",
+      "checks": [
+        {
+          "status": "PASS",
+          "message": "[vietnam-z5-vi] nền vapp (TESTING), ghi nguồn \"map.vapp.vn\""
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-z5-vi] tên chủ quyền do nguồn vapp thể hiện — đối chiếu bằng quét dữ liệu (--live) và ảnh chụp"
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-z5-vi] đang thấy toàn vẹn lãnh thổ, không cần bản đồ phụ"
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-z5-vi] không có tên sai trên bản đồ"
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-z5-en] nền vapp (TESTING), ghi nguồn \"map.vapp.vn\""
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-z5-en] tên chủ quyền do nguồn vapp thể hiện — đối chiếu bằng quét dữ liệu (--live) và ảnh chụp"
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-z5-en] đang thấy toàn vẹn lãnh thổ, không cần bản đồ phụ"
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-z5-en] không có tên sai trên bản đồ"
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-dark-z5] nền vapp (TESTING), ghi nguồn \"map.vapp.vn\""
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-dark-z5] tên chủ quyền do nguồn vapp thể hiện — đối chiếu bằng quét dữ liệu (--live) và ảnh chụp"
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-dark-z5] đang thấy toàn vẹn lãnh thổ, không cần bản đồ phụ"
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-dark-z5] không có tên sai trên bản đồ"
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-satellite-z5] nền vnsdi-sentinel2 (TESTING), ghi nguồn \"Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam (VNSDI)\""
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-satellite-z5] hiển thị: Quần đảo Hoàng Sa, Quần đảo Trường Sa, Biển Đông"
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-satellite-z5] đang thấy toàn vẹn lãnh thổ, không cần bản đồ phụ"
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-satellite-z5] không có tên sai trên bản đồ"
+        },
+        {
+          "status": "WARN",
+          "message": "[vietnam-admin-z5] không có nguồn nền nào (đang hiện thông báo: có)"
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-admin-z5] hiển thị: Quần đảo Hoàng Sa, Quần đảo Trường Sa"
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-admin-z5] đang thấy toàn vẹn lãnh thổ, không cần bản đồ phụ"
+        },
+        {
+          "status": "PASS",
+          "message": "[vietnam-admin-z5] không có tên sai trên bản đồ"
+        },
+        {
+          "status": "PASS",
+          "message": "[hoang-sa-z9] nền vapp (TESTING), ghi nguồn \"map.vapp.vn\""
+        },
+        {
+          "status": "PASS",
+          "message": "[hoang-sa-z9] tên chủ quyền do nguồn vapp thể hiện — đối chiếu bằng quét dữ liệu (--live) và ảnh chụp"
+        },
+        {
+          "status": "PASS",
+          "message": "[hoang-sa-z9] có bản đồ phụ phủ 102°–118°Đ, 4°30′–23°30′B, ghi rõ Hoàng Sa, Trường Sa (Điều 20.2–20.3)"
+        },
+        {
+          "status": "PASS",
+          "message": "[hoang-sa-z9] không có tên sai trên bản đồ"
+        },
+        {
+          "status": "PASS",
+          "message": "[truong-sa-z9] nền vapp (TESTING), ghi nguồn \"map.vapp.vn\""
+        },
+        {
+          "status": "PASS",
+          "message": "[truong-sa-z9] tên chủ quyền do nguồn vapp thể hiện — đối chiếu bằng quét dữ liệu (--live) và ảnh chụp"
+        },
+        {
+          "status": "PASS",
+          "message": "[truong-sa-z9] có bản đồ phụ phủ 102°–118°Đ, 4°30′–23°30′B, ghi rõ Hoàng Sa, Trường Sa (Điều 20.2–20.3)"
+        },
+        {
+          "status": "PASS",
+          "message": "[truong-sa-z9] không có tên sai trên bản đồ"
+        },
+        {
+          "status": "PASS",
+          "message": "[ho-chi-minh-z12] nền vapp (TESTING), ghi nguồn \"map.vapp.vn\""
+        },
+        {
+          "status": "PASS",
+          "message": "[ho-chi-minh-z12] tên chủ quyền do nguồn vapp thể hiện — đối chiếu bằng quét dữ liệu (--live) và ảnh chụp"
+        },
+        {
+          "status": "PASS",
+          "message": "[ho-chi-minh-z12] có bản đồ phụ phủ 102°–118°Đ, 4°30′–23°30′B, ghi rõ Hoàng Sa, Trường Sa (Điều 20.2–20.3)"
+        },
+        {
+          "status": "PASS",
+          "message": "[ho-chi-minh-z12] không có tên sai trên bản đồ"
+        },
+        {
+          "status": "PASS",
+          "message": "[ha-noi-z12] nền vapp (TESTING), ghi nguồn \"map.vapp.vn\""
+        },
+        {
+          "status": "PASS",
+          "message": "[ha-noi-z12] tên chủ quyền do nguồn vapp thể hiện — đối chiếu bằng quét dữ liệu (--live) và ảnh chụp"
+        },
+        {
+          "status": "PASS",
+          "message": "[ha-noi-z12] có bản đồ phụ phủ 102°–118°Đ, 4°30′–23°30′B, ghi rõ Hoàng Sa, Trường Sa (Điều 20.2–20.3)"
+        },
+        {
+          "status": "PASS",
+          "message": "[ha-noi-z12] không có tên sai trên bản đồ"
+        },
+        {
+          "status": "PASS",
+          "message": "[da-nang-z10] nền vapp (TESTING), ghi nguồn \"map.vapp.vn\""
+        },
+        {
+          "status": "PASS",
+          "message": "[da-nang-z10] tên chủ quyền do nguồn vapp thể hiện — đối chiếu bằng quét dữ liệu (--live) và ảnh chụp"
+        },
+        {
+          "status": "PASS",
+          "message": "[da-nang-z10] có bản đồ phụ phủ 102°–118°Đ, 4°30′–23°30′B, ghi rõ Hoàng Sa, Trường Sa (Điều 20.2–20.3)"
+        },
+        {
+          "status": "PASS",
+          "message": "[da-nang-z10] không có tên sai trên bản đồ"
+        },
+        {
+          "status": "PASS",
+          "message": "[khanh-hoa-z10] nền vapp (TESTING), ghi nguồn \"map.vapp.vn\""
+        },
+        {
+          "status": "PASS",
+          "message": "[khanh-hoa-z10] tên chủ quyền do nguồn vapp thể hiện — đối chiếu bằng quét dữ liệu (--live) và ảnh chụp"
+        },
+        {
+          "status": "PASS",
+          "message": "[khanh-hoa-z10] có bản đồ phụ phủ 102°–118°Đ, 4°30′–23°30′B, ghi rõ Hoàng Sa, Trường Sa (Điều 20.2–20.3)"
+        },
+        {
+          "status": "PASS",
+          "message": "[khanh-hoa-z10] không có tên sai trên bản đồ"
+        },
+        {
+          "status": "PASS",
+          "message": "[phu-quoc-an-giang-z10] nền vapp (TESTING), ghi nguồn \"map.vapp.vn\""
+        },
+        {
+          "status": "PASS",
+          "message": "[phu-quoc-an-giang-z10] tên chủ quyền do nguồn vapp thể hiện — đối chiếu bằng quét dữ liệu (--live) và ảnh chụp"
+        },
+        {
+          "status": "PASS",
+          "message": "[phu-quoc-an-giang-z10] có bản đồ phụ phủ 102°–118°Đ, 4°30′–23°30′B, ghi rõ Hoàng Sa, Trường Sa (Điều 20.2–20.3)"
+        },
+        {
+          "status": "PASS",
+          "message": "[phu-quoc-an-giang-z10] không có tên sai trên bản đồ"
+        },
+        {
+          "status": "PASS",
+          "message": "[con-dao-z12] nền vapp (TESTING), ghi nguồn \"map.vapp.vn\""
+        },
+        {
+          "status": "PASS",
+          "message": "[con-dao-z12] tên chủ quyền do nguồn vapp thể hiện — đối chiếu bằng quét dữ liệu (--live) và ảnh chụp"
+        },
+        {
+          "status": "PASS",
+          "message": "[con-dao-z12] có bản đồ phụ phủ 102°–118°Đ, 4°30′–23°30′B, ghi rõ Hoàng Sa, Trường Sa (Điều 20.2–20.3)"
+        },
+        {
+          "status": "PASS",
+          "message": "[con-dao-z12] không có tên sai trên bản đồ"
+        },
+        {
+          "status": "PASS",
+          "message": "[bien-gioi-phia-bac-z8] nền vapp (TESTING), ghi nguồn \"map.vapp.vn\""
+        },
+        {
+          "status": "PASS",
+          "message": "[bien-gioi-phia-bac-z8] tên chủ quyền do nguồn vapp thể hiện — đối chiếu bằng quét dữ liệu (--live) và ảnh chụp"
+        },
+        {
+          "status": "PASS",
+          "message": "[bien-gioi-phia-bac-z8] có bản đồ phụ phủ 102°–118°Đ, 4°30′–23°30′B, ghi rõ Hoàng Sa, Trường Sa (Điều 20.2–20.3)"
+        },
+        {
+          "status": "PASS",
+          "message": "[bien-gioi-phia-bac-z8] không có tên sai trên bản đồ"
+        },
+        {
+          "status": "PASS",
+          "message": "[ho-chi-minh-z16] nền vapp (TESTING), ghi nguồn \"map.vapp.vn\""
+        },
+        {
+          "status": "PASS",
+          "message": "[ho-chi-minh-z16] tên chủ quyền do nguồn vapp thể hiện — đối chiếu bằng quét dữ liệu (--live) và ảnh chụp"
+        },
+        {
+          "status": "PASS",
+          "message": "[ho-chi-minh-z16] có bản đồ phụ phủ 102°–118°Đ, 4°30′–23°30′B, ghi rõ Hoàng Sa, Trường Sa (Điều 20.2–20.3)"
+        },
+        {
+          "status": "PASS",
+          "message": "[ho-chi-minh-z16] không có tên sai trên bản đồ"
+        },
+        {
+          "status": "PASS",
+          "message": "Ảnh chụp bản đồ thật lưu ở reports/sovereignty để duyệt bằng mắt"
+        }
+      ]
+    }
+  ]
+}
