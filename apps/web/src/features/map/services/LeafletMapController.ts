@@ -5,6 +5,8 @@ import type { Poi } from '../../explore/types';
 import type { RoutePlan } from '../../routing/types';
 import type { TrafficMapLayer } from '../../traffic/domain/trafficMapLayer';
 import type { DraftStops, MapLayer, MapOverlays } from '../types';
+import { ArchipelagoLabels } from './leaflet/ArchipelagoLabels';
+import { VietnamInset } from './leaflet/VietnamInset';
 import { BaseLayers } from './leaflet/BaseLayers';
 import { VIETNAM_CENTER } from './leaflet/drawing';
 import { FocusPin } from './leaflet/FocusPin';
@@ -50,6 +52,8 @@ export class LeafletMapController {
   private readonly map: L.Map;
   private readonly renderer = new LifecycleCanvas();
   private readonly base: BaseLayers;
+  private readonly archipelagoLabels: ArchipelagoLabels;
+  private readonly inset: VietnamInset;
   private readonly camera: MapCamera;
   private readonly routeLayer: RouteLayer;
   private readonly traffic: TrafficLayers;
@@ -64,9 +68,16 @@ export class LeafletMapController {
   private lastDraftStopsKey = '';
   private lastTrafficMapLayer: TrafficMapLayer | null = null;
 
-  constructor(container: HTMLElement, handlers: MapControllerHandlers) {
+  private readonly reportBounds = () => this.handlers.onBoundsChange?.(this.camera.getBounds());
+
+  constructor(
+    container: HTMLElement,
+    private readonly handlers: MapControllerHandlers,
+  ) {
     this.map = L.map(container, {
       zoomControl: false,
+      minZoom: 1,
+      maxZoom: 19,
       preferCanvas: true,
       renderer: this.renderer,
       attributionControl: true,
@@ -76,8 +87,16 @@ export class LeafletMapController {
     L.control.scale({ imperial: false, position: 'bottomright' }).addTo(this.map);
 
     const language = () => this.language;
-    this.base = new BaseLayers(this.map);
+    let labels: ArchipelagoLabels | null = null;
+    this.base = new BaseLayers(this.map, import.meta.env.PROD, (provider) =>
+      labels?.setSuppressed(Boolean(provider?.sovereigntyLabels)),
+    );
+    // Tên Quần đảo Hoàng Sa, Trường Sa (Việt Nam) luôn hiện, mọi lớp nền.
+    this.archipelagoLabels = labels = new ArchipelagoLabels(this.map, this.language);
+    labels.setSuppressed(Boolean(this.base.currentProvider()?.sovereigntyLabels));
     this.camera = new MapCamera(this.map);
+    // Bản đồ phụ toàn vẹn lãnh thổ khi chỉ xem một phần (Điều 20.2–20.3, TT 17/2018/TT-BTNMT).
+    this.inset = new VietnamInset(this.map, () => this.camera.showVietnam()).addTo(this.map);
     this.traffic = new TrafficLayers(this.map, language);
     this.routeLayer = new RouteLayer(this.map, language, handlers.onSelectRoute);
     this.pois = new PoiLayer(handlers.onPoiClick);
@@ -93,7 +112,7 @@ export class LeafletMapController {
     this.pois.group.addTo(this.map);
     this.location.group.addTo(this.map);
 
-    this.map.on('moveend', () => handlers.onBoundsChange?.(this.camera.getBounds()));
+    this.map.on('moveend', this.reportBounds);
     handlers.onBoundsChange?.(this.camera.getBounds());
     this.map.on('click', (event: L.LeafletMouseEvent) =>
       handlers.onMapClick({ lat: event.latlng.lat, lng: event.latlng.lng }),
@@ -105,6 +124,7 @@ export class LeafletMapController {
     const languageChanged = data.language !== this.language;
     this.language = data.language;
     this.base.apply(data.layer, data.overlays.terrain);
+    this.archipelagoLabels.setLanguage(data.language);
     this.traffic.setVisibility(data.overlays);
     this.setPicking(data.isPicking);
     this.pois.update(data.pois, data.highlightedPoiId);
@@ -197,8 +217,14 @@ export class LeafletMapController {
     this.map.invalidateSize({ pan: false });
   }
   destroy() {
+    // Chuyển động (zoom/fit) còn dở có thể bắn moveend sau khi map đã gỡ: bỏ nghe trước khi gỡ.
+    // Không gọi map.stop(): Leaflet đặt lại zoom ở đó, lỗi NaN nếu khung bản đồ đã tách khỏi trang.
+    this.map.off('moveend', this.reportBounds);
     this.renderer.dispose();
     this.routeLayer.destroy();
+    this.inset.remove();
+    this.archipelagoLabels.destroy();
+    this.base.destroy();
     // Remove vector paths while their renderer is still alive. Map.remove() may otherwise
     // remove Canvas first, then schedule a path redraw after Canvas has deleted its context.
     const paths: L.Path[] = [];

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import { ShellContext, type SheetState } from '../../shared/ui/shell';
 
 type AppShellProps = {
-  /** Bật class `dark` cho toàn bộ giao diện (theo giờ, xem useTimeBasedMapLayer). */
+  /** Bật class `dark` cho toàn bộ giao diện (theo giao diện hệ thống hoặc lựa chọn của người dùng, xem useMapAppearance). */
   dark: boolean;
   /** Báo mỗi khi bảng đổi kích thước (để zoom lại tuyến vừa phần bản đồ còn thấy). */
   onSheetChange?: (state: SheetState) => void;

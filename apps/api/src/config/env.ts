@@ -12,6 +12,9 @@ const envSchema = z.object({
   GEMINI_API_KEY: optionalValue,
   OLLAMA_BASE_URL: z.string().url().default('http://localhost:11434'),
   VIETMAP_API_KEY: optionalValue,
+  VIETMAP_TILEMAP_API_KEY: optionalValue,
+  // Token bản đồ nền VNSDI (vnsdi.mae.gov.vn) cho lớp Hành chính, Địa hình và nền dự phòng. Chỉ đặt ở API.
+  VNSDI_BASEMAP_TOKEN: optionalValue,
   ROUTE_EXPLANATION_PROVIDER: z.enum(['off', 'gemini', 'ollama']).default('off'),
   ROUTE_EXPLANATION_MODEL: optionalValue,
   ROUTE_COMPARISON_SECRET: z.preprocess(emptyToUndefined, z.string().trim().min(32).optional()),

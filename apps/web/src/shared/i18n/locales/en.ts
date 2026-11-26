@@ -134,7 +134,6 @@ export const en: Record<string, string> = {
   'Điểm chọn trên bản đồ': 'Point selected on the map',
   'Vị trí GPS của thiết bị': 'Device GPS location',
   'Tìm thấy qua VietMap': 'Found with VietMap',
-  'Tìm thấy qua Photon / OpenStreetMap': 'Found with Photon / OpenStreetMap',
   'Tuyến đường đã lưu': 'Saved routes',
   'Hành trình của bạn': 'Your trips',
   'Được lưu an toàn trên trình duyệt này': 'Saved securely in this browser',
@@ -235,8 +234,6 @@ export const en: Record<string, string> = {
   'Đã bỏ lưu địa điểm': 'Place removed from saved items',
   'Đang chờ GPS để gắn báo cáo vào vị trí hiện tại.':
     'Waiting for GPS to attach the report to your current location.',
-  'Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.':
-    'Map tiles by OpenStreetMap · routes calculated with the VietMap API.',
   'Không lấy được vị trí.': 'Could not get your location.',
   'Không tính lại được tuyến.': 'Could not recalculate the route.',
   'Tài khoản iMap': 'iMap account',
@@ -484,7 +481,6 @@ export const en: Record<string, string> = {
   'ngay trên đường đi': 'right on the route',
   'Cách tâm tìm kiếm {distance}': '{distance} from search center',
   'Tọa độ': 'Coordinates',
-  'Mở địa điểm trên OpenStreetMap': 'Open place in OpenStreetMap',
   'Tìm đường đến đây': 'Directions here',
   'Nguồn địa điểm được ghi rõ theo từng kết quả ở trên.': 'The source is listed for each result above.',
   'Ước tính: Giao thông thông thoáng': 'Estimated: Free-flowing traffic',
@@ -889,4 +885,29 @@ export const en: Record<string, string> = {
     'The destination is outside the algorithm map area (central Ho Chi Minh City).',
   'Không tìm được đường giữa hai điểm trong vùng dữ liệu.':
     'No path was found between the two points in the data area.',
+  // Bản đồ nền (vApp, Vietmap, VNSDI) và ghi nguồn.
+  'Bản đồ nền vApp (map.vapp.vn), Vietmap và VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam) · tuyến đường tính qua API VietMap.':
+    'Base maps by vApp (map.vapp.vn), Vietmap and VNSDI (Vietnam Department of Survey, Mapping and Geographic Information) · routes calculated with the VietMap API.',
+  'Bản đồ địa hình VNSDI (không dùng với nền Vệ tinh)':
+    'VNSDI terrain map (not available with Satellite)',
+  'Chưa có nguồn bản đồ được duyệt cho chế độ này':
+    'No approved map source for this mode yet',
+  'Hành chính':
+    'Administrative',
+  'Nguồn: vApp (map.vapp.vn) · Vệ tinh: VNSDI Sentinel-2, Vietmap · Hành chính và Địa hình: VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam)':
+    'Source: vApp (map.vapp.vn) · Satellite: VNSDI Sentinel-2, Vietmap · Administrative and Terrain: VNSDI (Vietnam Department of Survey, Mapping and Geographic Information)',
+  'Nguồn: vApp · Vietmap · VNSDI':
+    'Source: vApp · Vietmap · VNSDI',
+  'Theo hệ thống':
+    'System',
+  'Tối':
+    'Dark',
+  'Đường phố':
+    'Streets',
+  'Sao chép tọa độ':
+    'Copy coordinates',
+  'Đã sao chép tọa độ':
+    'Coordinates copied',
+  'Tìm thấy qua dữ liệu OpenStreetMap':
+    'Found with OpenStreetMap data',
 };

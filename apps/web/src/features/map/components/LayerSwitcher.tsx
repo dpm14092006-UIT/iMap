@@ -1,13 +1,17 @@
-import { useId, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { Popover } from '../../../shared/ui/Popover';
 import { Icon } from '../../../shared/ui/Icon';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import type { MapLayer, MapOverlays } from '../types';
+import type { MapLayerPreference } from '../hooks/useMapAppearance';
+import { usableChain } from '../basemap/providers';
 
 type LayerSwitcherProps = {
   layer: MapLayer;
+  preference: MapLayerPreference;
+  inMenu?: boolean;
   overlays: MapOverlays;
-  onLayerChange: (layer: MapLayer) => void;
+  onLayerChange: (layer: MapLayerPreference) => void;
   onOverlaysChange: (overlays: MapOverlays) => void;
   /**
    * Nút nằm ở góc nào của bản đồ. Popover mở về phía còn trống:
@@ -17,40 +21,24 @@ type LayerSwitcherProps = {
 };
 
 const baseOptions = [
-  { id: 'street', label: 'Bản đồ' },
-  { id: 'satellite', label: 'Vệ tinh' },
+  { id: 'auto', label: 'Theo hệ thống', icon: 'compass' },
+  { id: 'street', label: 'Đường phố', icon: 'road' },
+  { id: 'dark', label: 'Tối', icon: 'moon' },
+  { id: 'satellite', label: 'Vệ tinh', icon: 'layers' },
+  { id: 'admin', label: 'Hành chính', icon: 'globe' },
 ] as const;
 
 const overlayOptions: { key: keyof MapOverlays; label: string; hint: string }[] = [
   { key: 'traffic', label: 'Giao thông trực tiếp', hint: 'Quầng màu quanh sự cố và đoạn tắc trên tuyến' },
   { key: 'incidents', label: 'Sự cố cộng đồng', hint: 'Marker kẹt xe, tai nạn, ngập…' },
-  { key: 'terrain', label: 'Địa hình', hint: 'Đường đồng mức (chỉ với nền Bản đồ)' },
+  { key: 'terrain', label: 'Địa hình', hint: 'Bản đồ địa hình VNSDI (không dùng với nền Vệ tinh)' },
 ];
-
-/** Ảnh xem trước của từng lớp nền, vẽ bằng gradient + vài nét đường. */
-function LayerThumb({ kind, className = '' }: { kind: 'street' | 'satellite'; className?: string }) {
-  const tone =
-    kind === 'satellite'
-      ? 'bg-gradient-to-br from-emerald-900 via-lime-800 to-stone-600'
-      : 'bg-gradient-to-br from-emerald-100 via-amber-50 to-sky-100 dark:from-slate-800 dark:via-slate-700 dark:to-slate-900';
-  return (
-    <span className={`relative block overflow-hidden ${tone} ${className}`} aria-hidden="true">
-      <svg viewBox="0 0 64 64" className="absolute inset-0 h-full w-full" fill="none">
-        <path
-          d="M-4 44 30 30 70 40M18-4 28 70M44-4 38 70"
-          stroke={kind === 'satellite' ? '#d6d3d1' : '#fff'}
-          strokeOpacity={kind === 'satellite' ? 0.35 : 0.9}
-          strokeWidth="3.5"
-          strokeLinecap="round"
-        />
-      </svg>
-    </span>
-  );
-}
 
 /** Nút thẻ ảnh "Lớp" (góc dưới trái, hoặc dưới phải khi đang dẫn đường); mở popover chọn nền bản đồ và các lớp phủ. */
 export function LayerSwitcher({
   layer,
+  preference,
+  inMenu = false,
   overlays,
   onLayerChange,
   onOverlaysChange,
@@ -58,13 +46,34 @@ export function LayerSwitcher({
 }: LayerSwitcherProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  // Mở về phía còn nhiều chỗ hơn (trên/dưới nút) và giới hạn chiều cao theo khoảng trống thật:
+  // khi dẫn đường trên màn hình thấp, bảng điều hướng đẩy nút lên cao nên phía trên có thể rất hẹp.
+  const [placement, setPlacement] = useState<{ above: boolean; maxHeight: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!open || inMenu) return;
+    const measure = () => {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const gap = 8 + 8; // khoảng cách tới nút + lề màn hình
+      // Giới hạn dưới là mép trên của bảng điều hướng (nếu đang dẫn đường), không phải đáy màn hình.
+      const banner = document.querySelector('[data-nav-banner]')?.getBoundingClientRect();
+      const bottomLimit = banner && banner.top > rect.bottom ? banner.top : window.innerHeight;
+      const spaceAbove = rect.top - gap;
+      const spaceBelow = bottomLimit - rect.bottom - gap;
+      const above = spaceAbove >= 320 || spaceAbove >= spaceBelow;
+      setPlacement({ above, maxHeight: Math.max(120, Math.floor(above ? spaceAbove : spaceBelow)) });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [open, inMenu]);
   const titleId = useId();
   const base = layer === 'satellite' ? 'satellite' : 'street';
-  const next = base === 'satellite' ? 'street' : 'satellite';
   // Khi dẫn đường, trừ cột nút bản đồ và các khoảng cách đến mép màn hình.
   const panelPosition =
     align === 'right'
-      ? 'right-0 max-w-[calc(100vw-4.75rem)] max-md:max-w-[calc(100vw-4.5rem)] max-h-[calc(100dvh-var(--map-controls-bottom)-var(--layer-trigger-size)-1.25rem)] overflow-y-auto'
+      ? 'right-0 max-w-[calc(100vw-4.75rem)] max-md:max-w-[calc(100vw-4.5rem)]'
       : 'left-0 max-w-[calc(100vw-32px)]';
 
   return (
@@ -72,24 +81,34 @@ export function LayerSwitcher({
       open={open}
       onClose={() => setOpen(false)}
       label={t('Lớp bản đồ')}
-      className="[--layer-trigger-size:4rem] max-md:[--layer-trigger-size:2.75rem]"
-      panelClassName={`bottom-full mb-2 w-[272px] ${panelPosition}`}
+      className="[--layer-trigger-size:2.75rem]"
+      panelClassName={
+        inMenu
+          ? '!static !mb-2 !bg-surface-muted !shadow-none'
+          : `${placement && !placement.above ? 'top-full mt-2' : 'bottom-full mb-2'} w-[280px] overflow-y-auto !border !border-line !bg-surface ${panelPosition}`
+      }
+      panelStyle={!inMenu && placement ? { maxHeight: placement.maxHeight } : undefined}
       trigger={
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => setOpen((current) => !current)}
           aria-label={t('Lớp bản đồ')}
           aria-expanded={open}
           aria-haspopup="dialog"
-          className={`group relative block h-[var(--layer-trigger-size)] w-[var(--layer-trigger-size)] overflow-hidden rounded-2xl shadow-glass dark:shadow-glass-dark ring-2 ring-white transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-indigo-400/40 active:scale-95 dark:ring-slate-700`}
+          className={
+            inMenu
+              ? 'ui-button ui-button-ghost min-h-11 w-full justify-start gap-3 px-3 text-sm'
+              : 'ui-button ui-button-secondary h-11 w-11 p-0 shadow-glass'
+          }
         >
-          <LayerThumb kind={next} className="h-full w-full transition group-hover:scale-110" />
-          <span
-            className={`absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-gradient-to-t from-slate-950/70 to-transparent pb-1 pt-4 text-[11px] font-bold text-white max-md:pb-0.5 max-md:pt-3 max-md:text-[10px]`}
-          >
-            <Icon name="layers" size={12} />
-            {t('Lớp')}
-          </span>
+          <Icon name="layers" size={20} />
+          {inMenu && (
+            <>
+              {t('Lớp bản đồ')}
+              <Icon name="chevron-down" size={16} className="ml-auto" />
+            </>
+          )}
         </button>
       }
     >
@@ -98,27 +117,43 @@ export function LayerSwitcher({
       </p>
       <div className="grid grid-cols-2 gap-2" role="group" aria-labelledby={titleId}>
         {baseOptions.map((option) => {
-          const selected = option.id === base;
+          const selected = option.id === preference;
+          // Chế độ chưa có nguồn bản đồ hợp lệ (ví dụ Hành chính khi chưa có token VNSDI) thì không cho chọn.
+          const unavailable =
+            option.id !== 'auto' && usableChain(option.id, import.meta.env.PROD).length === 0;
           return (
             <button
               key={option.id}
               type="button"
               aria-pressed={selected}
+              disabled={unavailable && !selected}
+              title={unavailable ? t('Chưa có nguồn bản đồ được duyệt cho chế độ này') : undefined}
               onClick={() => onLayerChange(option.id)}
-              className={`rounded-2xl p-1 text-center text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 ${selected ? 'bg-brand-50 text-brand-700 ring-2 ring-brand-500 dark:bg-brand-500/20 dark:text-brand-200' : 'text-ink-soft hover:bg-black/5 dark:text-slate-300 dark:hover:bg-white/10'}`}
+              className={`ui-button ui-button-secondary min-h-11 !gap-1 px-2 last:col-span-2 ${selected ? 'border-focus text-primary' : ''}`}
             >
-              <LayerThumb kind={option.id} className="mb-1 h-14 w-full rounded-xl" />
+              <Icon name={option.icon} size={15} />
               {t(option.label)}
             </button>
           );
         })}
       </div>
 
+      <p
+        className="mt-2 truncate text-[11px] leading-4 text-content-subtle"
+        title={t(
+          'Nguồn: vApp (map.vapp.vn) · Vệ tinh: VNSDI Sentinel-2, Vietmap · Hành chính và Địa hình: VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam)',
+        )}
+      >
+        {t('Nguồn: vApp · Vietmap · VNSDI')}
+      </p>
+
       <p className="mb-1 mt-3 text-xs font-bold text-content">{t('Lớp phủ')}</p>
       <ul className="space-y-0.5">
         {overlayOptions.map((option) => {
           const checked = overlays[option.key];
-          const disabled = option.key === 'terrain' && base === 'satellite';
+          const disabled =
+            option.key === 'terrain' &&
+            (base === 'satellite' || usableChain('terrain', import.meta.env.PROD).length === 0);
           return (
             <li key={option.key}>
               <button
@@ -128,11 +163,11 @@ export function LayerSwitcher({
                 disabled={disabled}
                 title={t(option.hint)}
                 onClick={() => onOverlaysChange({ ...overlays, [option.key]: !checked })}
-                className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left text-xs font-medium text-ink transition hover:bg-black/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 disabled:opacity-40 dark:text-slate-200 dark:hover:bg-white/10"
+                className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left text-xs font-medium text-ink transition hover:bg-black/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40 disabled:opacity-40 dark:text-slate-200 dark:hover:bg-white/10"
               >
                 {t(option.label)}
                 <span
-                  className={`relative h-5 w-9 shrink-0 rounded-full transition ${checked && !disabled ? 'bg-brand-gradient' : 'bg-slate-300 dark:bg-slate-600'}`}
+                  className={`relative h-5 w-9 shrink-0 rounded-full transition ${checked && !disabled ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-600'}`}
                   aria-hidden="true"
                 >
                   <span
@@ -144,11 +179,6 @@ export function LayerSwitcher({
           );
         })}
       </ul>
-
-      <p className="mt-2 flex items-center gap-1.5 border-t border-black/5 pt-2 text-[11px] text-ink-soft dark:border-white/10 dark:text-slate-400">
-        <Icon name="moon" size={13} className="shrink-0" />
-        {t('Chế độ tối tự động 18:00–06:00')}
-      </p>
     </Popover>
   );
 }

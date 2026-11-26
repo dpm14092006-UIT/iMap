@@ -19,6 +19,7 @@
     "benchmark:pathfinding": "tsx scripts/benchmark/benchmark-pathfinding.ts",
     "benchmark:tsp": "tsx scripts/benchmark/benchmark-tsp.ts",
     "verify": "node scripts/verify/verify.mjs",
+    "verify:sovereignty": "npm run build -w @routetwin/shared && tsx scripts/verify/sovereignty.ts",
     "test:browser": "npm run build -w @routetwin/shared && node scripts/verify/browser.mjs"
   },
   "engines": {

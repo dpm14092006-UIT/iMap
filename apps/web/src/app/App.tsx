@@ -17,7 +17,7 @@ import { MapControls } from '../features/map/components/MapControls';
 import { MapView } from '../features/map/components/MapView';
 import { TrafficLegend } from '../features/map/components/TrafficLegend';
 import { useCurrentLocation } from '../features/map/hooks/useCurrentLocation';
-import { useTimeBasedMapLayer } from '../features/map/hooks/useTimeBasedMapLayer';
+import { useMapAppearance } from '../features/map/hooks/useMapAppearance';
 import type { LeafletMapController } from '../features/map/services/LeafletMapController';
 import type { DraftStops, MapOverlays } from '../features/map/types';
 import { useSavedRoutes } from '../features/my-routes/hooks/useSavedRoutes';
@@ -88,7 +88,7 @@ export function App() {
   const { location: currentLocation, locate } = useCurrentLocation();
   const { user, accessToken, loading: authLoading } = useAuth();
   const isAuthenticated = Boolean(user && !user.is_anonymous && accessToken);
-  const { layer, setLayer, isDark } = useTimeBasedMapLayer(); // tối tự động 18:00–06:00
+  const { layer, preference, setLayer, isDark } = useMapAppearance();
   const savedRoutes = useSavedRoutes();
   const { updateAvailable, reloadForUpdate } = useAppUpdate();
   const now = useNow(AREA_INSIGHT_REFRESH_MS);
@@ -314,7 +314,7 @@ export function App() {
 
   const canUseAssistant = !authLoading && isAuthenticated;
   const { panelOpen } = panels;
-  const layerSwitcherProps = { layer, overlays, onLayerChange: setLayer, onOverlaysChange: setOverlays };
+  const layerSwitcherProps = { layer, preference, overlays, onLayerChange: setLayer, onOverlaysChange: setOverlays };
 
   return (
     <AppShell
@@ -361,7 +361,7 @@ export function App() {
             buildSearchAction={explorer.buildSearchAction}
             updateAvailable={updateAvailable}
             onUpdate={reloadForUpdate}
-            onInfo={() => showToast(t('Bản đồ nền OpenStreetMap · tuyến đường tính qua API VietMap.'))}
+            onInfo={() => showToast(t('Bản đồ nền vApp (map.vapp.vn), Vietmap và VNSDI (Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam) · tuyến đường tính qua API VietMap.'))}
             userEmail={user?.email ?? null}
             strip={
               explorer.alongRouteMode ? (

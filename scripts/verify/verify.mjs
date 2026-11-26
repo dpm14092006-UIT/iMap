@@ -25,7 +25,7 @@ const args = Object.fromEntries(
 const base = args.base ?? 'main';
 const shuffleRounds = Number(args.shuffle ?? 3);
 const only = args.only ? new Set(args.only.split(',')) : null;
-const roundIds = new Set(['static', 'types', 'audit', 'test', 'shuffle', 'build']);
+const roundIds = new Set(['static', 'types', 'audit', 'test', 'shuffle', 'sovereignty', 'build']);
 const invalidArgument = Object.keys(args).find((key) => !['base', 'shuffle', 'only'].includes(key));
 const invalidRound =
   args.only !== undefined ? args.only.split(',').find((id) => !roundIds.has(id)) : undefined;
@@ -118,8 +118,17 @@ const rounds = [
       }).flat(),
   },
   {
+    id: 'sovereignty',
+    title: 'Vòng 6 · Cổng kiểm chứng chủ quyền Việt Nam (bắt buộc)',
+    steps: () => [
+      run('vùng phủ · đường biên · địa danh · giấy phép · ảnh chuẩn', bin('tsx'), [
+        join(root, 'scripts/verify/sovereignty.ts'),
+      ]),
+    ],
+  },
+  {
     id: 'build',
-    title: 'Vòng 6 · Build production',
+    title: 'Vòng 7 · Build production',
     steps: () => {
       const out = mkdtempSync(join(tmpdir(), 'imap-verify-'));
       try {
