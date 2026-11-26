@@ -13,6 +13,20 @@ const fixtureTile = await readFile(resolve(root, 'apps/web/public/favicon-32.png
 const errors = [],
   requests = [],
   unexpected = [];
+/** Mở một chức năng: nút trực tiếp nếu có, nếu không thì qua menu trên cùng (giao diện không còn thanh bên). */
+async function openFeature(page, names) {
+  for (const name of names) {
+    const direct = page.getByRole('button', { name, exact: true }).filter({ visible: true }).first();
+    if (await direct.isVisible().catch(() => false)) return direct.click();
+  }
+  await page.getByRole('button', { name: 'Menu', exact: true }).filter({ visible: true }).first().click();
+  for (const name of names) {
+    const item = page.getByRole('button', { name, exact: true }).filter({ visible: true }).first();
+    if (await item.isVisible().catch(() => false)) return item.click();
+  }
+  throw new Error(`Không tìm thấy chức năng: ${names.join(' / ')}`);
+}
+
 async function openDirections(page) {
   const heading = page.getByRole('heading', { name: 'Chỉ đường', exact: true });
   if (await heading.isVisible().catch(() => false)) return;
@@ -429,17 +443,24 @@ try {
     await page.setViewportSize({ width, height: 650 });
     await trip.getByRole('button', { name: 'Báo cáo' }).waitFor();
     await trip.getByRole('button', { name: /^(Toàn tuyến|Về vị trí)$/ }).waitFor();
-    const { fits, rows, count } = await stop.evaluate((button) => {
-      const banner = button.closest('section').getBoundingClientRect();
-      const actions = [...button.parentElement.querySelectorAll('button')].map((action) =>
-        action.getBoundingClientRect(),
-      );
-      return {
-        fits: actions.every((action) => action.left >= banner.left && action.right <= banner.right),
-        rows: new Set(actions.map((action) => Math.round(action.top))).size,
-        count: actions.length,
-      };
-    });
+    // Đo lại cho tới khi bố cục ổn định (tối đa 2 giây): giao diện sắp xếp lại sau khi đổi kích thước.
+    let layout;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      layout = await stop.evaluate((button) => {
+        const banner = button.closest('section').getBoundingClientRect();
+        const actions = [...button.parentElement.querySelectorAll('button')].map((action) =>
+          action.getBoundingClientRect(),
+        );
+        return {
+          fits: actions.every((action) => action.left >= banner.left && action.right <= banner.right),
+          rows: new Set(actions.map((action) => Math.round(action.top))).size,
+          count: actions.length,
+        };
+      });
+      if (layout.rows === 1 && layout.fits) break;
+      await page.waitForTimeout(200);
+    }
+    const { fits, rows, count } = layout;
     assert.deepEqual(
       { fits, rows, count },
       { fits: true, rows: 1, count: 4 },
@@ -454,17 +475,9 @@ try {
   await page.goto(`http://127.0.0.1:${address.port}/`);
   // Trang chủ chỉ có bản đồ + thanh tìm kiếm; bảng Chỉ đường mở khi bấm nút trên thanh trên cùng.
   await openDirections(page);
-  await page
-    .getByRole('button', { name: 'Nhiều điểm', exact: true })
-    .filter({ visible: true })
-    .first()
-    .click();
+  await openFeature(page, ['Nhiều điểm', 'Lộ trình nhiều điểm']);
   await page.getByRole('heading', { name: 'Hành trình nhiều điểm' }).waitFor();
-  await page
-    .getByRole('button', { name: 'Giao thông', exact: true })
-    .filter({ visible: true })
-    .first()
-    .click();
+  await openFeature(page, ['Giao thông']);
   await page.getByRole('heading', { name: 'Tình hình giao thông' }).waitFor();
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);

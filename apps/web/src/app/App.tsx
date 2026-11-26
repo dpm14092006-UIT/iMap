@@ -559,7 +559,9 @@ export function App() {
             error={traffic.error}
             onClose={closePanel}
             onSignIn={() => panels.setAuthOpen(true)}
-            onViewMap={() => setOverlays((current) => current.incidents ? current : { ...current, incidents: true })}
+            onViewMap={() =>
+              setOverlays((current) => (current.incidents ? current : { ...current, incidents: true }))
+            }
             onReport={reporting.report}
             onClearance={reporting.verify}
           />

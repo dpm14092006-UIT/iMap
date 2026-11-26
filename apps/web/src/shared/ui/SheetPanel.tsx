@@ -83,7 +83,12 @@ export function SheetPanel({
         bottom: parent.clientHeight - element.offsetTop,
       };
       setInset((current) =>
-        current && current.left === next.left && current.right === next.right && current.bottom === next.bottom ? current : next,
+        current &&
+        current.left === next.left &&
+        current.right === next.right &&
+        current.bottom === next.bottom
+          ? current
+          : next,
       );
     };
     measure();

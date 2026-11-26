@@ -42,7 +42,9 @@ main {
   gap: 8px;
   pointer-events: none;
 }
-.imap-topbar > * { pointer-events: auto; }
+.imap-topbar > * {
+  pointer-events: auto;
+}
 .imap-wordmark {
   display: grid;
   min-width: 66px;
@@ -55,9 +57,12 @@ main {
   color: rgb(var(--primary));
   font-size: 25px;
   font-weight: 850;
-  letter-spacing: -.075em;
+  letter-spacing: -0.075em;
 }
-.imap-wordmark:focus-visible { outline: 2px solid rgb(var(--focus)); outline-offset: 2px; }
+.imap-wordmark:focus-visible {
+  outline: 2px solid rgb(var(--focus));
+  outline-offset: 2px;
+}
 .imap-quick-search {
   position: fixed;
   right: 12px;
@@ -79,11 +84,22 @@ main {
     background: rgb(var(--surface));
     box-shadow: 0 2px 8px rgb(25 28 34 / 10%);
   }
-  .imap-quick-search { position: static; flex: 1; min-width: 0; }
-  main[data-panel-open='true'] > [data-map-controls] { right: min(430px, 55vw); }
+  .imap-quick-search {
+    position: static;
+    flex: 1;
+    min-width: 0;
+  }
+  main[data-panel-open='true'] > [data-map-controls] {
+    right: min(430px, 55vw);
+  }
 }
 @media (max-width: 767px) {
-  .imap-quick-search > * { box-shadow: 0 2px 8px rgb(25 28 34 / 16%); border-radius: 12px; }
+  .imap-quick-search > * {
+    box-shadow: 0 2px 8px rgb(25 28 34 / 16%);
+    border-radius: 12px;
+  }
 }
 
-.imap-topbar summary::-webkit-details-marker { display: none; }
+.imap-topbar summary::-webkit-details-marker {
+  display: none;
+}

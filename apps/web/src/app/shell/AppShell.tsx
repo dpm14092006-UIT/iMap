@@ -45,7 +45,7 @@ export function AppShell({
       <main
         id="map"
         style={style}
-        data-panel-open={sheet.inset ? "true" : undefined}
+        data-panel-open={sheet.inset ? 'true' : undefined}
         data-sheet={sheet.isFull ? 'full' : undefined}
         className={`${dark ? 'dark' : ''} relative h-[100dvh] overflow-hidden bg-surface-muted text-content`}
       >
