@@ -44,6 +44,8 @@ export class CalculateRouteUseCase {
     if (base!.status === 'rejected') throw base!.reason;
 
     const candidates: RoutePathResult[] = flatten(base!.value, 'default');
+    // Tuyến gốc đã không qua trạm thu phí nào thì nhãn "Tránh trạm thu phí" vô nghĩa (thường gặp ở nội thành).
+    const baseHasNoToll = candidates.every((path) => path.tollCostVnd === 0);
     settled.forEach((result, index) => {
       const extra = extras[index]!;
       if (result.status === 'rejected') {
@@ -56,18 +58,19 @@ export class CalculateRouteUseCase {
         });
         return;
       }
-      candidates.push(...flatten(result.value, resolveVariant(extra.variant, result.value)));
+      candidates.push(...flatten(result.value, resolveVariant(extra.variant, result.value, baseHasNoToll)));
     });
 
-    const unique: RoutePathResult[] = [];
-    for (const path of candidates) {
-      if (!unique.some((kept) => areNearDuplicateRoutes(kept, path))) unique.push(path);
-    }
     const byObjective = (a: RoutePathResult, b: RoutePathResult) =>
       request.objective === 'distance'
         ? a.distanceMeters - b.distanceMeters
         : a.durationSeconds - b.durationSeconds;
-    const [primary, ...alternatives] = unique.sort(byObjective).slice(0, MAX_ROUTE_OPTIONS);
+    // Sắp xếp trước khi gộp để trong mỗi cặp gần trùng, bản tốt hơn theo tiêu chí được giữ lại.
+    const unique: RoutePathResult[] = [];
+    for (const path of [...candidates].sort(byObjective)) {
+      if (!unique.some((kept) => areNearDuplicateRoutes(kept, path))) unique.push(path);
+    }
+    const [primary, ...alternatives] = unique.slice(0, MAX_ROUTE_OPTIONS);
     return { ...primary!, ...(alternatives.length ? { alternatives } : {}) };
   }
 }
@@ -77,9 +80,13 @@ function flatten(result: RouteResult, variant: RouteVariant): RoutePathResult[] 
   return [primary, ...(alternatives ?? [])].map((path) => ({ ...path, variant }));
 }
 
-/** `avoid-toll` chỉ đúng khi VietMap báo toll_cost = 0 cho MỌI tuyến của lời gọi đó. */
-function resolveVariant(variant: RouteVariant, result: RouteResult): RouteVariant {
+/**
+ * `avoid-toll` chỉ đúng khi VietMap báo toll_cost = 0 cho MỌI tuyến của lời gọi đó, và chỉ có nghĩa
+ * khi tuyến gốc có thu phí: tuyến gốc đã miễn phí thì phương án phụ chỉ là một tuyến khác (`alternative`).
+ */
+function resolveVariant(variant: RouteVariant, result: RouteResult, baseHasNoToll: boolean): RouteVariant {
   if (variant !== 'avoid-toll') return variant;
+  if (baseHasNoToll) return 'alternative';
   const paths = [result, ...(result.alternatives ?? [])];
   return paths.every((path) => path.tollCostVnd === 0) ? 'avoid-toll' : 'alternative';
 }

@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import type { Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { env } from 'node:process';
+import { buildContentSecurityPolicy } from './src/shared/security/contentSecurityPolicy';
 
 const appBuildVersion = `${env.VERCEL_DEPLOYMENT_ID ?? env.VERCEL_GIT_COMMIT_SHA ?? 'local'}-${Date.now().toString(36)}`;
 
@@ -26,8 +27,60 @@ function appVersionPlugin(version: string): Plugin {
   };
 }
 
+/** Địa chỉ công khai của trang (để og:image/og:url là URL tuyệt đối như Facebook/Zalo yêu cầu). */
+function publicSiteUrl(): string | undefined {
+  const explicit = env.VITE_SITE_URL?.trim();
+  if (explicit) return explicit.replace(/\/+$/, '');
+  const vercel = env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  return vercel ? `https://${vercel}` : undefined;
+}
+
+/**
+ * Chỉ khi build: thêm CSP (dựng từ API/Supabase cấu hình) và ảnh xem trước khi chia sẻ dạng URL tuyệt đối.
+ * Không áp lúc dev vì Vite/React Refresh cần script nội tuyến.
+ */
+function htmlSecurityAndPreviewPlugin(): Plugin {
+  let policy = '';
+  return {
+    name: 'imap-html-security-preview',
+    apply: 'build',
+    configResolved(config) {
+      policy = buildContentSecurityPolicy({
+        apiBaseUrl: config.env.VITE_API_BASE_URL,
+        supabaseUrl: config.env.VITE_SUPABASE_URL,
+      });
+    },
+    transformIndexHtml(html) {
+      const site = publicSiteUrl();
+      const image = `${site ?? ''}/og-image.jpg`;
+      const escaped = policy.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
+      // CSP ngay sau charset: phải đứng trước mọi script/stylesheet mà nó quản lý.
+      return {
+        html: html.replace(
+          /<meta charset="UTF-8" \/>/,
+          (charset) => `${charset}\n    <meta http-equiv="Content-Security-Policy" content="${escaped}" />`,
+        ),
+        tags: [
+          { tag: 'meta', attrs: { property: 'og:image', content: image }, injectTo: 'head' },
+          { tag: 'meta', attrs: { name: 'twitter:image', content: image }, injectTo: 'head' },
+          ...(site
+            ? [
+                {
+                  tag: 'meta',
+                  attrs: { property: 'og:url', content: `${site}/` },
+                  injectTo: 'head' as const,
+                },
+                { tag: 'link', attrs: { rel: 'canonical', href: `${site}/` }, injectTo: 'head' as const },
+              ]
+            : []),
+        ],
+      };
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), appVersionPlugin(appBuildVersion)],
+  plugins: [react(), appVersionPlugin(appBuildVersion), htmlSecurityAndPreviewPlugin()],
   define: { __APP_BUILD_VERSION__: JSON.stringify(appBuildVersion) },
   build: {
     rollupOptions: {

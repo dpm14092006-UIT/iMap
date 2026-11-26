@@ -1,9 +1,10 @@
 import * as L from 'leaflet';
 import type { LatLng } from '../../../../shared/geo/types';
-import { MOBILE_QUERY, VIETNAM_CENTER } from './drawing';
+import { MOBILE_QUERY } from './drawing';
+import { VIETNAM_TERRITORY_BOUNDS } from './VietnamInset';
 
 /** Vùng bản đồ bị giao diện nổi che (px, tính từ mép khung bản đồ). */
-export type FitInsets = { left: number; bottom: number };
+export type FitInsets = { left: number; right?: number; bottom: number };
 
 /**
  * Điều khiển khung nhìn: bay tới điểm, bám vị trí, zoom vừa các điểm trong phần bản đồ còn thấy
@@ -16,8 +17,9 @@ export class MapCamera {
 
   constructor(private readonly map: L.Map) {}
 
+  /** Toàn cảnh Việt Nam: khớp giới hạn 4°30′–23°30′B, 102°–118°Đ (Điều 20.1), gồm đất liền, đảo, quần đảo. */
   showVietnam() {
-    this.map.setView(VIETNAM_CENTER, 5);
+    this.map.fitBounds(VIETNAM_TERRITORY_BOUNDS, { padding: [16, 16], animate: true });
   }
   zoomIn() {
     this.map.zoomIn();
@@ -49,8 +51,11 @@ export class MapCamera {
   /** Điện thoại: bảng/banner che đáy nên dời tâm xuống để điểm nằm giữa phần bản đồ còn thấy. */
   private centerAboveSheet(target: L.LatLng, zoom: number): L.LatLng {
     const covered = this.mobileQuery.matches ? (this.fitInsets?.bottom ?? 0) : 0;
-    if (covered <= 0) return target;
-    return this.map.unproject(this.map.project(target, zoom).add([0, covered / 2]), zoom);
+    const horizontal = this.mobileQuery.matches
+      ? 0
+      : ((this.fitInsets?.right ?? 0) - (this.fitInsets?.left ?? 0)) / 2;
+    if (covered <= 0 && horizontal === 0) return target;
+    return this.map.unproject(this.map.project(target, zoom).add([horizontal, covered / 2]), zoom);
   }
 
   followLocation(point: LatLng, zoom = 16) {
@@ -79,7 +84,7 @@ export class MapCamera {
     };
   }
 
-  /** Báo vùng bị bảng chức năng chiếm (trái ở desktop, đáy ở mobile); null khi không có bảng. */
+  /** Báo vùng bị bảng chức năng chiếm (phải ở desktop, đáy ở mobile); null khi không có bảng. */
   setFitInsets(insets: FitInsets | null) {
     this.fitInsets = insets;
   }
@@ -91,7 +96,7 @@ export class MapCamera {
 
   /**
    * Zoom vừa các điểm trong phần bản đồ còn nhìn thấy: chừa chỗ cho thanh trên (đo thực tế), bảng
-   * trái (desktop/tablet, rộng 360-400px) hoặc bảng kéo ở đáy (mobile) và cụm nút nổi bên phải.
+   * phải (desktop/tablet, rộng 360-400px) hoặc bảng kéo ở đáy (mobile) và cụm nút nổi bên phải.
    */
   fit(points: L.LatLngExpression[]) {
     this.lastFitPoints = points;
@@ -107,8 +112,8 @@ export class MapCamera {
     let right: number;
     let bottom: number;
     if (wide) {
-      left = this.fitInsets ? this.fitInsets.left + 24 : clientWidth >= 1024 ? 510 : 460;
-      right = 90;
+      left = (this.fitInsets?.left ?? 0) + 28;
+      right = this.fitInsets?.right ? this.fitInsets.right + 24 : 88;
       bottom = 80;
     } else {
       left = 28;

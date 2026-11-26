@@ -3,11 +3,9 @@ import type { PickTarget } from '../../../features/routing/components/RoutePanel
 import { parseRouteShareLink } from '../../../features/routing/domain/routeShareLink';
 import type { FeatureKey } from '../../types';
 
-/** Điện thoại mở vào bản đồ trống cho thoáng (trừ link chia sẻ tuyến); desktop/tablet mở sẵn chỉ đường. */
+/** Mở bản đồ trống, trừ khi người dùng vào bằng liên kết chia sẻ tuyến. */
 function initialPanel(): FeatureKey | null {
-  return window.matchMedia('(max-width: 767px)').matches && !parseRouteShareLink(window.location.search)
-    ? null
-    : 'directions';
+  return parseRouteShareLink(window.location.search) ? 'directions' : null;
 }
 
 /** Panel nào đang mở, chế độ chọn điểm trên bản đồ và bảng đăng nhập. */

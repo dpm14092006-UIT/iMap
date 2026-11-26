@@ -1,4 +1,13 @@
 import { z } from 'zod';
+import { isInVietmapCoverage } from '../constants.js';
+import {
+  outsideCoverageMessage,
+  publicMessage,
+  samePoint,
+  searchTextSchema,
+  strictNumber,
+  vietnamPointSchema,
+} from './input.js';
 
 export type PlaceSuggestion = {
   id: string;
@@ -30,7 +39,7 @@ export const poiLimits = { default: 15, max: 20 } as const;
 export const poiPathMaxPoints = 500;
 
 const poiSearchTermSchema = {
-  query: z.string().trim().min(1).max(80).optional(),
+  query: searchTextSchema(1, 80).optional(),
   category: poiCategorySchema.optional(),
   radiusM: z
     .number()
@@ -42,7 +51,7 @@ const poiSearchTermSchema = {
 };
 const hasSearchTerm = (value: { query?: string | undefined; category?: PoiCategory | undefined }) =>
   Boolean(value.query || value.category);
-const missingTerm = { message: 'Cần nhập từ khóa hoặc chọn danh mục.', path: ['query'] };
+const missingTerm = { ...publicMessage('Cần nhập từ khóa hoặc chọn danh mục.'), path: ['query'] };
 
 /** POST /api/places/along-route. `path` là [vĩ độ, kinh độ][]. */
 export const alongRoutePoiRequestSchema = z
@@ -50,7 +59,16 @@ export const alongRoutePoiRequestSchema = z
     path: z
       .array(z.tuple([z.number().min(-90).max(90), z.number().min(-180).max(180)]))
       .min(2)
-      .max(poiPathMaxPoints),
+      .max(poiPathMaxPoints)
+      .refine(
+        (path) => path.every(([lat, lng]) => isInVietmapCoverage({ lat, lng })),
+        publicMessage(outsideCoverageMessage),
+      )
+      .refine(
+        ([first, ...rest]) =>
+          rest.some(([lat, lng]) => !samePoint({ lat: first![0], lng: first![1] }, { lat, lng })),
+        publicMessage('Tuyến cần có ít nhất hai điểm khác nhau.'),
+      ),
     ...poiSearchTermSchema,
   })
   .refine(hasSearchTerm, missingTerm);
@@ -59,19 +77,20 @@ export type AlongRoutePoiRequest = z.infer<typeof alongRoutePoiRequestSchema>;
 /** GET /api/places/nearby (query string, nên ép kiểu số). */
 export const nearbyPoiRequestSchema = z
   .object({
-    lat: z.coerce.number().min(-90).max(90),
-    lng: z.coerce.number().min(-180).max(180),
+    lat: strictNumber(z.number().min(-90).max(90)),
+    lng: strictNumber(z.number().min(-180).max(180)),
     query: poiSearchTermSchema.query,
     category: poiSearchTermSchema.category,
-    radiusM: z.coerce
-      .number()
-      .int()
-      .min(poiRadiusLimits.min)
-      .max(poiRadiusLimits.max)
-      .default(poiRadiusLimits.default),
-    limit: z.coerce.number().int().min(1).max(poiLimits.max).default(poiLimits.default),
+    radiusM: strictNumber(z.number().int().min(poiRadiusLimits.min).max(poiRadiusLimits.max)).default(
+      poiRadiusLimits.default,
+    ),
+    limit: strictNumber(z.number().int().min(1).max(poiLimits.max)).default(poiLimits.default),
   })
-  .refine(hasSearchTerm, missingTerm);
+  .refine(hasSearchTerm, missingTerm)
+  .refine((value) => vietnamPointSchema.safeParse(value).success, {
+    ...publicMessage(outsideCoverageMessage),
+    path: ['lat'],
+  });
 export type NearbyPoiRequest = z.infer<typeof nearbyPoiRequestSchema>;
 
 /**

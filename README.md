@@ -1,122 +1,101 @@
-# iMap
+# iMap — Dẫn đường, tối ưu hành trình và cảnh báo giao thông cộng đồng
 
-> Project vision: A Web-Based Navigation and Route Optimization System with Real-Time Community Traffic Updates.
+**Đề tài** · A Web-Based Navigation and Route Optimization System with Real-Time Community Traffic Updates
 
-Bộ ứng dụng React/TypeScript + Tailwind CSS + Express/TypeScript theo hướng feature-first và Clean Architecture. Web dùng nền bản đồ OpenStreetMap, tìm địa điểm qua VietMap Autocomplete/Place v4 và tính tuyến ô tô/xe máy qua VietMap Route API v4. N2 có Auth, báo cáo giao thông PostGIS, GeoJSON/Realtime, xác minh cộng đồng và ảnh hiện trường lưu riêng tư. Các báo cáo cùng loại trong bán kính 75 m và 30 phút được tổng hợp để hiện số báo cáo, người gửi riêng biệt và lần cập nhật gần nhất; đây là ước lượng lân cận, chưa map-match vào cùng đoạn đường.
+![Ba phương án từ Chợ Bến Thành đến Dinh Độc Lập trên iMap](assets/imap-cover.png)
 
-Tuyến được dựng từ hình học đường và hướng dẫn rẽ trả về từ VietMap, không còn nối thẳng các điểm mẫu. Cần có `VIETMAP_API_KEY` để tính tuyến; khi thiếu key, API trả lỗi cấu hình thay vì vẽ tuyến giả.
+[Web production](https://i-map-zzzf.vercel.app/) · [API health](https://i-map-one.vercel.app/api/health) · [Tài liệu API](#api-rest) · [GitHub Issues](https://github.com/dpm14092006-UIT/iMap/issues)
 
-## Chạy trên Mac (Node >= 20.19)
+## Giới thiệu
 
-```bash
-git clone https://github.com/dpm14092006-UIT/iMap.git
-cd iMap
-chmod +x run.sh
-./run.sh
+iMap giúp người đi ô tô và xe máy tìm và so sánh tuyến, sắp xếp điểm ghé, dẫn đường bằng GPS và nhận cảnh báo sự cố trên đường đi. Theo báo cáo công tác 9 tháng đầu năm 2025 của Sở Xây dựng TP.HCM, thành phố còn 24 điểm có nguy cơ ùn tắc. [Cổng Thông tin điện tử Chính phủ tại TP.HCM](https://tphcm.baochinhphu.vn/tphcm-sap-khoi-cong-khanh-thanh-loat-du-an-ha-tang-trong-diem-101251025123641522.htm)
+
+Khảo sát Google Routes API và Waze cho thấy hai hướng giải quyết là tối ưu thứ tự điểm dừng và tiếp nhận báo cáo tại chỗ. iMap kết nối hai hướng này vào một chuyến đi. Trước chuyến đi, người dùng chọn phương án và thứ tự ghé dựa trên chi phí đường bộ. Trong chuyến đi, vị trí và phạm vi phương tiện của sự cố giúp xác định khi nào cần cảnh báo và xem tuyến tránh. [Google Routes API](https://developers.google.com/maps/documentation/routes/opt-way) · [Waze Help](https://support.google.com/waze/answer/13740207)
+
+## Tính năng trên web
+
+| Tính năng | Cách sử dụng |
+| --- | --- |
+| Bản đồ và tìm địa điểm | Xem bản đồ đường phố hoặc vệ tinh, tìm theo tên, đường và địa chỉ. Chọn điểm trên bản đồ, định vị và tìm địa điểm quanh đây hoặc dọc tuyến. |
+| Chỉ đường và so sánh | Chọn điểm đi, điểm đến, ô tô hoặc xe máy. Xem tuyến và chỉ dẫn rẽ từ VietMap, đối chiếu thời gian, quãng đường và số lần rẽ khi có dữ liệu. Có thể sao chép liên kết tuyến. |
+| Tối ưu nhiều điểm | Giữ điểm xuất phát, tự sắp xếp tối đa 15 điểm ghé theo thời gian hoặc quãng đường. Chọn đi một chiều hoặc quay lại điểm xuất phát. |
+| Dẫn đường và lưu tuyến | Bắt đầu chuyến để xem tiến độ GPS và nghe chỉ dẫn. Khi có sự cố trên tuyến, xem cảnh báo và phương án đi vòng nếu tìm được. Lưu và mở lại hành trình trên trình duyệt đang dùng. |
+| Trợ lý địa điểm | Thành viên chọn danh mục hoặc nhập nhu cầu bằng chữ để tìm quanh vị trí hay dọc tuyến và chọn điểm ghé. |
+| Giao thông cộng đồng | Xem sự cố trên bản đồ. Thành viên có thể báo sự cố, đính kèm ảnh và xác nhận đường đã thông hay sự cố vẫn còn. |
+| Tài khoản và Web Push | Thành viên đăng nhập để dùng các tính năng cá nhân và lịch sử điểm đi, điểm đến. Web Push cảnh báo trên tuyến đang theo dõi khi người dùng cấp quyền và trình duyệt hỗ trợ. |
+
+## Kiến trúc
+
+```mermaid
+flowchart LR
+    U["Người dùng"] --> W["Web React + Leaflet<br/>Bản đồ, tuyến, GPS, giao thông"]
+    W -->|"HTTPS · REST"| A["API Express<br/>Địa điểm, định tuyến, tối ưu, báo cáo"]
+    A --> V["VietMap Search, Route và Matrix"]
+    A --> O["Overpass và đồ thị OSM"]
+    W --> B["Tiles bản đồ đường phố và vệ tinh"]
+    W <-->|"Auth, ảnh, lịch sử và Realtime"| S["Supabase · PostgreSQL/PostGIS"]
+    A <-->|"RPC và xác thực"| S
+    A --> P["Web Push · VAPID"]
+    P --> W
 ```
 
-Lần đầu `run.sh` chạy `npm install`, cần Internet. Sau đó mở `http://localhost:5173`. API `http://localhost:4000/api/health`. Có thể chạy riêng:
+- **Chọn tuyến.** Web lấy vị trí từ truy vấn địa chỉ hoặc bản đồ, gọi VietMap qua API và hiển thị hình học, ETA và chỉ dẫn. Backend tính chênh lệch và xếp hạng theo ưu tiên đã chọn.
+- **Tối ưu điểm ghé.** API lấy ma trận chi phí có hướng từ VietMap. Held–Karp tìm thứ tự tối ưu trên ma trận, còn Nearest Neighbor + 2-opt phục vụ chế độ nhanh. API gọi Route để vẽ tuyến theo thứ tự đã chọn.
+- **Cảnh báo sự cố.** API lưu báo cáo có tọa độ, phạm vi xe và thời hạn. Realtime cập nhật lớp giao thông. Khi sự cố gần tuyến đang theo dõi, iMap có thể gửi Web Push và tìm đường tránh.
 
-```bash
-npm install
-npm run dev -w @routetwin/api
-npm run dev -w @routetwin/web
-```
+## Dữ liệu
 
-> Tạo `apps/api/.env` từ `.env.example` và `apps/web/.env` từ `.env.example`. Điền `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY` ở cả hai phía; thêm `VIETMAP_API_KEY` ở API để tính tuyến. Chạy đủ migration trong `supabase/migrations/` (`0001`–`0009`) trước khi dùng báo cáo. Ảnh báo cáo được tải trực tiếp lên bucket riêng tư theo quyền người dùng. Hỗ trợ Gemini trong biểu mẫu báo cáo là tùy chọn, mặc định tắt; chỉ bật sau khi cấu hình `GEMINI_API_KEY` và `GEMINI_TRAFFIC_AI_ENABLED=true`. **Không commit `.env`**.
+| Dữ liệu vận hành | Cách lưu |
+| --- | --- |
+| Báo cáo và xác nhận | `traffic_reports` lưu vị trí PostGIS, loại, mức độ, phương tiện, trạng thái và thời hạn. `report_updates` liên kết báo cáo với xác nhận của thành viên. |
+| Ảnh báo cáo | Bucket riêng tư `traffic-images`. Báo cáo giữ đường dẫn tệp, truy cập ảnh qua liên kết có thời hạn theo quyền. |
+| Lịch sử tìm tuyến | `recent_places` lưu điểm đi và điểm đến theo tài khoản. |
+| Cảnh báo đẩy | `push_subscriptions` lưu đăng ký trình duyệt. `route_watches` liên kết đăng ký với tuyến và thời hạn theo dõi. |
+| Tài khoản và hạn mức | Supabase Auth quản lý tài khoản. PostgreSQL áp dụng quyền theo người dùng và theo dõi hạn mức trợ lý ở `user_feature_usage_by_minute`. |
 
-## Kiểm tra
+PostGIS hỗ trợ truy vấn báo cáo theo vùng và tìm tuyến ở gần sự cố. Supabase Realtime cập nhật báo cáo trên bản đồ. Cơ chế RLS giới hạn truy cập dữ liệu cá nhân và ảnh.
 
-```bash
-npm run format     # tự định dạng code bằng Prettier
-npm run lint       # kiểm tra ESLint
-npm run typecheck
-npm test
-npm run build
-curl http://localhost:4000/api/health
-```
+## Công nghệ và triển khai
 
-## Phân vai
+| Thành phần | Công nghệ và môi trường |
+| --- | --- |
+| Web | React, TypeScript, Vite, Tailwind CSS, Leaflet và API trình duyệt cho GPS, âm thanh và chia sẻ. [Vercel Web](https://i-map-zzzf.vercel.app/) |
+| API REST | Node.js, Express, TypeScript, Zod và Web Push/VAPID. [Vercel API](https://i-map-one.vercel.app/api/health) |
+| Cơ sở dữ liệu | Supabase Auth, PostgreSQL, PostGIS, RLS, Storage và Realtime. |
+| Dữ liệu bản đồ | VietMap cho bản đồ nền, tìm kiếm, định tuyến và ma trận. Esri cho địa hình và nền dự phòng. OpenStreetMap và Overpass cung cấp dữ liệu cho các tính năng liên quan. |
+| Triển khai | Web và API là hai project Vercel cùng lấy mã từ `main`. GitHub Actions kiểm tra kiểu, test và build. [GitHub Actions](https://github.com/dpm14092006-UIT/iMap/actions) |
 
-- **N1 – Navigation & Optimization**: `apps/web/src/features/map|places|navigation|multi-stop|my-routes`, `apps/api/src/modules/places|navigation|optimization|my-routes`, thuật toán và graph OSM. Sở hữu `MapView`.
-- **N2 – Traffic & Data**: `apps/web/src/features/traffic|auth`, `apps/api/src/modules/traffic|auth`, `supabase/`, API middleware, migrations/RLS/Realtime.
-- **Cả hai**: `packages/shared`, `.github`, `docs/`, `apps/api/src/compositionRoot.ts` và hợp đồng `TrafficMapLayer`. Mọi thay đổi shared phải qua PR review.
+## API REST
 
-## Cấu trúc OOP
+Base URL là `https://i-map-one.vercel.app/api`. API trả JSON, dùng tọa độ `{lat, lng}` và tính khoảng cách, thời lượng bằng mét, giây. Các thao tác dành cho thành viên yêu cầu access token Supabase.
 
-Backend **feature-first + Clean Architecture**:
+| Method và path | Công dụng |
+| --- | --- |
+| `GET /health`, `GET /push/config` | Kiểm tra API và Web Push. |
+| `GET /places/suggest`, `GET /places/details`, `GET /places/reverse` | Gợi ý địa chỉ, đọc chi tiết và tra địa chỉ từ tọa độ. |
+| `GET /places/nearby`, `POST /places/along-route` | Tìm địa điểm quanh vị trí hoặc dọc tuyến. |
+| `POST /routes/calculate`, `POST /routes/compare`, `POST /routes/reroute` | Tính tuyến, so sánh và tính lại tuyến. |
+| `POST /routes/optimize` | Sắp xếp thứ tự ghé theo chi phí VietMap Matrix. |
+| `GET /routes/algorithm/graph`, `POST /routes/algorithm` | Đọc vùng phủ OSM trung tâm TP.HCM và chạy Dijkstra/A*. |
+| `GET /traffic-reports`, `GET /traffic-reports/geojson` | Đọc báo cáo theo bounding box `minLat`, `minLng`, `maxLat`, `maxLng`. |
+| `POST /traffic-reports`, `POST /traffic-reports/:id/clearance` | Gửi và xác nhận báo cáo. |
+| `POST /route-stops/search`, `POST /route-stops/explore` | Tìm điểm ghé theo nhu cầu của thành viên. |
 
-- **domain**: entities, value objects, invariant; **không** import Express, Supabase hoặc SDK.
-- **application**: use cases, port (interface) cho repositories/providers; chỉ phụ thuộc domain/ports.
-- **infrastructure**: triển khai ports bằng Vietmap, OSM và Supabase.
-- **presentation**: Express controller/route + schema validation.
-- **compositionRoot.ts**: nơi tạo object và inject dependencies vào constructor.
+[Health trực tuyến](https://i-map-one.vercel.app/api/health) · [Web Push config](https://i-map-one.vercel.app/api/push/config) · [Thông tin đồ thị OSM](https://i-map-one.vercel.app/api/routes/algorithm/graph)
 
-Đường đi request: `Route -> Controller -> UseCase -> Interface (port) -> Adapter`. Domain không biết API key, HTTP hay SQL.
+## Kết quả trên production
 
-Frontend React dùng **function components + hooks**, không gượng ép OOP class cho UI. OOP đặt ở service/domain backend.
+| Kiểm tra ngày 24/11/2026 | Kết quả |
+| --- | --- |
+| Tìm và so sánh tuyến | Web trả ba phương án cho tuyến Chợ Bến Thành → Dinh Độc Lập. API tính tuyến và so sánh đều trả HTTP 200. |
+| Tối ưu nhiều điểm | Ca kiểm tra ba điểm trả HTTP 200 và đổi thứ tự ghé từ `0 → 1 → 2` thành `0 → 2 → 1`. |
+| Dijkstra và A* | Đồ thị online có 17.368 nút và 31.929 cạnh có hướng. Trong một ca cùng điểm đầu và cuối, cả hai trả 1.114 m. A* duyệt 349 nút so với 2.065 nút của Dijkstra. |
+| Báo cáo và cảnh báo | API báo cáo trả HTTP 200. API Web Push trả `enabled: true`. |
 
-Frontend chia theo feature (`map`, `places`, `explore`, `routing`, `guidance`, `multi-stop`, `my-routes`, `traffic`, `notifications`, `place-assistant`, `auth`). Mỗi feature dùng `api/`, `components/`, `hooks/`, `domain/`, `services/` và `types.ts`; chỉ tạo thư mục khi có mã thực tế. `domain/` chứa logic thuần, `services/` chứa adapter trình duyệt/I/O. `app/flows/` điều phối các feature, `app/shell/` giữ khung ứng dụng; `shared/ui/` và `shared/styles/` cung cấp component và token màu dùng chung. Chi tiết: [docs/architecture/FOLDER_TREE.md](docs/architecture/FOLDER_TREE.md).
+Kết quả cho thấy người dùng có thể tìm tuyến, so sánh phương án và tối ưu thứ tự ghé trên bản web đang triển khai. Ca so sánh Dijkstra/A* minh họa hiệu quả của heuristic trên đồ thị hiện có. [Mã nguồn iMap](https://github.com/dpm14092006-UIT/iMap)
 
-## API scaffold
+## Nguồn tham khảo
 
-| Endpoint | Chủ | Trạng thái |
-|---|---|---|
-| `GET /api/health` | Shared | Chạy được |
-| `GET /api/traffic-reports` | N2 | Supabase RPC, lọc bounding box |
-| `GET /api/traffic-reports/geojson` | N2 | GeoJSON FeatureCollection |
-| `POST /api/traffic-reports` | N2 | JWT + PostGIS, rate limit |
-| `POST /api/traffic-reports/:id/clearance` | N2 | Xác minh cộng đồng + cooldown |
-| `POST /api/traffic-reports/analyze-image?task=incident\|traffic_sign` | N2 | Gợi ý Gemini trong biểu mẫu báo cáo; cần đăng nhập và bật cấu hình |
-| `GET /api/places/suggest` | N1 | VietMap Autocomplete v4; gợi ý chưa có tọa độ |
-| `GET /api/places/details?id=...` | N1 | VietMap Place v4; chỉ gọi khi chọn một gợi ý |
-| `GET /api/places/reverse` | N1 | VietMap reverse geocoding (tọa độ → địa chỉ) |
-| `POST /api/places/along-route` | N1 | Địa điểm thật dọc tuyến (VietMap Autocomplete + Place v4, khử trùng, tính đi vòng) |
-| `GET /api/places/nearby` | N1 | Địa điểm thật quanh một tâm theo từ khóa hoặc danh mục (tối đa 20 kết quả; 20 lượt/phút/IP) |
-| `POST /api/routes/calculate` | N1 | VietMap Route v4; cần `VIETMAP_API_KEY`; giới hạn 30 lượt/phút/IP |
-| `POST /api/routes/reroute` | N1 | Tính lại tuyến từ vị trí hiện tại; tránh sự cố bằng tuyến thay thế VietMap hoặc điểm vòng tránh (dùng khi dẫn đường); chung giới hạn 30 lượt/phút/IP với `calculate` |
-| `POST /api/routes/algorithm` | N1 | Dijkstra / A* trên đồ thị OSM trung tâm TP.HCM |
-| `GET /api/routes/algorithm/graph` | N1 | Vùng phủ + kích thước đồ thị OSM |
-| `POST /api/routes/optimize` | N1 | Matrix VietMap + Held–Karp (chính xác) hoặc NN + 2-opt (gần đúng), tối đa 15 điểm ghé |
-| `GET /api/my-routes` | N1 | 501, chưa Supabase |
-
-## Những lưu ý bắt buộc
-
-1. **Đơn vị nội bộ:** mét, giây, m/s; frontend chuyển sang km, phút/giờ và km/h.
-2. **Tọa độ JSON:** `{lat,lng}`; GeoJSON `[lng,lat]`.
-3. **Bản đồ và chỉ đường:** tile nền OpenStreetMap; tuyến ô tô/xe máy từ VietMap Route v4. API key chỉ nằm trong backend.
-4. **Backend giữ khóa bí mật:** khóa VietMap và provider server-side không đi vào `VITE_*`.
-5. **N2 cần cấu hình trước khi chạy thật:** áp dụng toàn bộ migrations trong `supabase/migrations/` theo thứ tự số, bật job hết hạn trong `supabase/ops/traffic-expiry-cron.sql`, rồi điền Supabase keys. Ảnh hiện trường là tùy chọn và được gắn trực tiếp vào báo cáo giao thông.
-6. AI ảnh (gợi ý sự cố và đọc biển báo) nằm ngay trong Báo cáo giao thông, không có mục AI Vision riêng; cần bật Gemini riêng. Xem [docs/features/AI_APPLICATIONS.md](docs/features/AI_APPLICATIONS.md) về giới hạn và quyền riêng tư.
-
-Mục lục tài liệu: [docs/README.md](docs/README.md).
-
-## Trợ lý địa điểm và âm thanh dẫn đường
-
-Tìm nhu cầu chung quanh vị trí hoặc dọc tuyến, hỏi lại khi mơ hồ, thêm/bỏ điểm ghé theo chi phí đường đi thật. Nhập nhu cầu bằng chữ hoặc chọn loại địa điểm. Âm thanh chỉ dùng cho chỉ dẫn và cảnh báo giao thông, có nút bật/tắt khi dẫn đường.
-
-- [Thiết kế/API và phạm vi](docs/features/PLACE_ASSISTANT_TECHNICAL.md)
-- [Thuật toán tìm điểm ghé](docs/features/ROUTE_STOPS_TECHNICAL.md)
-- [Benchmark Whisper trên 48 audio](docs/benchmarks/VOICE_BENCHMARK.md)
-- [Deploy web + API Vercel](docs/guides/DEPLOY_API.md)
-
-## Tìm kiếm toàn Việt Nam
-
-VietMap Search dùng `VIETMAP_API_KEY` ở backend, cùng biến cấu hình với định tuyến; key cần quyền/quota Autocomplete, Place và Reverse. Frontend luôn gọi `VITE_API_BASE_URL`. Khi gõ ít nhất 2 ký tự, app chờ 300 ms, hủy request cũ và ưu tiên theo tâm bản đồ. Chọn một gợi ý mới gọi Place v4 lấy tọa độ, không gọi Place cho toàn bộ danh sách. Kết quả thật được xếp trước gợi ý lưu sẵn. Tên khớp trực tiếp được ưu tiên hơn doanh nghiệp chỉ chứa tên địa danh. Lỗi quyền/quota/mạng được hiển thị; không chuyển dịch vụ âm thầm.
-
-Bản đồ khởi đầu ở khung nhìn Việt Nam, có nút quay về toàn quốc. Báo cáo giao thông được truy vấn theo vùng đang xem, giới hạn số lượng theo API; phóng to để xem chi tiết. Đồ thị Dijkstra/A* cài đặt riêng vẫn chỉ phủ trung tâm TP.HCM; tuyến VietMap không dùng đồ thị này.
-
-Xem [kết quả kiểm tra tìm kiếm](docs/benchmarks/SEARCH_VERIFICATION.md).
-
-## Dẫn đường và tính lại tuyến
-
-- **Dẫn đường:** bấm "Bắt đầu chuyến đi" sau khi tìm tuyến. App theo dõi vị trí, hiện chỉ dẫn rẽ tiếp theo và quãng đường còn lại.
-- **Tính lại tuyến (N1):** khi lệch tuyến đủ lâu, hoặc có sự cố đang hoạt động (mức Vừa trở lên) nằm trên tuyến trong 1,5 km phía trước, app gọi `POST /api/routes/reroute` từ vị trí hiện tại. Server chọn tuyến tốt nhất không đi qua sự cố → tuyến thay thế của VietMap → đi vòng qua điểm cạnh sự cố; nếu không né được (sự cố nằm trên con đường duy nhất vào/ra điểm) thì báo rõ để người dùng chú ý.
-- Thiết kế: `useNavigationSession` chỉ đọc GPS thiết bị qua `BrowserGpsSource`. GPS chỉ bật sau khi người dùng bấm Bắt đầu và được dừng khi kết thúc/đến nơi/rời ứng dụng. Quy trình kiểm tra: [NAVIGATION_CHECKLIST.md](docs/guides/NAVIGATION_CHECKLIST.md).
-
-## Thứ tự điểm dừng
-
-- **Chỉ đường:** thêm tối đa 8 điểm dừng giữa điểm xuất phát và điểm đến, đổi thứ tự bằng nút lên/xuống. Route API giữ nguyên thứ tự người dùng chọn.
-- **Nhiều điểm:** điểm xuất phát cố định; tự chọn thứ tự ghé tốt nhất theo ma trận chi phí đường bộ có hướng. Chế độ "Tự động"/"Chính xác" dùng Held–Karp tìm tối ưu chính xác cho tối đa 15 điểm ghé (≈ 20–30 ms); "Nhanh" dùng Nearest Neighbor + 2-opt (gần đúng, trung bình dài hơn tối ưu 1–3,5%, xem `docs/benchmarks/BENCHMARK_TSP.md`). Hỗ trợ đường đi mở hoặc quay về điểm xuất phát; điểm không có đường xe (khu đi bộ, công viên) được báo đích danh. Matrix tính theo loại xe và tiêu chí thời gian/quãng đường. Tuyến cuối lấy hình học đường thật từ Route API, không nối các điểm bằng đường thẳng.
-- Matrix dùng `VIETMAP_API_KEY`; key cần quyền Matrix. Không chuyển sang khoảng cách đường thẳng khi dịch vụ lỗi. Ma trận không có đường (null hoặc -1) được coi là không thể đi, không phải chi phí 0. Chi phí Matrix/Route có thể khác do làm tròn hoặc lựa chọn tuyến của provider; không cam kết giao thông tức thời.
-- Đóng bảng nhiều điểm chỉ ẩn bảng; điểm, bộ lọc và kết quả được giữ trong phiên ứng dụng. Mở lại phục hồi tuyến trên bản đồ. Chỉ nút **Xóa hành trình** xóa bản nháp; **Lưu** lưu tuyến vào danh sách đã lưu. Tải lại trang cần mở tuyến đã lưu, không có tự lưu vị trí nhạy cảm vào storage.
+- [VietMap Route v4](https://maps.vietmap.vn/docs/map-api/route-version/route-v4/) · [OpenStreetMap](https://www.openstreetmap.org/copyright) · [Leaflet](https://leafletjs.com/)
+- [PostGIS](https://postgis.net/docs/) · [Supabase Realtime](https://supabase.com/docs/guides/realtime) · [Vercel Express](https://vercel.com/docs/frameworks/backend/express)
+- [Dijkstra](https://doi.org/10.1007/BF01386390) · [A*](https://doi.org/10.1109/TSSC.1968.300136) · [Held–Karp](https://doi.org/10.1137/0110015)

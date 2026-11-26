@@ -54,14 +54,14 @@ function overlapRatio(a: Coordinate[], b: Coordinate[]): number {
 }
 
 /**
- * Hai tuyến coi là gần như trùng khi khoảng cách lệch ≤1%, thời gian lệch ≤2%
- * và ≥90% điểm mẫu của tuyến này nằm sát tuyến kia (xét cả hai chiều).
+ * Hai tuyến coi là gần như trùng khi khoảng cách lệch ≤1% và ≥90% điểm mẫu của tuyến này nằm sát
+ * tuyến kia (xét cả hai chiều). Không xét thời gian: cùng một con đường nhưng từ hai lời gọi VietMap
+ * khác nhau (vd. có/không tránh trạm thu phí) có thể lệch vài chục giây, vẫn là một phương án.
  */
 export function areNearDuplicateRoutes(a: RoutePathResult, b: RoutePathResult): boolean {
   const within = (x: number, y: number, tolerance: number) =>
     Math.abs(x - y) <= tolerance * Math.max(x, y, 1);
   if (!within(a.distanceMeters, b.distanceMeters, 0.01)) return false;
-  if (!within(a.durationSeconds, b.durationSeconds, 0.02)) return false;
   return (
     overlapRatio(a.coordinates, b.coordinates) >= 0.9 && overlapRatio(b.coordinates, a.coordinates) >= 0.9
   );

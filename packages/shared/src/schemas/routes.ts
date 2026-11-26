@@ -1,17 +1,31 @@
 import { z } from 'zod';
 import { MAX_OPTIMIZE_POINTS } from '../constants.js';
 import { comparisonSessionSchema, type RouteComparisonSnapshot } from './route-comparison.js';
+import { hasNoDuplicates, publicMessage, samePoint, vietnamPointSchema } from './input.js';
+/** Tọa độ bất kỳ trên Trái Đất (yêu cầu gọi VietMap dùng `vietnamPointSchema`). */
 export const geoPointSchema = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
 });
+/** Loại đường cần tránh, mỗi loại tối đa một lần. */
+export const avoidRoadsSchema = z
+  .array(z.enum(['ferry', 'toll']))
+  .max(2)
+  .refine(hasNoDuplicates, publicMessage('Mỗi loại đường cần tránh chỉ được chọn một lần.'));
 export const routeRequestSchema = z.object({
-  points: z.array(geoPointSchema).min(2).max(25),
+  points: z
+    .array(vietnamPointSchema)
+    .min(2)
+    .max(25)
+    .refine(
+      (points) => points.every((point, index) => index === 0 || !samePoint(points[index - 1]!, point)),
+      publicMessage('Hai điểm liên tiếp trên tuyến không được trùng nhau.'),
+    ),
   vehicle: z.enum(['car', 'motorcycle']),
   objective: z.enum(['distance', 'duration']).default('duration'),
   alternatives: z.boolean().optional(),
   comparisonSessionId: comparisonSessionSchema.optional(),
-  avoid: z.array(z.enum(['ferry', 'toll'])).optional(),
+  avoid: avoidRoadsSchema.optional(),
 });
 export type RouteRequest = z.infer<typeof routeRequestSchema>;
 export type RouteInstruction = {
@@ -68,7 +82,7 @@ export const tourAlgorithms = ['auto', 'exact', 'heuristic'] as const;
 /** Fixed departure, up to fifteen stops; departure is repeated only in the optimized closed tour. */
 export const optimizeRouteRequestSchema = z
   .object({
-    points: z.array(geoPointSchema).min(2).max(MAX_OPTIMIZE_POINTS),
+    points: z.array(vietnamPointSchema).min(2).max(MAX_OPTIMIZE_POINTS),
     vehicle: z.enum(['car', 'motorcycle']),
     objective: z.enum(['distance', 'duration']).default('duration'),
     returnToStart: z.boolean().default(false),
@@ -76,15 +90,8 @@ export const optimizeRouteRequestSchema = z
   })
   .refine(
     ({ points }) =>
-      points.every((point, index) =>
-        points
-          .slice(0, index)
-          .every(
-            (other) =>
-              Math.abs(point.lat - other.lat) > 0.000001 || Math.abs(point.lng - other.lng) > 0.000001,
-          ),
-      ),
-    { message: 'Các điểm dừng không được trùng vị trí.' },
+      points.every((point, index) => points.slice(0, index).every((other) => !samePoint(point, other))),
+    publicMessage('Các điểm dừng không được trùng vị trí.'),
   );
 export type OptimizeRouteRequest = z.infer<typeof optimizeRouteRequestSchema>;
 export type OptimizeRouteResult = {

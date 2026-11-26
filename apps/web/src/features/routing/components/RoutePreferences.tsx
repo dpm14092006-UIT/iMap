@@ -68,7 +68,7 @@ export function RoutePreferences({ directions }: Props) {
         >
           {t('Tránh phà')}
           <span
-            className={`relative h-5 w-9 rounded-full transition ${avoidFerry ? 'bg-brand-gradient' : 'bg-slate-300 dark:bg-slate-600'}`}
+            className={`relative h-5 w-9 rounded-full transition ${avoidFerry ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-600'}`}
             aria-hidden="true"
           >
             <span

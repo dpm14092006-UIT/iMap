@@ -1,10 +1,17 @@
 import { z } from 'zod';
 import type { PlaceSuggestion } from '@routetwin/shared';
-import { stripDiacritics } from '../../../../shared/text/stripDiacritics.js';
+import {
+  landmarkAlias,
+  nameMatch,
+  normalizePlaceText,
+  rankPlaceSuggestions,
+} from '../../domain/placeRanking.js';
 import type { GeoFocus, PlaceSearchProvider } from '../../application/ports/PlaceSearchProvider.js';
 import {
   invalidPlaceResponse,
   requestVietmapPlaces,
+  tidyVietmapAddress,
+  VIETMAP_DISPLAY_TYPE,
   vietmapPointSchema,
   type VietmapPlaceEndpoint,
 } from './vietmapPlaceRequest.js';
@@ -15,24 +22,7 @@ const suggestionSchema = z.object({
   address: z.string(),
   display: z.string().optional(),
 });
-function normalized(value: string) {
-  return stripDiacritics(value)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .replace(/\b(dct|dt|ql|tl)(\d+)/g, '$1 $2')
-    .trim();
-}
-
-/** Promote direct POI names over businesses that only contain the destination name. Ties retain provider ranking. */
-function nameMatch(query: string, name: string) {
-  const stripRoad = (text: string) => text.replace(/^(duong|pho) /, '');
-  const q = stripRoad(normalized(query)),
-    n = stripRoad(normalized(name));
-  if (q === n) return 3;
-  if (n.split(' ').length >= 2 && q.startsWith(`${n} `)) return 2;
-  if (n.startsWith(`${q} `)) return 1;
-  return 0;
-}
+const normalized = normalizePlaceText;
 const center: GeoFocus = { lat: 10.779, lng: 106.701 };
 
 /** Autocomplete returns opaque references; resolve only the selected row, never every suggestion. */
@@ -49,7 +39,7 @@ export class VietmapPlaceSearchProvider implements PlaceSearchProvider {
     const params: Record<string, string> = {
       text,
       focus: `${focus.lat},${focus.lng}`,
-      display_type: '6',
+      display_type: VIETMAP_DISPLAY_TYPE,
       ...(kind === 'street' || streetQuery ? { layers: 'STREET' } : {}),
     };
     const parse = (payload: unknown) => {
@@ -62,16 +52,24 @@ export class VietmapPlaceSearchProvider implements PlaceSearchProvider {
           !house || ` ${normalized(`${item.name} ${item.address}`)} `.includes(` ${normalized(house)} `),
       );
     };
-    let rows = parse(await this.request('autocomplete', params));
+    // Tên quen gọi của địa danh (vd. "Hồ Gươm" → "Hồ Hoàn Kiếm"): hỏi thêm tên chuẩn song song,
+    // kết quả của tên chuẩn đứng trước. Chỉ tốn thêm một lượt gọi khi câu gõ đúng là một bí danh.
+    const alias = kind === 'street' ? undefined : landmarkAlias(query);
+    const [primary, canonical] = await Promise.all([
+      this.request('autocomplete', params),
+      alias ? this.request('autocomplete', { ...params, text: alias }).catch(() => []) : [],
+    ]);
+    // Từ tên chuẩn chỉ lấy chính địa danh đó (vd. "Hồ Hoàn Kiếm"), không lấy các nơi khác chỉ bắt đầu bằng tên ấy.
+    const aliasRows = alias ? parse(canonical).filter((item) => nameMatch(alias, item.name) >= 2) : [];
+    let rows = [...aliasRows, ...parse(primary)];
     // Full-address geocoding is a second attempt only when type-ahead has no usable match.
     if (!rows.length) rows = parse(await this.request('search', params));
-    return rows
-      .sort((a, b) => nameMatch(query, b.name) - nameMatch(query, a.name))
+    return rankPlaceSuggestions(query, rows, alias)
       .slice(0, 10)
       .map((item) => ({
         id: item.ref_id,
         name: item.name || item.display || item.address,
-        address: item.address || item.display || '',
+        address: tidyVietmapAddress(item.address || item.display || ''),
         source: 'vietmap',
       }));
   }
@@ -82,7 +80,7 @@ export class VietmapPlaceSearchProvider implements PlaceSearchProvider {
     return {
       id,
       name: data.data.name || data.data.address || data.data.display || 'Địa điểm',
-      address: data.data.display || data.data.address || '',
+      address: tidyVietmapAddress(data.data.display || data.data.address || ''),
       lat: data.data.lat,
       lng: data.data.lng,
       source: 'vietmap',
@@ -94,7 +92,7 @@ export class VietmapPlaceSearchProvider implements PlaceSearchProvider {
       await this.request('reverse', {
         lat: String(point.lat),
         lng: String(point.lng),
-        display_type: '6',
+        display_type: VIETMAP_DISPLAY_TYPE,
       }),
     );
     if (!data.success) throw invalidPlaceResponse();
@@ -103,7 +101,7 @@ export class VietmapPlaceSearchProvider implements PlaceSearchProvider {
       ? {
           id: item.ref_id,
           name: item.name || item.address || 'Địa điểm',
-          address: item.display || item.address || '',
+          address: tidyVietmapAddress(item.display || item.address || ''),
           lat: item.lat,
           lng: item.lng,
           source: 'vietmap',

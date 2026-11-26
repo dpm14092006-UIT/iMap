@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { scheduledMapLayer } from '../../features/map/hooks/useTimeBasedMapLayer';
+import { systemPrefersDark } from '../../features/map/hooks/useMapAppearance';
 import { readLanguage, translate } from '../../shared/i18n/translate';
 import { formatErrorReport } from './errorReport';
 
@@ -50,7 +50,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBound
   render() {
     if (!this.state.failed) return this.props.children;
     return (
-      <div className={scheduledMapLayer() === 'dark' ? 'dark' : ''}>
+      <div className={systemPrefersDark() ? 'dark' : ''}>
         <main
           className={`grid min-h-dvh place-items-center bg-slate-50 px-6 text-center text-ink dark:bg-slate-900 dark:text-slate-100`}
           role="alert"

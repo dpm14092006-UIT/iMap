@@ -1,4 +1,5 @@
 export * from './constants.js';
+export * from './schemas/input.js';
 export * from './schemas/traffic.js';
 export * from './schemas/routes.js';
 export * from './schemas/places.js';

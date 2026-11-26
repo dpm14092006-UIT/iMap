@@ -5,7 +5,13 @@ import type {
   PoiSearchProvider,
   PoiSearchRequest,
 } from '../../application/ports/PoiSearchProvider.js';
-import { invalidPlaceResponse, requestVietmapPlaces, vietmapPointSchema } from './vietmapPlaceRequest.js';
+import {
+  invalidPlaceResponse,
+  requestVietmapPlaces,
+  tidyVietmapAddress,
+  VIETMAP_DISPLAY_TYPE,
+  vietmapPointSchema,
+} from './vietmapPlaceRequest.js';
 
 const candidateSchema = z.object({
   ref_id: z.string().min(1),
@@ -29,7 +35,7 @@ export class VietmapPoiSearchProvider implements PoiSearchProvider {
       circle_center: center,
       circle_radius: String(Math.round(request.radiusM)),
       layers: 'POI',
-      display_type: '6',
+      display_type: VIETMAP_DISPLAY_TYPE,
       ...(request.categoryCodes.length ? { cats: request.categoryCodes.join(',') } : {}),
     };
     const parse = (payload: unknown) => {
@@ -42,7 +48,7 @@ export class VietmapPoiSearchProvider implements PoiSearchProvider {
     return rows.map((row) => ({
       id: row.ref_id,
       name: row.name || row.display || row.address || '',
-      address: row.address || '',
+      address: tidyVietmapAddress(row.address || ''),
       categoryCodes: (row.categories ?? []).map(String),
       distanceM: row.distance === undefined ? undefined : row.distance * 1000,
     }));
@@ -60,7 +66,7 @@ export class VietmapPoiSearchProvider implements PoiSearchProvider {
     return {
       id,
       name,
-      address: address || place.data.address || '',
+      address: tidyVietmapAddress(address || place.data.address || ''),
       lat: place.data.lat,
       lng: place.data.lng,
     };

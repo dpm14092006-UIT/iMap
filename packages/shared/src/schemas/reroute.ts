@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { geoPointSchema, type RouteResult } from './routes.js';
+import { avoidRoadsSchema, type RouteResult } from './routes.js';
+import { vietnamPointSchema } from './input.js';
 
 /**
  * Hợp đồng cho POST /api/routes/reroute: tính lại tuyến từ VỊ TRÍ HIỆN TẠI khi đi lệch tuyến
@@ -16,17 +17,14 @@ export type BlockingIncident = z.infer<typeof blockingIncidentSchema>;
 
 export const rerouteRequestSchema = z.object({
   /** Vị trí hiện tại của xe. */
-  from: geoPointSchema,
+  from: vietnamPointSchema,
   /** Các điểm còn phải đi qua theo thứ tự; điểm cuối là đích. */
-  stops: z.array(geoPointSchema).min(1).max(15),
+  stops: z.array(vietnamPointSchema).min(1).max(15),
   vehicle: z.enum(['car', 'motorcycle']),
   objective: z.enum(['distance', 'duration']).default('duration'),
   avoid: z.array(blockingIncidentSchema).max(30).default([]),
   /** Loại đường cần tránh của tuyến gốc (ví dụ phà), giữ nguyên khi tính lại. */
-  avoidRoads: z
-    .array(z.enum(['ferry', 'toll']))
-    .max(2)
-    .optional(),
+  avoidRoads: avoidRoadsSchema.optional(),
 });
 export type RerouteRequest = z.infer<typeof rerouteRequestSchema>;
 

@@ -206,3 +206,52 @@ describe('VietmapRouteProvider congestion', () => {
     }
   });
 });
+
+describe('VietmapRouteProvider provider errors', () => {
+  afterEach(() => vi.restoreAllMocks());
+  const input = {
+    points: [
+      { lat: 10.7725, lng: 106.698 },
+      { lat: 10.777, lng: 106.6953 },
+    ],
+    vehicle: 'car' as const,
+    objective: 'duration' as const,
+  };
+
+  it('không trả nguyên văn lỗi tiếng Anh của VietMap; "out of bounds" thành 422 tiếng Việt', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            code: 'INVALID_REQUEST',
+            paths: [],
+            messages: 'Point 0 is out of bounds: 48.85, 2.35, the bounds are: 102.1,112.2,8.4,23.3',
+          }),
+        ),
+      ),
+    );
+    const error = await new VietmapRouteProvider('test-key').calculate(input).catch((cause) => cause);
+    expect(error).toMatchObject({ statusCode: 422, code: 'ROUTE_OUTSIDE_COVERAGE' });
+    expect(String(error.message)).not.toMatch(/out of bounds/i);
+  });
+
+  it('lỗi khác của VietMap trả thông báo tiếng Việt chung, chi tiết chỉ ghi log', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(
+            JSON.stringify({ code: 'INVALID_REQUEST', paths: [], messages: ['Some internal error'] }),
+          ),
+        ),
+    );
+    const error = await new VietmapRouteProvider('test-key').calculate(input).catch((cause) => cause);
+    expect(error).toMatchObject({ statusCode: 502, code: 'ROUTE_PROVIDER_ERROR' });
+    expect(String(error.message)).not.toContain('Some internal error');
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('Some internal error'));
+  });
+});

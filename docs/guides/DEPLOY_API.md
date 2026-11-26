@@ -16,7 +16,8 @@ Import repo GitHub, chọn nhánh `main` cho bản tích hợp. Tạo project v�
 | Biến | Giá trị/ý nghĩa |
 |---|---|
 | `CORS_ORIGIN` | Origin web chính xác, ví dụ `https://imap-web.vercel.app`; nhiều origin cách nhau dấu phẩy, không kèm path/slash cuối |
-| `VIETMAP_API_KEY` | Key định tuyến hiện có |
+| `VIETMAP_API_KEY` | Key tìm kiếm và định tuyến hiện có |
+| `VIETMAP_TILEMAP_API_KEY` | Key có quyền Tilemap nếu dùng key riêng. Bỏ trống để dùng `VIETMAP_API_KEY` cho cả Tilemap. |
 | `RATE_LIMIT_POI_PER_MIN`, `RATE_LIMIT_ROUTES_PER_MIN`, `RATE_LIMIT_PLACES_PER_MIN`, `RATE_LIMIT_OPTIMIZE_PER_MIN` | Lượt/phút/IP cho tìm POI (20), tính tuyến (30), gợi ý/chi tiết/reverse (60), tối ưu nhiều điểm (10). Bộ đếm trong RAM mỗi instance serverless, không phải giới hạn toàn cục |
 | `TRUST_PROXY_HOPS` | Đặt `1` khi chạy sau proxy của Vercel để `req.ip` là IP máy khách; mặc định `0` (nếu để 0 sau proxy, mọi người dùng chung một bộ đếm) |
 | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | Cấu hình Supabase hiện có để tính năng traffic/auth liên quan hoạt động |
@@ -40,7 +41,7 @@ VITE_SUPABASE_URL=...
 VITE_SUPABASE_PUBLISHABLE_KEY=...
 ```
 
-`VITE_API_BASE_URL` phải có `/api`, không slash cuối. Frontend Vite đóng gói biến lúc build, đổi env cần redeploy. Local vẫn `/api`, Vite proxy đến4000. RouteApiClient đã dùng env này, không còn buộc `/api` cùng origin. Supabase public key là key public; tuyệt đối không dùng service_role key. Cập nhật API CORS_ORIGIN bằng origin web sau khi có domain. Preview domain phải được allowlist rõ ràng nếu cần thử.
+`VITE_API_BASE_URL` phải có `/api`, không slash cuối. Bản đồ nền lấy style, tile và tài nguyên VietMap qua cùng API đã cấu hình. Key Tilemap chỉ đặt ở backend. Frontend Vite đóng gói biến lúc build, đổi env cần redeploy. Local vẫn `/api`, Vite proxy đến4000. RouteApiClient đã dùng env này, không còn buộc `/api` cùng origin. Supabase public key là key public; tuyệt đối không dùng service_role key. Cập nhật API CORS_ORIGIN bằng origin web sau khi có domain. Preview domain phải được allowlist rõ ràng nếu cần thử.
 
 Nhánh `main` là bản tích hợp sau khi hợp nhất các nhánh chức năng và tái cấu trúc. Dùng `main` cho Production Branch của cả web và API. Cấu hình key của từng dịch vụ vẫn cần thiết.
 

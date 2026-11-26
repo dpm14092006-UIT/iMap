@@ -1,0 +1,385 @@
+.imap-auth-canvas {
+  --auth-night: #0a1e35;
+  --auth-label: #c6daec;
+  --auth-accent: #a8ddff;
+  --surface: 13 36 60;
+  --surface-muted: 16 43 69;
+  --surface-raised: 24 51 78;
+  --content: 246 251 255;
+  --content-muted: 204 223 240;
+  --content-subtle: 174 201 223;
+  --line: 116 149 180;
+  --primary: 168 221 255;
+  --primary-hover: 197 235 255;
+  --on-primary: 10 30 53;
+  --focus: 168 221 255;
+  min-height: 100dvh;
+  color: #f6fbff;
+  background: var(--auth-night);
+  color-scheme: dark;
+}
+.dark .imap-auth-canvas {
+  --auth-night: #071727;
+}
+
+.imap-auth-layout {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-areas: 'head' 'form';
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 20px;
+  min-height: 100dvh;
+  padding: max(14px, env(safe-area-inset-top)) clamp(18px, 5vw, 30px) max(28px, env(safe-area-inset-bottom));
+}
+.imap-auth-header,
+.imap-auth-form {
+  position: relative;
+  z-index: 2;
+}
+.imap-auth-header {
+  grid-area: head;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.imap-auth-wordmark {
+  color: #f6fbff;
+  font-size: 30px;
+  font-weight: 850;
+  letter-spacing: -0.085em;
+  line-height: 1;
+  text-shadow: 0 2px 12px #08192b;
+}
+.imap-auth-header-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+.imap-auth-back,
+.imap-auth-language {
+  border: 1px solid #8ba8c0;
+  border-radius: 11px;
+  background: #0d263e;
+  color: #f6fbff;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+.imap-auth-back {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 6px;
+  padding-inline: 10px;
+}
+.imap-auth-back:hover,
+.imap-auth-language:hover {
+  color: #a8ddff;
+  background: #173e60;
+}
+.imap-auth-back svg {
+  flex: none;
+}
+.imap-auth-language {
+  display: grid;
+  min-width: 46px;
+  height: 44px;
+  place-items: center;
+  line-height: 1;
+}
+.imap-auth-back:focus-visible,
+.imap-auth-language:focus-visible {
+  outline: 2px solid #a8ddff;
+  outline-offset: 3px;
+}
+.imap-auth-art {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 390px;
+  pointer-events: none;
+}
+.imap-auth-form {
+  grid-area: form;
+  width: min(100%, 384px);
+  min-width: 0;
+  margin: 152px auto 0;
+  text-shadow: 0 2px 9px #061424;
+}
+.imap-auth-form .muted {
+  color: var(--auth-label);
+}
+.imap-auth-form .ink-link {
+  color: var(--auth-accent);
+}
+.imap-auth-title {
+  margin: 0 0 20px;
+  font-size: clamp(2.25rem, 6vw, 3.55rem);
+  font-weight: 800;
+  letter-spacing: -0.059em;
+  line-height: 1.11;
+}
+.imap-auth-title[tabindex='-1']:focus {
+  outline: none;
+}
+.imap-auth-form input:not([type='checkbox']) {
+  min-height: 50px;
+  border: 1px solid #819db5;
+  background: #112d4a;
+  color: #f6fbff;
+}
+.imap-auth-form input:not([type='checkbox'])::placeholder {
+  color: #b0c7db;
+}
+.imap-auth-form input:not([type='checkbox']):focus {
+  border-color: var(--auth-accent);
+  outline: 2px solid var(--auth-accent);
+  outline-offset: 2px;
+}
+.imap-auth-form button[type='submit'] {
+  min-height: 50px;
+  border-color: #a8ddff;
+  background: #a8ddff;
+  color: #0a1e35;
+  font-weight: 750;
+  text-shadow: none;
+}
+.imap-auth-form button[type='submit']:enabled:hover {
+  background: #c5ebff;
+}
+.imap-auth-form button:focus-visible {
+  outline: 2px solid var(--auth-accent);
+  outline-offset: 3px;
+}
+.imap-auth-form div:has(> input[name='password']) button {
+  color: #e0efff;
+}
+.imap-auth-form [role='alert'] {
+  border-color: #c37f8b;
+  background: #582a40;
+  color: #fff0f2;
+}
+
+.imap-scenery {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #fff;
+}
+.imap-scenery-slide {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+.imap-scenery-slide[data-active='true'] {
+  opacity: 1;
+}
+.imap-scenery-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 50%;
+}
+.imap-scenery-slide[data-active='true'] img {
+  animation: imap-scenery-pan 4s ease-out both;
+}
+@keyframes imap-scenery-pan {
+  from {
+    transform: scale(1.007);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+.imap-scenery::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgb(5 19 34 / 73%),
+    transparent 32%,
+    rgb(8 27 46 / 53%) 49%,
+    var(--auth-night) 96%
+  );
+  content: '';
+}
+.imap-scenery-trail {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: #a8ddff;
+  opacity: 0.72;
+  transform: translateY(-44%);
+}
+.imap-trail-spark {
+  stroke-dasharray: 16 1300;
+  animation: imap-trail-glide 4.3s ease-out both;
+  filter: drop-shadow(0 0 5px #a8ddff);
+}
+@keyframes imap-trail-glide {
+  from {
+    stroke-dashoffset: 112;
+  }
+  to {
+    stroke-dashoffset: -1320;
+    opacity: 0;
+  }
+}
+.imap-scenery-footer {
+  position: absolute;
+  z-index: 3;
+  inset: 157px clamp(18px, 5vw, 30px) auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 10px;
+}
+.imap-scenery-caption {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-shadow: 0 2px 10px #061424;
+}
+.imap-scenery-caption::before {
+  position: absolute;
+  z-index: -1;
+  inset: -12px -22px;
+  background: radial-gradient(
+    ellipse at 28% 60%,
+    rgb(6 20 36 / 78%) 15%,
+    rgb(6 20 36 / 53%) 48%,
+    transparent 80%
+  );
+  content: '';
+}
+.imap-scenery-caption p {
+  margin: 0;
+  font-size: clamp(1rem, 2.8vw, 2.7rem);
+  font-weight: 760;
+  line-height: 1.14;
+  letter-spacing: -0.035em;
+}
+.imap-scenery-caption span {
+  display: block;
+  margin-top: 3px;
+  color: #e0f1ff;
+  font-size: 0.76rem;
+}
+.imap-scenery-controls {
+  display: flex;
+  flex: none;
+  gap: 4px;
+  pointer-events: auto;
+}
+.imap-scenery-control {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: #fff;
+  background: #102f4a;
+  border: 1px solid #91aac0;
+  border-radius: 999px;
+  font-weight: 700;
+}
+.imap-scenery-control:hover {
+  background: #22567c;
+}
+.imap-scenery-control:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (min-width: 768px) {
+  .imap-auth-layout {
+    grid-template-areas: 'head .' 'form .';
+    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+    grid-template-rows: auto minmax(min-content, 1fr);
+    gap: 0 clamp(30px, 4vw, 64px);
+    padding: 24px clamp(28px, 5vw, 92px) 28px;
+  }
+  .imap-auth-header {
+    align-self: start;
+    max-width: 490px;
+  }
+  .imap-auth-wordmark {
+    font-size: 35px;
+  }
+  .imap-auth-form {
+    align-self: center;
+    margin: 0 auto;
+    padding-block: 45px 86px;
+  }
+  .imap-auth-back,
+  .imap-auth-language {
+    background: #0b2038;
+    border-color: #6b88a5;
+  }
+  .imap-auth-art {
+    inset: 0;
+    height: auto;
+  }
+  .imap-scenery-slide {
+    inset: 0 0 0 23%;
+  }
+  .imap-scenery-slide img {
+    object-position: center 48%;
+  }
+  .imap-scenery::after {
+    background:
+      linear-gradient(
+        90deg,
+        var(--auth-night) 2%,
+        var(--auth-night) 26%,
+        rgb(10 30 53 / 88%) 35%,
+        rgb(10 30 53 / 31%) 56%,
+        transparent 77%
+      ),
+      linear-gradient(180deg, transparent 46%, rgb(7 23 39 / 20%) 69%, rgb(6 22 39 / 89%) 100%);
+  }
+  .imap-scenery-footer {
+    top: auto;
+    left: clamp(470px, 55vw, 1100px);
+    right: clamp(30px, 5vw, 90px);
+    bottom: clamp(28px, 7dvh, 88px);
+  }
+  .imap-scenery-caption span {
+    font-size: 0.94rem;
+  }
+  .imap-scenery-controls {
+    gap: 7px;
+  }
+  .imap-scenery-trail {
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .imap-scenery-slide {
+    transition: none;
+  }
+  .imap-scenery-slide[data-active='true'] img,
+  .imap-trail-spark {
+    animation: none;
+  }
+}
+
+.imap-scenery-slide[data-scene='tphcm'] img {
+  object-position: 57% 46%;
+}
+.imap-scenery-slide[data-scene='an-giang'] img {
+  object-position: 61% 55%;
+}
+.imap-scenery-slide[data-scene='hue'] img {
+  object-position: 54% 56%;
+}

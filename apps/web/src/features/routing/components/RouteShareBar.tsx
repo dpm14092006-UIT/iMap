@@ -81,7 +81,7 @@ export function RouteShareBar({ route }: RouteShareBarProps) {
           <Button
             type="button"
             onClick={() => void copy()}
-            className="mt-2 flex h-9 w-full items-center justify-center gap-1.5 rounded-full bg-brand-gradient text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40"
+            className="mt-2 flex h-9 w-full items-center justify-center gap-1.5 rounded-full bg-brand-600 text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-indigo-400/40"
           >
             <Icon name="link" size={14} />
             {t('Sao chép liên kết')}

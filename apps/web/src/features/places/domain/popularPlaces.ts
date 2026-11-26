@@ -1,7 +1,7 @@
 import type { Place } from '../types';
 
 /**
- * Danh sách địa điểm nổi bật ở TP.HCM.
+ * Danh sách địa điểm nổi bật ở TP.HCM (kèm hai quần đảo Hoàng Sa, Trường Sa), địa chỉ theo địa giới hành chính mới (từ 1/7/2025).
  * Dùng làm gợi ý nhanh khi tìm kiếm (không cần gọi API).
  * Kết quả tìm kiếm thật vẫn lấy từ VietMap qua backend.
  */
@@ -9,7 +9,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'ben-thanh',
     name: 'Chợ Bến Thành',
-    address: 'Quận 1',
+    address: 'Phường Bến Thành',
     category: 'Điểm tham quan',
     lat: 10.7721,
     lng: 106.6983,
@@ -18,7 +18,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'park-239',
     name: 'Công viên 23/9',
-    address: 'Quận 1',
+    address: 'Phường Bến Thành',
     category: 'Công viên',
     lat: 10.7677,
     lng: 106.6929,
@@ -27,7 +27,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'tao-dan',
     name: 'Công viên Tao Đàn',
-    address: 'Quận 1',
+    address: 'Phường Xuân Hòa',
     category: 'Công viên',
     lat: 10.7757,
     lng: 106.69,
@@ -36,7 +36,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'independence',
     name: 'Dinh Độc Lập',
-    address: 'Quận 1',
+    address: 'Phường Bến Thành',
     category: 'Di tích lịch sử',
     lat: 10.777,
     lng: 106.6952,
@@ -45,7 +45,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'notre-dame',
     name: 'Nhà thờ Đức Bà',
-    address: 'Quận 1',
+    address: 'Phường Sài Gòn',
     category: 'Điểm tham quan',
     lat: 10.7796,
     lng: 106.699,
@@ -54,7 +54,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'turtle-lake',
     name: 'Hồ Con Rùa',
-    address: 'Quận 3',
+    address: 'Phường Sài Gòn',
     category: 'Điểm tham quan',
     lat: 10.7831,
     lng: 106.6982,
@@ -63,7 +63,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'nguyen-hue',
     name: 'Phố đi bộ Nguyễn Huệ',
-    address: 'Quận 1',
+    address: 'Phường Sài Gòn',
     category: 'Phố đi bộ',
     lat: 10.7736,
     lng: 106.7043,
@@ -72,7 +72,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'bach-dang',
     name: 'Bến Bạch Đằng',
-    address: 'Quận 1',
+    address: 'Phường Sài Gòn',
     category: 'Điểm tham quan',
     lat: 10.7726,
     lng: 106.7074,
@@ -81,7 +81,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'ba-son',
     name: 'Khu vực Ba Son',
-    address: 'Quận 1',
+    address: 'Phường Sài Gòn',
     category: 'Khu vực',
     lat: 10.7828,
     lng: 106.7085,
@@ -90,7 +90,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'zoo',
     name: 'Thảo Cầm Viên',
-    address: 'Quận 1',
+    address: 'Phường Sài Gòn',
     category: 'Công viên',
     lat: 10.7874,
     lng: 106.7049,
@@ -99,7 +99,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'le-van-tam',
     name: 'Công viên Lê Văn Tám',
-    address: 'Quận 1',
+    address: 'Phường Tân Định',
     category: 'Công viên',
     lat: 10.789,
     lng: 106.6983,
@@ -108,7 +108,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'tan-dinh',
     name: 'Chợ Tân Định',
-    address: 'Quận 3',
+    address: 'Phường Tân Định',
     category: 'Chợ',
     lat: 10.793,
     lng: 106.6913,
@@ -117,7 +117,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'hang-xanh',
     name: 'Ngã tư Hàng Xanh',
-    address: 'Bình Thạnh',
+    address: 'Phường Thạnh Mỹ Tây',
     category: 'Nút giao',
     lat: 10.8016,
     lng: 106.7143,
@@ -126,7 +126,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'landmark',
     name: 'Landmark 81',
-    address: 'Bình Thạnh',
+    address: 'Phường Thạnh Mỹ Tây',
     category: 'Địa điểm nổi bật',
     lat: 10.7949,
     lng: 106.7218,
@@ -135,7 +135,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'thu-thiem',
     name: 'Khu đô thị Thủ Thiêm',
-    address: 'Thủ Đức',
+    address: 'Phường An Khánh',
     category: 'Khu đô thị',
     lat: 10.7827,
     lng: 106.7173,
@@ -144,7 +144,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'thao-dien',
     name: 'Thảo Điền',
-    address: 'Thủ Đức',
+    address: 'Phường An Khánh',
     category: 'Khu vực',
     lat: 10.8031,
     lng: 106.7308,
@@ -153,7 +153,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'phu-nhuan',
     name: 'Ngã tư Phú Nhuận',
-    address: 'Phú Nhuận',
+    address: 'Phường Cầu Kiệu',
     category: 'Nút giao',
     lat: 10.7993,
     lng: 106.682,
@@ -161,8 +161,8 @@ export const popularPlaces: Place[] = [
   },
   {
     id: 'dien-bien-phu',
-    name: 'Điện Biên Phủ – Q.3',
-    address: 'Quận 3',
+    name: 'Điện Biên Phủ – Xuân Hòa',
+    address: 'Phường Xuân Hòa',
     category: 'Khu vực',
     lat: 10.7859,
     lng: 106.6885,
@@ -171,7 +171,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'central-post-office',
     name: 'Bưu điện trung tâm',
-    address: 'Quận 1',
+    address: 'Phường Sài Gòn',
     category: 'Điểm tham quan',
     lat: 10.7799,
     lng: 106.701,
@@ -180,7 +180,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'da-kao',
     name: 'Đa Kao',
-    address: 'Quận 1',
+    address: 'Phường Sài Gòn',
     category: 'Khu vực',
     lat: 10.7856,
     lng: 106.702,
@@ -188,8 +188,8 @@ export const popularPlaces: Place[] = [
   },
   {
     id: 'thu-thiem-tunnel',
-    name: 'Đầu hầm Thủ Thiêm (Q.1)',
-    address: 'Quận 1',
+    name: 'Đầu hầm Thủ Thiêm (phía Sài Gòn)',
+    address: 'Phường Sài Gòn',
     category: 'Khu vực',
     lat: 10.7735,
     lng: 106.71,
@@ -198,7 +198,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'an-phu',
     name: 'An Phú',
-    address: 'Thủ Đức',
+    address: 'Phường An Khánh',
     category: 'Khu vực',
     lat: 10.8024,
     lng: 106.7464,
@@ -207,7 +207,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'tan-son-nhat',
     name: 'Sân bay Tân Sơn Nhất',
-    address: 'Tân Bình',
+    address: 'Phường Tân Sơn',
     category: 'Sân bay',
     lat: 10.8187,
     lng: 106.652,
@@ -216,7 +216,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'national-university',
     name: 'Đại học Quốc gia TP.HCM',
-    address: 'Thủ Đức',
+    address: 'Phường Linh Xuân',
     category: 'Trường đại học',
     lat: 10.8712,
     lng: 106.797,
@@ -225,7 +225,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'ba-chieu',
     name: 'Chợ Bà Chiểu',
-    address: 'Bình Thạnh',
+    address: 'Phường Gia Định',
     category: 'Chợ',
     lat: 10.7991,
     lng: 106.697,
@@ -234,7 +234,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'cho-ray',
     name: 'Bệnh viện Chợ Rẫy',
-    address: 'Quận 5',
+    address: 'Phường Chợ Lớn',
     category: 'Bệnh viện',
     lat: 10.7573,
     lng: 106.659,
@@ -243,7 +243,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'aeon-tan-phu',
     name: 'AEON Mall Tân Phú',
-    address: 'Tân Phú',
+    address: 'Phường Tân Sơn Nhì',
     category: 'Trung tâm thương mại',
     lat: 10.8029,
     lng: 106.617,
@@ -252,7 +252,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'ben-xe-mien-dong-moi',
     name: 'Bến xe Miền Đông mới',
-    address: 'Thủ Đức',
+    address: 'Phường Long Bình',
     category: 'Bến xe',
     lat: 10.8782,
     lng: 106.815,
@@ -261,7 +261,7 @@ export const popularPlaces: Place[] = [
   {
     id: 'gia-dinh-park',
     name: 'Công viên Gia Định',
-    address: 'Gò Vấp',
+    address: 'Phường Hạnh Thông',
     category: 'Công viên',
     lat: 10.8179,
     lng: 106.68,
@@ -270,10 +270,33 @@ export const popularPlaces: Place[] = [
   {
     id: 'ben-xe-mien-tay',
     name: 'Bến xe Miền Tây',
-    address: 'Bình Tân',
+    address: 'Phường An Lạc',
     category: 'Bến xe',
     lat: 10.7414,
     lng: 106.62,
     source: 'popular',
   },
+  // Hai quần đảo của Việt Nam: luôn có trong gợi ý vì dữ liệu tìm kiếm VietMap không trả về chúng.
+  // Tọa độ là đảo chính mang tên quần đảo (đảo Hoàng Sa, đảo Trường Sa Lớn).
+  {
+    id: 'quan-dao-hoang-sa',
+    name: 'Quần đảo Hoàng Sa (Việt Nam)',
+    address: 'Đặc khu Hoàng Sa, Thành phố Đà Nẵng',
+    category: 'Quần đảo',
+    lat: 16.5333,
+    lng: 111.6111,
+    source: 'popular',
+  },
+  {
+    id: 'quan-dao-truong-sa',
+    name: 'Quần đảo Trường Sa (Việt Nam)',
+    address: 'Đặc khu Trường Sa, Tỉnh Khánh Hòa',
+    category: 'Quần đảo',
+    lat: 8.6453,
+    lng: 111.9197,
+    source: 'popular',
+  },
 ];
+
+/** Gợi ý cho ô điểm đi/đến/điểm dừng: bỏ các quần đảo vì không có đường bộ tới. */
+export const routablePopularPlaces: Place[] = popularPlaces.filter((place) => place.category !== 'Quần đảo');

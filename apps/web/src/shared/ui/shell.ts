@@ -1,10 +1,10 @@
 import { createContext, useContext } from 'react';
 
-/** `inset`: phần bản đồ bị bảng che (px, từ mép trái / mép dưới khung); null khi đang kéo hoặc không có bảng. */
+/** `inset`: phần bản đồ bị bảng che (px, từ mép ngang / mép dưới khung); null khi đang kéo hoặc không có bảng. */
 export type SheetState = {
   height: string | null;
   isFull: boolean;
-  inset: { left: number; bottom: number } | null;
+  inset: { left: number; right?: number; bottom: number } | null;
 };
 
 export type ShellContextValue = {

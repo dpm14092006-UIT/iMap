@@ -11,6 +11,23 @@ function isNetworkFailure(error: unknown): error is TypeError {
   return error instanceof TypeError && /fetch failed/i.test(error.message);
 }
 
+type IssueLike = { message: string; params?: { publicMessage?: unknown }; errors?: IssueLike[][] };
+
+/**
+ * Thông báo tiếng Việt do schema đánh dấu `params.publicMessage` (xem `publicMessage` ở @routetwin/shared),
+ * kể cả khi nằm trong nhánh của một union; không có thì dùng thông báo chung.
+ */
+function publicValidationMessage(issues: readonly IssueLike[]): string | undefined {
+  for (const issue of issues) {
+    if (issue.params?.publicMessage === true) return issue.message;
+    for (const branch of issue.errors ?? []) {
+      const nested = publicValidationMessage(branch);
+      if (nested) return nested;
+    }
+  }
+  return undefined;
+}
+
 export const errorHandler: ErrorRequestHandler = (error: unknown, req, res, next) => {
   const requestId = getRequestId(req);
   if (res.headersSent) return next(error);
@@ -35,7 +52,7 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, req, res, next
     res.status(400).json({
       error: {
         code: 'VALIDATION_ERROR',
-        message: 'Dữ liệu không hợp lệ',
+        message: publicValidationMessage(error.issues as readonly IssueLike[]) ?? 'Dữ liệu không hợp lệ',
         details: error.flatten(),
         requestId,
       },

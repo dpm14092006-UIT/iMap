@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { formatDistanceMeters } from '../../../shared/format/units';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import { Button } from '../../../shared/ui/Button';
@@ -20,7 +21,8 @@ type PlacePanelProps = {
 const sourceLabels: Record<PlaceSource, string> = {
   popular: 'Địa điểm gợi ý có sẵn',
   vietmap: 'Tìm thấy qua VietMap',
-  osm: 'Tìm thấy qua Photon / OpenStreetMap',
+  // Trợ lý địa điểm vẫn dùng dữ liệu OSM (Overpass); giấy phép ODbL yêu cầu ghi nguồn.
+  osm: 'Tìm thấy qua dữ liệu OpenStreetMap',
   map: 'Điểm chọn trên bản đồ',
   gps: 'Vị trí GPS của thiết bị',
   poi: 'Tìm thấy qua VietMap',
@@ -29,6 +31,7 @@ const sourceLabels: Record<PlaceSource, string> = {
 /** Panel chi tiết một địa điểm, có nút "Tìm đường đến đây". */
 export function PlacePanel({ place, poi, onClose, onDirections }: PlacePanelProps) {
   const { language, t } = useI18n();
+  const [copied, setCopied] = useState(false);
   return (
     <SheetPanel eyebrow={t('ĐỊA ĐIỂM')} title={t('Chi tiết địa điểm')} icon="pin" onClose={onClose}>
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-100 dark:from-indigo-400/20 via-blue-50 dark:via-blue-400/10 to-emerald-50 dark:to-emerald-400/10 px-4 py-5">
@@ -69,15 +72,18 @@ export function PlacePanel({ place, poi, onClose, onDirections }: PlacePanelProp
           {t(sourceLabels[place.source])}
         </p>
       </div>
-      <a
-        href={`https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lng}#map=17/${place.lat}/${place.lng}`}
-        target="_blank"
-        rel="noreferrer"
+      <button
+        type="button"
+        onClick={() => {
+          void navigator.clipboard
+            ?.writeText(`${place.lat.toFixed(6)}, ${place.lng.toFixed(6)}`)
+            .then(() => setCopied(true), () => setCopied(false));
+        }}
         className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface text-[11px] font-semibold text-content-muted transition hover:border-brand-200 dark:hover:border-indigo-300/30 hover:text-brand-700 dark:hover:text-indigo-300"
       >
-        <Icon name="arrow-up-right" size={15} />
-        {t('Mở địa điểm trên OpenStreetMap')}
-      </a>
+        <Icon name={copied ? 'check' : 'link'} size={15} />
+        {t(copied ? 'Đã sao chép tọa độ' : 'Sao chép tọa độ')}
+      </button>
       <Button
         type="button"
         onClick={() => onDirections(place)}

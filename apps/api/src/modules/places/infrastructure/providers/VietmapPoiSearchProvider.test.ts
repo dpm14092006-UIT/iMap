@@ -35,7 +35,7 @@ describe('VietmapPoiSearchProvider', () => {
       circle_radius: '1500',
       cats: '10009',
       layers: 'POI',
-      display_type: '6',
+      display_type: '5',
     });
   });
 

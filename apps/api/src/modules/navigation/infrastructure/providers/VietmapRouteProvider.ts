@@ -190,7 +190,18 @@ export class VietmapRouteProvider implements RouteProvider, AlternativeRouteProv
           'VietMap không tìm được tuyến phù hợp giữa các điểm đã chọn.',
         );
       }
-      throw new AppError(502, 'ROUTE_PROVIDER_ERROR', detail || 'VietMap không tính được tuyến.');
+      // Thông điệp gốc của VietMap (tiếng Anh, có thể kèm tọa độ) chỉ ghi log, không trả cho người dùng.
+      console.warn(
+        JSON.stringify({ provider: 'vietmap-route', code: parsed.data.code, detail: detail ?? null }),
+      );
+      if (detail && /out of bounds/i.test(detail)) {
+        throw new AppError(
+          422,
+          'ROUTE_OUTSIDE_COVERAGE',
+          'Có điểm nằm ngoài vùng bản đồ Việt Nam mà dịch vụ chỉ đường hỗ trợ.',
+        );
+      }
+      throw new AppError(502, 'ROUTE_PROVIDER_ERROR', 'VietMap chưa thể tính tuyến lúc này. Hãy thử lại.');
     }
 
     const paths = [...parsed.data.paths].sort((a, b) =>

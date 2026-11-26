@@ -7,7 +7,7 @@ export const VIETNAM_CENTER: L.LatLngExpression = [16, 108];
 
 export const COLORS = {
   start: '#0d9488',
-  end: '#4338ca',
+  end: '#004779',
   routeFrom: [0x43, 0x38, 0xca],
   routeTo: [0x0d, 0x94, 0x88],
   alternative: '#a5b4fc',

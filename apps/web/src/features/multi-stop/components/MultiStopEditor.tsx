@@ -3,7 +3,7 @@ import { Button } from '../../../shared/ui/Button';
 import { Icon } from '../../../shared/ui/Icon';
 import { Select } from '../../../shared/ui/Input';
 import { PlaceCombobox } from '../../places/components/PlaceCombobox';
-import { popularPlaces } from '../../places/domain/popularPlaces';
+import { routablePopularPlaces } from '../../places/domain/popularPlaces';
 import type { RouteObjective, TransportMode } from '../../routing/types';
 import { MAX_STOPS } from '../domain/limits';
 import type { useMultiStopForm } from '../hooks/useMultiStopForm';
@@ -86,7 +86,7 @@ export function MultiStopEditor({ getFocus, form }: Props) {
             setPlan(null);
           }}
           onSelect={selectStart}
-          places={popularPlaces}
+          places={routablePopularPlaces}
           placeholder={t('Chọn điểm xuất phát')}
           value={startText}
         />
@@ -183,7 +183,7 @@ export function MultiStopEditor({ getFocus, form }: Props) {
           inputClassName="h-[44px] bg-surface"
           onChange={setQuery}
           onSelect={addStop}
-          places={popularPlaces.filter((place) => !stops.some((stop) => stop.id === place.id))}
+          places={routablePopularPlaces.filter((place) => !stops.some((stop) => stop.id === place.id))}
           placeholder={t('Thêm điểm dừng')}
           value={query}
         />

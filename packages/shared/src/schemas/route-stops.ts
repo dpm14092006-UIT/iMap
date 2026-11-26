@@ -1,6 +1,16 @@
 import { z } from 'zod';
 import { stopCategories, type StopCategory } from '../constants.js';
-import { geoPointSchema, type RouteResult } from './routes.js';
+import { type RouteResult } from './routes.js';
+import { publicMessage, samePoint, searchTextSchema, vietnamPointSchema } from './input.js';
+
+/** Điểm đi và điểm đến của một tuyến: đúng hai điểm, khác nhau. */
+const routeEndpointsSchema = z
+  .array(vietnamPointSchema)
+  .length(2)
+  .refine(
+    ([from, to]) => !samePoint(from!, to!),
+    publicMessage('Điểm đi và điểm đến không được trùng nhau.'),
+  );
 
 export const stopCategorySchema = z.enum(stopCategories);
 export const stopIntentSchema = z.object({
@@ -14,9 +24,9 @@ export const stopIntentSchema = z.object({
 });
 export type StopIntent = z.infer<typeof stopIntentSchema>;
 export const routeStopRequestSchema = z.object({
-  points: z.array(geoPointSchema).length(2),
+  points: routeEndpointsSchema,
   vehicle: z.enum(['car', 'motorcycle']),
-  query: z.string().trim().min(2).max(300),
+  query: searchTextSchema(2, 300),
   category: stopCategorySchema.optional(),
   maxExtraDistanceMeters: z.number().int().min(0).max(10000).optional(),
   maxExtraDurationSeconds: z.number().int().min(0).max(3600).optional(),
@@ -54,12 +64,12 @@ export type RouteStopResponse = {
 };
 
 export const explorePlacesRequestSchema = z.object({
-  query: z.string().trim().min(2).max(300),
+  query: searchTextSchema(2, 300),
   context: z.array(z.string().trim().min(1).max(300)).max(4).default([]),
   mode: z.enum(['nearby', 'route']),
   category: stopCategorySchema.optional(),
-  center: geoPointSchema.optional(),
-  points: z.array(geoPointSchema).length(2).optional(),
+  center: vietnamPointSchema.optional(),
+  points: routeEndpointsSchema.optional(),
   vehicle: z.enum(['car', 'motorcycle']).default('motorcycle'),
   radiusMeters: z.number().int().min(100).max(5000).optional(),
   maxExtraDistanceMeters: z.number().int().min(0).max(10000).optional(),

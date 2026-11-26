@@ -2,14 +2,11 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import { ShellContext, type SheetState } from '../../shared/ui/shell';
 
 type AppShellProps = {
-  /** Bật class `dark` cho toàn bộ giao diện (theo giờ, xem useTimeBasedMapLayer). */
+  /** Bật class `dark` theo chế độ sáng/tối của hệ thống. */
   dark: boolean;
   /** Báo mỗi khi bảng đổi kích thước (để zoom lại tuyến vừa phần bản đồ còn thấy). */
   onSheetChange?: (state: SheetState) => void;
-  /** Có panel mở: nhóm nút góc dưới trái dịch sang phải để không bị panel che. */
-  panelOpen: boolean;
   map: ReactNode;
-  dock: ReactNode;
   topBar: ReactNode;
   /** Nút góc dưới trái: bộ chọn lớp, chú giải giao thông… */
   bottomLeft: ReactNode;
@@ -23,9 +20,7 @@ type AppShellProps = {
 export function AppShell({
   dark,
   onSheetChange,
-  panelOpen,
   map,
-  dock,
   topBar,
   bottomLeft,
   bottomRight,
@@ -50,19 +45,20 @@ export function AppShell({
       <main
         id="map"
         style={style}
+        data-panel-open={sheet.inset ? "true" : undefined}
         data-sheet={sheet.isFull ? 'full' : undefined}
-        className={`${dark ? 'dark' : ''} relative h-[100dvh] min-h-[560px] overflow-hidden bg-[#e8ece7] text-ink dark:bg-[#0b1321] dark:text-slate-100`}
+        className={`${dark ? 'dark' : ''} relative h-[100dvh] overflow-hidden bg-surface-muted text-content`}
       >
         {map}
-        {dock}
         {topBar}
         <div
-          className={`pointer-events-none absolute bottom-[calc(var(--shell-bottom)+24px)] right-[76px] max-md:right-[60px] ${docked ? 'max-md:bottom-[calc(var(--shell-bottom)+12px)]' : ''} z-20 flex flex-wrap items-end gap-2 transition-[left,bottom] duration-200 max-md:left-3 ${panelOpen ? 'md:left-[452px] lg:left-[500px]' : 'md:left-[80px] lg:left-[88px]'} ${hideOnFullSheet} [&>*]:pointer-events-auto`}
+          className={`pointer-events-none absolute bottom-[calc(var(--shell-bottom)+24px)] right-[76px] max-md:right-[60px] ${docked ? 'max-md:bottom-[calc(var(--shell-bottom)+12px)]' : ''} z-20 flex flex-wrap items-end gap-2 transition-[bottom] duration-200 left-3 ${hideOnFullSheet} [&>*]:pointer-events-auto`}
         >
           {bottomLeft}
         </div>
         <div
-          className={`absolute bottom-[var(--map-controls-bottom)] right-3 z-20 flex items-end gap-2 [--map-controls-bottom:calc(var(--shell-bottom)+56px)] transition-[bottom] duration-200 ${docked ? 'max-md:[--map-controls-bottom:calc(var(--shell-bottom)+34px)]' : ''} ${hideOnFullSheet}`}
+          data-map-controls
+          className={`absolute bottom-[var(--map-controls-bottom)] right-3 z-20 flex flex-col items-end gap-2 [--map-controls-bottom:calc(var(--shell-bottom)+10px)] transition-[bottom] duration-200 ${docked ? 'max-md:[--map-controls-bottom:calc(var(--shell-bottom)+12px)]' : ''} ${hideOnFullSheet}`}
         >
           {bottomRight}
         </div>

@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { isInVietmapCoverage, MAX_TRAFFIC_BOUNDS_SPAN_DEG } from '../constants.js';
+import { noteTextSchema, outsideCoverageMessage, publicMessage, strictNumber } from './input.js';
 export const incidentTypes = [
   'traffic_jam',
   'accident',
@@ -38,29 +40,40 @@ const trafficPhotoPathSchema = z
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/traffic-reports\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp)$/i,
     'Đường dẫn ảnh báo cáo không hợp lệ',
   );
-export const trafficReportInputSchema = z.object({
-  incidentType: z.enum(incidentTypes),
-  severity: z.enum(['low', 'medium', 'high']),
-  vehicleScope: trafficVehicleScopeSchema.default('both'),
-  lat: z.number().min(-90).max(90),
-  lng: z.number().min(-180).max(180),
-  note: z.string().max(300).optional(),
-  gpsAccuracyM: z.number().min(0).max(100_000).optional(),
-  headingDeg: z.number().min(0).lt(360).optional(),
-  imagePath: trafficPhotoPathSchema.optional(),
-});
+export const trafficReportInputSchema = z
+  .object({
+    incidentType: z.enum(incidentTypes),
+    severity: z.enum(['low', 'medium', 'high']),
+    vehicleScope: trafficVehicleScopeSchema.default('both'),
+    lat: z.number().min(-90).max(90),
+    lng: z.number().min(-180).max(180),
+    note: noteTextSchema(300).optional(),
+    gpsAccuracyM: z.number().min(0).max(100_000).optional(),
+    headingDeg: z.number().min(0).lt(360).optional(),
+    imagePath: trafficPhotoPathSchema.optional(),
+  })
+  .refine(isInVietmapCoverage, { ...publicMessage(outsideCoverageMessage), path: ['lat'] });
 export const clearanceSchema = z.object({ state: z.enum(['clear', 'still_active']) });
 export const trafficReportIdSchema = z.string().uuid();
 export const trafficBoundsSchema = z
   .object({
-    minLat: z.coerce.number().min(-90).max(90),
-    minLng: z.coerce.number().min(-180).max(180),
-    maxLat: z.coerce.number().min(-90).max(90),
-    maxLng: z.coerce.number().min(-180).max(180),
+    minLat: strictNumber(z.number().min(-90).max(90)),
+    minLng: strictNumber(z.number().min(-180).max(180)),
+    maxLat: strictNumber(z.number().min(-90).max(90)),
+    maxLng: strictNumber(z.number().min(-180).max(180)),
   })
-  .refine((bounds) => bounds.minLat < bounds.maxLat && bounds.minLng < bounds.maxLng, {
-    message: 'Phạm vi bản đồ không hợp lệ',
-  });
+  .refine(
+    (bounds) => bounds.minLat < bounds.maxLat && bounds.minLng < bounds.maxLng,
+    publicMessage('Phạm vi bản đồ không hợp lệ.'),
+  )
+  .refine(
+    (bounds) =>
+      bounds.maxLat - bounds.minLat <= MAX_TRAFFIC_BOUNDS_SPAN_DEG &&
+      bounds.maxLng - bounds.minLng <= MAX_TRAFFIC_BOUNDS_SPAN_DEG,
+    publicMessage(
+      `Vùng bản đồ quá rộng; hãy phóng to (tối đa ${MAX_TRAFFIC_BOUNDS_SPAN_DEG}° mỗi chiều) để xem báo cáo giao thông.`,
+    ),
+  );
 export const trafficReportDtoSchema = z.object({
   id: z.string().uuid(),
   incidentType: z.enum(incidentTypes),

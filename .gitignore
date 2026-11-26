@@ -7,3 +7,6 @@ coverage/
 .DS_Store
 *.log
 .vite/
+
+# Báo cáo và ảnh chụp của cổng kiểm chứng chủ quyền
+reports/

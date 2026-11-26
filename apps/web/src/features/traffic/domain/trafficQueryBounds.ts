@@ -1,6 +1,7 @@
-import type { TrafficReportBounds } from '@routetwin/shared';
+import { MAX_TRAFFIC_BOUNDS_SPAN_DEG, type TrafficReportBounds } from '@routetwin/shared';
 
-const MAX_SPAN = 2;
+/** Cùng giới hạn với API và RPC Postgres. */
+const MAX_SPAN = MAX_TRAFFIC_BOUNDS_SPAN_DEG;
 
 export function containsTrafficBounds(outer: TrafficReportBounds, inner: TrafficReportBounds): boolean {
   return (

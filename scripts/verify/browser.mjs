@@ -1,7 +1,7 @@
 /* global document, window, WheelEvent, getComputedStyle, requestAnimationFrame */
 /** Repeatable UI + real Leaflet integration checks. No paid API calls, writes or real GPS required. */
 import assert from 'node:assert/strict';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
@@ -9,10 +9,24 @@ import { createServer } from 'vite';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const artifacts = process.env.IMAP_BROWSER_ARTIFACTS;
+const fixtureTile = await readFile(resolve(root, 'apps/web/public/favicon-32.png'));
 const errors = [],
   requests = [],
   unexpected = [];
+async function openDirections(page) {
+  const heading = page.getByRole('heading', { name: 'Chỉ đường', exact: true });
+  if (await heading.isVisible().catch(() => false)) return;
+  await page
+    .getByRole('button', { name: 'Chỉ đường', exact: true })
+    .filter({ visible: true })
+    .first()
+    .click();
+  await heading.waitFor();
+}
+
 let server, browser;
+let limitHybridTiles = false;
+let blockSentinel = false;
 try {
   process.chdir(resolve(root, 'apps/web'));
   server = await createServer({
@@ -26,6 +40,7 @@ try {
   assert.equal(typeof address, 'object');
   browser = await chromium.launch({
     headless: true,
+    args: ['--enable-unsafe-swiftshader'],
     ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
       ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
       : {}),
@@ -40,13 +55,11 @@ try {
   await context.route(/^https?:\/\//, async (route) => {
     const url = new URL(route.request().url());
     if (url.hostname === '127.0.0.1') return route.continue();
+    if (blockSentinel && url.pathname.includes('/Sentinel2/')) return route.fulfill({ status: 503 });
     if (route.request().resourceType() === 'image')
       return route.fulfill({
         contentType: 'image/png',
-        body: Buffer.from(
-          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a8XcAAAAASUVORK5CYII=',
-          'base64',
-        ),
+        body: fixtureTile,
       });
     return route.abort();
   });
@@ -73,6 +86,37 @@ try {
     const url = new URL(route.request().url());
     if (!url.pathname.startsWith('/api/')) return route.continue();
     requests.push(url.pathname);
+    const style = /\/map\/vietmap\/styles\/(tm|dm|hm)\/style\.json$/.exec(url.pathname)?.[1];
+    if (style) {
+      return route.fulfill({
+        json: {
+          version: 8,
+          sources: {
+            fixture: {
+              type: 'raster',
+              tiles: [`https://maps.vietmap.vn/maps/tiles/st/{z}/{x}/{y}.png?fixture=${style}`],
+              tileSize: 256,
+            },
+          },
+          layers: [
+            {
+              id: 'background',
+              type: 'background',
+              paint: {
+                'background-color': style === 'dm' ? '#101a29' : '#e8ece7',
+              },
+            },
+            { id: 'fixture', type: 'raster', source: 'fixture' },
+          ],
+        },
+      });
+    }
+    if (url.pathname.startsWith('/api/map/vnsdi/'))
+      return route.fulfill({ contentType: 'image/png', body: fixtureTile });
+    if (url.pathname.startsWith('/api/map/vietmap/tiles/st/')) {
+      if (limitHybridTiles && url.searchParams.get('fixture') === 'hm') return route.fulfill({ status: 423 });
+      return route.fulfill({ contentType: 'image/png', body: fixtureTile });
+    }
     let data;
     if (url.pathname === '/api/push/config') data = { enabled: false, publicKey: null };
     else if (url.pathname === '/api/health') data = { configured: {} };
@@ -103,11 +147,19 @@ try {
     if (msg.type() === 'error' && !msg.text().startsWith('Failed to load resource:')) errors.push(msg.text());
   });
   page.on('response', (r) => {
-    if (r.status() >= 400) console.error('HTTP:', r.status(), r.url());
+    if (r.status() >= 400 && !(r.status() === 423 && r.url().includes('fixture=hm')))
+      console.error('HTTP:', r.status(), r.url());
   });
+  const initialMapTile = page.waitForResponse((r) => r.ok() && r.url().includes('/api/map/vietmap/tiles/'));
   await page.goto(`http://127.0.0.1:${address.port}/?demo=1`);
-  await page.getByRole('heading', { name: 'Chỉ đường', exact: true }).waitFor();
-  await page.locator('.leaflet-tile-loaded').first().waitFor();
+  // Trang chủ chỉ có bản đồ + thanh tìm kiếm; bảng Chỉ đường mở khi bấm nút trên thanh trên cùng.
+  await openDirections(page);
+  await initialMapTile;
+  await page.locator('.leaflet-gl-layer .maplibregl-canvas').first().waitFor();
+  assert.ok(
+    requests.includes('/api/map/vietmap/styles/tm/style.json') ||
+      requests.includes('/api/map/vietmap/styles/dm/style.json'),
+  );
   assert.equal(await page.getByRole('button', { name: 'Demo', exact: true }).count(), 0);
   assert.equal(await page.getByText('So sánh thuật toán', { exact: true }).count(), 0);
   console.log('✓ Legacy demo URL/storage cannot enable removed UI; app and Leaflet render');
@@ -151,6 +203,7 @@ try {
   await page.locator('#qa-map .routetwin-route-label').click();
   assert.deepEqual(await page.evaluate(() => window.__qa.events.selected), ['route-a']);
   console.log('✓ Route without alternatives fits, draws and dispatches selection');
+  const darkStyle = page.waitForResponse((r) => r.ok() && r.url().includes('/map/vietmap/styles/dm/'));
   await page.evaluate(() => {
     const q = window.__qa;
     q.data.layer = 'dark';
@@ -187,7 +240,9 @@ try {
     q.data.trafficLayer = q.toTrafficMapLayer([report, { ...report, id: 'cleared', status: 'cleared' }]);
     q.c.update(q.data);
   });
+  await darkStyle;
   assert.equal(await page.locator('#qa-map.map-theme-dark.is-picking').count(), 1);
+  await page.locator('#qa-map .maplibregl-canvas').waitFor();
   assert.equal(await page.locator('#qa-map .routetwin-navigation-marker').count(), 1);
   assert.equal(await page.locator('#qa-map .routetwin-route-label').count(), 0);
   assert.equal(await page.locator('#qa-map .routetwin-poi-marker.is-highlighted').count(), 1);
@@ -206,6 +261,7 @@ try {
   );
   assert.match(await page.locator('#qa-map .leaflet-popup-content').textContent(), /QA Flood/);
   console.log('✓ GPS arrow, heading, POI selection, focus pin, active incident popup and independent layers');
+  const sentinelTile = page.waitForResponse((r) => r.ok() && r.url().includes('/Sentinel2/MapServer/tile/'));
   await page.evaluate(() => {
     const q = window.__qa;
     q.data.overlays = { traffic: false, incidents: false, terrain: true };
@@ -224,6 +280,55 @@ try {
   assert.equal(await page.locator('#qa-map .routetwin-poi-marker').count(), 0);
   assert.equal(await page.locator('#qa-map .routetwin-navigation-marker').count(), 0);
   assert.equal(await page.evaluate(() => window.__qa.events.gestures), 1);
+  // Vệ tinh: ảnh Sentinel-2 của VNSDI (không nhãn) → nhãn chủ quyền của iMap phải hiện.
+  await sentinelTile;
+  await page.locator('#qa-map.map-theme-satellite .leaflet-tile-loaded').first().waitFor();
+  assert.equal(await page.evaluate(() => window.__qa.el.dataset.basemap), 'vnsdi-sentinel2');
+  assert.match(await page.locator('#qa-map .leaflet-control-attribution').textContent(), /VNSDI.*Sentinel-2/);
+  assert.equal(await page.locator('#qa-map .sovereignty-label--archipelago').count(), 2);
+  // Đường phố + Địa hình khi VNSDI địa hình chưa có token: giữ nền đường phố, không để bản đồ trắng.
+  await page.evaluate(() => {
+    const q = window.__qa;
+    q.data.layer = 'street';
+    q.c.update(q.data);
+  });
+  await page.waitForFunction(() => window.__qa.el.dataset.basemap === 'vietmap');
+  assert.equal(await page.locator('#qa-map .routetwin-basemap-notice').count(), 0);
+  assert.ok(!requests.some((p) => p.startsWith('/api/map/vnsdi/terrain/')));
+  // Sentinel-2 lỗi → Vietmap hybrid.
+  blockSentinel = true;
+  const hybridTile = page.waitForResponse((r) => r.ok() && r.url().includes('fixture=hm'));
+  await page.evaluate(() => {
+    const q = window.__qa;
+    // Sang vùng khác để trình duyệt phải tải ô Sentinel-2 mới (ô cũ nằm trong bộ nhớ đệm).
+    q.c.map.setView([21.03, 105.85], 9, { animate: false });
+    q.data.layer = 'satellite';
+    q.c.update(q.data);
+  });
+  await hybridTile;
+  await page.locator('#qa-map.map-theme-satellite .maplibregl-canvas').waitFor();
+  assert.equal(await page.evaluate(() => window.__qa.el.dataset.basemap), 'vietmap');
+  assert.ok(requests.includes('/api/map/vietmap/styles/hm/style.json'));
+  // Hết nguồn hợp lệ (Vietmap 423) → thông báo, không dự phòng về OSM.
+  await page.evaluate(() => {
+    const q = window.__qa;
+    q.data.layer = 'street';
+    q.c.update(q.data);
+  });
+  limitHybridTiles = true;
+  const blockedTile = page.waitForResponse((r) => r.status() === 423 && r.url().includes('fixture=hm'));
+  await page.evaluate(() => {
+    const q = window.__qa;
+    q.data.layer = 'satellite';
+    q.c.update(q.data);
+  });
+  await blockedTile;
+  await page.locator('#qa-map .routetwin-basemap-notice').waitFor();
+  assert.equal(await page.locator('#qa-map .maplibregl-canvas').count(), 0);
+  assert.equal(await page.locator('#qa-map .sovereignty-label--archipelago').count(), 2);
+  console.log(
+    '✓ Satellite uses VNSDI Sentinel-2, falls back to Vietmap hybrid, then shows a notice (never OSM); terrain without a source keeps the base',
+  );
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => {
     const q = window.__qa;
@@ -296,7 +401,7 @@ try {
     await incidents.click();
     assert.notEqual(await incidents.getAttribute('aria-checked'), wasChecked);
     await incidents.click();
-    await dialog.getByRole('button', { name: 'Bản đồ', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Đường phố', exact: true }).click();
     await page.keyboard.press('Escape');
     await dialog.waitFor({ state: 'hidden' });
   }
@@ -317,7 +422,8 @@ try {
     `✓ Browser → HTTP client → route fixture → native GPS guidance; traffic requests during GPS: ${after - before}`,
   );
   await page.goto(`http://127.0.0.1:${address.port}/`);
-  await page.getByRole('heading', { name: 'Chỉ đường', exact: true }).waitFor();
+  // Trang chủ chỉ có bản đồ + thanh tìm kiếm; bảng Chỉ đường mở khi bấm nút trên thanh trên cùng.
+  await openDirections(page);
   await page
     .getByRole('button', { name: 'Nhiều điểm', exact: true })
     .filter({ visible: true })

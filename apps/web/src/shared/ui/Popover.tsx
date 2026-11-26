@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { useI18n } from '../i18n/I18nProvider';
 
 type PopoverProps = {
@@ -9,6 +9,8 @@ type PopoverProps = {
   label: string;
   /** Vị trí của hộp so với nút, ví dụ "bottom-full mb-2 left-0". */
   panelClassName?: string;
+  /** Kiểu nội tuyến cho hộp (ví dụ chiều cao tối đa đo theo khoảng trống thực tế). */
+  panelStyle?: CSSProperties;
   className?: string;
   children: ReactNode;
 };
@@ -20,6 +22,7 @@ export function Popover({
   trigger,
   label,
   panelClassName = 'top-full mt-2 left-0',
+  panelStyle,
   className = '',
   children,
 }: PopoverProps) {
@@ -54,6 +57,7 @@ export function Popover({
         <div
           role="dialog"
           aria-label={t(label)}
+          style={panelStyle}
           className={`absolute z-50 animate-pop rounded-2xl bg-white/95 p-3 shadow-glass ring-1 ring-black/5 backdrop-blur-xl dark:bg-slate-900/95 dark:text-slate-100 dark:shadow-glass-dark dark:ring-white/10 ${panelClassName}`}
         >
           {children}

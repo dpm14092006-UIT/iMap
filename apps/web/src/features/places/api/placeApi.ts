@@ -52,7 +52,7 @@ class PlaceApiClient {
       category: 'Địa chỉ',
       lat: suggestion.lat,
       lng: suggestion.lng,
-      source: suggestion.source ?? 'osm',
+      source: suggestion.source ?? 'vietmap',
     };
   }
 }

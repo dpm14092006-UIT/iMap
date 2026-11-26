@@ -1,9 +1,10 @@
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import { Icon } from '../../../shared/ui/Icon';
+import { SuggestionPopup } from './SuggestionPopup';
 import type { usePlaceCombobox } from '../hooks/usePlaceCombobox';
 import type { PlaceComboboxProps } from '../types';
 
-type Props = Pick<PlaceComboboxProps, 'value' | 'onChange' | 'action'> & {
+type Props = Pick<PlaceComboboxProps, 'value' | 'onChange' | 'action' | 'listPositionClassName'> & {
   form: Pick<
     ReturnType<typeof usePlaceCombobox>,
     | 'listId'
@@ -24,7 +25,7 @@ type Props = Pick<PlaceComboboxProps, 'value' | 'onChange' | 'action'> & {
     | 'emptyMessage'
   >;
 };
-export function PlaceSuggestionsList({ value, onChange, action, form }: Props) {
+export function PlaceSuggestionsList({ value, onChange, action, listPositionClassName, form }: Props) {
   const {
     listId,
     activeIndex,
@@ -48,7 +49,7 @@ export function PlaceSuggestionsList({ value, onChange, action, form }: Props) {
   return (
     <>
       {showList && (
-        <div className="absolute left-0 right-0 top-[calc(100%+7px)] z-[80] max-h-[min(70dvh,560px)] overflow-y-auto overscroll-contain rounded-2xl border border-slate-100 bg-white p-1.5 shadow-float dark:shadow-float-dark dark:border-white/10 dark:bg-slate-800">
+        <SuggestionPopup positionClassName={listPositionClassName}>
           <div
             className="mb-1 flex gap-1 border-b border-line/60 p-1"
             role="group"
@@ -85,7 +86,7 @@ export function PlaceSuggestionsList({ value, onChange, action, form }: Props) {
                   role="option"
                   aria-selected={activeIndex === 0}
                 >
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-gradient text-white">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-600 text-white">
                     <Icon name={action.icon} size={17} />
                   </span>
                   <span className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-snug text-brand-700 dark:text-brand-200">
@@ -164,7 +165,7 @@ export function PlaceSuggestionsList({ value, onChange, action, form }: Props) {
                   ? t('VietMap · ưu tiên gần khu vực tìm kiếm')
                   : t('Địa điểm gợi ý có sẵn')}
           </div>
-        </div>
+        </SuggestionPopup>
       )}
     </>
   );

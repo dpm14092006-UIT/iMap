@@ -60,11 +60,10 @@ export function CategoryChips({ active, onSelect }: CategoryChipsProps) {
               type="button"
               aria-pressed={selected}
               onClick={() => onSelect({ category })}
-              className={`flex h-10 shrink-0 items-center gap-2 rounded-full pl-1.5 pr-3.5 text-[13px] font-semibold shadow-sm ring-1 backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-indigo-400/40 active:scale-95 ${selected ? 'scale-[1.03] bg-brand-gradient text-white ring-transparent shadow-md' : 'bg-white/90 text-ink ring-black/5 hover:bg-white dark:bg-slate-900/85 dark:text-slate-100 dark:ring-white/10 dark:hover:bg-slate-800'}`}
+              className={`flex h-11 shrink-0 items-center gap-2 rounded-xl pl-1.5 pr-3.5 text-[13px] font-semibold shadow-sm ring-1 backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-indigo-400/40 active:scale-95 ${selected ? 'scale-[1.03] bg-brand-600 text-white ring-transparent shadow-md' : 'bg-white/90 text-ink ring-black/5 hover:bg-white dark:bg-slate-900/85 dark:text-slate-100 dark:ring-white/10 dark:hover:bg-slate-800'}`}
             >
               <span
-                className="grid h-7 w-7 place-items-center rounded-full text-white"
-                style={{ backgroundColor: selected ? 'rgb(255 255 255 / 25%)' : meta.color }}
+                className={`grid h-7 w-7 place-items-center rounded-lg ${selected ? "bg-white/20 text-white" : "bg-brand-50 text-brand-700 dark:bg-brand-900 dark:text-brand-200"}`}
               >
                 <Icon name={meta.icon} size={15} />
               </span>

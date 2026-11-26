@@ -14,10 +14,16 @@ export function routeLabels(route: RouteLike, routes: RouteLike[]): string[] {
   const fastest = Math.min(...routes.map((item) => item.durationMin));
   const isFastest = route.durationMin === fastest;
   if (isFastest) labels.push('Nhanh nhất');
+  // "Ngắn nhất" chỉ khi thật sự ngắn hơn tuyến nhanh nhất (≥10 m và ≥1%): dài bằng nhau thì tuyến
+  // nhanh nhất đã là tuyến ngắn nhất, gắn thêm nhãn cho tuyến chậm hơn chỉ gây hiểu nhầm.
+  const fastestDistance = Math.min(
+    ...routes.filter((item) => item.durationMin === fastest).map((item) => item.distanceKm),
+  );
   if (
     !isFastest &&
     routes.length > 1 &&
-    route.distanceKm === Math.min(...routes.map((item) => item.distanceKm))
+    route.distanceKm === Math.min(...routes.map((item) => item.distanceKm)) &&
+    fastestDistance - route.distanceKm >= Math.max(0.01, fastestDistance * 0.01)
   ) {
     labels.push('Ngắn nhất');
   }

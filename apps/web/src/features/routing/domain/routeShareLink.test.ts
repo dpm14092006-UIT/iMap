@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { Place } from '../../places/types';
-import { buildRouteShareUrl, parseRouteShareLink, type SharedRoute } from './routeShareLink';
+import {
+  addressBarUrl,
+  buildPlaceShareUrl,
+  buildRouteShareUrl,
+  parsePlaceShareLink,
+  MAX_SHARED_NAME_LENGTH,
+  parseRouteShareLink,
+  type SharedRoute,
+} from './routeShareLink';
 
 const place = (name: string, lat: number, lng: number): Place => ({
   id: name,
@@ -40,6 +48,31 @@ describe('route share link', () => {
     expect(parseRouteShareLink('?from=95,106,A&to=11,107,B')).toBeNull();
     expect(parseRouteShareLink('')).toBeNull();
   });
+
+  it.each([
+    ['hex', '?from=0x0A,0x6A,A&to=11,107,B'],
+    ['số mũ', '?from=1e1,106,A&to=11,107,B'],
+    ['Infinity', '?from=Infinity,106,A&to=11,107,B'],
+    ['rỗng', '?from=,,A&to=11,107,B'],
+    ['khoảng trắng', '?from=%20,%20,A&to=11,107,B'],
+    ['ngoài Việt Nam (Paris)', '?from=48.85,2.35,A&to=11,107,B'],
+    ['đại dương (0,0)', '?from=10.77,106.69,A&to=0,0,B'],
+  ])('bỏ qua link có tọa độ %s', (_label, search) => {
+    expect(parseRouteShareLink(search)).toBeNull();
+  });
+
+  it('cắt tên quá dài và bỏ ký tự điều khiển trong tên từ link', () => {
+    const longName = 'GỌI 0909000000 NHẬN QUÀ '.repeat(20);
+    const parsed = parseRouteShareLink(
+      `?from=10.77,106.69,${encodeURIComponent(longName)}&to=10.78,106.7,${encodeURIComponent('Chợ\u0000\nBến Thành')}`,
+    );
+    expect(Array.from(parsed!.origin.name)).toHaveLength(MAX_SHARED_NAME_LENGTH);
+    expect(parsed?.destination.name).toBe('Chợ Bến Thành');
+  });
+
+  it('tên chỉ toàn ký tự điều khiển thì dùng tên mặc định', () => {
+    expect(parseRouteShareLink('?from=10.77,106.69,%00%01&to=10.78,106.7,B')?.origin.name).toBe('Điểm đi');
+  });
 });
 
 const routeShareScenarios: SharedRoute[] = Array.from({ length: 100 }, (_, index) => {
@@ -50,8 +83,9 @@ const routeShareScenarios: SharedRoute[] = Array.from({ length: 100 }, (_, index
     'Bến xe Miền Đông',
     'Đại học Quốc gia',
   ];
-  const latitude = -80 + index * 1.6;
-  const longitude = -170 + index * 3.4;
+  // Quét khắp vùng VietMap hỗ trợ (link ngoài vùng bị bỏ qua, xem test riêng).
+  const latitude = 8.5 + index * 0.14;
+  const longitude = 102.2 + index * 0.09;
   return {
     origin: place(`${names[index % names.length]} ${index}`, latitude, longitude),
     destination: place(`${names[(index + 2) % names.length]} #${index}`, latitude + 0.23, longitude + 0.31),
@@ -100,5 +134,52 @@ describe('route share round-trip regression matrix', () => {
   it('bỏ qua điểm ghé sai định dạng thay vì làm hỏng cả link', () => {
     const parsed = parseRouteShareLink('?from=10,106,A&to=11,107,B&via=abc&via=10.5,106.5,C');
     expect(parsed?.via?.map((stop) => stop.name)).toEqual(['C']);
+  });
+});
+
+describe('place links and address bar', () => {
+  it('đọc lại đúng link địa điểm, kiểm tra như link tuyến', () => {
+    const url = buildPlaceShareUrl(
+      { name: 'Chợ Bến Thành', lat: 10.7721, lng: 106.6983 },
+      'https://imap.example/?x=1',
+    );
+    expect(parsePlaceShareLink(new URL(url).search)).toMatchObject({
+      name: 'Chợ Bến Thành',
+      lat: 10.7721,
+      lng: 106.6983,
+    });
+    expect(parsePlaceShareLink('?place=0x0A,0x6A,Fake')).toBeNull();
+    expect(parsePlaceShareLink('?place=48.85,2.35,Paris')).toBeNull();
+    expect(parsePlaceShareLink('?place=10.77,106.69,')?.name).toBe('Địa điểm');
+  });
+
+  it('thanh địa chỉ: tuyến → tham số tuyến, địa điểm → ?place=, không xem gì → bỏ tham số của iMap', () => {
+    const base = 'https://imap.example/map?utm_source=zalo&place=1,1,old';
+    const route = addressBarUrl(
+      {
+        kind: 'route',
+        route: {
+          origin: place('A', 10.77, 106.69),
+          destination: place('B', 10.78, 106.7),
+          vehicle: 'car',
+        },
+      },
+      base,
+    );
+    expect(parseRouteShareLink(new URL(route).search)).toMatchObject({ vehicle: 'car' });
+    expect(new URL(route).pathname).toBe('/map');
+
+    const placeUrl = addressBarUrl({ kind: 'place', place: place('Chợ', 10.77, 106.69) }, route);
+    expect(new URL(placeUrl).searchParams.get('from')).toBeNull();
+    expect(parsePlaceShareLink(new URL(placeUrl).search)?.name).toBe('Chợ');
+
+    const none = new URL(
+      addressBarUrl(
+        { kind: 'none' },
+        'https://imap.example/?from=1&to=2&mode=car&via=3&by=distance&ferry=avoid&place=4&utm_source=zalo#x',
+      ),
+    );
+    expect([...none.searchParams.keys()]).toEqual(['utm_source']);
+    expect(none.hash).toBe('#x');
   });
 });

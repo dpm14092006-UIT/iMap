@@ -28,7 +28,7 @@ export class LocationLayer {
             }).addTo(this.group)
           : L.circleMarker([point.lat, point.lng], {
               radius: 8,
-              fillColor: '#4338ca',
+              fillColor: '#004779',
               fillOpacity: 1,
               color: '#fff',
               weight: 3,

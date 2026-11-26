@@ -15,6 +15,7 @@ export function PlaceCombobox(props: PlaceComboboxProps) {
     icon = 'search',
     className = '',
     inputClassName = '',
+    listPositionClassName,
     ariaLabel,
     inputRef,
     action = null,
@@ -93,9 +94,16 @@ export function PlaceCombobox(props: PlaceComboboxProps) {
         onSelect={onSelect}
         recentPlaces={recentPlaces}
         onRemoveRecent={onRemoveRecent}
+        listPositionClassName={listPositionClassName}
         form={form}
       />
-      <PlaceSuggestionsList value={value} onChange={onChange} action={action} form={form} />
+      <PlaceSuggestionsList
+        value={value}
+        onChange={onChange}
+        action={action}
+        listPositionClassName={listPositionClassName}
+        form={form}
+      />
     </div>
   );
 }

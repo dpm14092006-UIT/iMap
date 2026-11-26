@@ -30,8 +30,9 @@ export function PlaceSearchBar({ onSelect, getFocus, inputRef, buildAction }: Pl
         className="w-full"
         icon="search"
         {...(inputRef ? { inputRef } : {})}
-        inputClassName="h-12 rounded-full border-transparent bg-white/90 pr-16 text-sm shadow-glass dark:shadow-glass-dark ring-1 ring-black/5 backdrop-blur-xl hover:border-transparent focus:border-brand-500 dark:focus:border-indigo-400 focus:bg-white dark:bg-slate-900/85 dark:ring-white/10 dark:focus:bg-slate-900"
+        inputClassName="h-12 rounded-xl !border-line !bg-surface !text-content !placeholder:text-content-muted pr-16 text-base md:h-11 md:text-sm max-md:pr-3"
         maxSuggestions={7}
+        listPositionClassName="absolute left-0 right-0 top-[calc(100%+7px)] max-md:fixed max-md:inset-x-3 max-md:top-[68px]"
         onChange={setQuery}
         onSelect={(place) => {
           setQuery(place.name);
@@ -39,7 +40,7 @@ export function PlaceSearchBar({ onSelect, getFocus, inputRef, buildAction }: Pl
         }}
         places={popularPlaces}
         action={buildAction?.(query) ?? null}
-        placeholder={t('Tìm địa điểm, đường hoặc địa chỉ')}
+        placeholder={t('Tìm địa điểm')}
         value={query}
       />
       {!focused && !query && (

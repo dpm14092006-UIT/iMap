@@ -134,7 +134,7 @@ export function RouteTrafficAlert({
               <Button
                 type="button"
                 onClick={onAccept}
-                className="h-11 rounded-2xl bg-brand-gradient text-sm font-bold text-white shadow-md transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+                className="h-11 rounded-2xl bg-brand-600 text-sm font-bold text-white shadow-md transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
               >
                 {t('Có, đổi tuyến')}
               </Button>

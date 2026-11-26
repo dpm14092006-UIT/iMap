@@ -1,7 +1,8 @@
 /**
  * Nguồn gốc của một địa điểm, dùng để hiển thị nhãn phù hợp trên UI.
  * - popular: địa điểm gợi ý có sẵn trong app (xem data/popularPlaces.ts)
- * - osm:     kết quả tìm kiếm từ Photon / OpenStreetMap
+ * - osm:     địa điểm từ trợ lý địa điểm (dữ liệu OpenStreetMap qua Overpass)
+ * - vietmap: kết quả tìm kiếm VietMap
  * - map:     điểm người dùng chọn trực tiếp trên bản đồ
  * - gps:     vị trí hiện tại lấy từ GPS của thiết bị
  * - poi:     địa điểm thật (VietMap) từ chức năng khám phá quanh đây / dọc tuyến
@@ -49,6 +50,8 @@ export type PlaceComboboxProps = {
   icon?: IconName | null;
   className?: string;
   inputClassName?: string;
+  /** Lớp định vị danh sách gợi ý thay cho mặc định (ngay dưới ô nhập). */
+  listPositionClassName?: string;
   ariaLabel: string;
   maxSuggestions?: number;
   /** Để nơi dùng focus ô nhập bằng phím tắt. */
