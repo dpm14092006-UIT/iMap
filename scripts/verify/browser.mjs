@@ -384,6 +384,28 @@ try {
   await page.getByRole('button', { name: 'Bắt đầu', exact: true }).click();
   await page.getByRole('region', { name: 'Điều hướng chuyến đi' }).waitFor();
   await page.locator('.routetwin-navigation-marker').waitFor();
+  // Bản đồ phụ (Điều 20) phải nhìn thấy đủ: không bị đồng hồ tốc độ hay thanh dẫn đường che.
+  await page.waitForTimeout(1200);
+  const insetBlocked = await page.evaluate(() => {
+    const inset = document.querySelector('.routetwin-territory-inset');
+    if (!inset || inset.hidden) return null;
+    const a = inset.getBoundingClientRect();
+    return [...document.querySelectorAll('.speedometer, [data-nav-banner]')]
+      .map((el) => ({
+        name: el.className.toString().split(' ')[0] || 'banner',
+        r: el.getBoundingClientRect(),
+      }))
+      .filter(
+        ({ r }) =>
+          Math.min(a.right, r.right) > Math.max(a.left, r.left) &&
+          Math.min(a.bottom, r.bottom) > Math.max(a.top, r.top),
+      )
+      .map(({ name }) => name);
+  });
+  assert.ok(
+    !insetBlocked || insetBlocked.length === 0,
+    `Territory inset is covered by: ${JSON.stringify(insetBlocked)}`,
+  );
   const before = requests.filter((p) => p === '/api/traffic-reports').length;
   assert.match(await page.getByRole('region', { name: 'Điều hướng chuyến đi' }).innerText(), /GPS trực tiếp/);
   assert.equal(await page.getByRole('button', { name: /Rẽ nhầm|Tạm dừng|Sự cố phía trước/ }).count(), 0);
