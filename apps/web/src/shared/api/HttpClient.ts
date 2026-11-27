@@ -14,6 +14,17 @@ export type RequestOptions = Omit<RequestInit, 'body' | 'method'> & {
   accessToken?: string;
 };
 
+/**
+ * Nguồn access token còn hạn (do tầng auth cung cấp). Token mà nơi gọi truyền vào lấy từ state React,
+ * có thể đã hết hạn nếu máy ngủ hoặc tab chạy nền lâu khiến SDK chưa kịp tự làm mới.
+ */
+export type AccessTokenProvider = {
+  /** Token hiện tại, tự làm mới nếu đã hết hạn; null nếu không còn phiên. */
+  current(): Promise<string | null>;
+  /** Bắt buộc làm mới phiên ngay (dùng khi máy chủ từ chối token); null nếu không làm mới được. */
+  refresh(): Promise<string | null>;
+};
+
 /** Retry-After là số giây hoặc ngày giờ HTTP; trả về số giây (làm tròn lên, tối thiểu 1) hoặc undefined. */
 function parseRetryAfterSeconds(header: string | null): number | undefined {
   if (!header) return undefined;
@@ -33,7 +44,14 @@ function parseRetryAfterSeconds(header: string | null): number | undefined {
  * (AbortController) thì giữ nguyên `AbortError`.
  */
 export class HttpClient {
+  private tokenProvider: AccessTokenProvider | null = null;
+
   constructor(private readonly options: HttpClientOptions) {}
+
+  /** Tầng auth đăng ký nguồn token để mọi yêu cầu cần đăng nhập luôn gửi token còn hạn. */
+  setAccessTokenProvider(provider: AccessTokenProvider | null): void {
+    this.tokenProvider = provider;
+  }
 
   get<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     return this.send<T>(endpoint, 'GET', undefined, options);
@@ -49,6 +67,35 @@ export class HttpClient {
     method: 'GET' | 'POST',
     body: unknown,
     { accessToken, ...init }: RequestOptions,
+  ): Promise<T> {
+    if (!accessToken || !this.tokenProvider) return this.attempt<T>(endpoint, method, body, init, accessToken);
+    const token = (await this.freshToken(() => this.tokenProvider!.current())) ?? accessToken;
+    try {
+      return await this.attempt<T>(endpoint, method, body, init, token);
+    } catch (error) {
+      // Máy chủ từ chối phiên: làm mới một lần rồi gửi lại; vẫn lỗi thì báo lỗi gốc.
+      if (!(error instanceof ApiError) || error.code !== 'INVALID_SESSION' || init.signal?.aborted) throw error;
+      const refreshed = await this.freshToken(() => this.tokenProvider!.refresh());
+      if (!refreshed || refreshed === token) throw error;
+      return this.attempt<T>(endpoint, method, body, init, refreshed);
+    }
+  }
+
+  /** Lỗi khi hỏi tầng auth (mất mạng…) không được chặn yêu cầu: trả null để dùng token sẵn có. */
+  private async freshToken(read: () => Promise<string | null>): Promise<string | null> {
+    try {
+      return await read();
+    } catch {
+      return null;
+    }
+  }
+
+  private async attempt<T>(
+    endpoint: string,
+    method: 'GET' | 'POST',
+    body: unknown,
+    init: Omit<RequestOptions, 'accessToken'>,
+    accessToken: string | undefined,
   ): Promise<T> {
     const headers = new Headers(init.headers);
     headers.set('Accept', 'application/json');

@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
+import { httpClient } from '../../../shared/api/HttpClient';
 import { whenIdle } from '../../../shared/async/whenIdle';
 import { runSignOutTasks, type SignOutTask } from '../domain/signOutTasks';
 import { getSupabaseClient, supabaseConfigured } from '../services/supabaseClient';
@@ -59,7 +60,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (nextSession?.access_token)
               void client.realtime.setAuth(nextSession.access_token).catch(() => undefined);
           });
-          unsubscribe = () => subscription.unsubscribe();
+          // Mọi yêu cầu cần đăng nhập lấy token còn hạn ngay lúc gửi, không dùng token cũ trong state.
+          httpClient.setAccessTokenProvider({
+            current: async () => (await client.auth.getSession()).data.session?.access_token ?? null,
+            refresh: async () => (await client.auth.refreshSession()).data.session?.access_token ?? null,
+          });
+          unsubscribe = () => {
+            subscription.unsubscribe();
+            httpClient.setAccessTokenProvider(null);
+          };
           const { data } = await client.auth.getSession();
           if (!active || receivedAuthEvent) return;
           setSession(data.session);
