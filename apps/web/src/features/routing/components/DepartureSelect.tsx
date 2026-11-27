@@ -1,3 +1,4 @@
+import { formatClock } from '../../../shared/format/units';
 import { useState } from 'react';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import { Icon } from '../../../shared/ui/Icon';
@@ -16,13 +17,6 @@ const modeLabels: Record<DepartureMode, string> = {
   depart: 'Khởi hành lúc',
   arrive: 'Đến lúc',
 };
-
-const formatClock = (date: Date, language: 'vi' | 'en') =>
-  date.toLocaleTimeString(language === 'en' ? 'en-US' : 'vi-VN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
 
 /** Giờ HH:mm hôm nay (hoặc ngày mai nếu đã qua) làm mốc thời gian. */
 function clockToDate(value: string, now: Date): Date {

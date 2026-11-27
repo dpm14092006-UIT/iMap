@@ -3,12 +3,14 @@ import type { LatLng } from '../../../shared/geo/types';
 import type { RoutePlan } from '../types';
 
 /** Một điểm trên dòng thời gian của tuyến: giây kể từ lúc xuất phát. */
-type Sample = { point: LatLng; seconds: number };
+type Sample = { point: LatLng; seconds: number; meters: number };
 
 export type RoutePlaybackTimeline = {
   samples: Sample[];
   /** Tổng thời gian hành trình (giây) theo VietMap. */
   totalSeconds: number;
+  /** Tổng chiều dài (m) theo hình học tuyến. */
+  totalMeters: number;
 };
 
 export type PlaybackFrame = { point: LatLng; heading: number };
@@ -22,6 +24,7 @@ type Step = { distanceMeters: number; durationSeconds: number };
 export function buildPlaybackTimeline(route: RoutePlan): RoutePlaybackTimeline {
   const samples: Sample[] = [];
   let elapsed = 0;
+  let elapsedMeters = 0;
   for (const leg of route.legs) {
     const points = leg.points.map(([lat, lng]) => ({ lat, lng }));
     const cumulative: number[] = [];
@@ -35,11 +38,16 @@ export function buildPlaybackTimeline(route: RoutePlan): RoutePlaybackTimeline {
     const timeAt = legTimeProfile(leg.instructions ?? [], meters, legSeconds);
     points.forEach((point, index) => {
       if (index === 0 && samples.length) return; // điểm nối giữa hai chặng
-      samples.push({ point, seconds: elapsed + timeAt(cumulative[index] ?? 0) });
+      samples.push({
+        point,
+        seconds: elapsed + timeAt(cumulative[index] ?? 0),
+        meters: elapsedMeters + (cumulative[index] ?? 0),
+      });
     });
     elapsed += legSeconds;
+    elapsedMeters += meters;
   }
-  return { samples, totalSeconds: elapsed };
+  return { samples, totalSeconds: elapsed, totalMeters: elapsedMeters };
 }
 
 /** Hàm quãng đường (m) → thời gian (giây) trong một chặng, nội suy tuyến tính theo các đoạn chỉ dẫn. */
@@ -105,4 +113,27 @@ export function routePlayback(timeline: RoutePlaybackTimeline, seconds: number):
 
 function sameSpot(a: LatLng, b: LatLng) {
   return a.lat === b.lat && a.lng === b.lng;
+}
+
+/**
+ * Thời gian còn lại (giây) khi còn `remainingMeters` mét: đọc mốc thời gian VietMap tại vị trí tương ứng trên tuyến,
+ * nên đoạn đường chậm phía trước (theo chỉ dẫn) được tính đúng thay vì chia đều.
+ */
+export function remainingSecondsAt(timeline: RoutePlaybackTimeline, remainingMeters: number): number {
+  const { samples, totalMeters, totalSeconds } = timeline;
+  if (!samples.length || totalMeters <= 0) return 0;
+  const traveled = Math.min(totalMeters, Math.max(0, totalMeters - remainingMeters));
+  let previous = samples[0]!;
+  for (const sample of samples) {
+    if (sample.meters >= traveled) {
+      const span = sample.meters - previous.meters;
+      const seconds =
+        span > 0
+          ? previous.seconds + ((traveled - previous.meters) / span) * (sample.seconds - previous.seconds)
+          : sample.seconds;
+      return Math.max(0, totalSeconds - seconds);
+    }
+    previous = sample;
+  }
+  return 0;
 }

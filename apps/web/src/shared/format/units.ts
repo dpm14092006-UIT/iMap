@@ -43,3 +43,11 @@ export function formatDurationCompact(minutes: number, language: 'vi' | 'en' = '
   if (total < 60) return language === 'en' ? `${total} min` : `${total} ph`;
   return `${Math.floor(total / 60)}h${String(total % 60).padStart(2, '0')}`;
 }
+
+/** Giờ:phút theo ngôn ngữ (vd. "15:42"). */
+export const formatClock = (date: Date, language: 'vi' | 'en'): string =>
+  date.toLocaleTimeString(language === 'en' ? 'en-US' : 'vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
