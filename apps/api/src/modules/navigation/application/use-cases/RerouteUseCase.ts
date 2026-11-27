@@ -6,7 +6,7 @@ import {
   type RouteResult,
 } from '@routetwin/shared';
 import type { AlternativeRouteProvider } from '../ports/AlternativeRouteProvider.js';
-import { detourPoints, nearestSegment, routePassesNear } from '../../domain/reroute/routeGeometry.js';
+import { detourPoints, nearestSegment, routeEntersIncident } from '../../domain/reroute/routeGeometry.js';
 
 /** Điểm vòng tránh cách sự cố thêm bao nhiêu mét ngoài bán kính của nó. */
 const DETOUR_EXTRA_METERS = 250;
@@ -39,7 +39,7 @@ export class RerouteUseCase {
     if (input.avoid.length === 0)
       return { route: best, strategy: 'direct', blockedCount: 0, candidatesChecked: candidates.length };
 
-    const clear = candidates.find((route) => this.blockersOn(route, input.avoid).length === 0);
+    const clear = candidates.find((route) => this.blockersOn(route, input).length === 0);
     if (clear) {
       return {
         route: clear,
@@ -50,11 +50,11 @@ export class RerouteUseCase {
     }
 
     // Mọi tuyến đều bị chặn → thử đi vòng quanh sự cố đầu tiên trên tuyến tốt nhất.
-    const blocker = this.blockersOn(best, input.avoid)[0]!;
+    const blocker = this.blockersOn(best, input)[0]!;
     const detours = await this.detourCandidates(input, best, blocker);
     const checked = candidates.length + detours.length;
     const clearDetour = detours
-      .filter((route) => this.blockersOn(route, input.avoid).length === 0)
+      .filter((route) => this.blockersOn(route, input).length === 0)
       .sort((a, b) => this.cost(a, input.objective) - this.cost(b, input.objective))[0];
     if (clearDetour)
       return { route: clearDetour, strategy: 'detour', blockedCount: 0, candidatesChecked: checked };
@@ -62,15 +62,17 @@ export class RerouteUseCase {
     return {
       route: best,
       strategy: 'unavoidable',
-      blockedCount: this.blockersOn(best, input.avoid).length,
+      blockedCount: this.blockersOn(best, input).length,
       candidatesChecked: checked,
     };
   }
 
   /** Các sự cố mà tuyến đi xuyên qua (theo thứ tự xuất hiện dọc tuyến). */
-  private blockersOn(route: RouteResult, avoid: BlockingIncident[]): BlockingIncident[] {
-    return avoid
-      .filter((incident) => routePassesNear(route.coordinates, incident, incident.radiusMeters))
+  private blockersOn(route: RouteResult, input: RerouteRequest): BlockingIncident[] {
+    return input.avoid
+      .filter((incident) =>
+        routeEntersIncident(route.coordinates, incident, incident.radiusMeters, input.from),
+      )
       .sort(
         (a, b) => nearestSegment(a, route.coordinates).index - nearestSegment(b, route.coordinates).index,
       );

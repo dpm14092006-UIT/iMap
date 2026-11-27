@@ -123,4 +123,32 @@ describe('RerouteUseCase', () => {
     await new RerouteUseCase(provider).execute({ ...input, avoid: [] });
     expect(provider.calculateAlternatives.mock.calls[0]![0]).not.toHaveProperty('avoid');
   });
+
+  it('đứng ngay trong vùng sự cố: tuyến đi tiếp qua sự cố bị chặn, tuyến quay đầu thì không', async () => {
+    // Đứng cách sự cố ~40 m về phía nam (trong bán kính 80 m), đích ở phía nam.
+    const here = { lat: 10.77464, lng: 106.7 };
+    const forward = route(
+      [
+        [106.7, 10.77464],
+        [106.7, 10.776],
+        [106.702, 10.776],
+        [106.702, 10.76],
+      ],
+      200,
+    );
+    const uTurn = route(
+      [
+        [106.7, 10.77464],
+        [106.7, 10.76],
+      ],
+      260,
+    );
+    const result = await new RerouteUseCase(providerReturning([forward, uTurn])).execute({
+      ...input,
+      from: here,
+      stops: [{ lat: 10.76, lng: 106.7 }],
+      avoid: [{ lat: 10.775, lng: 106.7, radiusMeters: 80 }],
+    });
+    expect(result).toMatchObject({ route: uTurn, strategy: 'alternative', blockedCount: 0 });
+  });
 });

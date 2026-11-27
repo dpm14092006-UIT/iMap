@@ -52,6 +52,28 @@ export function routePassesNear(line: Coordinate[], center: LatLng, radiusMeters
   return nearestSegment(center, line).distanceMeters <= radiusMeters;
 }
 
+/** Đứng trong vùng sự cố thì tuyến phải tiến gần sự cố hơn ít nhất chừng này (mét) mới tính là đi qua. */
+const APPROACH_MARGIN_METERS = 20;
+
+/**
+ * Tuyến xuất phát từ `from` có lao vào sự cố không.
+ * Nếu `from` nằm ngoài vòng tròn: giống `routePassesNear`.
+ * Nếu `from` đã ở trong vòng (ví dụ người dùng vừa báo sự cố ngay chỗ mình đứng): mọi tuyến đều bắt đầu
+ * trong vòng, nên chỉ tính là bị chặn khi tuyến đi lại gần sự cố hơn chỗ đang đứng — quay đầu hay rẽ
+ * đi hướng khác thì không bị chặn.
+ */
+export function routeEntersIncident(
+  line: Coordinate[],
+  center: LatLng,
+  radiusMeters: number,
+  from: LatLng,
+): boolean {
+  const { distanceMeters } = nearestSegment(center, line);
+  const startDistance = Math.hypot(toMeters(from, center).x, toMeters(from, center).y);
+  if (startDistance > radiusMeters) return distanceMeters <= radiusMeters;
+  return distanceMeters < startDistance - APPROACH_MARGIN_METERS;
+}
+
 /**
  * Hai điểm vòng tránh nằm hai bên tuyến, vuông góc với hướng đường tại chỗ sự cố,
  * cách sự cố `offsetMeters`. Đi qua một trong hai điểm này buộc tuyến mới né khỏi sự cố.

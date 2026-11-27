@@ -124,4 +124,66 @@ describe('HttpClient', () => {
       vi.useRealTimers();
     }
   });
+
+  describe('nguồn token', () => {
+    const invalid = () =>
+      Response.json({ error: { code: 'INVALID_SESSION', message: 'Phiên hết hạn' } }, { status: 401 });
+    const auth = (fetcher: ReturnType<typeof vi.fn>, call: number) =>
+      (fetcher.mock.calls[call]![1].headers as Headers).get('Authorization');
+
+    it('dùng token còn hạn từ tầng auth thay cho token cũ', async () => {
+      const http = new HttpClient({ baseUrl: '/api', timeoutMs: 1000 });
+      http.setAccessTokenProvider({ current: async () => 'moi', refresh: async () => 'moi2' });
+      const fetcher = vi.fn().mockResolvedValue(Response.json({ data: 1 }));
+      vi.stubGlobal('fetch', fetcher);
+      await http.post('/x', {}, { accessToken: 'cu' });
+      expect(auth(fetcher, 0)).toBe('Bearer moi');
+    });
+
+    it('INVALID_SESSION: làm mới phiên rồi gửi lại đúng một lần', async () => {
+      const http = new HttpClient({ baseUrl: '/api', timeoutMs: 1000 });
+      const refresh = vi.fn().mockResolvedValue('moi');
+      http.setAccessTokenProvider({ current: async () => 'cu', refresh });
+      const fetcher = vi
+        .fn()
+        .mockResolvedValueOnce(invalid())
+        .mockResolvedValue(Response.json({ data: 2 }));
+      vi.stubGlobal('fetch', fetcher);
+      expect(await http.post('/x', { a: 1 }, { accessToken: 'cu' })).toBe(2);
+      expect(refresh).toHaveBeenCalledOnce();
+      expect(auth(fetcher, 1)).toBe('Bearer moi');
+      expect(fetcher.mock.calls[1]![1].body).toBe('{"a":1}');
+    });
+
+    it('không làm mới được thì báo lỗi phiên gốc', async () => {
+      const http = new HttpClient({ baseUrl: '/api', timeoutMs: 1000 });
+      http.setAccessTokenProvider({ current: async () => 'cu', refresh: async () => null });
+      const fetcher = vi.fn().mockResolvedValue(invalid());
+      vi.stubGlobal('fetch', fetcher);
+      const error = (await http.get('/x', { accessToken: 'cu' }).catch((c: unknown) => c)) as ApiError;
+      expect(error).toMatchObject({ status: 401, code: 'INVALID_SESSION' });
+      expect(fetcher).toHaveBeenCalledOnce();
+    });
+
+    it('tầng auth lỗi thì vẫn gửi bằng token sẵn có', async () => {
+      const http = new HttpClient({ baseUrl: '/api', timeoutMs: 1000 });
+      http.setAccessTokenProvider({
+        current: () => Promise.reject(new Error('offline')),
+        refresh: async () => null,
+      });
+      const fetcher = vi.fn().mockResolvedValue(Response.json({ data: 3 }));
+      vi.stubGlobal('fetch', fetcher);
+      expect(await http.get('/x', { accessToken: 'cu' })).toBe(3);
+      expect(auth(fetcher, 0)).toBe('Bearer cu');
+    });
+
+    it('yêu cầu không cần đăng nhập thì không gắn token', async () => {
+      const http = new HttpClient({ baseUrl: '/api', timeoutMs: 1000 });
+      http.setAccessTokenProvider({ current: async () => 'moi', refresh: async () => 'moi' });
+      const fetcher = vi.fn().mockResolvedValue(Response.json({ data: 4 }));
+      vi.stubGlobal('fetch', fetcher);
+      await http.get('/x');
+      expect(auth(fetcher, 0)).toBeNull();
+    });
+  });
 });
