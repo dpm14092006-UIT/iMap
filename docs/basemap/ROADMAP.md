@@ -3,7 +3,7 @@
 ## Cần chủ dự án làm (blocker)
 
 1. **Token VNSDI** — vnsdi.mae.gov.vn → "Đăng ký sử dụng dữ liệu" → Đăng ký mới; ghi mục đích "ứng dụng iMap, dịch vụ BanDoHanhChinhVietNam, BanDoDiaHinh". Dán vào `apps/api/.env` (`VNSDI_BASEMAP_TOKEN`), đổi `vnsdi-admin`, `vnsdi-terrain` sang TESTING, chạy `npm run verify:sovereignty -- --live`.
-2. **Hỏi vApp (support@erpfit.com):** dùng style.json cho ứng dụng có thể thương mại hóa được không; được đổi màu style (Tối, bốn style iMap) không; được thêm lớp khối toà nhà 3D và bật địa hình nổi từ nguồn `terrain` của style không; vApp đã đối chiếu biên giới với bộ bản đồ chuẩn biên giới quốc gia chưa.
+2. **Hỏi vApp (support@erpfit.com):** dùng style.json cho ứng dụng có thể thương mại hóa được không; được đổi màu style (Tối, bốn style iMap) không; (đã đồng ý thêm lớp khối toà nhà 3D và địa hình nổi, 27/11/2026); vApp đã đối chiếu biên giới với bộ bản đồ chuẩn biên giới quốc gia chưa.
 3. **VIETMAP:** trên console bật Tile cho khóa hoặc tạo khóa "public tile" có giới hạn domain; xác nhận hạn mức Trial (500/ngày hay không giới hạn).
 4. **Hỏi VNSDI** điều khoản dùng Sentinel2 trong ứng dụng bên thứ ba.
 5. **Phê duyệt:** người phụ trách duyệt từng nguồn theo `docs/basemap/README.md`.
