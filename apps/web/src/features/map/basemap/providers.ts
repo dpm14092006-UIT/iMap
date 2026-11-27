@@ -158,9 +158,13 @@ export const BASEMAP_PROVIDERS: readonly BasemapProvider[] = [
         'DEM terrarium, zoom tối đa 11, vùng phủ 102–110°Đ, 8–24°B (không gồm Trường Sa: vùng biển, địa hình phẳng).',
         'Chiều cao toà nhà theo thuộc tính "height" trong ô vector vApp; toà nhà thiếu dữ liệu dùng chiều cao mặc định thấp.',
       ],
-      blockers: [
-        'Chưa xác nhận với ERPFit (support@erpfit.com) quyền thêm lớp khối toà nhà / địa hình nổi trên style vApp.',
-      ],
+      blockers: [],
+      approval: {
+        by: 'Chủ dự án iMap (phê duyệt trong phiên làm việc với Claude Code; xác nhận ERPFit đã đồng ý)',
+        date: '2026-11-27',
+        report:
+          'ERPFit đồng ý cho thêm lớp khối toà nhà và địa hình nổi trên style vApp; iMap không ẩn/đổi lớp nào của nguồn (kể cả sov-*). Lưu văn bản xác nhận của ERPFit vào docs/basemap/evidence/.',
+      },
     },
     dataSource: 'OpenStreetMap, Overture Maps, Wikidata, dữ liệu công khai Việt Nam (theo điều khoản vApp)',
     lastVerified: '2026-11-26',
