@@ -16,7 +16,7 @@ import { TrafficLayers } from './maplibre/TrafficLayers';
 import { VietnamInset } from './maplibre/VietnamInset';
 
 /**
- * Bộ máy bản đồ MapLibre GL (WebGL): cùng hợp đồng MapController với bản Leaflet, thêm khả năng nghiêng,
+ * Bộ máy bản đồ MapLibre GL (WebGL): theo hợp đồng MapController, có nghiêng,
  * xoay (3D). Mỗi loại dữ liệu do một lớp trong `./maplibre/` vẽ; lớp này quyết định KHI NÀO vẽ lại và
  * cài lại các lớp của iMap mỗi khi đổi nền (setStyle xóa mọi lớp).
  */
@@ -60,7 +60,7 @@ export class MaplibreMapController implements MapController {
       container,
       center: VIETNAM_CENTER_LNGLAT,
       zoom: toGLZoom(5),
-      // Cùng giới hạn với bản Leaflet trước đây (1–19 theo thang ô 256 px).
+      // Giới hạn zoom 1–19 theo thang ô 256 px của ứng dụng.
       minZoom: toGLZoom(1),
       maxZoom: toGLZoom(19),
       maxPitch: 60,
@@ -108,7 +108,7 @@ export class MaplibreMapController implements MapController {
     this.map.on('pitch', this.reportCamera);
     this.map.on('moveend', this.reportCamera);
     handlers.onBoundsChange?.(this.camera.getBounds());
-    // Khung đầu tiên: toàn vẹn lãnh thổ (như bản Leaflet mở ở tâm Việt Nam).
+    // Khung đầu tiên: toàn vẹn lãnh thổ.
     this.camera.showVietnam();
   }
 

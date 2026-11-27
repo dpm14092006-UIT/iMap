@@ -44,7 +44,7 @@ export type MapControllerData = {
 };
 
 /**
- * Hợp đồng giữa React và bộ máy bản đồ (Leaflet hôm nay, MapLibre GL khi chuyển xong).
+ * Hợp đồng giữa React và bộ máy bản đồ (MapLibre GL).
  * React và các flow trong `app/` chỉ gọi những method này, không chạm thư viện bản đồ.
  */
 export interface MapController {

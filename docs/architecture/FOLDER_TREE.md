@@ -20,7 +20,7 @@ iMap/
 │   │       ├── features/
 │   │       │   ├── routing/              Tuyến, phương án, chỉ đường, chia sẻ
 │   │       │   ├── guidance/             GPS, tiến độ, lệch tuyến, giọng nói
-│   │       │   ├── map/                  MapView, Leaflet Facade và các lớp vẽ
+│   │       │   ├── map/                  MapView, MapLibre Facade, các lớp vẽ, 3D/4D
 │   │       │   ├── places/               Tìm kiếm, combobox, lịch sử địa điểm
 │   │       │   ├── explore/              POI quanh điểm/dọc tuyến
 │   │       │   ├── multi-stop/           Form tối ưu hành trình
@@ -71,7 +71,7 @@ iMap/
 | `components/` | Giao diện, sự kiện DOM, accessibility; panel chỉ lắp ghép các phần |
 | `hooks/` | State/effect React, điều phối và quyền sở hữu request |
 | `domain/` | Model, thuật toán, chuyển đổi và danh mục thuần; không React hoặc I/O |
-| `services/` | Adapter có trạng thái/I/O: Leaflet, GPS, âm thanh, localStorage, cache |
+| `services/` | Adapter có trạng thái/I/O: MapLibre GL, GPS, âm thanh, localStorage, cache |
 | `types.ts` | Hợp đồng dữ liệu và props dùng trong feature |
 | `context/` | Provider khi thực sự cần chia sẻ state (`auth`, `places`) |
 | `styles/` | CSS riêng của adapter map; phần còn lại dùng utility/token chung |

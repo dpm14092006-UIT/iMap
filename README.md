@@ -28,7 +28,7 @@ Khảo sát Google Routes API và Waze cho thấy hai hướng giải quyết l�
 
 ```mermaid
 flowchart LR
-    U["Người dùng"] --> W["Web React + Leaflet<br/>Bản đồ, tuyến, GPS, giao thông"]
+    U["Người dùng"] --> W["Web React + MapLibre GL<br/>Bản đồ, tuyến, GPS, giao thông"]
     W -->|"HTTPS · REST"| A["API Express<br/>Địa điểm, định tuyến, tối ưu, báo cáo"]
     A --> V["VietMap Search, Route và Matrix"]
     A --> O["Overpass và đồ thị OSM"]
@@ -59,7 +59,7 @@ PostGIS hỗ trợ truy vấn báo cáo theo vùng và tìm tuyến ở gần s�
 
 | Thành phần | Công nghệ và môi trường |
 | --- | --- |
-| Web | React, TypeScript, Vite, Tailwind CSS, Leaflet và API trình duyệt cho GPS, âm thanh và chia sẻ. [Vercel Web](https://i-map-zzzf.vercel.app/) |
+| Web | React, TypeScript, Vite, Tailwind CSS, MapLibre GL (2D/3D/4D) và API trình duyệt cho GPS, âm thanh và chia sẻ. [Vercel Web](https://i-map-zzzf.vercel.app/) |
 | API REST | Node.js, Express, TypeScript, Zod và Web Push/VAPID. [Vercel API](https://i-map-one.vercel.app/api/health) |
 | Cơ sở dữ liệu | Supabase Auth, PostgreSQL, PostGIS, RLS, Storage và Realtime. |
 | Dữ liệu bản đồ | Bản đồ nền: vApp (map.vapp.vn), dự phòng VietMap; VNSDI (Sentinel-2, bản đồ hành chính khi có token). VietMap cho tìm kiếm, định tuyến và ma trận. OpenStreetMap/Overpass chỉ làm dữ liệu cho trợ lý địa điểm và đồ thị thuật toán, không làm nền. Xem `docs/basemap/`. |
@@ -96,6 +96,6 @@ Kết quả cho thấy người dùng có thể tìm tuyến, so sánh phương 
 
 ## Nguồn tham khảo
 
-- [VietMap Route v4](https://maps.vietmap.vn/docs/map-api/route-version/route-v4/) · [OpenStreetMap](https://www.openstreetmap.org/copyright) · [Leaflet](https://leafletjs.com/)
+- [VietMap Route v4](https://maps.vietmap.vn/docs/map-api/route-version/route-v4/) · [OpenStreetMap](https://www.openstreetmap.org/copyright) · [MapLibre GL JS](https://maplibre.org/)
 - [PostGIS](https://postgis.net/docs/) · [Supabase Realtime](https://supabase.com/docs/guides/realtime) · [Vercel Express](https://vercel.com/docs/frameworks/backend/express)
 - [Dijkstra](https://doi.org/10.1007/BF01386390) · [A*](https://doi.org/10.1109/TSSC.1968.300136) · [Held–Karp](https://doi.org/10.1137/0110015)

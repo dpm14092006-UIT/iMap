@@ -26,6 +26,6 @@ Class bố cục hoặc kích thước riêng có thể truyền qua `className`
 
 ## CSS theo phạm vi
 
-`tokens.css` chứa theme; `base.css` chứa font/reset/accessibility; `components.css` chứa control, scroll và toast; `app/styles/shell.css` chứa bố cục app; `features/map/styles/leaflet.css` chứa Leaflet và marker. File `app/styles.css` chỉ lắp ghép.
+`tokens.css` chứa theme; `base.css` chứa font/reset/accessibility; `components.css` chứa control, scroll và toast; `app/styles/shell.css` chứa bố cục app; `features/map/styles/map.css` chứa điều khiển MapLibre và marker. File `app/styles.css` chỉ lắp ghép.
 
 Giữ kích thước chữ ô nhập tối thiểu 16 px trên màn hình nhỏ để tránh Safari tự zoom, vòng focus rõ và reduced-motion. Kiểm tra desktop 1440×1000 và mobile 390×844 bằng script browser; primitive có test submit/loading/ref/validation, combobox có test bàn phím, lỗi resolve và huỷ request.

@@ -192,7 +192,7 @@ export class RouteApiClient {
   };
 }
 
-/** Đổi kết quả tuyến của API (mét, giây, GeoJSON) sang RoutePlan để vẽ và hiển thị (km, phút, Leaflet). */
+/** Đổi kết quả tuyến của API (mét, giây, GeoJSON) sang RoutePlan để vẽ và hiển thị (km, phút, tọa độ [vĩ độ, kinh độ]). */
 export function routePlanFromResult(
   result: RouteResult,
   stops: Place[],
@@ -202,7 +202,7 @@ export function routePlanFromResult(
 ): RoutePlan {
   const leg = {
     nodes: stops.map((place) => place.id),
-    // API trả GeoJSON [kinh độ, vĩ độ]; Leaflet dùng [vĩ độ, kinh độ].
+    // API trả GeoJSON [kinh độ, vĩ độ]; ứng dụng dùng [vĩ độ, kinh độ].
     points: result.coordinates.map(([lng, lat]) => [lat, lng] as [number, number]),
     distanceKm: result.distanceMeters / 1000,
     durationMin: result.durationSeconds / 60,

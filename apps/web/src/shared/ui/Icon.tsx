@@ -159,7 +159,7 @@ export function Icon({ name, size = 20, ...props }: IconProps) {
   );
 }
 
-/** Chuỗi SVG của biểu tượng, dùng cho marker Leaflet (divIcon) nằm ngoài cây React. */
+/** Chuỗi SVG của biểu tượng, dùng cho marker bản đồ (HTML) nằm ngoài cây React. */
 export function iconSvg(name: IconName, size = 16): string {
   return `<svg aria-hidden="true" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${shapes[name]}</svg>`;
 }

@@ -104,7 +104,7 @@ packages/shared/src/
 | Hình học | `shared/geo/distance.ts`, `shared/geo/polyline.ts` | Haversine, xấp xỉ phẳng, hướng, chiếu điểm lên đoạn/đường gấp khúc — mọi feature dùng chung |
 | Miền dẫn đường | `RoutePath`, `NavigationGuidanceEngine`, `IncidentAheadDetector`, `SpeedEstimator` | Tiến độ, lệch tuyến, sự cố phía trước; có test, không biết React |
 | Bất đồng bộ | `RequestSequence` (theo kênh), `RequestGeneration` (một luồng), `debounce`, `whenIdle` | Bỏ kết quả cũ về muộn, gom tải lại |
-| Bản đồ | `LeafletMapController` | Adapter bọc Leaflet; React chỉ gọi method public |
+| Bản đồ | `MapController` / `MaplibreMapController` | Adapter bọc MapLibre GL; React chỉ gọi method của interface |
 | Điều phối | `app/flows/*/use*` | Mỗi hook một luồng nghiệp vụ nhiều feature; `App.tsx` chỉ lắp ghép |
 
 Quy tắc: component không gọi `fetch` hay `localStorage` trực tiếp; hook nhận lớp qua tham số (mặc định là bản dùng chung) để thay bằng bản giả khi test.
@@ -131,7 +131,7 @@ N1 không truy cập DB traffic trực tiếp; N2 không sửa `MapView.tsx` tr�
 
 `routing` sở hữu `RoutePlan`, phương án, chia sẻ và form chỉ đường. `guidance` sở hữu `NavigationStatus`, `RoutePath`, GPS, âm thanh và tiến độ dẫn đường. Các hook nối nhiều feature đặt ở `app/flows`, không import ngược `app` từ feature.
 
-`LeafletMapController` là Facade điều phối `BaseLayers`, `MapCamera`, `RouteLayer`, `TrafficLayers`, `PoiLayer`, `LocationLayer`, `FocusPin`. Các lớp sở hữu nhóm layer của mình; `destroy()` gỡ listener và map. Khi không có phương án phụ, tuyến chính vẫn được fit. Chuỗi không tin cậy trong tooltip/popup dùng text node.
+`MaplibreMapController` là Facade điều phối các lớp trong `services/maplibre/`: `MaplibreBasemap`, `MaplibreCamera`, `RouteLayer`, `TrafficLayers`, marker (`PoiMarkers`, `LocationMarker`, `FocusPin`), `VietnamInset`, `Map3D`, `SunLight`. Các lớp sở hữu nhóm layer của mình; `destroy()` gỡ listener và map. Khi không có phương án phụ, tuyến chính vẫn được fit. Chuỗi không tin cậy trong tooltip/popup dùng text node.
 
 Các panel chia form, bộ lọc và kết quả thành component riêng; hook sở hữu state và request. Kết quả tìm kiếm/AI phải bị huỷ khi đổi token, điểm hoặc ảnh. Tối ưu hành trình dùng `RequestGeneration` để kết quả trước reset/đổi tuỳ chọn/unmount không phục hồi dữ liệu cũ.
 
@@ -141,7 +141,7 @@ Công thức haversine ở `packages/shared/src/geo/haversine.ts`; API dùng bá
 
 Quy ước token và control ở [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md). `app/styles.css` chỉ nhập CSS theo phạm vi và các lớp Tailwind; không dùng selector dò chuỗi `class` để ép màu tối.
 
-`npm run verify -- --shuffle=1` chạy format, lint ranh giới, typecheck, audit export/props, unit test API/web/shared, xáo trộn thứ tự và build production. `npm run test:browser` mở Vite riêng và chạy Chromium với Leaflet thật trên desktop/mobile, fixture API/tile; không sử dụng provider trả phí. Cài browser bằng `npx playwright install chromium` (Linux CI dùng `--with-deps`). Biến `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` cho phép dùng browser đã có; `IMAP_BROWSER_ARTIFACTS` chỉ định thư mục screenshot tuỳ chọn.
+`npm run verify -- --shuffle=1` chạy format, lint ranh giới, typecheck, audit export/props, unit test API/web/shared, xáo trộn thứ tự và build production. `npm run test:browser` mở Vite riêng và chạy Chromium với MapLibre GL thật trên desktop/mobile, fixture API/tile; không sử dụng provider trả phí. Cài browser bằng `npx playwright install chromium` (Linux CI dùng `--with-deps`). Biến `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` cho phép dùng browser đã có; `IMAP_BROWSER_ARTIFACTS` chỉ định thư mục screenshot tuỳ chọn.
 
 Test browser không thay thế xác minh GPS/âm thanh trên thiết bị, Supabase RLS, provider thật hoặc giao nhận Web Push. Không ghi các giới hạn đó thành kết quả đã đạt.
 
