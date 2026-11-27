@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RouteLeg, RoutePlan } from '../types';
-import { buildPlaybackTimeline, routePlayback } from './routePlayback';
+import { buildPlaybackTimeline, remainingSecondsAt, routePlayback } from './routePlayback';
 
 const leg = (points: [number, number][], durationMin: number, instructions?: RouteLeg['instructions']) =>
   ({ points, durationMin, distanceKm: 0, nodes: [], instructions }) as unknown as RouteLeg;
@@ -59,5 +59,24 @@ describe('routePlayback', () => {
 
   it('tuyến rỗng thì không có khung hình', () => {
     expect(routePlayback(buildPlaybackTimeline(plan([])), 0)).toBeNull();
+  });
+});
+
+describe('remainingSecondsAt (giờ đến khi dẫn đường)', () => {
+  const timeline = buildPlaybackTimeline(
+    plan([
+      leg(north, 4, [
+        { distanceMeters: 1000, durationSeconds: 180, text: '', streetName: '' },
+        { distanceMeters: 1000, durationSeconds: 60, text: '', streetName: '' },
+      ]),
+    ]),
+  );
+  it('đầu tuyến còn trọn thời gian, cuối tuyến còn 0', () => {
+    expect(remainingSecondsAt(timeline, timeline.totalMeters)).toBeCloseTo(240, 3);
+    expect(remainingSecondsAt(timeline, 0)).toBe(0);
+    expect(remainingSecondsAt(timeline, timeline.totalMeters * 5)).toBeCloseTo(240, 3);
+  });
+  it('qua nửa quãng đường (đoạn chậm) chỉ còn 1/4 thời gian vì đoạn còn lại đi nhanh', () => {
+    expect(remainingSecondsAt(timeline, timeline.totalMeters / 2)).toBeCloseTo(60, 0);
   });
 });

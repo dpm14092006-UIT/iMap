@@ -531,6 +531,8 @@ try {
   );
   const before = requests.filter((p) => p === '/api/traffic-reports').length;
   assert.match(await page.getByRole('region', { name: 'Điều hướng chuyến đi' }).innerText(), /GPS trực tiếp/);
+  // Giờ đến và thời gian còn lại tính từ vị trí GPS trên tuyến.
+  assert.match(await page.getByTestId('navigation-eta').innerText(), /Đến lúc \d{2}:\d{2} · \d+ (phút|giờ)/);
   assert.equal(await page.getByRole('button', { name: /Rẽ nhầm|Tạm dừng|Sự cố phía trước/ }).count(), 0);
   for (const viewport of [
     { width: 1440, height: 708 },

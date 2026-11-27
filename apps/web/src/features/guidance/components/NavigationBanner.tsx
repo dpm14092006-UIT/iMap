@@ -1,5 +1,5 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
-import { formatDistanceMeters } from '../../../shared/format/units';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { formatClock, formatDistanceMeters, formatDurationMinutes } from '../../../shared/format/units';
 import { useMediaQuery } from '../../../shared/hooks/useMediaQuery';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
 import { Icon } from '../../../shared/ui/Icon';
@@ -12,6 +12,8 @@ type NavigationBannerProps = {
   instruction: { text: string; sign?: number } | null;
   distanceToInstructionMeters: number;
   distanceRemainingMeters: number;
+  /** Thời gian còn lại (giây) ước tính từ vị trí GPS trên tuyến; null khi chưa có. */
+  remainingSeconds?: number | null;
   offRoute: boolean;
   error: string;
   canRecalculate: boolean;
@@ -44,6 +46,7 @@ export function NavigationBanner({
   instruction,
   distanceToInstructionMeters,
   distanceRemainingMeters,
+  remainingSeconds = null,
   offRoute,
   error,
   canRecalculate,
@@ -58,6 +61,14 @@ export function NavigationBanner({
   onPreviewRoute,
   atTop = false,
 }: NavigationBannerProps) {
+  // Giờ đến = bây giờ + thời gian còn lại: cập nhật mỗi lần GPS báo vị trí và mỗi 30 giây (kể cả khi đứng yên vì kẹt xe).
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (remainingSeconds === null) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, [remainingSeconds]);
   const { language, t } = useI18n();
   const isMobile = useMediaQuery('(max-width: 767px)');
   const { setSheet, setTopOverlayInset } = useShell();
@@ -178,7 +189,17 @@ export function NavigationBanner({
           {isGuiding && (
             <div className="mt-1 flex flex-wrap items-center gap-2">
               {!offRoute && (
-                <p className="text-xs text-white/70">
+                <p className="text-xs text-white/70" data-testid="navigation-eta">
+                  {remainingSeconds !== null && (
+                    <>
+                      <span className="font-semibold text-white">
+                        {t('Đến lúc {time}', {
+                          time: formatClock(new Date(now + remainingSeconds * 1000), language),
+                        })}
+                      </span>{' '}
+                      · {formatDurationMinutes(remainingSeconds / 60, language)} ·{' '}
+                    </>
+                  )}
                   {t('Còn {distance}', { distance: formatDistanceMeters(distanceRemainingMeters, language) })}{' '}
                   · {t('GPS trực tiếp')}
                 </p>
