@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type RefObject } from 'react';
-import type { LeafletMapController } from '../../../features/map/services/LeafletMapController';
+import type { MapController } from '../../../features/map/services/MapController';
 import type { NavigationStatus } from '../../../features/guidance/types';
 import type { RoutePlan } from '../../../features/routing/types';
 import type { LatLng } from '../../../shared/geo/types';
@@ -16,7 +16,7 @@ type Options = {
  * hành trình; bấm "Về vị trí" để bám lại.
  */
 export function useNavigationFollow(
-  mapController: RefObject<LeafletMapController | null>,
+  mapController: RefObject<MapController | null>,
   { status, route, displayLocation }: Options,
 ) {
   const isIdle = status === 'idle';

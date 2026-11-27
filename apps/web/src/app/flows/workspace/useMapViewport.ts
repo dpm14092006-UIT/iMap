@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, type RefObject } from 'react';
-import type { LeafletMapController } from '../../../features/map/services/LeafletMapController';
+import type { MapController } from '../../../features/map/services/MapController';
 import type { LatLng } from '../../../shared/geo/types';
 import type { SheetState } from '../../../shared/ui/shell';
 
@@ -14,10 +14,7 @@ const FOCUS_FALLBACK_MS = 400;
  *
  * @param routeFitActive Có đang xem một tuyến cần giữ vừa khung không.
  */
-export function useMapViewport(
-  mapController: RefObject<LeafletMapController | null>,
-  routeFitActive: boolean,
-) {
+export function useMapViewport(mapController: RefObject<MapController | null>, routeFitActive: boolean) {
   const pendingFocus = useRef<{ point: LatLng; zoom: number | undefined } | null>(null);
   const sheetOpen = useRef(false);
   const routeFitActiveRef = useRef(routeFitActive);

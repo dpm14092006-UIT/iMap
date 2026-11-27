@@ -7,7 +7,7 @@ import { ALONG_ROUTE_RADIUS_M, radiusForZoom } from '../../../features/explore/d
 import { placeFromPoi } from '../../../features/explore/domain/poiPlace';
 import type { Poi, PoiSearchTerm } from '../../../features/explore/types';
 import type { ComboboxAction } from '../../../features/places/components/PlaceCombobox';
-import type { LeafletMapController } from '../../../features/map/services/LeafletMapController';
+import type { MapController } from '../../../features/map/services/MapController';
 import type { DirectionsController } from '../../../features/routing/hooks/useDirections';
 import type { RoutePlan } from '../../../features/routing/types';
 import { progressAlongPath } from '../../../shared/geo/polyline';
@@ -34,7 +34,7 @@ type Options = {
   selection: PlaceSelection;
   directions: DirectionsController;
   currentLocation: LatLng | null;
-  mapController: RefObject<LeafletMapController | null>;
+  mapController: RefObject<MapController | null>;
   getMapCenter: () => LatLng;
   showToast: (message: string) => void;
   t: (text: string, values?: Record<string, string | number>) => string;

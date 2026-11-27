@@ -28,6 +28,8 @@ describe('buildContentSecurityPolicy', () => {
       'https://abc.supabase.co',
       'wss://abc.supabase.co',
       'https://map.vapp.vn',
+      // MapLibre GL tải ô ảnh VNSDI bằng fetch.
+      'https://vnsdi.mae.gov.vn',
     ]);
   });
 
@@ -39,7 +41,7 @@ describe('buildContentSecurityPolicy', () => {
 
   it('API cùng nguồn ("/api") hoặc thiếu cấu hình thì chỉ còn self', () => {
     const local = buildContentSecurityPolicy({ apiBaseUrl: '/api' });
-    expect(directive(local, 'connect-src')).toEqual(["'self'", ...MAP_STYLE_SOURCES]);
+    expect(directive(local, 'connect-src')).toEqual(["'self'", ...MAP_STYLE_SOURCES, ...MAP_TILE_SOURCES]);
     expect(buildContentSecurityPolicy({ apiBaseUrl: 'javascript:alert(1)' })).not.toContain('javascript');
   });
 
@@ -58,7 +60,7 @@ describe('buildContentSecurityPolicy', () => {
     expect(origins('arcgis-raster')).toEqual([...MAP_TILE_SOURCES].sort());
     expect(origins('maplibre-style')).toEqual([...MAP_STYLE_SOURCES].sort());
     const vapp = readFileSync(
-      new URL('../../features/map/services/leaflet/VappLayer.ts', import.meta.url),
+      new URL('../../features/map/services/maplibre/MaplibreBasemap.ts', import.meta.url),
       'utf8',
     );
     expect(vapp).toContain(`'${MAP_STYLE_SOURCES[0]}'`);

@@ -31,6 +31,7 @@ import {
 } from '../../apps/web/src/features/map/domain/vietnamTerritory';
 import {
   BASEMAP_PROVIDERS,
+  isUsable,
   MODE_CHAINS,
   usableChain,
   type BasemapMode,
@@ -335,11 +336,11 @@ async function coverageGate(gate: Gate) {
     `Đảo nằm ngoài cả hai quần đảo: ${orphan.map((i) => i.name.vi).join(', ')}`,
   );
 
-  const controller = read('apps/web/src/features/map/services/LeafletMapController.ts');
+  const controller = read('apps/web/src/features/map/services/MaplibreMapController.ts');
   gate.expect(
     !/maxBounds\s*:/.test(controller),
     'Bản đồ không giới hạn maxBounds, người dùng kéo tới được Hoàng Sa và Trường Sa',
-    'LeafletMapController đặt maxBounds: kiểm tra Hoàng Sa (tới 113.3°E) và Trường Sa (tới 118.1°E) còn xem được',
+    'MaplibreMapController đặt maxBounds: kiểm tra Hoàng Sa (tới 113.3°E) và Trường Sa (tới 118.1°E) còn xem được',
   );
 
   const outsideRouting = REFERENCE_POINTS.filter(
@@ -464,12 +465,37 @@ async function boundaryGate(gate: Gate) {
     'OSM nguyên bản đang được dùng làm nền',
   );
   gate.pass(`Trạng thái nguồn: ${BASEMAP_PROVIDERS.map((p) => `${p.id}=${p.status}`).join(', ')}`);
-  const vapp = read('apps/web/src/features/map/services/leaflet/VappLayer.ts');
+  // Nền dùng NGUYÊN style vApp: không chạm vào lớp của style (ẩn, lọc, đổi màu, gỡ), nhất là lớp sov-*.
+  const basemapCode = read('apps/web/src/features/map/services/maplibre/MaplibreBasemap.ts')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
   gate.expect(
-    !/visibility|\.filter\(|sov-/.test(vapp.replace(/\/\*[\s\S]*?\*\//g, '')),
+    !/\.layers\b|\b(setLayoutProperty|setPaintProperty|setFilter|removeLayer|moveLayer)\b|sov-/.test(
+      basemapCode,
+    ),
     'Không ẩn, lọc hay đổi lớp chủ quyền (sov-*) của nguồn vApp',
-    'VappLayer đang ẩn/lọc/đổi lớp của style nguồn',
+    'MaplibreBasemap đang ẩn/lọc/đổi lớp của style nguồn',
   );
+
+  // 3D (địa hình, toà nhà khối) chỉ THÊM dữ liệu của iMap trên nền: không ẩn/đổi lớp của nhà cung cấp,
+  // khối toà nhà nằm dưới lớp chữ (tên chủ quyền luôn ở trên), production cần phê duyệt riêng.
+  const map3dCode = read('apps/web/src/features/map/services/maplibre/Map3D.ts')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  const removes = [...map3dCode.matchAll(/removeLayer\(([^)]*)\)/g)].map((m) => m[1]);
+  gate.expect(
+    !/\b(setLayoutProperty|setPaintProperty|setFilter|moveLayer)\b|sov-/.test(map3dCode) &&
+      removes.every((arg) => arg === 'BUILDINGS_3D_LAYER') &&
+      /type === 'symbol'/.test(map3dCode) &&
+      /usable3d\(/.test(map3dCode),
+    '3D chỉ thêm địa hình và lớp khối của iMap (dưới lớp chữ), không đổi lớp chủ quyền; production cần phê duyệt',
+    'Map3D đang đổi/gỡ lớp của nhà cung cấp, đặt khối toà nhà trên lớp chữ, hoặc bỏ qua phê duyệt',
+  );
+  for (const p of BASEMAP_PROVIDERS.filter((x) => x.features3d && isUsable(x, true)))
+    if (!p.features3d!.approval)
+      gate.warn(
+        `${p.id}: 3D (địa hình, toà nhà khối) chưa được duyệt cho production — ${p.features3d!.blockers[0]}`,
+      );
 
   // Điều 20.1–20.3 TT 17/2018/TT-BTNMT: khung toàn vẹn lãnh thổ và bản đồ phụ.
   const e = VIETNAM_TERRITORY_EXTENT;
@@ -490,10 +516,12 @@ async function boundaryGate(gate: Gate) {
     'Bản đồ phụ bật khi xem một phần lãnh thổ (Đà Nẵng, Khánh Hòa, TP.HCM, An Giang…) và tắt khi đã thấy toàn vẹn',
     `Thiếu bản đồ phụ khi xem: ${missingInset.join(', ')}`,
   );
-  const controller0 = read('apps/web/src/features/map/services/LeafletMapController.ts');
+  const controller0 = read('apps/web/src/features/map/services/MaplibreMapController.ts');
   gate.expect(
     /new VietnamInset\(/.test(controller0) &&
-      /VIETNAM_TERRITORY_BOUNDS/.test(read('apps/web/src/features/map/services/leaflet/MapCamera.ts')),
+      /fitBounds\(VIETNAM_TERRITORY_LNGLAT_BOUNDS/.test(
+        read('apps/web/src/features/map/services/maplibre/MaplibreCamera.ts'),
+      ),
     'Bản đồ chính có bản đồ phụ; nút "Xem toàn Việt Nam" khớp khung Điều 20.1',
     'Thiếu bản đồ phụ hoặc nút tổng quan chưa khớp khung Điều 20.1',
   );
@@ -505,11 +533,11 @@ async function boundaryGate(gate: Gate) {
     'Proxy VNSDI không trỏ tới máy chủ chính thức',
   );
 
-  const controller = read('apps/web/src/features/map/services/LeafletMapController.ts');
+  const controller = read('apps/web/src/features/map/services/MaplibreMapController.ts');
   gate.expect(
     /new ArchipelagoLabels\(/.test(controller),
     'Nhãn chủ quyền của iMap (ArchipelagoLabels) hiện trên nền không tự có nhãn; tắt khi nguồn đã thể hiện để không chồng chữ',
-    'LeafletMapController không tạo ArchipelagoLabels',
+    'MaplibreMapController không tạo ArchipelagoLabels',
   );
   const hs = VIETNAM_ARCHIPELAGOS.find((a) => a.id === 'hoang-sa');
   const ts = VIETNAM_ARCHIPELAGOS.find((a) => a.id === 'truong-sa');
@@ -697,11 +725,13 @@ async function namesGate(gate: Gate) {
 // 4. License Validation
 // ---------------------------------------------------------------------------------------------
 async function licenseGate(gate: Gate) {
-  const vietmapLayer = read('apps/web/src/features/map/services/leaflet/VietmapLayer.ts');
+  // Ghi nguồn lấy đúng chuỗi trong registry của nguồn đang hiển thị (và của bản đồ phụ).
+  const mapController = read('apps/web/src/features/map/services/MaplibreMapController.ts');
   gate.expect(
-    /© Vietmap/.test(vietmapLayer),
-    'Ghi nguồn "© Vietmap" trên nền Vietmap',
-    'Thiếu ghi nguồn Vietmap',
+    /this\.attribution\.set\('base', provider\?\.attribution/.test(mapController) &&
+      /this\.attribution\.set\('inset', text\)/.test(mapController),
+    'Ghi nguồn bản đồ lấy từ registry cho nền và bản đồ phụ',
+    'Ghi nguồn không lấy từ registry',
   );
   // Mỗi nguồn trong registry có ghi nguồn và giấy phép; nguồn đang dùng được phải có ghi nguồn bắt buộc.
   const attributionRules: Record<string, RegExp[]> = {
@@ -725,11 +755,10 @@ async function licenseGate(gate: Gate) {
   if (unclear.length)
     gate.warn(`Quyền sử dụng chưa xác nhận đủ để duyệt production:\n      ${unclear.join('\n      ')}`);
 
-  const controller = read('apps/web/src/features/map/services/LeafletMapController.ts');
   gate.expect(
-    !/attributionControl:\s*false/.test(controller),
+    /new AttributionLine\(\)/.test(mapController) && /addControl\(this\.attribution/.test(mapController),
     'Khung ghi nguồn bản đồ luôn hiển thị',
-    'attributionControl bị tắt',
+    'Khung ghi nguồn (AttributionLine) chưa được gắn vào bản đồ',
   );
 
   // Dữ liệu OSM (ODbL) còn dùng ở đâu thì phải ghi nguồn ở đó.
@@ -1006,7 +1035,12 @@ async function visualGate(gate: Gate) {
               ],
             },
           });
-        if (route.request().resourceType() === 'image' || url.pathname.startsWith('/api/map/'))
+        // MapLibre tải ô ảnh bằng fetch() (không phải <img>): nhận diện theo đường dẫn ô ArcGIS.
+        if (
+          route.request().resourceType() === 'image' ||
+          url.pathname.startsWith('/api/map/') ||
+          /\/MapServer\/tile\//.test(url.pathname)
+        )
           return route.fulfill({ contentType: 'image/png', body: fixtureTile });
         return route.abort();
       });
@@ -1022,14 +1056,13 @@ async function visualGate(gate: Gate) {
         document.getElementById('sov-map')?.remove();
         const w = window as unknown as { __sov?: { destroy(): void } };
         w.__sov?.destroy();
-        const { LeafletMapController } = await import('/src/features/map/services/LeafletMapController.ts');
+        const { MaplibreMapController } = await import('/src/features/map/services/MaplibreMapController.ts');
         const { toTrafficMapLayer } = await import('/src/features/traffic/domain/trafficMapLayer.ts');
         const el = document.createElement('div');
         el.id = 'sov-map';
-        el.className = 'routetwin-leaflet';
         el.style.cssText = 'position:fixed;inset:0;z-index:100000;background:#e8ece7';
         document.body.append(el);
-        const c = new LeafletMapController(el, {
+        const c = new MaplibreMapController(el, {
           onBoundsChange() {},
           onMapClick() {},
           onSelectRoute() {},
@@ -1049,12 +1082,13 @@ async function visualGate(gate: Gate) {
           overlays: { traffic: false, incidents: false, terrain: false },
           pois: [],
           highlightedPoiId: null,
+          view3d: false,
         });
-        (c as unknown as { map: { setView(c: [number, number], z: number, o: object): void } }).map.setView(
-          v.center,
-          v.zoom,
-          { animate: false },
-        );
+        // Mức zoom của khung nhìn theo ô 256 px; MapLibre dùng ô 512 px nên cùng tỉ lệ là zoom − 1.
+        (c as unknown as { map: { jumpTo(o: object): void } }).map.jumpTo({
+          center: [v.center[1], v.center[0]],
+          zoom: v.zoom - 1,
+        });
         w.__sov = c as unknown as { destroy(): void };
       }, view);
       await page.waitForTimeout(LIVE ? 4_000 : 900);
@@ -1094,7 +1128,7 @@ async function visualGate(gate: Gate) {
           basemap: map.dataset.basemap ?? null,
           notice: Boolean(map.querySelector('.routetwin-basemap-notice')),
           missing: texts.filter((t) => !all.includes(t)),
-          attribution: map.querySelector('.leaflet-control-attribution')?.textContent ?? '',
+          attribution: map.querySelector('.routetwin-attribution')?.textContent ?? '',
           inset:
             inset && !inset.hidden ? { bounds: inset.dataset.insetBounds ?? '', labels: insetLabels } : null,
         };

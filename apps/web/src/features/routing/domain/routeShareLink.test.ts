@@ -168,6 +168,15 @@ describe('place links and address bar', () => {
     );
     expect(parseRouteShareLink(new URL(route).search)).toMatchObject({ vehicle: 'car' });
     expect(new URL(route).pathname).toBe('/map');
+    // Tham số ngoài link của iMap (nguồn chiến dịch, ?engine=…) giữ nguyên; tham số cũ của iMap thì bỏ.
+    expect(new URL(route).searchParams.get('utm_source')).toBe('zalo');
+    expect(new URL(route).searchParams.get('place')).toBeNull();
+    const withEngine = addressBarUrl(
+      { kind: 'place', place: place('Chợ', 10.77, 106.69) },
+      'https://imap.example/?engine=maplibre&from=1&to=2',
+    );
+    expect(new URL(withEngine).searchParams.get('engine')).toBe('maplibre');
+    expect(new URL(withEngine).searchParams.get('from')).toBeNull();
 
     const placeUrl = addressBarUrl({ kind: 'place', place: place('Chợ', 10.77, 106.69) }, route);
     expect(new URL(placeUrl).searchParams.get('from')).toBeNull();

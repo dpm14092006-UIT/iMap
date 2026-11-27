@@ -126,9 +126,19 @@ export type AddressBarState =
 
 /** URL tương ứng với thứ đang xem; `none` chỉ bỏ các tham số của iMap, giữ đường dẫn và tham số khác. */
 export function addressBarUrl(state: AddressBarState, current: string): string {
-  if (state.kind === 'route') return buildRouteShareUrl(state.route, current);
-  if (state.kind === 'place') return buildPlaceShareUrl(state.place, current);
-  const url = new URL(current);
-  for (const name of LINK_PARAMS) url.searchParams.delete(name);
+  const url = new URL(
+    state.kind === 'route'
+      ? buildRouteShareUrl(state.route, current)
+      : state.kind === 'place'
+        ? buildPlaceShareUrl(state.place, current)
+        : current,
+  );
+  // Tham số không thuộc link của iMap (vd. ?engine=maplibre) được giữ nguyên trên thanh địa chỉ.
+  const kept = new URL(current).searchParams;
+  for (const name of LINK_PARAMS) {
+    kept.delete(name);
+    if (state.kind === 'none') url.searchParams.delete(name);
+  }
+  for (const [name, value] of kept) if (!url.searchParams.has(name)) url.searchParams.append(name, value);
   return url.toString();
 }

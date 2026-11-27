@@ -13,11 +13,13 @@ import { useNavigationSession } from '../features/guidance/hooks/useNavigationSe
 import { usableSourceCredits } from '../features/map/basemap/providers';
 import { LayerSwitcher } from '../features/map/components/LayerSwitcher';
 import { MapControls } from '../features/map/components/MapControls';
+import { TimelineBar } from '../features/map/components/TimelineBar';
+import { useMapView3d } from '../features/map/hooks/useMapView3d';
 import { MapView } from '../features/map/components/MapView';
 import { TrafficLegend } from '../features/map/components/TrafficLegend';
 import { useCurrentLocation } from '../features/map/hooks/useCurrentLocation';
 import { useMapAppearance } from '../features/map/hooks/useMapAppearance';
-import type { LeafletMapController } from '../features/map/services/LeafletMapController';
+import type { MapCamera, MapController } from '../features/map/services/MapController';
 import type { DraftStops, MapOverlays } from '../features/map/types';
 import { useSavedRoutes } from '../features/my-routes/hooks/useSavedRoutes';
 import { PushPermissionCard } from '../features/notifications/components/PushPermissionCard';
@@ -79,13 +81,18 @@ const VIETNAM_CENTER: LatLng = { lat: 16, lng: 108 };
 export function App() {
   const { t } = useI18n();
   const routeApi = useMemo(() => new RouteApiClient(), []);
-  const mapController = useRef<LeafletMapController | null>(null);
+  const mapController = useRef<MapController | null>(null);
   const getMapCenter = useCallback(() => mapController.current?.getCenter() ?? VIETNAM_CENTER, []);
   const { toast, showToast } = useToast();
   const { location: currentLocation, locate } = useCurrentLocation();
   const { user, accessToken, loading: authLoading } = useAuth();
   const isAuthenticated = Boolean(user && !user.is_anonymous && accessToken);
   const { layer, preference, setLayer, isDark } = useMapAppearance();
+  const { view3d, setView3d } = useMapView3d();
+  const [mapCamera, setMapCamera] = useState<MapCamera>({ bearing: 0, pitch: 0 });
+  // 4D: thanh dòng thời gian (phát lại hành trình, ánh sáng theo giờ).
+  const [timelineOpen, setTimelineOpen] = useState(false);
+  const [lightTime, setLightTime] = useState<number | null>(null);
   const savedRoutes = useSavedRoutes();
   const { updateAvailable, reloadForUpdate } = useAppUpdate();
 
@@ -357,6 +364,9 @@ export function App() {
           route={activeRoute}
           routeOptions={routeOptionsForMap}
           trafficLayer={trafficLayer}
+          view3d={view3d}
+          lightTime={lightTime}
+          onCameraChange={setMapCamera}
         />
       }
       topBar={
@@ -396,6 +406,16 @@ export function App() {
       }
       bottomLeft={
         <>
+          {timelineOpen && isNavigationIdle && (
+            <div className="md:order-1">
+              <TimelineBar
+                route={activeRoute}
+                onFrame={(frame) => mapController.current?.showPlayback(frame)}
+                onLightTime={setLightTime}
+                onClose={() => setTimelineOpen(false)}
+              />
+            </div>
+          )}
           {overlays.traffic && (
             <div className="md:order-2 md:mx-auto">
               <TrafficLegend onHide={() => setOverlays((current) => ({ ...current, traffic: false }))} />
@@ -410,6 +430,12 @@ export function App() {
           </div>
           <MapControls
             showZoom={!isNavigationIdle}
+            view3d={view3d}
+            onToggle3d={() => setView3d(!view3d)}
+            timelineOpen={timelineOpen}
+            onToggleTimeline={isNavigationIdle ? () => setTimelineOpen(!timelineOpen) : undefined}
+            camera={mapCamera}
+            onResetNorth={() => mapController.current?.resetNorth()}
             onLocate={() => (isNavigationIdle ? void locateOnMap() : follow.recenter())}
             onZoomIn={() => {
               follow.pauseIfNavigating();

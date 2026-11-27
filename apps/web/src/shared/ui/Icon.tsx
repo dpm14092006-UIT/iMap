@@ -9,6 +9,7 @@ export type IconName =
   | 'chevron-down'
   | 'close'
   | 'compass'
+  | 'cube'
   | 'current-location'
   | 'directions'
   | 'globe'
@@ -16,6 +17,8 @@ export type IconName =
   | 'menu'
   | 'motorcycle'
   | 'multi-stop'
+  | 'pause'
+  | 'play'
   | 'plus'
   | 'user'
   | 'minus'
@@ -81,6 +84,7 @@ const shapes: Record<IconName, string> = {
   'chevron-down': '<path d="m6 9 6 6 6-6" />',
   close: '<path d="m6 6 12 12M18 6 6 18" />',
   compass: '<circle cx="12" cy="12" r="9" /><path d="m15.6 8.4-2.2 5-5 2.2 2.2-5 5-2.2Z" />',
+  cube: '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" /><path d="m4 7.5 8 4.5 8-4.5M12 12v9" />',
   'current-location':
     '<circle cx="12" cy="12" r="7" /><circle cx="12" cy="12" r="2.1" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />',
   directions:
@@ -101,6 +105,8 @@ const shapes: Record<IconName, string> = {
   upload:
     '<path d="M12 16V4M7 9l5-5 5 5" /><path d="M5 14v4.25A1.75 1.75 0 0 0 6.75 20h10.5A1.75 1.75 0 0 0 19 18.25V14" />',
   swap: '<path d="m7 7 3-3 3 3M10 4v15M17 17l-3 3-3-3M14 20V5" />',
+  pause: '<path d="M8 5v14M16 5v14" />',
+  play: '<path d="M7 4.5v15l12.5-7.5L7 4.5Z" />',
   clock: '<circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.2 2" />',
   road: '<path d="M8 3 4 21M16 3l4 18M12 5v3M12 12v3M12 19v2" />',
   pin: '<path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z" /><circle cx="12" cy="10" r="2.2" />',

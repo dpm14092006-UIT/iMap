@@ -39,6 +39,25 @@ export type BasemapProvider = {
   sovereigntyLabels: boolean;
   /** Mức zoom ô ảnh gốc (raster). */
   zoom?: { min: number; max: number };
+  /**
+   * Khả năng 3D dựa trên dữ liệu của nguồn: địa hình nổi (nguồn raster-dem trong style) và toà nhà khối
+   * (lớp vector có chiều cao). iMap chỉ THÊM lớp/địa hình, không ẩn hay đổi lớp nào của nguồn (kể cả sov-*).
+   * Production chỉ bật khi có `approval` (quyền thêm lớp trên style của nhà cung cấp đã được xác nhận).
+   */
+  features3d?: Features3d;
+};
+
+export type Features3d = {
+  /** Tên nguồn raster-dem có sẵn trong style của nhà cung cấp. */
+  terrainSource?: string;
+  /** Lớp vector toà nhà và thuộc tính chiều cao (mét). */
+  buildings?: { source: string; sourceLayer: string; heightField: string };
+  /** Ghi nguồn bắt buộc thêm khi bật 3D (vd. dữ liệu độ cao). */
+  attribution: string;
+  /** Ghi chú giới hạn dữ liệu (vùng phủ, độ phân giải). */
+  notes: string[];
+  blockers: string[];
+  approval?: { by: string; date: string; report: string };
 };
 
 const VNSDI_ATTRIBUTION =
@@ -131,6 +150,18 @@ export const BASEMAP_PROVIDERS: readonly BasemapProvider[] = [
     // Tối: dùng style gốc (sáng) vì chưa xác nhận được quyền tự đổi style (IMAP V2 §10).
     modes: ['street', 'dark', 'overview'],
     status: 'APPROVED',
+    features3d: {
+      terrainSource: 'terrain',
+      buildings: { source: 'vapp', sourceLayer: 'building', heightField: 'height' },
+      attribution: 'Độ cao © Mapzen / AWS Terrain Tiles',
+      notes: [
+        'DEM terrarium, zoom tối đa 11, vùng phủ 102–110°Đ, 8–24°B (không gồm Trường Sa: vùng biển, địa hình phẳng).',
+        'Chiều cao toà nhà theo thuộc tính "height" trong ô vector vApp; toà nhà thiếu dữ liệu dùng chiều cao mặc định thấp.',
+      ],
+      blockers: [
+        'Chưa xác nhận với ERPFit (support@erpfit.com) quyền thêm lớp khối toà nhà / địa hình nổi trên style vApp.',
+      ],
+    },
     dataSource: 'OpenStreetMap, Overture Maps, Wikidata, dữ liệu công khai Việt Nam (theo điều khoản vApp)',
     lastVerified: '2026-11-26',
     version: 'style "vapp-basemap", 19 lớp, có lớp sov-dots/sov-names',
@@ -291,6 +322,16 @@ export function usableSourceCredits(production: boolean): string[] {
     (provider) => SOURCE_CREDITS[provider.id.split('-')[0] ?? ''] ?? provider.name,
   );
   return [...new Set(credits)];
+}
+
+/**
+ * Khả năng 3D dùng được của một nguồn: dev/kiểm thử luôn bật để thu thập bằng chứng; production chỉ khi
+ * chủ dự án đã ghi phê duyệt (`features3d.approval`). Nghiêng/xoay bản đồ không cần phê duyệt (không đổi style).
+ */
+export function usable3d(provider: BasemapProvider | null, production: boolean): Features3d | null {
+  const features = provider?.features3d;
+  if (!features) return null;
+  return production && !features.approval ? null : features;
 }
 
 export function usableChain(mode: BasemapMode, production: boolean): BasemapProvider[] {
