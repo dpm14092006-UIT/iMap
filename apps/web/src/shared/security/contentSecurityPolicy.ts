@@ -50,7 +50,7 @@ export function buildContentSecurityPolicy({ apiBaseUrl, supabaseUrl }: CspConfi
     // data: biểu tượng SVG nội tuyến; blob: ảnh xem trước khi báo cáo; Supabase: ảnh báo cáo (link ký).
     // API: ô ảnh VNSDI qua proxy /api/map/vnsdi.
     'img-src': list("'self'", 'data:', 'blob:', ...MAP_TILE_SOURCES, api, supabase),
-    // MapLibre GL tải cả ô ảnh bằng fetch (Leaflet dùng <img>): máy chủ ô ảnh cũng cần ở connect-src.
+    // MapLibre GL tải cả ô ảnh bằng fetch: máy chủ ô ảnh cũng cần ở connect-src.
     'connect-src': list("'self'", api, supabase, supabaseSocket, ...MAP_STYLE_SOURCES, ...MAP_TILE_SOURCES),
     'font-src': "'self'",
     'worker-src': "'self'",

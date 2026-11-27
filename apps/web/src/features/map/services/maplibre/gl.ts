@@ -1,16 +1,16 @@
 import * as maplibregl from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-csp-worker.js?url&no-inline';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import type { Coordinate, LatLng } from '../../../../shared/geo/types';
+import type { Coordinate } from '../../../../shared/geo/types';
 
-// Bản CSP-safe của worker (không dùng blob: eval), cùng cấu hình với bản Leaflet trước đây.
+// Bản CSP-safe của worker (không dùng blob: eval).
 maplibregl.setWorkerUrl(workerUrl);
 
 export { maplibregl };
 export type GLMap = maplibregl.Map;
 
 /**
- * Cả ứng dụng (ngưỡng nhãn đảo, flyTo(…, 15), maxZoom khi fit…) dùng mức zoom theo ô 256 px như Leaflet.
+ * Cả ứng dụng (ngưỡng nhãn đảo, flyTo(…, 15), maxZoom khi fit…) dùng mức zoom theo ô 256 px.
  * MapLibre dùng ô 512 px: cùng tỉ lệ bản đồ thì zoom MapLibre = zoom ứng dụng − 1. Quy đổi tại biên này.
  */
 export const ZOOM_OFFSET = 1;
@@ -35,7 +35,6 @@ export function transformMapRequest(url: string): { url: string } {
     : { url };
 }
 
-export const toLngLat = (point: LatLng): [number, number] => [point.lng, point.lat];
 /** Tọa độ nội bộ [vĩ độ, kinh độ] → [kinh độ, vĩ độ] của GeoJSON/MapLibre. */
 export const coordinateToLngLat = ([lat, lng]: Coordinate): [number, number] => [lng, lat];
 
@@ -49,7 +48,7 @@ export function textElement<K extends keyof HTMLElementTagNameMap>(
   return element;
 }
 
-/** Chú thích tên khi rê chuột (thay tooltip của Leaflet): chỉ CSS, không cần thư viện. */
+/** Chú thích tên khi rê chuột: chỉ CSS, không cần thư viện. */
 export function withTooltip(element: HTMLElement, text: string): HTMLElement {
   const tip = textElement('span', text);
   tip.className = 'routetwin-tooltip routetwin-tooltip--hover';

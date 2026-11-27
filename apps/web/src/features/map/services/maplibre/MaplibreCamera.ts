@@ -20,7 +20,7 @@ export const VIETNAM_TERRITORY_LNGLAT_BOUNDS: [[number, number], [number, number
 
 /**
  * Điều khiển khung nhìn: bay tới điểm, bám vị trí, zoom vừa các điểm trong phần bản đồ còn thấy
- * (chừa chỗ cho thanh trên, bảng chức năng và cụm nút nổi). Cùng hành vi với bản Leaflet.
+ * (chừa chỗ cho thanh trên, bảng chức năng và cụm nút nổi).
  */
 export class MaplibreCamera {
   private fitInsets: FitInsets | null = null;
@@ -167,7 +167,7 @@ export class MaplibreCamera {
     const byUser = (event: { originalEvent?: unknown }) => {
       if (event.originalEvent) listener();
     };
-    // Cuộn chuột và chụm hai ngón báo ngay (như bản Leaflet), không chờ khung hình sau mới có zoomstart.
+    // Cuộn chuột và chụm hai ngón báo ngay, không chờ khung hình sau mới có zoomstart.
     const container = this.map.getContainer();
     const onTouch = (event: TouchEvent) => {
       if (event.touches.length > 1) listener();
