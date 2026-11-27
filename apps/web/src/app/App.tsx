@@ -13,6 +13,7 @@ import { useNavigationSession } from '../features/guidance/hooks/useNavigationSe
 import { usableSourceCredits } from '../features/map/basemap/providers';
 import { LayerSwitcher } from '../features/map/components/LayerSwitcher';
 import { MapControls } from '../features/map/components/MapControls';
+import { buildPlaybackTimeline, remainingSecondsAt } from '../features/routing/domain/routePlayback';
 import { TimelineBar } from '../features/map/components/TimelineBar';
 import { useMapView3d } from '../features/map/hooks/useMapView3d';
 import { MapView } from '../features/map/components/MapView';
@@ -114,6 +115,11 @@ export function App() {
   } = navigation;
   const isNavigationIdle = navigationStatus === 'idle';
   const isNavigating = navigationStatus === 'navigating' || navigationStatus === 'locating';
+  // Thời gian còn lại khi dẫn đường: mốc thời gian VietMap theo từng chỉ dẫn, đọc tại vị trí GPS hiện tại.
+  const navigationTimeline = useMemo(
+    () => (navigationRoute ? buildPlaybackTimeline(navigationRoute) : null),
+    [navigationRoute],
+  );
   const navigationPath = useMemo(
     () => (navigationRoute ? new RoutePath(navigationRoute.legs) : null),
     [navigationRoute],
@@ -466,6 +472,11 @@ export function App() {
         instruction={navigation.nextInstruction}
         distanceToInstructionMeters={navigation.distanceToInstructionMeters}
         distanceRemainingMeters={navigation.distanceRemainingMeters}
+        remainingSeconds={
+          navigationTimeline
+            ? remainingSecondsAt(navigationTimeline, navigation.distanceRemainingMeters)
+            : null
+        }
         offRoute={navigation.offRoute}
         error={navigation.error}
         canRecalculate={Boolean(navigationRoute && navigationLocation)}

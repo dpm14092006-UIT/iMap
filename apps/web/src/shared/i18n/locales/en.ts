@@ -195,6 +195,7 @@ export const en: Record<string, string> = {
   'Đi ngay': 'Leave now',
   'Khởi hành lúc': 'Depart at',
   'Đến lúc': 'Arrive by',
+  'Đến lúc {time}': 'Arrive {time}',
   'Thời điểm khởi hành': 'Departure time',
   Giờ: 'Time',
   'Chỉ để ước tính giờ đến, chưa dự báo tắc đường theo giờ.':
