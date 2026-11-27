@@ -36,6 +36,14 @@ Cập nhật: 2026-11-26. Tài liệu bàn giao cho đợt nâng cấp bản đ�
 
 Nghiêng, xoay bản đồ và dẫn đường 3D không đổi style nên bật ngay. Địa hình nổi và khối toà nhà dùng dữ liệu của nguồn (registry `features3d`), chỉ THÊM lớp của iMap dưới lớp chữ, không đổi lớp `sov-*`. Production chỉ bật khi có `features3d.approval`. vApp đang chờ ERPFit xác nhận (ROADMAP mục 2); khi có, ghi `approval: { by, date, report }` vào `features3d` của vApp. Khi bật, ghi thêm nguồn "Độ cao © Mapzen / AWS Terrain Tiles".
 
+## 4D (dòng thời gian)
+
+Nút đồng hồ mở thanh "Dòng thời gian":
+
+- **Ánh sáng theo giờ:** `shared/geo/sunPosition.ts` (công thức NOAA) tính vị trí mặt trời tại tâm bản đồ, rồi đặt `setLight` (hướng, độ cao, màu) và `setSky`. MapLibre không vẽ bóng đổ thật, nên giao diện ghi "Ánh sáng mô phỏng theo vị trí mặt trời". Không đổi lớp nào của nguồn, kể cả hillshade của vApp.
+- **Phát lại hành trình:** `routing/domain/routePlayback.ts` gán mốc thời gian cho từng điểm của tuyến. Tốc độ lấy theo từng chỉ dẫn VietMap; chặng không có chỉ dẫn thì chia đều thời gian. Camera nghiêng và bay theo tuyến ở tốc độ ×60, ×240 hoặc ×960. Khi bật giảm chuyển động, camera không xoay.
+- Không có "giao thông theo thời gian": VietMap chỉ có dữ liệu giao thông thời gian thực.
+
 ## Lệnh
 
 ```bash

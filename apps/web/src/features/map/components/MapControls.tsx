@@ -11,6 +11,9 @@ type MapControlsProps = {
   /** Chế độ 3D và hướng/độ nghiêng hiện tại của bản đồ (la bàn chỉ hiện khi bản đồ xoay hoặc nghiêng). */
   view3d?: boolean;
   onToggle3d?: () => void;
+  /** 4D: mở/đóng thanh dòng thời gian. */
+  timelineOpen?: boolean;
+  onToggleTimeline?: () => void;
   camera?: { bearing: number; pitch: number };
   onResetNorth?: () => void;
 };
@@ -50,6 +53,8 @@ export function MapControls({
   showZoom = false,
   view3d = false,
   onToggle3d,
+  timelineOpen = false,
+  onToggleTimeline,
   camera,
   onResetNorth,
 }: MapControlsProps) {
@@ -78,6 +83,15 @@ export function MapControls({
           onClick={onToggle3d}
           pressed={view3d}
           className={view3d ? 'text-brand-700 dark:text-brand-200' : ''}
+        />
+      )}
+      {onToggleTimeline && (
+        <ControlButton
+          icon="clock"
+          label={timelineOpen ? 'Đóng dòng thời gian' : 'Mở dòng thời gian (4D)'}
+          onClick={onToggleTimeline}
+          pressed={timelineOpen}
+          className={timelineOpen ? 'text-brand-700 dark:text-brand-200' : ''}
         />
       )}
       <ControlButton icon="current-location" label="Định vị vị trí hiện tại" onClick={onLocate} />
