@@ -68,13 +68,15 @@ export class HttpClient {
     body: unknown,
     { accessToken, ...init }: RequestOptions,
   ): Promise<T> {
-    if (!accessToken || !this.tokenProvider) return this.attempt<T>(endpoint, method, body, init, accessToken);
+    if (!accessToken || !this.tokenProvider)
+      return this.attempt<T>(endpoint, method, body, init, accessToken);
     const token = (await this.freshToken(() => this.tokenProvider!.current())) ?? accessToken;
     try {
       return await this.attempt<T>(endpoint, method, body, init, token);
     } catch (error) {
       // Máy chủ từ chối phiên: làm mới một lần rồi gửi lại; vẫn lỗi thì báo lỗi gốc.
-      if (!(error instanceof ApiError) || error.code !== 'INVALID_SESSION' || init.signal?.aborted) throw error;
+      if (!(error instanceof ApiError) || error.code !== 'INVALID_SESSION' || init.signal?.aborted)
+        throw error;
       const refreshed = await this.freshToken(() => this.tokenProvider!.refresh());
       if (!refreshed || refreshed === token) throw error;
       return this.attempt<T>(endpoint, method, body, init, refreshed);

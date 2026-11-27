@@ -152,4 +152,3 @@ describe('RerouteUseCase', () => {
     expect(result).toMatchObject({ route: uTurn, strategy: 'alternative', blockedCount: 0 });
   });
 });
-

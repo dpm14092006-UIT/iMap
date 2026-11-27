@@ -144,7 +144,10 @@ describe('HttpClient', () => {
       const http = new HttpClient({ baseUrl: '/api', timeoutMs: 1000 });
       const refresh = vi.fn().mockResolvedValue('moi');
       http.setAccessTokenProvider({ current: async () => 'cu', refresh });
-      const fetcher = vi.fn().mockResolvedValueOnce(invalid()).mockResolvedValue(Response.json({ data: 2 }));
+      const fetcher = vi
+        .fn()
+        .mockResolvedValueOnce(invalid())
+        .mockResolvedValue(Response.json({ data: 2 }));
       vi.stubGlobal('fetch', fetcher);
       expect(await http.post('/x', { a: 1 }, { accessToken: 'cu' })).toBe(2);
       expect(refresh).toHaveBeenCalledOnce();
@@ -164,7 +167,10 @@ describe('HttpClient', () => {
 
     it('tầng auth lỗi thì vẫn gửi bằng token sẵn có', async () => {
       const http = new HttpClient({ baseUrl: '/api', timeoutMs: 1000 });
-      http.setAccessTokenProvider({ current: () => Promise.reject(new Error('offline')), refresh: async () => null });
+      http.setAccessTokenProvider({
+        current: () => Promise.reject(new Error('offline')),
+        refresh: async () => null,
+      });
       const fetcher = vi.fn().mockResolvedValue(Response.json({ data: 3 }));
       vi.stubGlobal('fetch', fetcher);
       expect(await http.get('/x', { accessToken: 'cu' })).toBe(3);
