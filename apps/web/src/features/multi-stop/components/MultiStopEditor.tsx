@@ -174,7 +174,8 @@ export function MultiStopEditor({ getFocus, form }: Props) {
           </li>
         ))}
       </ol>
-      <div className="mb-4">
+      {/* z-30: danh sách gợi ý phải nổi trên thanh "Tối ưu hành trình" dính ở đáy (z-20). */}
+      <div className="relative z-30 mb-4">
         <PlaceCombobox
           getFocus={getFocus}
           ariaLabel={t('Tìm điểm dừng để thêm')}
