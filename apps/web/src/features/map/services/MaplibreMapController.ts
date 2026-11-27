@@ -11,6 +11,7 @@ import { MaplibreCamera } from './maplibre/MaplibreCamera';
 import { FocusPin, LocationMarker, PoiMarkers } from './maplibre/markers';
 import { Map3D } from './maplibre/Map3D';
 import { ALTERNATIVE_ROUTE_LAYER, RouteLayer } from './maplibre/RouteLayer';
+import { SunLight } from './maplibre/SunLight';
 import { TrafficLayers } from './maplibre/TrafficLayers';
 import { VietnamInset } from './maplibre/VietnamInset';
 
@@ -33,6 +34,9 @@ export class MaplibreMapController implements MapController {
   private readonly location: LocationMarker;
   private readonly focus: FocusPin;
   private readonly map3d: Map3D;
+  private readonly sun: SunLight;
+  private readonly playbackMarker: LocationMarker;
+  private playing = false;
   private destroyed = false;
   private view3d = false;
   private navigating = false;
@@ -92,6 +96,8 @@ export class MaplibreMapController implements MapController {
     this.pois = new PoiMarkers(this.map, handlers.onPoiClick);
     this.focus = new FocusPin(this.map);
     this.location = new LocationMarker(this.map);
+    this.playbackMarker = new LocationMarker(this.map);
+    this.sun = new SunLight(this.map);
     this.map3d = new Map3D(this.map, import.meta.env.PROD, (text) => this.attribution.set('3d', text));
 
     this.map.on('style.load', this.reinstall);
@@ -117,6 +123,7 @@ export class MaplibreMapController implements MapController {
     this.map.getContainer().classList.toggle('is-picking', data.isPicking);
     this.pois.update(data.pois, data.highlightedPoiId);
     this.apply3d(data);
+    this.sun.set(data.lightTime);
 
     const routeId = data.route?.id ?? null;
     const routeOptionsKey = data.routeOptions.map((route) => route.id).join('|');
@@ -182,6 +189,21 @@ export class MaplibreMapController implements MapController {
       this.camera.followHeading(point, zoom, this.heading);
     else this.camera.followLocation(point, zoom);
   }
+  showPlayback(frame: { point: LatLng; heading: number } | null) {
+    if (this.destroyed) return;
+    if (!frame) {
+      if (!this.playing) return;
+      this.playing = false;
+      this.playbackMarker.destroy();
+      this.camera.clearPadding();
+      this.camera.setPitchMode(this.view3d, true);
+      return;
+    }
+    this.playing = true;
+    this.playbackMarker.update(frame.point, true, frame.heading);
+    // Camera nghiêng bay theo tuyến; giảm chuyển động thì chỉ bám vị trí, không xoay.
+    this.camera.playbackFrame(frame.point, 16, this.camera.prefersReducedMotion() ? null : frame.heading);
+  }
   resetNorth() {
     this.camera.resetNorth();
   }
@@ -220,6 +242,7 @@ export class MaplibreMapController implements MapController {
     this.pois.clear();
     this.focus.destroy();
     this.location.destroy();
+    this.playbackMarker.destroy();
     this.archipelagoLabels.destroy();
     this.base.destroy();
     this.map.remove();
@@ -228,6 +251,11 @@ export class MaplibreMapController implements MapController {
   /** Nguồn nền đang hiển thị (kiểm thử, cổng kiểm chứng). */
   activeBasemapId(): string | null {
     return this.base.activeProviderId();
+  }
+
+  /** Mốc thời gian đang mô phỏng ánh sáng (kiểm thử). */
+  lightTime(): number | null {
+    return this.sun.current();
   }
 
   /**
@@ -240,6 +268,7 @@ export class MaplibreMapController implements MapController {
     this.routeLayer.install();
     this.traffic.installSections();
     this.map3d.apply(this.base.currentProvider(), this.view3d);
+    this.sun.apply();
   };
 
   /** Chuyển 2D/3D; kết thúc dẫn đường 3D thì quay lại hướng Bắc (vẫn giữ nghiêng nếu đang 3D). */

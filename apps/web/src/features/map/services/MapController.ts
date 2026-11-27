@@ -39,6 +39,8 @@ export type MapControllerData = {
   highlightedPoiId: string | null;
   /** Chế độ 3D: nghiêng bản đồ, dẫn đường xoay theo hướng đi, địa hình/toà nhà khối khi nguồn cho phép. */
   view3d: boolean;
+  /** 4D: mốc thời gian (ms) để mô phỏng ánh sáng mặt trời; null = ánh sáng mặc định. */
+  lightTime: number | null;
 };
 
 /**
@@ -68,5 +70,7 @@ export interface MapController {
   /** Zoom lại vừa vùng vừa fit gần nhất (khi bảng đổi kích thước). */
   refit(): void;
   invalidateSize(): void;
+  /** 4D: đặt camera và mũi tên phát lại hành trình tại một khung hình; null = thoát phát lại. */
+  showPlayback(frame: { point: LatLng; heading: number } | null): void;
   destroy(): void;
 }

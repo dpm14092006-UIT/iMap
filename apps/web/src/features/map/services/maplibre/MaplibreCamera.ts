@@ -120,6 +120,25 @@ export class MaplibreCamera {
    * Dẫn đường 3D: bản đồ nghiêng, xoay theo hướng đi (hướng đi luôn hướng lên), vị trí đặt thấp trên màn hình
    * để thấy nhiều đường phía trước. Bỏ qua dao động nhỏ của GPS/la bàn để bản đồ không rung.
    */
+  /** Bỏ phần đệm do phát lại hành trình để lại (padding của jumpTo được giữ trong camera). */
+  clearPadding() {
+    this.map.setPadding({ top: 0, bottom: 0, left: 0, right: 0 });
+  }
+
+  /** Phát lại hành trình (4D): đặt camera tức thì mỗi khung hình (không easeTo để khỏi giật). */
+  playbackFrame(point: LatLng, zoom: number, heading: number | null) {
+    const [, sheetY] = this.sheetOffset();
+    const visible = this.map.getContainer().clientHeight + 2 * sheetY;
+    this.map.jumpTo({
+      center: [point.lng, point.lat],
+      zoom: toGLZoom(zoom),
+      bearing: heading ?? this.map.getBearing(),
+      pitch: heading === null ? this.map.getPitch() : NAV_PITCH_3D,
+      // jumpTo không có offset: dời tâm lên trước để mũi tên nằm thấp trên màn hình.
+      padding: { top: Math.max(0, sheetY + visible * 0.44), bottom: 0, left: 0, right: 0 },
+    });
+  }
+
   followHeading(point: LatLng, zoom: number, heading: number) {
     const [, sheetY] = this.sheetOffset();
     const visible = this.map.getContainer().clientHeight + 2 * sheetY;

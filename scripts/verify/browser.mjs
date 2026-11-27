@@ -209,6 +209,7 @@ try {
       pois: [],
       highlightedPoiId: null,
       view3d: false,
+      lightTime: null,
     };
     c.update(data);
     window.__qa = { c, data, route, events, el, MaplibreMapController, toTrafficMapLayer };
@@ -386,6 +387,62 @@ try {
   });
   await page.waitForTimeout(900);
   assert.deepEqual(await camera(), { pitch: 0, bearing: 0 });
+  // 4D: ánh sáng đổi hướng theo giờ; phát lại hành trình đi từ đầu tới cuối tuyến rồi trả camera về thường.
+  const light = await page.evaluate(() => {
+    const q = window.__qa;
+    const read = (iso) => {
+      q.data.lightTime = Date.parse(iso);
+      q.c.update(q.data);
+      return q.c.map.getLight().position;
+    };
+    const morning = read('2026-03-20T01:00:00Z');
+    const afternoon = read('2026-03-20T09:00:00Z');
+    q.data.lightTime = null;
+    q.c.update(q.data);
+    return { morning, afternoon, reset: q.c.lightTime() };
+  });
+  assert.ok(light.morning[1] > 60 && light.morning[1] < 120, `morning sun in the east: ${light.morning}`);
+  assert.ok(
+    light.afternoon[1] > 240 && light.afternoon[1] < 300,
+    `afternoon sun in the west: ${light.afternoon}`,
+  );
+  assert.equal(light.reset, null);
+  const playback = await page.evaluate(async () => {
+    const q = window.__qa;
+    const { buildPlaybackTimeline, routePlayback } =
+      await import('/src/features/routing/domain/routePlayback.ts');
+    const timeline = buildPlaybackTimeline(q.route);
+    const near = (frame) => {
+      q.c.showPlayback(frame);
+      const center = q.c.map.getCenter();
+      return Math.hypot(center.lat - frame.point.lat, center.lng - frame.point.lng) < 1e-6;
+    };
+    const start = near(routePlayback(timeline, 0));
+    const end = near(routePlayback(timeline, timeline.totalSeconds));
+    const pitch = Math.round(q.c.map.getPitch());
+    const last = q.route.legs.at(-1).points.at(-1);
+    const finish = routePlayback(timeline, timeline.totalSeconds).point;
+    const markers = document.querySelectorAll('#qa-map .routetwin-navigation-marker').length;
+    q.c.showPlayback(null);
+    return {
+      start,
+      end,
+      pitch,
+      markers,
+      reachedEnd: Math.abs(finish.lat - last[0]) < 1e-9 && Math.abs(finish.lng - last[1]) < 1e-9,
+      after: document.querySelectorAll('#qa-map .routetwin-navigation-marker').length,
+    };
+  });
+  assert.deepEqual(playback, { start: true, end: true, pitch: 55, markers: 1, reachedEnd: true, after: 0 });
+  await page.waitForTimeout(900);
+  assert.deepEqual(
+    await camera(),
+    { pitch: 0, bearing: 0 },
+    'Leaving playback returns the camera to 2D north',
+  );
+  console.log(
+    '✓ 4D: sun light follows the time of day; route playback runs start → end and restores the camera',
+  );
   await page.emulateMedia({ reducedMotion: 'reduce' });
   console.log(
     '✓ 3D: pitch toggle, heading-up 3D navigation, back to north; no 3D layers without provider data',

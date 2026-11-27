@@ -32,6 +32,8 @@ type MapViewProps = {
   onPoiClick: (poiId: string) => void;
   /** Chế độ 3D (nghiêng, dẫn đường xoay theo hướng đi). */
   view3d?: boolean;
+  /** 4D: mốc thời gian mô phỏng ánh sáng (ms); null = mặc định. */
+  lightTime?: number | null;
   /** Hướng xoay / độ nghiêng của bản đồ (la bàn). */
   onCameraChange?: (camera: MapCamera) => void;
 };
@@ -56,6 +58,7 @@ export function MapView({
   onSelectRoute,
   onPoiClick,
   view3d = false,
+  lightTime = null,
   onCameraChange,
 }: MapViewProps) {
   const { language, t } = useI18n();
@@ -119,6 +122,7 @@ export function MapView({
       pois,
       highlightedPoiId,
       view3d,
+      lightTime,
     });
   }, [
     controllerRef,
@@ -137,6 +141,7 @@ export function MapView({
     pois,
     highlightedPoiId,
     view3d,
+    lightTime,
   ]);
 
   return (

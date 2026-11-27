@@ -13,6 +13,7 @@ import { useNavigationSession } from '../features/guidance/hooks/useNavigationSe
 import { usableSourceCredits } from '../features/map/basemap/providers';
 import { LayerSwitcher } from '../features/map/components/LayerSwitcher';
 import { MapControls } from '../features/map/components/MapControls';
+import { TimelineBar } from '../features/map/components/TimelineBar';
 import { useMapView3d } from '../features/map/hooks/useMapView3d';
 import { MapView } from '../features/map/components/MapView';
 import { TrafficLegend } from '../features/map/components/TrafficLegend';
@@ -89,6 +90,9 @@ export function App() {
   const { layer, preference, setLayer, isDark } = useMapAppearance();
   const { view3d, setView3d } = useMapView3d();
   const [mapCamera, setMapCamera] = useState<MapCamera>({ bearing: 0, pitch: 0 });
+  // 4D: thanh dòng thời gian (phát lại hành trình, ánh sáng theo giờ).
+  const [timelineOpen, setTimelineOpen] = useState(false);
+  const [lightTime, setLightTime] = useState<number | null>(null);
   const savedRoutes = useSavedRoutes();
   const { updateAvailable, reloadForUpdate } = useAppUpdate();
 
@@ -361,6 +365,7 @@ export function App() {
           routeOptions={routeOptionsForMap}
           trafficLayer={trafficLayer}
           view3d={view3d}
+          lightTime={lightTime}
           onCameraChange={setMapCamera}
         />
       }
@@ -401,6 +406,16 @@ export function App() {
       }
       bottomLeft={
         <>
+          {timelineOpen && isNavigationIdle && (
+            <div className="md:order-1">
+              <TimelineBar
+                route={activeRoute}
+                onFrame={(frame) => mapController.current?.showPlayback(frame)}
+                onLightTime={setLightTime}
+                onClose={() => setTimelineOpen(false)}
+              />
+            </div>
+          )}
           {overlays.traffic && (
             <div className="md:order-2 md:mx-auto">
               <TrafficLegend onHide={() => setOverlays((current) => ({ ...current, traffic: false }))} />
@@ -417,6 +432,8 @@ export function App() {
             showZoom={!isNavigationIdle}
             view3d={view3d}
             onToggle3d={() => setView3d(!view3d)}
+            timelineOpen={timelineOpen}
+            onToggleTimeline={isNavigationIdle ? () => setTimelineOpen(!timelineOpen) : undefined}
             camera={mapCamera}
             onResetNorth={() => mapController.current?.resetNorth()}
             onLocate={() => (isNavigationIdle ? void locateOnMap() : follow.recenter())}
