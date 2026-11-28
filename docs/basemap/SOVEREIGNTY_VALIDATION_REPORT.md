@@ -23,7 +23,7 @@ Chưa đọc trong đợt này: toàn văn Luật Đo đạc và bản đồ 27/
 | Điều 20.2–20.3 — bản đồ phụ | `VietnamInset`: hiện khi xem một phần lãnh thổ, phủ 101,56°–118,41°Đ / 3,95°–24,06°B, ghi "QĐ Hoàng Sa", "QĐ Trường Sa"; bấm để về toàn cảnh | Đạt ở 10 khung nhìn kiểm thử. Ngoại lệ: tạm ẩn khi đang dẫn đường từng bước (sau khi bấm "Bắt đầu"), do chủ dự án phê duyệt ngày 28/11/2026; màn hình tìm và xem tuyến vẫn có bản đồ phụ |
 | Tên Hoàng Sa, Trường Sa, Biển Đông | Nguồn có lớp chủ quyền (vApp) tự thể hiện; nền không có nhãn (vệ tinh, dự phòng) dùng nhãn iMap; không chồng chữ | Đạt |
 | Không đường lưỡi bò / tên nước ngoài | Quét mã nguồn (342 file), style và 21 ô vector vApp; ảnh chụp | Đạt (vApp). VIETMAP chưa quét được (423) |
-| Vệ tinh | VNSDI Sentinel-2 + nhãn iMap | **Chưa đạt Điều 20.1** khi xem toàn cảnh: ảnh không có đường biên giới |
+| Vệ tinh | VNSDI Sentinel-2 + nhãn iMap | Duyệt có điều kiện (28/11/2026): chỉ dùng khi zoom ≥ 10; thu nhỏ hơn thì về nền Đường phố có biên giới và nhắc phóng to. Ảnh vẫn không có đường biên giới khi phóng gần vùng giáp ranh |
 
 ## 3. Cổng kiểm chứng (`npm run verify:sovereignty`)
 

@@ -305,6 +305,14 @@ try {
   assert.equal(await page.evaluate(() => window.__qa.el.dataset.basemap), 'vnsdi-sentinel2');
   assert.match(await page.locator('#qa-map .routetwin-attribution').textContent(), /VNSDI.*Sentinel-2/);
   assert.equal(await page.locator('#qa-map .sovereignty-label--archipelago').count(), 2);
+  // Thu nhỏ dưới mức thành phố: ảnh không có biên giới → về nền Đường phố vApp, nhắc phóng to; phóng lại thì có ảnh.
+  await page.evaluate(() => window.__qa.c.map.jumpTo({ zoom: 6 }));
+  // Chuỗi Đường phố (vApp, Vietmap theo môi trường kiểm thử), không phải ảnh vệ tinh.
+  await page.waitForFunction(() => window.__qa.el.dataset.basemap !== 'vnsdi-sentinel2');
+  assert.equal(await page.locator('#qa-map .routetwin-basemap-zoom-hint').count(), 1);
+  await page.evaluate(() => window.__qa.c.map.jumpTo({ zoom: 11 }));
+  await page.waitForFunction(() => window.__qa.el.dataset.basemap === 'vnsdi-sentinel2');
+  assert.equal(await page.locator('#qa-map .routetwin-basemap-zoom-hint').count(), 0);
   // Đường phố + Địa hình khi VNSDI địa hình chưa có token: giữ nền đường phố, không để bản đồ trắng.
   await page.evaluate(() => {
     const q = window.__qa;
@@ -320,7 +328,7 @@ try {
   await page.evaluate(() => {
     const q = window.__qa;
     // Sang vùng khác để trình duyệt phải tải ô Sentinel-2 mới (ô cũ nằm trong bộ nhớ đệm).
-    q.c.map.jumpTo({ center: [105.85, 21.03], zoom: 8 });
+    q.c.map.jumpTo({ center: [105.85, 21.03], zoom: 11 });
     q.data.layer = 'satellite';
     q.c.update(q.data);
   });

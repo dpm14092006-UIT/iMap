@@ -1,3 +1,4 @@
+import type { MapLayer } from '../types';
 /**
  * Danh sách nguồn bản đồ nền (BasemapRegistry) và trạng thái kiểm chứng của từng nguồn.
  *
@@ -45,6 +46,11 @@ export type BasemapProvider = {
    * Production chỉ bật khi có `approval` (quyền thêm lớp trên style của nhà cung cấp đã được xác nhận).
    */
   features3d?: Features3d;
+  /**
+   * Chỉ dùng khi phóng tới mức zoom này trở lên (thang ô 256 px). Thu nhỏ hơn thì dùng nguồn kế tiếp trong chuỗi,
+   * hoặc nền Đường phố. Dùng cho nguồn không thể hiện đủ biên giới khi xem rộng (Điều 20.1).
+   */
+  minViewZoom?: number;
 };
 
 export type Features3d = {
@@ -118,7 +124,14 @@ export const BASEMAP_PROVIDERS: readonly BasemapProvider[] = [
     license:
       'Dịch vụ công khai, không yêu cầu token; chưa tìm thấy điều khoản sử dụng. Dữ liệu gốc Copernicus Sentinel-2 là dữ liệu mở.',
     modes: ['satellite'],
-    status: 'TESTING',
+    status: 'APPROVED',
+    minViewZoom: 10,
+    approval: {
+      by: 'Chủ dự án iMap (phê duyệt trong phiên làm việc với Claude Code)',
+      date: '2026-11-28',
+      report:
+        'Duyệt có điều kiện: chỉ dùng khi phóng tới mức thành phố (zoom ≥ 10); thu nhỏ hơn thì về nền vApp có biên giới (Điều 20.1). Chấp nhận ảnh không có đường biên giới khi phóng gần vùng giáp ranh. Bản đồ phụ và nhãn Hoàng Sa, Trường Sa của iMap vẫn hiện.',
+    },
     dataSource:
       'Trung tâm Hạ tầng dữ liệu không gian địa lý (xử lý tăng cường), ảnh gốc Copernicus Sentinel-2',
     lastVerified: '2026-11-26',
@@ -131,7 +144,7 @@ export const BASEMAP_PROVIDERS: readonly BasemapProvider[] = [
       'Ảnh không có nhãn: nhãn chủ quyền do lớp của iMap vẽ.',
     ],
     blockers: [
-      'Ảnh không có đường biên giới quốc gia: chưa đạt Điều 20.1 khi xem toàn cảnh. Cần chồng lớp ranh giới chính thức (VNSDI hành chính, cần token) trước khi duyệt.',
+      'Ảnh không có đường biên giới quốc gia: vì vậy chỉ dùng khi zoom ≥ 10 (minViewZoom); khi có lớp ranh giới chính thức (VNSDI hành chính, cần token) thì chồng lên và bỏ giới hạn.',
       'Ở mức 5–7 ảnh là mosaic loang lổ; ngoài lãnh thổ trả ô trắng.',
       'Cần xác nhận điều khoản sử dụng với VNSDI.',
     ],
@@ -342,4 +355,33 @@ export function usableChain(mode: BasemapMode, production: boolean): BasemapProv
   return MODE_CHAINS[mode]
     .map(providerById)
     .filter((p): p is BasemapProvider => Boolean(p && isUsable(p, production) && p.modes.includes(mode)));
+}
+
+export type BasemapPick = {
+  mode: BasemapMode;
+  chain: BasemapProvider[];
+  /** Đã chọn Vệ tinh nhưng đang thu nhỏ quá: tạm dùng nền Đường phố, giao diện nhắc phóng to. */
+  zoomedOut: boolean;
+};
+
+/**
+ * Chọn chuỗi nguồn cho lớp đang chọn ở mức zoom hiện tại (thang ô 256 px). Nguồn có `minViewZoom` chỉ dùng
+ * khi phóng đủ gần; khi một nguồn trong chuỗi bị loại vì zoom thì dùng nền Đường phố (Điều 20.1: xem rộng phải có
+ * biên giới).
+ */
+export function pickBasemap(
+  layer: MapLayer,
+  terrain: boolean,
+  zoom: number,
+  production: boolean,
+): BasemapPick {
+  const wantsTerrain = terrain && layer !== 'satellite' && usableChain('terrain', production).length > 0;
+  const chosen: BasemapMode = wantsTerrain ? 'terrain' : layer;
+  const inView = (mode: BasemapMode) =>
+    usableChain(mode, production).filter((p) => (p.minViewZoom ?? 0) <= zoom);
+  // Có nguồn bị loại vì zoom (ảnh không có biên giới khi xem rộng): về Đường phố ở cả dev lẫn production,
+  // không rơi sang nguồn kế tiếp, để xem rộng luôn có biên giới.
+  if (usableChain(chosen, production).some((p) => (p.minViewZoom ?? 0) > zoom))
+    return { mode: 'street', chain: inView('street'), zoomedOut: true };
+  return { mode: chosen, chain: inView(chosen), zoomedOut: false };
 }

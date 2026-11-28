@@ -3,6 +3,7 @@ import {
   BASEMAP_PROVIDERS,
   MODE_CHAINS,
   isUsable,
+  pickBasemap,
   usableChain,
   usableSourceCredits,
   usable3d,
@@ -73,5 +74,27 @@ describe('BasemapRegistry', () => {
     expect(usable3d(null, false)).toBeNull();
     for (const p of BASEMAP_PROVIDERS)
       if (p.features3d) expect(p.features3d.attribution.length).toBeGreaterThan(0);
+  });
+});
+
+describe('pickBasemap: vệ tinh chỉ khi phóng gần (production)', () => {
+  it('zoom ≥ 10: ảnh Sentinel-2 của VNSDI', () => {
+    const pick = pickBasemap('satellite', false, 12, true);
+    expect(pick).toMatchObject({ mode: 'satellite', zoomedOut: false });
+    expect(pick.chain.map((p) => p.id)).toEqual(['vnsdi-sentinel2']);
+  });
+
+  it('thu nhỏ dưới 10: về nền Đường phố vApp (có biên giới), báo zoomedOut để nhắc phóng to', () => {
+    const pick = pickBasemap('satellite', false, 6, true);
+    expect(pick).toMatchObject({ mode: 'street', zoomedOut: true });
+    expect(pick.chain.map((p) => p.id)).toEqual(['vapp']);
+  });
+
+  it('bản dev cũng về Đường phố khi thu nhỏ (không rơi sang Vietmap vệ tinh)', () => {
+    expect(pickBasemap('satellite', false, 6, false)).toMatchObject({ mode: 'street', zoomedOut: true });
+  });
+
+  it('các lớp khác không bị ảnh hưởng bởi zoom', () => {
+    expect(pickBasemap('street', false, 3, true)).toMatchObject({ mode: 'street', zoomedOut: false });
   });
 });
