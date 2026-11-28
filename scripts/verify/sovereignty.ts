@@ -526,6 +526,14 @@ async function boundaryGate(gate: Gate) {
     'Thiếu bản đồ phụ hoặc nút tổng quan chưa khớp khung Điều 20.1',
   );
 
+  // Ngoại lệ duy nhất được duyệt (chủ dự án, 28/11/2026): ẩn bản đồ phụ khi đang dẫn đường từng bước.
+  const suspendCalls = controller0.match(/this\.inset\.setSuspended\(([^)]*)\)/g) ?? [];
+  gate.expect(
+    suspendCalls.length === 1 && suspendCalls[0] === 'this.inset.setSuspended(data.isNavigating)',
+    'Bản đồ phụ chỉ tạm ẩn khi đang dẫn đường từng bước (ngoại lệ đã duyệt); tìm, xem tuyến vẫn có',
+    `Bản đồ phụ bị ẩn ngoài trường hợp dẫn đường: ${suspendCalls.join(', ') || 'không thấy lệnh gọi'}`,
+  );
+
   const api = read('apps/api/src/modules/map/presentation/vnsdiBasemapRouter.ts');
   gate.expect(
     api.includes('https://vnsdi.mae.gov.vn') && api.includes('BanDoHanhChinhVietNam'),

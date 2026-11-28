@@ -123,6 +123,7 @@ export class MaplibreMapController implements MapController {
     this.map.getContainer().classList.toggle('is-picking', data.isPicking);
     this.pois.update(data.pois, data.highlightedPoiId);
     this.apply3d(data);
+    this.inset.setSuspended(data.isNavigating);
     this.sun.set(data.lightTime);
 
     const routeId = data.route?.id ?? null;
