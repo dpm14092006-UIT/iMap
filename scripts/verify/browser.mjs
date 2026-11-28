@@ -64,7 +64,10 @@ try {
     reducedMotion: 'reduce',
     permissions: ['geolocation'],
     geolocation: { latitude: 10.77, longitude: 106.69, accuracy: 5 },
+    timezoneId: 'Asia/Ho_Chi_Minh',
   });
+  // Giao diện tự đổi theo giờ: cố định 9:00 sáng để kết quả không phụ thuộc lúc chạy (đồng hồ vẫn chạy).
+  await context.clock.install({ time: new Date('2026-11-28T09:00:00+07:00') });
   // Fixture tiles keep CI independent of map-provider availability. MapLibre itself is never mocked.
   await context.route(/^https?:\/\//, async (route) => {
     const url = new URL(route.request().url());
@@ -302,6 +305,14 @@ try {
   assert.equal(await page.evaluate(() => window.__qa.el.dataset.basemap), 'vnsdi-sentinel2');
   assert.match(await page.locator('#qa-map .routetwin-attribution').textContent(), /VNSDI.*Sentinel-2/);
   assert.equal(await page.locator('#qa-map .sovereignty-label--archipelago').count(), 2);
+  // Thu nhỏ dưới mức thành phố: ảnh không có biên giới → về nền Đường phố vApp, nhắc phóng to; phóng lại thì có ảnh.
+  await page.evaluate(() => window.__qa.c.map.jumpTo({ zoom: 6 }));
+  // Chuỗi Đường phố (vApp, Vietmap theo môi trường kiểm thử), không phải ảnh vệ tinh.
+  await page.waitForFunction(() => window.__qa.el.dataset.basemap !== 'vnsdi-sentinel2');
+  assert.equal(await page.locator('#qa-map .routetwin-basemap-zoom-hint').count(), 1);
+  await page.evaluate(() => window.__qa.c.map.jumpTo({ zoom: 11 }));
+  await page.waitForFunction(() => window.__qa.el.dataset.basemap === 'vnsdi-sentinel2');
+  assert.equal(await page.locator('#qa-map .routetwin-basemap-zoom-hint').count(), 0);
   // Đường phố + Địa hình khi VNSDI địa hình chưa có token: giữ nền đường phố, không để bản đồ trắng.
   await page.evaluate(() => {
     const q = window.__qa;
@@ -317,7 +328,7 @@ try {
   await page.evaluate(() => {
     const q = window.__qa;
     // Sang vùng khác để trình duyệt phải tải ô Sentinel-2 mới (ô cũ nằm trong bộ nhớ đệm).
-    q.c.map.jumpTo({ center: [105.85, 21.03], zoom: 8 });
+    q.c.map.jumpTo({ center: [105.85, 21.03], zoom: 11 });
     q.data.layer = 'satellite';
     q.c.update(q.data);
   });
@@ -502,6 +513,34 @@ try {
     });
   });
   assert.deepEqual(insetCorners, [true, true, true, true], 'Directions panel covers the territory inset');
+  // Đóng bảng: viên tóm tắt tuyến ở góc trên phải không được đè bản đồ phụ (desktop và điện thoại).
+  await page
+    .getByRole('button', { name: 'Đóng bảng', exact: true })
+    .filter({ visible: true })
+    .first()
+    .click();
+  await page.locator('[data-map-top-overlay]').waitFor();
+  for (const viewport of [
+    { width: 1440, height: 1000 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.waitForTimeout(600);
+    const overlap = await page.evaluate(() => {
+      const inset = document.querySelector('.routetwin-territory-inset');
+      const pill = document.querySelector('[data-map-top-overlay]');
+      if (!inset || inset.hidden || !pill) return 'missing';
+      const a = inset.getBoundingClientRect();
+      const b = pill.getBoundingClientRect();
+      const hit =
+        Math.min(a.right, b.right) > Math.max(a.left, b.left) &&
+        Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top);
+      return hit;
+    });
+    assert.equal(overlap, false, `Route summary pill overlaps the territory inset at ${viewport.width}px`);
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openDirections(page);
   await page.getByRole('button', { name: 'Tùy chọn', exact: true }).click();
   await page.getByRole('button', { name: 'Tùy chọn', exact: true }).click();
   await page.getByRole('button', { name: 'Bắt đầu', exact: true }).click();
@@ -525,6 +564,8 @@ try {
     { width: 320, height: 568 },
   ]) {
     await page.setViewportSize(viewport);
+    // Thu cửa sổ đột ngột (1440 → 390) có thể để lại vị trí cuộn ngang cũ: về gốc như khi mở trang thật.
+    await page.evaluate(() => window.scrollTo(0, 0));
     const trigger = page.getByRole('button', { name: 'Lớp bản đồ', exact: true });
     await trigger.click();
     const dialog = page.getByRole('dialog', { name: 'Lớp bản đồ' });
@@ -555,13 +596,16 @@ try {
       null,
       `Map layer popover overlaps the navigation banner at ${viewport.width}×${viewport.height}: ${JSON.stringify(overlap)}`,
     );
-    const box = await dialog.boundingBox();
+    // Cùng lý do: chờ bố cục ổn định (tối đa 2 giây) rồi mới kết luận menu bị cắt.
+    const fits = (b) =>
+      b && b.x >= 0 && b.x + b.width <= viewport.width && b.y >= 0 && b.y + b.height <= viewport.height;
+    let box = await dialog.boundingBox();
+    for (let attempt = 0; attempt < 10 && !fits(box); attempt++) {
+      await page.waitForTimeout(200);
+      box = await dialog.boundingBox();
+    }
     assert.ok(
-      box &&
-        box.x >= 0 &&
-        box.x + box.width <= viewport.width &&
-        box.y >= 0 &&
-        box.y + box.height <= viewport.height,
+      fits(box),
       `Map layer popover is clipped at ${viewport.width}×${viewport.height}: ${JSON.stringify(box)}`,
     );
     const incidents = dialog.getByRole('switch', { name: 'Sự cố cộng đồng' });

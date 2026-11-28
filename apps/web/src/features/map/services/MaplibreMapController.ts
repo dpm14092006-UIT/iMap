@@ -101,6 +101,7 @@ export class MaplibreMapController implements MapController {
     this.map3d = new Map3D(this.map, import.meta.env.PROD, (text) => this.attribution.set('3d', text));
 
     this.map.on('style.load', this.reinstall);
+    this.map.on('zoomend', this.onZoomEnd);
     this.map.on('moveend', this.reportBounds);
     this.map.on('click', this.onClick);
     this.map.on('mousemove', this.onHover);
@@ -117,6 +118,7 @@ export class MaplibreMapController implements MapController {
     if (this.destroyed) return;
     const languageChanged = data.language !== this.language;
     this.language = data.language;
+    this.base.setZoom(this.camera.getZoom());
     this.base.apply(data.layer, data.overlays.terrain);
     this.archipelagoLabels.setLanguage(data.language);
     this.traffic.setVisibility(data.overlays);
@@ -237,6 +239,7 @@ export class MaplibreMapController implements MapController {
     this.destroyed = true;
     this.map.off('moveend', this.reportBounds);
     this.map.off('style.load', this.reinstall);
+    this.map.off('zoomend', this.onZoomEnd);
     cancelAnimationFrame(this.cameraFrame);
     this.routeLayer.destroy();
     this.traffic.destroy();
@@ -270,6 +273,11 @@ export class MaplibreMapController implements MapController {
     this.traffic.installSections();
     this.map3d.apply(this.base.currentProvider(), this.view3d);
     this.sun.apply();
+  };
+
+  /** Nguồn nền có giới hạn zoom (vệ tinh) đổi khi phóng to/thu nhỏ. */
+  private readonly onZoomEnd = () => {
+    if (!this.destroyed) this.base.setZoom(this.camera.getZoom());
   };
 
   /** Chuyển 2D/3D; kết thúc dẫn đường 3D thì quay lại hướng Bắc (vẫn giữ nghiêng nếu đang 3D). */

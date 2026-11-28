@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { useI18n } from '../../../shared/i18n/I18nProvider';
-import { useSystemDark } from '../../map/hooks/useMapAppearance';
+import { useNightTime } from '../../map/hooks/useMapAppearance';
 import { AccountForm } from './AccountForm';
 import { AuthLayout } from './AuthLayout';
 
 export function AuthPage() {
-  const isDark = useSystemDark();
+  const isDark = useNightTime();
   const { language, setLanguage, t } = useI18n();
   useEffect(() => {
     const previousTitle = document.title;
