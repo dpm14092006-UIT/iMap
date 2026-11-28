@@ -18,6 +18,8 @@ export class VietnamInset implements maplibregl.IControl {
   private failed = new Set<string>();
   private overlayWatch: MutationObserver | null = null;
   private frame = 0;
+  /** Đang dẫn đường từng bước: tạm ẩn bản đồ phụ (chủ dự án phê duyệt 28/11/2026, xem báo cáo chủ quyền). */
+  private suspended = false;
 
   constructor(
     private readonly onOverview: () => void,
@@ -82,12 +84,21 @@ export class VietnamInset implements maplibregl.IControl {
    */
   footprint(): DOMRect | null {
     const box = this.box;
-    if (!box) return null;
+    if (!box || this.suspended) return null;
     const wasHidden = box.hidden;
     box.hidden = false;
     const rect = box.getBoundingClientRect();
     box.hidden = wasHidden;
     return rect.width > 0 ? rect : null;
+  }
+
+  /**
+   * Ẩn bản đồ phụ trong lúc dẫn đường từng bước (sau khi bấm "Bắt đầu"); tìm và xem tuyến vẫn có bản đồ phụ.
+   */
+  setSuspended(suspended: boolean) {
+    if (suspended === this.suspended) return;
+    this.suspended = suspended;
+    this.sync();
   }
 
   /** Có đang hiển thị bản đồ phụ không (dùng cho kiểm thử, cổng kiểm chứng). */
@@ -99,12 +110,14 @@ export class VietnamInset implements maplibregl.IControl {
     const main = this.main;
     if (!this.box || !main) return;
     const view = main.getBounds();
-    const show = needsTerritoryInset({
-      south: view.getSouth(),
-      west: view.getWest(),
-      north: view.getNorth(),
-      east: view.getEast(),
-    });
+    const show =
+      !this.suspended &&
+      needsTerritoryInset({
+        south: view.getSouth(),
+        west: view.getWest(),
+        north: view.getNorth(),
+        east: view.getEast(),
+      });
     this.box.hidden = !show;
     main.getContainer().classList.toggle('has-territory-inset', show);
     if (!show) {
