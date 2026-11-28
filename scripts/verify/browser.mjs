@@ -64,7 +64,10 @@ try {
     reducedMotion: 'reduce',
     permissions: ['geolocation'],
     geolocation: { latitude: 10.77, longitude: 106.69, accuracy: 5 },
+    timezoneId: 'Asia/Ho_Chi_Minh',
   });
+  // Giao diện tự đổi theo giờ: cố định 9:00 sáng để kết quả không phụ thuộc lúc chạy (đồng hồ vẫn chạy).
+  await context.clock.install({ time: new Date('2026-11-28T09:00:00+07:00') });
   // Fixture tiles keep CI independent of map-provider availability. MapLibre itself is never mocked.
   await context.route(/^https?:\/\//, async (route) => {
     const url = new URL(route.request().url());
@@ -502,6 +505,34 @@ try {
     });
   });
   assert.deepEqual(insetCorners, [true, true, true, true], 'Directions panel covers the territory inset');
+  // Đóng bảng: viên tóm tắt tuyến ở góc trên phải không được đè bản đồ phụ (desktop và điện thoại).
+  await page
+    .getByRole('button', { name: 'Đóng bảng', exact: true })
+    .filter({ visible: true })
+    .first()
+    .click();
+  await page.locator('[data-map-top-overlay]').waitFor();
+  for (const viewport of [
+    { width: 1440, height: 1000 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.waitForTimeout(600);
+    const overlap = await page.evaluate(() => {
+      const inset = document.querySelector('.routetwin-territory-inset');
+      const pill = document.querySelector('[data-map-top-overlay]');
+      if (!inset || inset.hidden || !pill) return 'missing';
+      const a = inset.getBoundingClientRect();
+      const b = pill.getBoundingClientRect();
+      const hit =
+        Math.min(a.right, b.right) > Math.max(a.left, b.left) &&
+        Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top);
+      return hit;
+    });
+    assert.equal(overlap, false, `Route summary pill overlaps the territory inset at ${viewport.width}px`);
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openDirections(page);
   await page.getByRole('button', { name: 'Tùy chọn', exact: true }).click();
   await page.getByRole('button', { name: 'Tùy chọn', exact: true }).click();
   await page.getByRole('button', { name: 'Bắt đầu', exact: true }).click();

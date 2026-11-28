@@ -6,7 +6,7 @@ export const en: Record<string, string> = {
   'Báo sự cố': 'Report an incident',
   'Xem ghim sự cố trên bản đồ. Chạm vào bản đồ để chọn vị trí báo cáo.':
     'View incident pins on the map. Tap the map to select a report location.',
-  'Theo hệ thống': 'System default',
+  'Tự động theo giờ': 'Auto (by time of day)',
   'Đường phố': 'Street map',
   Tối: 'Dark map',
   'Cập nhật iMap': 'Update iMap',
@@ -64,8 +64,8 @@ export const en: Record<string, string> = {
   'Điều khiển bản đồ': 'Map controls',
   'Định vị vị trí hiện tại': 'Locate current position',
   'Xoay về hướng Bắc': 'Reset to north',
-  'Chuyển sang bản đồ 2D': 'Switch to 2D map',
   'Chuyển sang bản đồ 3D': 'Switch to 3D map',
+  'Về hướng Bắc, chuyển sang bản đồ 2D': 'Face north and switch to 2D map',
   'Dòng thời gian': 'Timeline',
   'Đóng dòng thời gian': 'Close timeline',
   'Mở dòng thời gian (4D)': 'Open timeline (4D)',

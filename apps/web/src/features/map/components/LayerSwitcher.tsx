@@ -24,7 +24,7 @@ type LayerSwitcherProps = {
 };
 
 const baseOptions = [
-  { id: 'auto', label: 'Theo hệ thống', icon: 'compass' },
+  { id: 'auto', label: 'Tự động theo giờ', icon: 'compass' },
   { id: 'street', label: 'Đường phố', icon: 'road' },
   { id: 'dark', label: 'Tối', icon: 'moon' },
   { id: 'satellite', label: 'Vệ tinh', icon: 'layers' },

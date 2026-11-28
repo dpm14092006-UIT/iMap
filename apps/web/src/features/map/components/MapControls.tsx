@@ -67,24 +67,26 @@ export function MapControls({
       role="group"
       aria-label={t('Điều khiển bản đồ')}
     >
-      {rotated && onResetNorth && (
-        // Kim la bàn chỉ hướng Bắc: xoay ngược với hướng bản đồ đang xoay.
-        <ControlButton
-          icon="compass"
-          label="Xoay về hướng Bắc"
-          onClick={onResetNorth}
-          iconStyle={{ transform: `rotate(${-(camera?.bearing ?? 0) - 45}deg)` }}
-        />
-      )}
-      {onToggle3d && (
-        <ControlButton
-          icon="cube"
-          label={view3d ? 'Chuyển sang bản đồ 2D' : 'Chuyển sang bản đồ 3D'}
-          onClick={onToggle3d}
-          pressed={view3d}
-          className={view3d ? 'text-brand-700 dark:text-brand-200' : ''}
-        />
-      )}
+      {(onToggle3d || (rotated && onResetNorth)) &&
+        (view3d || rotated ? (
+          // Một nút cho cả 3D và la bàn: đang 3D hoặc bản đồ bị xoay thì là la bàn (kim chỉ Bắc);
+          // bấm vào thì về hướng Bắc và trở lại 2D, nút lại thành hình khối.
+          <ControlButton
+            icon="compass"
+            label={view3d ? 'Về hướng Bắc, chuyển sang bản đồ 2D' : 'Xoay về hướng Bắc'}
+            onClick={() => (view3d && onToggle3d ? onToggle3d() : onResetNorth?.())}
+            pressed={view3d}
+            className={view3d ? 'text-brand-700 dark:text-brand-200' : ''}
+            iconStyle={{ transform: `rotate(${-(camera?.bearing ?? 0) - 45}deg)` }}
+          />
+        ) : (
+          <ControlButton
+            icon="cube"
+            label="Chuyển sang bản đồ 3D"
+            onClick={() => onToggle3d?.()}
+            pressed={false}
+          />
+        ))}
       {onToggleTimeline && (
         <ControlButton
           icon="clock"

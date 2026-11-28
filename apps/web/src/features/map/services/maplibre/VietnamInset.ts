@@ -173,7 +173,9 @@ export class VietnamInset implements maplibregl.IControl {
     const rect = box.getBoundingClientRect();
     const mapTop = main.getContainer().getBoundingClientRect().top;
     let bottom = 0;
-    for (const el of document.querySelectorAll<HTMLElement>('.speedometer, [data-nav-banner]')) {
+    for (const el of document.querySelectorAll<HTMLElement>(
+      '.speedometer, [data-nav-banner], [data-map-top-overlay]',
+    )) {
       if (getComputedStyle(el).visibility === 'hidden') continue;
       const r = el.getBoundingClientRect();
       const sameColumn = r.left < rect.right && r.right > rect.left;
