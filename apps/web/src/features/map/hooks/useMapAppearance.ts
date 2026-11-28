@@ -2,17 +2,24 @@ import { useState, useSyncExternalStore } from 'react';
 import type { MapLayer } from '../types';
 
 export type MapLayerPreference = MapLayer | 'auto';
-const SYSTEM_DARK = '(prefers-color-scheme: dark)';
 const STORAGE_KEY = 'imap-base-layer';
+/** Giao diện tối từ 18:00 tới trước 6:00 sáng (giờ trên máy người dùng); ban ngày luôn sáng. */
+export const DARK_FROM_HOUR = 18;
+export const LIGHT_FROM_HOUR = 6;
 
-export function systemPrefersDark() {
-  return typeof window !== 'undefined' && (window.matchMedia?.(SYSTEM_DARK)?.matches ?? false);
+export function isNightTime(date: Date = new Date()): boolean {
+  const hour = date.getHours();
+  return hour >= DARK_FROM_HOUR || hour < LIGHT_FROM_HOUR;
 }
 
+/** Báo lại mỗi phút để đổi giao diện đúng 6:00 và 18:00 mà không cần tải lại trang. */
 function subscribe(onChange: () => void) {
-  const query = window.matchMedia?.(SYSTEM_DARK);
-  query?.addEventListener('change', onChange);
-  return () => query?.removeEventListener('change', onChange);
+  const timer = window.setInterval(onChange, 60_000);
+  document.addEventListener('visibilitychange', onChange);
+  return () => {
+    window.clearInterval(timer);
+    document.removeEventListener('visibilitychange', onChange);
+  };
 }
 
 function readLayer(): MapLayerPreference {
@@ -20,7 +27,7 @@ function readLayer(): MapLayerPreference {
     const value = window.localStorage.getItem(STORAGE_KEY);
     if (value === 'street' || value === 'dark' || value === 'satellite' || value === 'admin') return value;
   } catch {
-    // Vẫn bật theo hệ thống nếu trình duyệt không cung cấp bộ nhớ.
+    // Vẫn tự đổi theo giờ nếu trình duyệt không cung cấp bộ nhớ.
   }
   return 'auto';
 }
@@ -29,12 +36,16 @@ export function resolveMapLayer(preference: MapLayerPreference, isDark: boolean)
   return preference === 'auto' ? (isDark ? 'dark' : 'street') : preference;
 }
 
-export function useSystemDark() {
-  return useSyncExternalStore(subscribe, systemPrefersDark, () => false);
+export function useNightTime() {
+  return useSyncExternalStore(
+    subscribe,
+    () => isNightTime(),
+    () => false,
+  );
 }
 
 export function useMapAppearance() {
-  const isDark = useSystemDark();
+  const isDark = useNightTime();
   const [preference, setPreference] = useState(readLayer);
   return {
     isDark,

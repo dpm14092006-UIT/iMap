@@ -1,1 +1,4 @@
-{}
+{
+  "systemPrefersDark": "Đổi thành isNightTime: giao diện tối theo giờ (18:00–6:00), không theo cài đặt hệ thống (yêu cầu chủ dự án 28/11/2026).",
+  "useSystemDark": "Đổi thành useNightTime, cùng lý do với isNightTime."
+}
