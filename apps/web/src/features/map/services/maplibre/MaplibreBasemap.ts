@@ -1,5 +1,5 @@
 import type { StyleSpecification } from 'maplibre-gl';
-import { usableChain, type BasemapMode, type BasemapProvider } from '../../basemap/providers';
+import { pickBasemap, type BasemapProvider } from '../../basemap/providers';
 import type { MapLayer } from '../../types';
 import { vietmapProxyBase, type GLMap } from './gl';
 
@@ -78,6 +78,10 @@ export class MaplibreBasemap {
   private attempt: Attempt | null = null;
   private shown: BasemapProvider | null = null;
   private notice: HTMLElement | null = null;
+  private zoomHint: HTMLElement | null = null;
+  private layer: MapLayer | null = null;
+  private terrain = false;
+  private zoom = 0;
 
   constructor(
     private readonly map: GLMap,
@@ -92,19 +96,34 @@ export class MaplibreBasemap {
   }
 
   apply(layer: MapLayer, terrain: boolean) {
+    this.layer = layer;
+    this.terrain = terrain;
+    this.refresh();
+  }
+
+  /** Mức zoom hiện tại (thang ô 256 px): nguồn có `minViewZoom` chỉ dùng khi phóng đủ gần. */
+  setZoom(zoom: number) {
+    this.zoom = zoom;
+    if (this.layer) this.refresh();
+  }
+
+  private refresh() {
+    const layer = this.layer;
+    if (!layer) return;
+    // Địa hình chỉ thay nền khi có nguồn hợp lệ; vệ tinh thu nhỏ quá thì về Đường phố (xem pickBasemap).
+    const { mode, chain, zoomedOut } = pickBasemap(layer, this.terrain, this.zoom, this.production);
+    const effectiveLayer: MapLayer = zoomedOut ? 'street' : layer;
     const container = this.map.getContainer();
-    container.classList.toggle('map-theme-dark', layer === 'dark');
-    container.classList.toggle('map-theme-satellite', layer === 'satellite');
-    container.classList.toggle('map-theme-admin', layer === 'admin');
-    // Lớp phủ Địa hình chỉ thay nền khi có nguồn địa hình hợp lệ; nếu không, giữ nền đang chọn.
-    const wantsTerrain =
-      terrain && layer !== 'satellite' && usableChain('terrain', this.production).length > 0;
-    const mode: BasemapMode = wantsTerrain ? 'terrain' : layer;
-    if (mode === this.current) return;
-    this.current = mode;
+    container.classList.toggle('map-theme-dark', effectiveLayer === 'dark');
+    container.classList.toggle('map-theme-satellite', effectiveLayer === 'satellite');
+    container.classList.toggle('map-theme-admin', effectiveLayer === 'admin');
+    this.setZoomHint(zoomedOut);
+    const key = `${mode}:${chain.map((p) => p.id).join(',')}`;
+    if (key === this.current) return;
+    this.current = key;
     const revision = ++this.revision;
     this.setNotice(false);
-    this.showFirstAvailable(usableChain(mode, this.production), layer, revision);
+    this.showFirstAvailable(chain, effectiveLayer, revision);
   }
 
   /** Nguồn đang được chọn để hiển thị (kể cả khi đang tải). */
@@ -123,6 +142,7 @@ export class MaplibreBasemap {
     this.map.off('style.load', this.onStyleLoad);
     this.map.off('idle', this.onIdle);
     this.setNotice(false);
+    this.setZoomHint(false);
   }
 
   private showFirstAvailable(chain: BasemapProvider[], layer: MapLayer, revision: number) {
@@ -201,6 +221,21 @@ export class MaplibreBasemap {
       ([401, 403, 423].includes(status) || status >= 429);
     if (rejected || (!attempt.ready && !emptyTile)) queueMicrotask(attempt.fail);
   };
+
+  private setZoomHint(show: boolean) {
+    if (show && !this.zoomHint) {
+      const box = document.createElement('div');
+      box.className = 'routetwin-basemap-notice routetwin-basemap-zoom-hint';
+      box.setAttribute('role', 'status');
+      box.textContent = 'Phóng to tới mức thành phố để xem ảnh vệ tinh.';
+      this.map.getContainer().querySelector('.maplibregl-ctrl-top-right')?.prepend(box);
+      this.zoomHint = box;
+    }
+    if (!show && this.zoomHint) {
+      this.zoomHint.remove();
+      this.zoomHint = null;
+    }
+  }
 
   private setNotice(show: boolean) {
     if (show && !this.notice) {
