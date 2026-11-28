@@ -564,6 +564,8 @@ try {
     { width: 320, height: 568 },
   ]) {
     await page.setViewportSize(viewport);
+    // Thu cửa sổ đột ngột (1440 → 390) có thể để lại vị trí cuộn ngang cũ: về gốc như khi mở trang thật.
+    await page.evaluate(() => window.scrollTo(0, 0));
     const trigger = page.getByRole('button', { name: 'Lớp bản đồ', exact: true });
     await trigger.click();
     const dialog = page.getByRole('dialog', { name: 'Lớp bản đồ' });
@@ -594,13 +596,16 @@ try {
       null,
       `Map layer popover overlaps the navigation banner at ${viewport.width}×${viewport.height}: ${JSON.stringify(overlap)}`,
     );
-    const box = await dialog.boundingBox();
+    // Cùng lý do: chờ bố cục ổn định (tối đa 2 giây) rồi mới kết luận menu bị cắt.
+    const fits = (b) =>
+      b && b.x >= 0 && b.x + b.width <= viewport.width && b.y >= 0 && b.y + b.height <= viewport.height;
+    let box = await dialog.boundingBox();
+    for (let attempt = 0; attempt < 10 && !fits(box); attempt++) {
+      await page.waitForTimeout(200);
+      box = await dialog.boundingBox();
+    }
     assert.ok(
-      box &&
-        box.x >= 0 &&
-        box.x + box.width <= viewport.width &&
-        box.y >= 0 &&
-        box.y + box.height <= viewport.height,
+      fits(box),
       `Map layer popover is clipped at ${viewport.width}×${viewport.height}: ${JSON.stringify(box)}`,
     );
     const incidents = dialog.getByRole('switch', { name: 'Sự cố cộng đồng' });
